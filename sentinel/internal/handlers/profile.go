@@ -35,6 +35,11 @@ import (
 //	POST   /api/status-pages/auto
 //	PUT    /api/status-pages/{id}/theme
 //	POST   /api/status-pages/{id}/snapshot        下载单文件静态 HTML 快照
+//	POST   /api/status-pages/{id}/snapshots       生成并归档快照
+//	GET    /api/status-pages/{id}/snapshots       快照归档列表
+//	GET    /api/status-pages/{id}/snapshots/{sid} 下载指定归档快照
+//	DELETE /api/status-pages/{id}/snapshots/{sid} 删除归档快照
+//	PUT    /api/status-pages/{id}/snapshot-schedule 设置快照定时计划 off/daily/hourly
 //	GET    /api/status/{slug}          （公开，白名单已含 /api/status/ 前缀）
 //	POST   /api/status/{slug}/subscribe     （公开）
 //	GET    /api/status/{slug}/confirm       （公开）
@@ -54,6 +59,11 @@ func (s *Server) RegisterSoulRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/status-pages/auto", s.handleAutoStatusPage)
 	mux.HandleFunc("PUT /api/status-pages/{id}/theme", s.handleUpdateStatusPageTheme)
 	mux.HandleFunc("POST /api/status-pages/{id}/snapshot", s.handleStatusPageSnapshot)
+	mux.HandleFunc("POST /api/status-pages/{id}/snapshots", s.handleCreateSnapshot)
+	mux.HandleFunc("GET /api/status-pages/{id}/snapshots", s.handleListSnapshots)
+	mux.HandleFunc("GET /api/status-pages/{id}/snapshots/{sid}", s.handleGetSnapshot)
+	mux.HandleFunc("DELETE /api/status-pages/{id}/snapshots/{sid}", s.handleDeleteSnapshot)
+	mux.HandleFunc("PUT /api/status-pages/{id}/snapshot-schedule", s.handleUpdateSnapshotSchedule)
 	mux.HandleFunc("POST /api/status-pages/{id}/publish", s.handlePublishStatusPage)
 	mux.HandleFunc("POST /api/status-pages/{id}/publish/rollback", s.handlePublishRollback)
 	mux.HandleFunc("GET /api/status-pages/{id}/publish", s.handlePublishInfo)

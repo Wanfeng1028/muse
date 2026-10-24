@@ -48,6 +48,7 @@ func newProfileTestStore(t *testing.T) (*Store, *sql.DB) {
 			title TEXT NOT NULL,
 			theme TEXT NOT NULL,
 			accent_color TEXT NOT NULL,
+			snapshot_schedule TEXT NOT NULL DEFAULT 'off',
 			created_at TEXT NOT NULL
 		)`,
 	}

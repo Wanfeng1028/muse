@@ -218,6 +218,22 @@ updated_at TEXT NOT NULL
 			`ALTER TABLE monitors ADD COLUMN keyword_mode TEXT NOT NULL DEFAULT ''`,
 		},
 	},
+	{
+		version: 13,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS status_snapshots (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				page_id INTEGER NOT NULL REFERENCES status_pages(id) ON DELETE CASCADE,
+				created_at TEXT NOT NULL,
+				generator TEXT NOT NULL DEFAULT 'manual',
+				theme TEXT NOT NULL DEFAULT 'light',
+				size_bytes INTEGER NOT NULL DEFAULT 0,
+				html TEXT NOT NULL DEFAULT ''
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_status_snapshots_page_time ON status_snapshots(page_id, created_at)`,
+			`ALTER TABLE status_pages ADD COLUMN snapshot_schedule TEXT NOT NULL DEFAULT 'off'`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

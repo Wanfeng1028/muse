@@ -70,7 +70,7 @@ func TestFreshDBAppliedVersionsDeep2(t *testing.T) {
 		t.Fatalf("AppliedVersions 返回错误: %v", err)
 	}
 
-	want := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12}
+	want := []int{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}
 	if !reflect.DeepEqual(versions, want) {
 		t.Fatalf("全新库 AppliedVersions = %v, 期望 %v", versions, want)
 	}

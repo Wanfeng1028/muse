@@ -93,13 +93,14 @@ func ClassifyFailureCause(startError string) string {
 
 // StatusPage 表示一个状态页。
 type StatusPage struct {
-	ID          int64  `json:"id"`
-	TenantID    int64  `json:"tenant_id"`
-	Slug        string `json:"slug"`
-	Title       string `json:"title"`
-	Theme       string `json:"theme"`
-	AccentColor string `json:"accent_color"`
-	CreatedAt   string `json:"created_at"`
+	ID               int64  `json:"id"`
+	TenantID         int64  `json:"tenant_id"`
+	Slug             string `json:"slug"`
+	Title            string `json:"title"`
+	Theme            string `json:"theme"`
+	AccentColor      string `json:"accent_color"`
+	SnapshotSchedule string `json:"snapshot_schedule"`
+	CreatedAt        string `json:"created_at"`
 }
 
 // percentileLinear 使用线性插值法计算已排序切片的分位数。
@@ -358,7 +359,7 @@ func (s *Store) CreateStatusPage(tenantID int64, slug, title string) (int64, err
 // ListStatusPages 返回某租户下所有状态页。
 func (s *Store) ListStatusPages(tenantID int64) ([]StatusPage, error) {
 	rows, err := s.db.Query(
-		`SELECT id, tenant_id, slug, title, theme, accent_color, created_at FROM status_pages WHERE tenant_id = ? ORDER BY id ASC`,
+		`SELECT id, tenant_id, slug, title, theme, accent_color, snapshot_schedule, created_at FROM status_pages WHERE tenant_id = ? ORDER BY id ASC`,
 		tenantID,
 	)
 	if err != nil {
@@ -368,7 +369,7 @@ func (s *Store) ListStatusPages(tenantID int64) ([]StatusPage, error) {
 	var out []StatusPage
 	for rows.Next() {
 		var sp StatusPage
-		if err := rows.Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.CreatedAt); err != nil {
+		if err := rows.Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.SnapshotSchedule, &sp.CreatedAt); err != nil {
 			return nil, err
 		}
 		out = append(out, sp)
@@ -380,8 +381,8 @@ func (s *Store) ListStatusPages(tenantID int64) ([]StatusPage, error) {
 func (s *Store) GetStatusPage(id int64) (StatusPage, error) {
 	var sp StatusPage
 	err := s.db.QueryRow(
-		`SELECT id, tenant_id, slug, title, theme, accent_color, created_at FROM status_pages WHERE id = ?`, id,
-	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.CreatedAt)
+		`SELECT id, tenant_id, slug, title, theme, accent_color, snapshot_schedule, created_at FROM status_pages WHERE id = ?`, id,
+	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.SnapshotSchedule, &sp.CreatedAt)
 	if err != nil {
 		return sp, err
 	}
@@ -392,8 +393,8 @@ func (s *Store) GetStatusPage(id int64) (StatusPage, error) {
 func (s *Store) GetStatusPageBySlug(slug string) (StatusPage, error) {
 	var sp StatusPage
 	err := s.db.QueryRow(
-		`SELECT id, tenant_id, slug, title, theme, accent_color, created_at FROM status_pages WHERE slug = ?`, slug,
-	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.CreatedAt)
+		`SELECT id, tenant_id, slug, title, theme, accent_color, snapshot_schedule, created_at FROM status_pages WHERE slug = ?`, slug,
+	).Scan(&sp.ID, &sp.TenantID, &sp.Slug, &sp.Title, &sp.Theme, &sp.AccentColor, &sp.SnapshotSchedule, &sp.CreatedAt)
 	if err != nil {
 		return sp, err
 	}

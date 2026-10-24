@@ -2,6 +2,26 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.11.0] - 2026-10-24
+
+### 新增
+- 数据库迁移 v13：新建 `status_snapshots` 表用于持久化存储快照，`status_pages` 表新增 `snapshot_schedule` 列（支持 off/daily/hourly，默认 off）。
+- 快照归档与定时生成相关 API（均需鉴权）：
+  - `POST /api/status-pages/{id}/snapshots`：生成并归档快照，返回 201 及 id/created_at/size_bytes。
+  - `GET /api/status-pages/{id}/snapshots`：获取快照列表，limit 默认 50 上限 200。
+  - `GET /api/status-pages/{id}/snapshots/{sid}`：下载指定快照的 HTML 附件。
+  - `DELETE /api/status-pages/{id}/snapshots/{sid}`：删除指定快照，返回 204 且幂等。
+  - `PUT /api/status-pages/{id}/snapshot-schedule`：设置定时计划，非法参数返回 400。
+  - 跨页访问快照返回 404，原 `POST /api/status-pages/{id}/snapshot` 下载接口保持不变。
+- 定时生成能力：调度器每 tick 结束后经 5 分钟节流扫描一次，对 schedule 为 daily（24h）或 hourly（1h）的页面自动生成快照（generator 为 "schedule"），生成后按 `SENTINEL_SNAPSHOT_RETAIN` 裁剪旧快照，生成失败仅记日志不中断其他页面。
+- 控制台新增「快照归档」页面（/snapshots），支持列出全部状态页、设定时计划、立即生成、快照列表下载与删除，导航栏新增入口。
+
+### 修复
+- 关闭 v0.8.3/v0.8.4 已知限制：快照为下载附件形态，未做服务端持久化与定时生成。现已支持服务端持久化及定时生成。
+
+### 运维
+- 新增环境变量 `SENTINEL_SNAPSHOT_RETAIN`（默认 30），用于控制每个状态页保留的最新快照数量，定时生成后按此值裁剪旧快照。
+
 ## [0.10.1] - 2026-10-23
 
 ### 修复

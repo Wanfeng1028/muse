@@ -203,6 +203,11 @@ func main() {
 	// HTTP 服务
 	h := handlers.New(st, sch, cfg.CheckRetryMax)
 	h.SetMailer(subMailer)
+	// 快照定时生成：调度器扫描回调复用 handler 的生成归档链路
+	sch.SetSnapshotGenerator(func(pageID int64) error {
+		_, err := h.GenerateAndStoreSnapshot(pageID, "schedule")
+		return err
+	})
 	h.SetPublicURL(cfg.PublicURL)
 	h.SetQueueSender(queueSender)
 	srv := &http.Server{

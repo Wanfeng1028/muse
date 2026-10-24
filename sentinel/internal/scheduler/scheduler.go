@@ -23,6 +23,9 @@ type Scheduler struct {
 	// 告警升级策略，空=禁用
 	escalation []escalation.Level
 	mu         sync.Mutex
+	// 快照定时生成回调（nil=禁用）与上次扫描时间
+	snapshotGen       func(pageID int64) error
+	lastSnapshotSweep time.Time
 }
 
 // New 创建调度器。concurrency<=0 则 10；tickSec<=0 则 5。
@@ -129,6 +132,9 @@ func (s *Scheduler) tick(ctx context.Context) {
 
 	// 每轮 tick 结束后检查升级。
 	s.checkEscalations()
+
+	// 快照归档扫描（内部 5 分钟节流）。
+	s.maybeSweepSnapshots()
 }
 
 // runOne 执行单次检查，带并发限流。

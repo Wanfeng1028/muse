@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>快照归档 · 哨兵 Sentinel</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <script src="/static/app.js" defer></script>
+  <style>
+    .card-header{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.5rem}
+    .card-header h3{margin:0}
+    .card-header code{font-size:.85em;color:var(--muted,#666)}
+    .ctrl-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+    .ctrl-row select{font:inherit}
+    .snap-table{width:100%}
+    .snap-table th,.snap-table td{text-align:left;padding:.35rem .5rem}
+    .snap-actions{display:flex;gap:.35rem}
+    .btn-sm{padding:.2rem .5rem;font-size:.85em}
+  </style>
+</head>
+<body onload="initSnapshots()">
+  <header class="topbar">
+    <span class="brand">哨兵 Sentinel</span>
+    <nav class="nav">
+      <a href="/">仪表盘</a>
+      <a href="/monitors">监控管理</a>
+      <a href="/incidents">事件</a>
+      <a href="/deliveries">投递队列</a>
+      <a href="/snapshots" class="active">快照归档</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h1>快照归档</h1>
+    <p>状态页的静态 HTML 快照归档在这里管理。可以手动立即生成，也可以按每天/每小时定时自动生成，旧快照按保留数自动清理。</p>
+    <div id="pages"></div>
+  </main>
+
+<script>
+async function initSnapshots(){
+  try{
+    const pages=await api('/api/status-pages');
+    renderPages(pages.pages||pages.items||pages);
+  }catch(e){
+    document.getElementById('pages').innerHTML='<p>加载失败：'+esc(e.message||String(e))+'</p>';
+  }
+}
+
+function renderPages(pages){
+  const container=document.getElementById('pages');
+  container.innerHTML='';
+  if(!pages||pages.length===0){
+    container.innerHTML='<p>暂无状态页。</p>';
+    return;
+  }
+  pages.forEach(function(page){
+    const section=document.createElement('section');
+    section.className='card';
+    section.dataset.pageId=page.id;
+
+    const header=document.createElement('div');
+    header.className='card-header';
+    header.innerHTML='<h3>'+esc(page.title||page.name||'')+'</h3> <code>'+esc(page.slug||'')+'</code>';
+    section.appendChild(header);
+
+    const ctrlRow=document.createElement('div');
+    ctrlRow.className='ctrl-row';
+
+    const label=document.createElement('span');
+    label.textContent='定时计划';
+    ctrlRow.appendChild(label);
+
+    const sel=document.createElement('select');
+    [{v:'off',t:'关闭'},{v:'daily',t:'每天'},{v:'hourly',t:'每小时'}].forEach(function(opt){
+      const o=document.createElement('option');
+      o.value=opt.v;
+      o.textContent=opt.t;
+      if((page.snapshot_schedule||'off')===opt.v) o.selected=true;
+      sel.appendChild(o);
+    });
+    sel.onchange=async function(){
+      const prev=page.snapshot_schedule||'off';
+      try{
+        await api('/api/status-pages/'+page.id+'/snapshot-schedule',{method:'PUT',body:JSON.stringify({schedule:sel.value})});
+        page.snapshot_schedule=sel.value;
+      }catch(e){
+        sel.value=prev;
+        alert('更新定时计划失败：'+(e.message||String(e)));
+      }
+    };
+    ctrlRow.appendChild(sel);
+
+    const genBtn=document.createElement('button');
+    genBtn.textContent='立即生成';
+    genBtn.className='btn-sm';
+    genBtn.onclick=async function(){
+      genBtn.disabled=true;
+      genBtn.textContent='生成中…';
+      try{
+        await api('/api/status-pages/'+page.id+'/snapshots',{method:'POST'});
+        await loadSnaps(page.id,tbody);
+      }catch(e){
+        alert('生成快照失败：'+(e.message||String(e)));
+      }finally{
+        genBtn.disabled=false;
+        genBtn.textContent='立即生成';
+      }
+    };
+    ctrlRow.appendChild(genBtn);
+    section.appendChild(ctrlRow);
+
+    const table=document.createElement('table');
+    table.className='snap-table';
+    const thead=document.createElement('thead');
+    thead.innerHTML='<tr><th>生成时间</th><th>方式</th><th>大小</th><th>操作</th></tr>';
+    table.appendChild(thead);
+    const tbody=document.createElement('tbody');
+    table.appendChild(tbody);
+    section.appendChild(table);
+    container.appendChild(section);
+
+    loadSnaps(page.id,tbody);
+  });
+}
+
+async function loadSnaps(pageId,tbody){
+  tbody.innerHTML='<tr><td colspan="4">加载中…</td></tr>';
+  try{
+    const data=await api('/api/status-pages/'+pageId+'/snapshots');
+    const snaps=data.items||[];
+    tbody.innerHTML='';
+    if(snaps.length===0){
+      tbody.innerHTML='<tr><td colspan="4">暂无快照</td></tr>';
+      return;
+    }
+    snaps.forEach(function(snap){
+      const tr=document.createElement('tr');
+      const genMethod=snap.generator==='manual'?'手动':snap.generator==='schedule'?'定时':esc(snap.generator||'');
+      tr.innerHTML=
+        '<td>'+esc(snap.created_at||snap.generated_at||'')+'</td>'+
+        '<td>'+genMethod+'</td>'+
+        '<td>'+fmtSize(snap.size_bytes||0)+'</td>'+
+        '<td class="snap-actions"></td>';
+      const actions=tr.querySelector('.snap-actions');
+
+      const dlBtn=document.createElement('button');
+      dlBtn.textContent='下载';
+      dlBtn.className='btn-sm';
+      dlBtn.onclick=function(){downloadSnap(pageId,snap.id)};
+      actions.appendChild(dlBtn);
+
+      const delBtn=document.createElement('button');
+      delBtn.textContent='删除';
+      delBtn.className='btn-sm';
+      delBtn.onclick=function(){deleteSnap(pageId,snap.id,tbody)};
+      actions.appendChild(delBtn);
+
+      tbody.appendChild(tr);
+    });
+  }catch(e){
+    tbody.innerHTML='<tr><td colspan="4">加载失败：'+esc(e.message||String(e))+'</td></tr>';
+  }
+}
+
+function fmtSize(bytes){
+  if(bytes<1024) return bytes+' B';
+  if(bytes<1024*1024) return (bytes/1024).toFixed(1)+' KB';
+  return (bytes/(1024*1024)).toFixed(1)+' MB';
+}
+
+async function downloadSnap(pageId,snapId){
+  try{
+    const token=sessionStorage.getItem('sentinel_token');
+    const resp=await fetch('/api/status-pages/'+pageId+'/snapshots/'+snapId,{
+      headers:{'Authorization':'Bearer '+(token||'')}
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    const blob=await resp.blob();
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='snapshot-'+snapId+'.html';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(a.href);
+  }catch(e){
+    alert('下载失败：'+(e.message||String(e)));
+  }
+}
+
+async function deleteSnap(pageId,snapId,tbody){
+  if(!confirm('确定删除此快照？')) return;
+  try{
+    await api('/api/status-pages/'+pageId+'/snapshots/'+snapId,{method:'DELETE'});
+    await loadSnaps(pageId,tbody);
+  }catch(e){
+    alert('删除失败：'+(e.message||String(e)));
+  }
+}
+</script>
+</body>
+</html>
