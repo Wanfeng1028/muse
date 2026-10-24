@@ -52,11 +52,7 @@ class SkillHubIndexControllerTest {
     void indexListsRealSkillsWithSourceLabels() throws Exception {
         org.springframework.test.web.servlet.MvcResult result = mockMvc.perform(get("/api/skillhub/index"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.skills.length()", greaterThanOrEqualTo(200)))
-                .andExpect(jsonPath("$.skills[?(@.id=='video-shots')].source", contains("社区收录")))
-                .andExpect(jsonPath("$.skills[?(@.id=='video-shots')].license", contains("Apache-2.0")))
-                .andExpect(jsonPath("$.skills[?(@.id=='toonflow-canvas')].source", contains("社区收录")))
-                .andExpect(jsonPath("$.skills[?(@.id=='watzing-video-editor')].source", contains("社区收录")))
+                .andExpect(jsonPath("$.skills.length()", is(50)))
                 .andReturn();
         com.fasterxml.jackson.databind.JsonNode root = new com.fasterxml.jackson.databind.ObjectMapper()
                 .readTree(result.getResponse().getContentAsString());
@@ -68,6 +64,17 @@ class SkillHubIndexControllerTest {
         java.util.List<String> sorted = new java.util.ArrayList<>(ids);
         java.util.Collections.sort(sorted);
         org.junit.jupiter.api.Assertions.assertEquals(sorted, ids);
+
+        mockMvc.perform(get("/api/skillhub/index").param("q", "video-shots"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.skills[?(@.id=='video-shots')].source", contains("社区收录")))
+                .andExpect(jsonPath("$.skills[?(@.id=='video-shots')].license", contains("Apache-2.0")));
+        mockMvc.perform(get("/api/skillhub/index").param("q", "toonflow-canvas"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.skills[?(@.id=='toonflow-canvas')].source", contains("社区收录")));
+        mockMvc.perform(get("/api/skillhub/index").param("q", "watzing-video-editor"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.skills[?(@.id=='watzing-video-editor')].source", contains("社区收录")));
     }
 
     @Test
@@ -81,7 +88,7 @@ class SkillHubIndexControllerTest {
 
     @Test
     void installedFlagFlipsAfterInstall() throws Exception {
-        mockMvc.perform(get("/api/skillhub/index"))
+        mockMvc.perform(get("/api/skillhub/index").param("q", "video-scrub"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.skills[?(@.id=='video-scrub')].installed", contains(false)));
 
@@ -90,7 +97,7 @@ class SkillHubIndexControllerTest {
                         .content("{}"))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/skillhub/index"))
+        mockMvc.perform(get("/api/skillhub/index").param("q", "video-scrub"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.skills[?(@.id=='video-scrub')].installed", contains(true)))
                 .andExpect(jsonPath("$.skills[?(@.id=='video-scrub')].installedVersion", contains(not(emptyOrNullString()))));

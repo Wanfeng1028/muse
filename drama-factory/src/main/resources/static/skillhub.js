@@ -11,8 +11,18 @@
     'skh.prev': { 'zh-CN': '上一页', 'en': 'Previous' },
     'skh.next': { 'zh-CN': '下一页', 'en': 'Next' },
     'skh.perPage': { 'zh-CN': '每页', 'en': 'Per page' },
-    'skh.pageInfo': { 'zh-CN': '第 {p}/{t} 页，共 {n} 个', 'en': 'Page {p} of {t}, {n} total' }
+    'skh.pageInfo': { 'zh-CN': '第 {p}/{t} 页，共 {n} 个', 'en': 'Page {p} of {t}, {n} total' },
+    'skh.heading': { 'zh-CN': 'SkillHub', 'en': 'Skill Hub' },
+    'skh.subtitle': { 'zh-CN': '官方和社区收录的视频 skills，点一下装到本地用。', 'en': 'Official and community video skills. Click to install locally.' },
+    'skh.searchPh': { 'zh-CN': '按名称、描述或作者搜索', 'en': 'Search by name, description, or author' },
+    'skh.sourceFilter': { 'zh-CN': '来源', 'en': 'Source' },
+    'skh.sourceAll': { 'zh-CN': '全部', 'en': 'All' },
+    'skh.sourceOfficial': { 'zh-CN': '官方出品', 'en': 'Official' },
+    'skh.sourceCommunity': { 'zh-CN': '社区收录', 'en': 'Community' },
+    'skh.updatedAt': { 'zh-CN': '索引更新于 -', 'en': 'Index updated on -' },
+    'skh.empty': { 'zh-CN': '没有找到匹配的 Skill，换个关键词试试', 'en': 'No matching skills found. Try another keyword.' }
   };
+  if (window.DFI18N) window.DFI18N.register(PAGE_I18N);
 
   function el(tag, className, text) {
     var e = document.createElement(tag);
@@ -77,7 +87,7 @@
     var card = el('div', 'card h-100');
     var body = el('div', 'card-body');
     body.appendChild(el('h5', 'card-title', skill.name || skill.id));
-    body.appendChild(el('p', 'card-text', skill.desc || ''));
+    body.appendChild(el('p', 'card-text', skill.description || skill.desc || ''));
     renderActions(body, skill);
     card.appendChild(body);
     return card;

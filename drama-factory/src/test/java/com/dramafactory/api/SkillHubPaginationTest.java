@@ -46,18 +46,39 @@ class SkillHubPaginationTest {
     }
 
     @Test
-    void noParamsReturnsAll() throws Exception {
+    void noParamsDefaultsToFirstPage() throws Exception {
         MvcResult result = mockMvc.perform(get("/api/skillhub/index"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.page", is(0)))
-                .andExpect(jsonPath("$.totalPages", is(1)))
+                .andExpect(jsonPath("$.size", is(50)))
+                .andExpect(jsonPath("$.skills.length()", is(50)))
                 .andReturn();
         String body = result.getResponse().getContentAsString(StandardCharsets.UTF_8);
         int total = com.jayway.jsonpath.JsonPath.read(body, "$.total");
-        int size = com.jayway.jsonpath.JsonPath.read(body, "$.size");
-        int len = com.jayway.jsonpath.JsonPath.read(body, "$.skills.length()");
+        int totalPages = com.jayway.jsonpath.JsonPath.read(body, "$.totalPages");
         assertTrue(total >= 200, "expected at least 200 skills, got " + total);
-        assertTrue(total == len && size == total, "size should equal total when no params");
+        int expectedPages = (int) Math.ceil((double) total / 50);
+        assertTrue(totalPages == expectedPages, "expected totalPages " + expectedPages + ", got " + totalPages);
+    }
+
+    @Test
+    void firstAndSecondPageIdsHaveNoIntersection() throws Exception {
+        MvcResult result0 = mockMvc.perform(get("/api/skillhub/index"))
+                .andExpect(status().isOk())
+                .andReturn();
+        String body0 = result0.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        java.util.List<String> ids0 = com.jayway.jsonpath.JsonPath.read(body0, "$.skills[*].id");
+        MvcResult result1 = mockMvc.perform(get("/api/skillhub/index")
+                        .param("page", "1")
+                        .param("size", "50"))
+                .andExpect(status().isOk())
+                .andReturn();
+        String body1 = result1.getResponse().getContentAsString(StandardCharsets.UTF_8);
+        java.util.List<String> ids1 = com.jayway.jsonpath.JsonPath.read(body1, "$.skills[*].id");
+        java.util.Set<String> set0 = new java.util.HashSet<>(ids0);
+        java.util.Set<String> set1 = new java.util.HashSet<>(ids1);
+        set0.retainAll(set1);
+        assertTrue(set0.isEmpty(), "page 0 and page 1 should have no overlapping ids, but found " + set0);
     }
 
     @Test

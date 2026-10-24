@@ -6,6 +6,8 @@
 ## [Unreleased]
 
 ### Added（深耕轮 2026-10-24 05:07：视频拆解「逐字稿（内嵌字幕提取）」）
+- 深耕轮 2026-10-24 17:07，SkillHub 索引默认分页（关闭 TD-003）。GET /api/skillhub/index 始终分页，无参默认第 0 页、每页 50 条（此前无参返回全部条目）；total 仍为过滤后全量，totalPages 按 ceil(total/size) 计算；size 钳制 1 到 200 不变；前端 skillhub 页恒发 page/size 参数，不受影响；依赖无参返回全部的调用方须改传 page/size 或用 q 过滤定位单条。
+- 深耕轮 2026-10-24 17:07，前端 skillhub.js 两处修复（视觉验收发现）：卡片描述字段由 desc 改为 description，之前卡片描述恒为空；补齐 skillhub 页 9 个缺失的 i18n 键并按同站既定做法注册词典，之前标题、副标题、搜索框等位置显示 skh.heading 之类裸键。
 - 新服务 `SubtitleTranscriptService`：ffprobe 列字幕流（优先 chi/zho/zh）→ ffmpeg 抽取为 SRT → 解析为分段时间轴；无字幕轨道/提取失败时诚实降级（found=false），不炸拆解流水线。
 - 流水线接入：`DeconstructionService.runPipeline` 在关键帧抽取后提取逐字稿；逐镜按时段重叠映射字幕文本（`video_deconstruction_shots.transcript_text`）；任务表新增 `transcript_status`（EMBEDDED/NONE）/`transcript_track_info`/`transcript_json`（Flyway V23）。
 - 报告：`DeconstructionReportBuilder` 新增 4 参重载，报告新增「## 逐字稿（内嵌字幕提取）」节；口径说明更新——逐字稿改标注"内嵌字幕轨道离线提取"，ASR 语音转写仍未接入（诚实标注，不冒充）。

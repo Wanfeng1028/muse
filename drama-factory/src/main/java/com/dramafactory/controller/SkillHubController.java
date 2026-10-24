@@ -69,7 +69,7 @@ public class SkillHubController {
     }
 
     @GetMapping("/index")
-    @Operation(summary = "获取自有 SkillHub 索引", description = "返回内置与社区收录的 skills 列表，供软件内一键安装")
+    @Operation(summary = "获取自有 SkillHub 索引", description = "返回内置与社区收录的 skills 列表，供软件内一键安装。始终分页，无参默认第 0 页、每页 50 条，total 为过滤后全量。")
     public ResponseEntity<SkillHubIndex> index(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
@@ -138,24 +138,12 @@ public class SkillHubController {
         }
 
         int total = filtered.size();
-        int effectivePage;
-        int effectiveSize;
-        int totalPages;
-        List<SkillHubItem> pageItems;
-
-        if (page == null && size == null && q == null && source == null) {
-            effectivePage = 0;
-            effectiveSize = total;
-            totalPages = total == 0 ? 0 : 1;
-            pageItems = filtered;
-        } else {
-            effectivePage = page == null ? 0 : Math.max(0, page);
-            effectiveSize = size == null ? 50 : Math.min(200, Math.max(1, size));
-            totalPages = total == 0 ? 0 : (total + effectiveSize - 1) / effectiveSize;
-            int from = Math.min(effectivePage * effectiveSize, total);
-            int to = Math.min(from + effectiveSize, total);
-            pageItems = filtered.subList(from, to);
-        }
+        int effectivePage = page == null ? 0 : Math.max(0, page);
+        int effectiveSize = size == null ? 50 : Math.min(200, Math.max(1, size));
+        int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / effectiveSize);
+        int from = Math.min(effectivePage * effectiveSize, total);
+        int to = Math.min(from + effectiveSize, total);
+        List<SkillHubItem> pageItems = filtered.subList(from, to);
 
         SkillHubIndex body = new SkillHubIndex(
                 HUB_NAME,

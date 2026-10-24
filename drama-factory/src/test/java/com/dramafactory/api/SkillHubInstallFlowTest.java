@@ -75,7 +75,7 @@ class SkillHubInstallFlowTest {
 
 
     private JsonNode getHubIndex() throws Exception {
-        MvcResult result = mockMvc.perform(get("/api/skillhub/index"))
+        MvcResult result = mockMvc.perform(get("/api/skillhub/index").param("q", SKILL_ID))
                 .andExpect(status().isOk())
                 .andReturn();
         return objectMapper.readTree(result.getResponse().getContentAsString(StandardCharsets.UTF_8));
