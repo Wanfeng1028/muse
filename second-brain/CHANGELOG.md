@@ -7,6 +7,20 @@
 
 ## [Unreleased]
 
+## [0.17.0] - 2026-10-24
+### 记忆健康诊断
+
+### 新增
+- API：`GET /api/review/health`（按 `X-User`/`?user=` 隔离），返回记忆健康诊断：到期/逾期 7 天以上/从未复习汇总、平均 EF、EF 四档分布、最多 20 条需关注卡片（`reason` 为 ef_floor/overdue_long/never_reviewed_long，`reasonText` 大白话）、服务端规则生成的大白话建议 `advice`。
+- 前端：复习统计页新增「记忆健康」区块——汇总 4 数字、EF 分布条、需关注卡片列表（点标题跳转笔记）、建议列表；失败静默。
+- Store：`internal/store/review_health.go` 新增 `ReviewHealth` 聚合（汇总计数 + EF 分桶 + 三类需关注卡片 + 建议规则），无 schema 变更。
+
+### 测试
+- Store 层 6 例（空库/汇总计数/ef_floor/overdue_long/never_reviewed_long/用户隔离）全部通过。
+- `go test ./...` 全绿，`go vet` 全洁。
+- 真实服务冒烟通过：播种三类卡片后 `/api/review/health` 汇总与列表断言一致。
+- 截图亲眼验收通过。
+
 ## [0.16.0] - 2026-10-23
 ### 年度复习热力图
 

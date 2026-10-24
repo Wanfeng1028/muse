@@ -306,6 +306,7 @@ SM-2 四档说明：
 | `GET /api/review/stats` | 复习统计（按 `X-User`/`?user=` 隔离） | `{dueToday,totalNotes,reviewed7d,avgEf,streakDays}` |
 | `GET /api/review/digest?n=5` | 每日回顾：到期优先，不足时用最久未复习的补足（按 `X-User`/`?user=` 隔离） | `{notes:[{id,title,snippet,tags,dueDate}]}` |
 | `GET /api/review/heatmap?days=365` | 年度热力图数据：最近 N 天每日复习/新增数（默认 365，上限 366；按 `X-User`/`?user=` 隔离） | `{days,heatmap:[{date,reviewed,added}]}`，日期升序 |
+| `GET /api/review/health` | 记忆健康诊断：到期/逾期 7 天以上/从未复习汇总、EF 分布、需关注卡片、大白话建议（按 `X-User`/`?user=` 隔离） | `{asOf,total,dueNow,overdue7d,neverReviewed,avgEf,efBuckets,attention:[{noteId,title,ef,dueDate,overdueDays,reviewedCount,reason,reasonText}],advice}` |
 
 `grade` 取值：0 = 忘记，3 = 困难，4 = 良好，5 = 简单。
 
@@ -354,6 +355,10 @@ SM-2 四档说明：
 年度热力图（v0.16，统计页新增区）：
 
 ![年度热力图](docs/screenshots/review-heatmap.png)
+
+记忆健康（v0.17，统计页新增区）：
+
+![记忆健康](docs/screenshots/health-v017.png)
 
 知识图谱（v0.15 力导向布局）：
 

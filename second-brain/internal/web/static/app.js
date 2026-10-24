@@ -1178,19 +1178,106 @@ function bindEvents() {
 // ---------- 复习统计 ----------
 async function loadReviewStatsView() {
   try {
-    const [trendRes, masteryRes, heatmapRes] = await Promise.all([
+    const [trendRes, masteryRes, heatmapRes, healthRes] = await Promise.all([
       api("/api/review/trend?days=7"),
       api("/api/review/mastery"),
       api("/api/review/heatmap?days=365").catch(() => { console.error("热力图加载失败"); return null; }),
+      api("/api/review/health").catch(() => { console.error("记忆健康加载失败"); return null; }),
     ]);
     drawTrend(trendRes && trendRes.trend ? trendRes.trend : []);
     renderMastery(masteryRes && masteryRes.mastery ? masteryRes.mastery : []);
     renderHeatmap(heatmapRes && heatmapRes.heatmap ? heatmapRes.heatmap : null);
+    renderHealth(healthRes);
   } catch (e) {
     console.error("复习统计加载失败", e);
   }
 }
 
+// 记忆健康：汇总数字 + EF 分布条 + 需关注卡片 + 大白话建议
+function renderHealth(data) {
+  const summaryEl = document.getElementById("health-summary");
+  const efEl = document.getElementById("health-ef");
+  const attEl = document.getElementById("health-attention");
+  const advEl = document.getElementById("health-advice");
+  const emptyEl = document.getElementById("health-empty");
+  if (!summaryEl) return;
+  summaryEl.innerHTML = "";
+  efEl.innerHTML = "";
+  attEl.innerHTML = "";
+  advEl.innerHTML = "";
+  if (!data || !data.total) {
+    summaryEl.style.display = "none";
+    efEl.style.display = "none";
+    emptyEl.hidden = false;
+    return;
+  }
+  summaryEl.style.display = "";
+  efEl.style.display = "";
+  emptyEl.hidden = true;
+  const chips = [
+    ["今日到期", data.dueNow || 0],
+    ["逾期 7 天以上", data.overdue7d || 0],
+    ["从未复习", data.neverReviewed || 0],
+    ["平均 EF", (data.avgEf || 0).toFixed(1)],
+  ];
+  for (const [label, val] of chips) {
+    const d = document.createElement("div");
+    d.className = "health-chip";
+    const n = document.createElement("span");
+    n.className = "health-chip-num";
+    n.textContent = String(val);
+    const l = document.createElement("span");
+    l.className = "health-chip-label";
+    l.textContent = label;
+    d.appendChild(n);
+    d.appendChild(l);
+    summaryEl.appendChild(d);
+  }
+  const buckets = Array.isArray(data.efBuckets) ? data.efBuckets : [];
+  const maxC = Math.max(1, ...buckets.map((b) => b.count || 0));
+  for (const b of buckets) {
+    const row = document.createElement("div");
+    row.className = "health-ef-row";
+    const lab = document.createElement("span");
+    lab.className = "health-ef-label";
+    lab.textContent = b.label || "";
+    const bar = document.createElement("span");
+    bar.className = "ef-bar health-ef-bar";
+    const fill = document.createElement("span");
+    fill.className = "ef-fill";
+    fill.style.width = Math.round(((b.count || 0) / maxC) * 100) + "%";
+    bar.appendChild(fill);
+    const cnt = document.createElement("span");
+    cnt.className = "health-ef-count";
+    cnt.textContent = String(b.count || 0);
+    row.appendChild(lab);
+    row.appendChild(bar);
+    row.appendChild(cnt);
+    efEl.appendChild(row);
+  }
+  const attention = Array.isArray(data.attention) ? data.attention : [];
+  for (const a of attention) {
+    const li = document.createElement("li");
+    li.className = "health-attention-item";
+    const link = document.createElement("button");
+    link.type = "button";
+    link.className = "health-attention-title";
+    link.textContent = a.title || ("笔记 " + a.noteId);
+    link.addEventListener("click", () => selectNote(a.noteId));
+    const meta = document.createElement("span");
+    meta.className = "health-attention-meta";
+    meta.textContent = (a.reasonText || "") + "（EF " + (a.ef || 0).toFixed(1) + "）";
+    li.appendChild(link);
+    li.appendChild(meta);
+    attEl.appendChild(li);
+  }
+  const advice = Array.isArray(data.advice) ? data.advice : [];
+  for (const txt of advice) {
+    const li = document.createElement("li");
+    li.textContent = txt;
+    advEl.appendChild(li);
+  }
+}
 // 7 日趋势条形图：深色 reviewed 柱 + 浅色 added 柱并排，无图表库
 function drawTrend(trend) {
   const canvas = $("trend-canvas");

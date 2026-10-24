@@ -1721,6 +1721,95 @@ code {
   background: #2b7de9;
   border-radius: 3px;
 }
+/* ---------- 记忆健康 ---------- */
+.health-summary {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+}
+.health-chip {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 96px;
+  padding: 10px 14px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+.health-chip-num {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+}
+.health-chip-label {
+  font-size: 12px;
+  color: var(--text-3);
+  margin-top: 2px;
+}
+.health-ef {
+  margin-bottom: 14px;
+}
+.health-ef-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+.health-ef-label {
+  width: 64px;
+  color: var(--text-3);
+  flex-shrink: 0;
+}
+.health-ef-bar {
+  width: 160px;
+}
+.health-ef-count {
+  color: var(--text);
+  min-width: 24px;
+}
+.health-attention {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.health-attention-item {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+}
+.health-attention-title {
+  background: none;
+  border: none;
+  padding: 0;
+  color: #2b7de9;
+  cursor: pointer;
+  font-size: 13px;
+  text-align: left;
+}
+.health-attention-meta {
+  color: var(--text-3);
+  font-size: 12px;
+}
+.health-advice {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
 .heatmap-wrap {
   overflow-x: auto;
   padding: var(--radius-lg, 8px) 0;
