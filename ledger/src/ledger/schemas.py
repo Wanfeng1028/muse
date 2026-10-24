@@ -326,7 +326,7 @@ class MatchRuleCreate(BaseModel):
     category_id: int
     direction: Literal["in", "out", "any"] = "any"
     priority: int = 0
-    pattern_type: Literal["keyword", "regex"] = "keyword"
+    pattern_type: Literal["keyword", "regex", "fuzzy"] = "keyword"
     is_enabled: int = 1
 
     @field_validator("is_enabled")

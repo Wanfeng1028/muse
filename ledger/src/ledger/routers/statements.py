@@ -1577,6 +1577,10 @@ async def preview_match_rule(
                 reason = "规则「" + kw + "」命中"
             else:
                 reason = "未命中"
+        elif r.get("pattern_type") == "fuzzy":
+            matched = matching.fuzzy_rule_matches(matching.normalize(kw), haystack)
+            conf = 92
+            reason = "规则「" + kw + "」命中" if matched else "未命中"
         else:
             matched = bool(matching.normalize(kw)) and matching.normalize(kw) in haystack
             conf = 95

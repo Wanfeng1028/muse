@@ -96,6 +96,13 @@ make dev
 
 规则管理页截图：docs/screenshots/rules-manage.png
 
+### 模糊规则（v2.13）
+
+- 规则类型新增 fuzzy：写个词就能兜住拼写不标准、差一两个字的商户名，不用再写正则。
+- 匹配算法：归一化后子串命中，或滑动窗口编辑距离命中（短词允许 1 字之差、长词允许 2 字之差，且差字数不到词长一半；2 字词 1 字之差不算命中，避免误伤）。
+- 调度层级：别名 > 正则 > 关键词 > 模糊 > 历史 > 候选；模糊命中置信度 92，规则预览链路同样显示模糊命中。
+- 截图：docs/screenshots/rules-fuzzy.png
+
 对账工作台截图：docs/screenshots/workbench.png
 
 月度报告截图：docs/screenshots/monthly-report.png

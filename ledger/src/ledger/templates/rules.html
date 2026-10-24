@@ -61,6 +61,7 @@
       <select id="rule-pattern-type">
         <option value="keyword">关键词</option>
         <option value="regex">正则</option>
+        <option value="fuzzy">模糊</option>
       </select>
     </div>
     <div class="form-row" id="regex-hint-row" style="display:none;">
@@ -116,6 +117,7 @@ function clearErrors() {
 function patternTypeText(t) {
   if (t === 'keyword') return '关键词';
   if (t === 'regex') return '正则';
+  if (t === 'fuzzy') return '模糊';
   return t || '';
 }
 
@@ -282,6 +284,7 @@ function sourceText(src) {
   if (src === 'alias') return '别名记忆';
   if (src === 'regex') return '正则规则';
   if (src === 'keyword') return '关键词规则';
+  if (src === 'fuzzy') return '模糊规则';
   if (src === 'history') return '历史推断';
   if (src === 'frequent') return '常用推荐';
   return src || '';

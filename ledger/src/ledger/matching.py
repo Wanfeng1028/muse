@@ -539,6 +539,83 @@ def _pick_best_keyword(
     return best
 
 
+def _levenshtein(a: str, b: str) -> int:
+    m, n = len(a), len(b)
+    if m == 0:
+        return n
+    if n == 0:
+        return m
+    prev = list(range(n + 1))
+    curr = [0] * (n + 1)
+    for i in range(1, m + 1):
+        curr[0] = i
+        for j in range(1, n + 1):
+            if a[i - 1] == b[j - 1]:
+                curr[j] = prev[j - 1]
+            else:
+                curr[j] = 1 + min(prev[j - 1], prev[j], curr[j - 1])
+        prev, curr = curr, prev
+    return prev[n]
+
+def fuzzy_rule_matches(pattern: str, haystack: str) -> bool:
+    if not pattern or not haystack or len(pattern) < 2:
+        return False
+    if pattern in haystack:
+        return True
+    p_len = len(pattern)
+    min_L = max(1, p_len - 1)
+    max_L = p_len + 1
+    h_len = len(haystack)
+    min_dist = p_len + h_len
+    if h_len < min_L:
+        min_dist = _levenshtein(pattern, haystack)
+    else:
+        for L in range(min_L, max_L + 1):
+            if L > h_len:
+                continue
+            for i in range(h_len - L + 1):
+                dist = _levenshtein(pattern, haystack[i:i + L])
+                if dist < min_dist:
+                    min_dist = dist
+                    if min_dist == 0:
+                        break
+            if min_dist == 0:
+                break
+    if p_len < 5:
+        thresh = 1
+    else:
+        thresh = 2
+    return min_dist <= thresh and min_dist * 2 < p_len
+
+def _pick_best_fuzzy(fuzzy_rules: list[dict], counterparty: str, summary: str, direction: str) -> dict | None:
+    best_rule = None
+    best_priority = -float('inf')
+    best_keyword_len = -1
+    best_id = float('inf')
+    haystack = normalize(counterparty + summary)
+    for rule in fuzzy_rules:
+        if rule.get("pattern_type") != "fuzzy" or int(rule.get("is_enabled", 1)) != 1:
+            continue
+        rule_direction = rule.get("direction") or "any"
+        if rule_direction != "any" and rule_direction != direction:
+            continue
+        keyword = rule.get("keyword", "")
+        norm_keyword = normalize(keyword)
+        if not norm_keyword:
+            continue
+        if fuzzy_rule_matches(norm_keyword, haystack):
+            rule_priority = rule.get("priority", 0)
+            rule_id = rule.get("id", 0)
+            if (rule_priority > best_priority or
+                (rule_priority == best_priority and len(norm_keyword) > best_keyword_len) or
+                (rule_priority == best_priority and len(norm_keyword) == best_keyword_len and rule_id < best_id)):
+                best_rule = rule
+                best_priority = rule_priority
+                best_keyword_len = len(norm_keyword)
+                best_id = rule_id
+    return best_rule
+
+
 def match_best(
     counterparty: str,
     summary: str,
@@ -549,7 +626,7 @@ def match_best(
     history: list[dict],
     top_categories: list[tuple[int, int]],
 ) -> dict:
-    """统一调度：别名记忆 > 正则规则 > 关键词规则 > 历史 > 候选 > 无匹配。
+    """统一调度：别名记忆 > 正则规则 > 关键词规则 > 模糊规则 > 历史 > 候选 > 无匹配。
 
     返回 dict，键为 category_id/confidence/source/rule_id/reason。
     """
@@ -576,6 +653,14 @@ def match_best(
             continue
         kw_rules.append(rule)
     best_kw = _pick_best_keyword(kw_rules, counterparty, summary, direction)
+    fuzzy_rules: list[dict] = []
+    for rule in rules:
+        if rule.get("pattern_type") != "fuzzy":
+            continue
+        if int(rule.get("is_enabled", 1)) != 1:
+            continue
+        fuzzy_rules.append(rule)
+    best_fuzzy = _pick_best_fuzzy(fuzzy_rules, counterparty, summary, direction)
 
     winner = None
     winner_source = ""
@@ -592,7 +677,17 @@ def match_best(
         winner, winner_source = best_regex, "rule_regex"
     elif best_kw is not None:
         winner, winner_source = best_kw, "rule_keyword"
+    if winner is None and best_fuzzy is not None:
+        winner, winner_source = best_fuzzy, "rule_fuzzy"
     if winner is not None:
+        if winner_source == "rule_fuzzy":
+            return {
+                "category_id": int(winner["category_id"]),
+                "confidence": 92,
+                "source": "rule_fuzzy",
+                "rule_id": int(winner.get("id") or 0),
+                "reason": "模糊规则「" + str(winner.get("keyword") or "") + "」命中",
+            }
         if winner_source == "rule_regex":
             return {
                 "category_id": int(winner["category_id"]),
