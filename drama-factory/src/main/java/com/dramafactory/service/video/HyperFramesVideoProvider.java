@@ -24,6 +24,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * 剧坊 HTML 渲染降级路线：调用 HyperFrames CLI 把 composition.html 逐帧渲染成 MP4。
+ * 模板二选一：shot-card（默认，单卡片 kinetic 排版）或 shot-timeline（多节拍时间线：bg/title/subtitle/accent 四个可寻址 clip）；非法值在 submit 时直接拒绝。
  * 本 VM 无 GPU，默认追加 --no-browser-gpu 走 CPU 渲染。
  */
 @Component("hyperFramesVideoProvider")
@@ -60,6 +61,9 @@ public class HyperFramesVideoProvider implements VideoProvider {
     @Value("${drama.video.hyperframes.browser-gpu:false}")
     private boolean browserGpu;
 
+    @Value("${drama.video.hyperframes.template:shot-card}")
+    private String template;
+
     private final CommandRunner commandRunner;
 
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
@@ -84,6 +88,7 @@ public class HyperFramesVideoProvider implements VideoProvider {
         this.workers = 2;
         this.timeoutMinutes = 30;
         this.browserGpu = false;
+        this.template = "shot-card";
     }
 
     @Override
@@ -98,6 +103,10 @@ public class HyperFramesVideoProvider implements VideoProvider {
         }
         if (seconds <= 0) {
             throw new IllegalArgumentException("seconds 必须为正数，实际：" + seconds);
+        }
+        if (!"shot-card".equals(template) && !"shot-timeline".equals(template)) {
+            throw new IllegalArgumentException(
+                    "hyperframes 模板非法：" + template + "，只允许 shot-card 或 shot-timeline");
         }
 
         // 1) 先自检 CLI 可用性（--version，15 秒超时）
@@ -114,7 +123,9 @@ public class HyperFramesVideoProvider implements VideoProvider {
             Files.createDirectories(outDir);
 
             // 2) 写自包含 composition.html（不引用任何外部资源）
-            String html = buildCompositionHtml(shot, seconds);
+            String html = "shot-timeline".equals(template)
+                    ? buildTimelineCompositionHtml(shot, seconds)
+                    : buildCompositionHtml(shot, seconds);
             Files.write(workDir.resolve("composition.html"), html.getBytes(StandardCharsets.UTF_8));
 
             final Path finalWorkDir = workDir;
@@ -271,6 +282,46 @@ public class HyperFramesVideoProvider implements VideoProvider {
             title = title.substring(0, 60);
         }
         return title;
+    }
+
+    private String buildTimelineCompositionHtml(Shot shot, int seconds) {
+        int s = seconds;
+        int titleDuration = Math.max(1, (2 * s) / 3);
+        int subtitleStart = s / 3;
+        int subtitleDuration = s - s / 3;
+        int accentStart = (2 * s) / 3;
+        int accentDuration = s - (2 * s) / 3;
+        String titleText = htmlEscape(buildTitle(shot));
+        String subtitleText = htmlEscape("SHOT " + shot.getShotNo() + " · " + s + "s");
+        return "<!DOCTYPE html>" +
+            "<html lang=\"zh-CN\">" +
+            "<meta charset=\"UTF-8\">" +
+            "<style>" +
+            "*{margin:0;padding:0;box-sizing:border-box;}" +
+        "html,body{width:1920px;height:1080px;overflow:hidden;background:#111;}" +
+            "#root{position:relative;width:1920px;height:1080px;}" +
+            ".clip{position:absolute;width:100%;height:100%;}" +
+            ".clip-bg{background:#1a1a2e;animation:bgZoom linear both;}" +
+            ".clip-title{display:flex;justify-content:center;align-items:center;padding-bottom:90px;animation:titleIn ease-out both;}" +
+            ".clip-title span{font-size:72px;color:#fff;font-weight:bold;}" +
+            ".clip-subtitle{display:flex;justify-content:center;align-items:center;padding-top:90px;animation:subIn ease-out both;}" +
+            ".clip-subtitle span{font-size:36px;color:#aaa;}" +
+            ".clip-accent{bottom:0;height:6px;background:#e94560;animation:accentGrow linear both;}" +
+            "@keyframes bgZoom{from{transform:scale(1)}to{transform:scale(1.08)}}" +
+            "@keyframes titleIn{from{opacity:0;transform:translateY(30px)}to{opacity:1;transform:translateY(0)}}" +
+            "@keyframes subIn{from{opacity:0}to{opacity:1}}" +
+            "@keyframes accentGrow{from{width:0}to{width:100%}}" +
+            "</style>" +
+            "<body>" +
+            "<div id=\"root\" data-composition-id=\"shot-timeline\" data-width=\"1920\" data-height=\"1080\" data-start=\"0\" data-duration=\"" + s + "\">" +
+            "<div class=\"clip clip-bg\" data-clip=\"bg\" data-start=\"0\" data-duration=\"" + s + "\" style=\"animation-duration:" + s + "s\"></div>" +
+            "<div class=\"clip clip-title\" data-clip=\"title\" data-start=\"0\" data-duration=\"" + titleDuration + "\" style=\"animation-duration:" + titleDuration + "s\"><span>" + titleText + "</span></div>" +
+            "<div class=\"clip clip-subtitle\" data-clip=\"subtitle\" data-start=\"" + subtitleStart + "\" data-duration=\"" + subtitleDuration + "\" style=\"animation-duration:" + subtitleDuration + "s\"><span>" + subtitleText + "</span></div>" +
+            "<div class=\"clip clip-accent\" data-clip=\"accent\" data-start=\"" + accentStart + "\" data-duration=\"" + accentDuration + "\" style=\"animation-duration:" + accentDuration + "s\">" +
+            "</div>" +
+            "</div>" +
+            "</body>" +
+            "</html>";
     }
 
     private void runRender(Path workDir, int seconds) {

@@ -83,6 +83,8 @@ drama:
     # HyperFrames CLI 地址（独立 hyperframes provider 与 htmlrender 引擎共用，运维单点配置）
     hyperframes:
       cli: ${DRAMA_VIDEO_HYPERFRAMES_CLI:hyperframes}
+      # composition 模板：shot-card（默认，单卡片）或 shot-timeline（多节拍可寻址时间线）
+      template: ${DRAMA_VIDEO_HYPERFRAMES_TEMPLATE:shot-card}
   # 官方 Skill 库：内置 skill 随发行物走（resources/skills-bundled），用户点击安装后落到 skills.dir
   skills:
     dir: ${DRAMA_SKILLS_DIR:data/skills}

@@ -5,6 +5,9 @@
 
 ## [Unreleased]
 
+### Added（深耕轮 2026-10-25 03:07：HyperFrames 可寻址时间线模板（关闭 TD-002））
+- HyperFramesVideoProvider 新增 drama.video.hyperframes.template 开关：shot-timeline 模板含 bg/title/subtitle/accent 四个带 data-clip/data-start/data-duration 的可寻址 clip；节拍数学（S=seconds）：bg(0,S)、title(0,max(1,(2*S)/3))、subtitle(S/3,S-S/3)、accent((2*S)/3,S-(2*S)/3)；shot-card 仍为默认，老行为不变；非法值 submit 直接拒绝；测试 HyperFramesTimelineTemplateTest 7 例全绿；视觉验收：真实生成 HTML 抓屏亲眼通过（标题/副标题分开、底部 accent 条正常扫过，零 console 错误），验收中抓出并修复 1 个真问题：模板缺全局 margin 清零致 accent 条被 body 默认 8px 边距顶出视口之外。
+
 ### Added（深耕轮 2026-10-24 05:07：视频拆解「逐字稿（内嵌字幕提取）」）
 - 深耕轮 2026-10-24 17:07，SkillHub 索引默认分页（关闭 TD-003）。GET /api/skillhub/index 始终分页，无参默认第 0 页、每页 50 条（此前无参返回全部条目）；total 仍为过滤后全量，totalPages 按 ceil(total/size) 计算；size 钳制 1 到 200 不变；前端 skillhub 页恒发 page/size 参数，不受影响；依赖无参返回全部的调用方须改传 page/size 或用 q 过滤定位单条。
 - 深耕轮 2026-10-24 17:07，前端 skillhub.js 两处修复（视觉验收发现）：卡片描述字段由 desc 改为 description，之前卡片描述恒为空；补齐 skillhub 页 9 个缺失的 i18n 键并按同站既定做法注册词典，之前标题、副标题、搜索框等位置显示 skh.heading 之类裸键。
