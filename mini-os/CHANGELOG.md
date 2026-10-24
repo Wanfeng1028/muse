@@ -1,6 +1,63 @@
 
 # Changelog
 
+## [1.11.0] - 2026-10-24
+
+### 新增
+- 新增 `src/twofa.rs`（488 行）：两步验证 HTTP 层，提供 6 个端点
+  - `GET /api/2fa/status`：查询启用状态
+  - `POST /api/2fa/setup`：验证密码后返回 `secret`、`otpauthUrl`、`qrSvg` 二维码
+  - `POST /api/2fa/enable`：输入 6 位验证码启用两步验证，返回 10 个备用码
+  - `POST /api/2fa/disable`：验证密码后停用，返回 204
+  - `POST /api/2fa/backup-codes/regenerate`：验证密码后重新生成 10 个备用码，旧码作废
+  - `POST /api/auth/2fa`：登录第二步，使用 challenge 及验证码或备用码换取 session
+- 新增 `src/totp.rs`（396 行）：TOTP 核心实现
+  - 遵循 RFC 6238 / RFC 4226，使用 SHA1，6 位数字，30 秒周期，校验容忍前后 1 个窗口
+  - 生成 20 字节随机密钥并转为 base32
+  - 生成 `otpauth://` URL 及 SVG 格式二维码
+  - 通过 RFC 6238 官方测试向量
+- 新增 `src/password.rs`（92 行）：密码强度策略
+  - 长度 8 到 128 字符，必须同时含字母和数字
+  - 不可与用户名相同（忽略大小写）
+  - 包含 15 个常见密码黑名单（如 `password`、`12345678`、`minios123`、`letmein1`）
+  - 注册接口与 `useradd` CLI 同口径
+- 密钥落库加密
+  - TOTP 密钥使用 AES-256-GCM 加密后以 hex 存入 `users.totp_secret`
+  - 主密钥来自环境变量 `MINIOS_TOTP_MASTER_KEY`（64 个十六进制字符，即 32 字节）
+  - 未配置主密钥时，2FA 相关操作报 500，普通登录不受影响
+  - 12 字节随机 nonce 拼接在密文前
+- 备用码机制
+  - 生成 10 个格式为 `xxxx-xxxx` 的备用码，字符集为 `abcdefghjkmnpqrstuvwxyz23456789`
+  - 使用 argon2 哈希后入库，输入时支持带或不带横线
+  - 一次一码，用过标记 `used_at`，再次使用返回 401
+- 登录第二步交互
+  - 启用 2FA 的用户调用 `/api/auth/login` 不再直接返回 session，改为返回 `202` 及 `{"requires2fa": true, "challenge"}`
+  - `challenge` 存入 `tfa_challenges` 表，5 分钟有效
+  - 单个 `challenge` 连续 5 次错误尝试后作废并返回 429，需重新登录
+- 迁移 008
+  - `users` 表新增 `totp_secret`（TEXT，可空）与 `totp_enabled`（INTEGER，默认 0）
+  - 新建 `tfa_backup_codes` 与 `tfa_challenges` 表
+  - 幂等执行：列判存在，表用 `IF NOT EXISTS`
+- 依赖更新
+  - `Cargo.toml` 新增 `aes-gcm 0.10.3`、`qrcode 0.14.1`（svg 特性）、`sha1 0.10.6`
+  - 使用 `vendor/` 本地目录及 `[patch.crates-io]` 做离线补丁，支持本机离线构建
+- 前端更新
+  - `static/login.html` 登录页增加第二步两步验证界面（标题"两步验证"）
+  - `static/app.js` 设置区增加两步验证设置：状态查询、启用向导（输密码→扫二维码→输验证码→展示备用码）、停用、重生成备用码
+
+### 测试
+- 新增 26 个测试用例
+  - `tests/twofa_test.rs`：11 个集成测试，覆盖密码策略经注册接口、status 默认 false、setup/enable 全流程、登录第二步 202/200、备用码一次一码、challenge 5 次锁定 429、challenge 过期 410、disable 204 回退、备用码轮换旧码失效、密钥落库非明文且可解密、迁移 008 列与表断言
+  - `src/totp.rs`：9 个单元测试，包含 RFC 6238 官方向量
+  - `src/password.rs`：6 个单元测试
+
+### 已知限制
+- TOTP 仅实现 SHA1，未支持 RFC 6238 允许的 SHA256/512
+- challenge 的 5 次尝试上限按单个 challenge 计算；攻击者重新登录可获取新 challenge（受 `MINIOS_LOGIN_RPS`/`MINIOS_LOGIN_BURST` 间接约束）；`/api/auth/2fa` 暂无独立 IP 级限流
+- 过期 challenge 仅在命中时删除，无定时清理任务；已用备用码保留在库中（查询取 `used_at IS NULL`），无归档或清理策略
+- 主密钥轮换无在线迁移：更换 `MINIOS_TOTP_MASTER_KEY` 后旧密文解密失败，用户需先停用再重新设置两步验证
+- `.env.example` 尚未收录 `MINIOS_TOTP_MASTER_KEY`（待补）
+
 ## [1.10.0] - 2026-10-23
 
 ### 新增

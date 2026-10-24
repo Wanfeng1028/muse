@@ -19,6 +19,7 @@
 - **访客只读分享**（v1.3 文件分享，v1.6 加目录分享）：文件管理器对文件/目录生成分享链接（`/share.html?token=...`），访客免登录只读查看/下载，不可写。目录分享带面包屑浏览（`GET /api/share/list?token=...&path=`），路径穿越一律 403。
 - **Prometheus 指标**：`GET /metrics` 暴露 `http_requests_total`、`http_request_duration_seconds`（直方图）、`vfs_ops_total`、`ws_connections`、`vfs_files_total`、`vfs_bytes_total`、`shares_total{type}`（文本格式，零依赖，路由 label 已归一化防爆炸）。
 - **桌面交互**：窗口拖拽、开始菜单、实时时钟、WebSocket 连接状态指示。
+- v1.11.0 加了两步验证，登录时除了密码还要填手机验证器 App 上的 6 位数字（TOTP 标准，像 Google Authenticator 或 Authy 都能用），验证器不在身边也能用 10 个一次性备用码救急。去桌面“设置”里的两步验证区开启，流程是先输密码确认本人，再扫二维码（或手工输密钥）绑定，填 6 位码确认后把 10 个备用码抄好。密钥会用 AES-256-GCM 加密后存进数据库，服务端看不到明文，只要提前配好 `MINIOS_TOTP_MASTER_KEY`（64 个十六进制字符）环境变量就行。
 
 ## 技术栈
 
@@ -182,6 +183,10 @@ docker run --rm -p 8090:8090 -v mini-os-data:/app/data mini-os
 ![多窗口同屏（v1.9：文件管理器+真 PTY 终端+今日日程/速记便签小组件）](docs/screenshots/v19-desktop-widgets.png)
 ![右键菜单（v1.9：重命名/移动到…/删除）](docs/screenshots/v19-contextmenu.png)
 ![深色主题（v1.9）](docs/screenshots/v19-theme-dark.png)
+![登录第二步输验证码界面](docs/screenshots/mini-os/login-2fa.png)
+![用备用码登录](docs/screenshots/mini-os/login-2fa-backup.png)
+![设置区两步验证开关](docs/screenshots/mini-os/settings-2fa.png)
+![扫码绑定界面](docs/screenshots/mini-os/settings-2fa-qr.png)
 
 
 

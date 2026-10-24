@@ -89,6 +89,7 @@ journalctl -u mini-os -f
 | `MINIOS_SESSION_SLIDING` | `true` | 会话滑动续期开关：开启时，活跃请求在剩余寿命 < TTL/2 时自动顺延 expires_at 并重发 Cookie；取值为 true/false/1/0/yes/no/on/off，非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_RPS` | `1` | 登录限流每秒补充 token 数；非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_BURST` | `5` | 登录限流桶容量（突发上限）；非法值启动即报错退出（exit 2） |
+| MINIOS_TOTP_MASTER_KEY | 无（必填才可用 2FA） | 64 个十六进制字符（32 字节），用于 AES‑256‑GCM 加密用户 TOTP 密钥；启动时不校验，只有在调用 2FA 接口时检查。 |
 
 补充说明：
 - `SHUTDOWN_TIMEOUT_SECS` 是 v1.2.0 新增。它只管"排空在途请求"这一段，不限制服务运行时长。v1.1.0 曾把它错误地当成整个服务生命周期超时，v1.2.0 已修复。
@@ -179,7 +180,7 @@ sudo systemctl start mini-os
 
 ### 4.1 版本化迁移
 
-v1.2.0 引入 `schema_migrations` 表做版本化迁移，当前共 7 步：
+v1.2.0 引入 `schema_migrations` 表做版本化迁移，当前共 8 步：
 
 - `001`：建 `vfs_nodes` / `settings` 表。
 - `002`：新增 `content_blob` / `mime_type` 列。
@@ -188,6 +189,7 @@ v1.2.0 引入 `schema_migrations` 表做版本化迁移，当前共 7 步：
 - `005`：users 表 `role` 列 + CHECK 约束（admin/editor/viewer）。
 - `006`：shares 表新增 `expires_at` 列（分享过期时间）。
 - `007`（v1.9.0）：新建 `notes` / `events` 表（便签与日程）。
+- `008`（v1.11.0）：users 新增 totp_secret（AES-256-GCM 加密后 hex，可空）与 totp_enabled（0/1，默认 0）；新建 tfa_backup_codes（备用码 argon2 哈希，一次一码）与 tfa_challenges（登录二次验证挑战，5 分钟有效）表。
 
 迁移是幂等的，重复跑不会出问题。
 
@@ -323,7 +325,42 @@ scrape_configs:
 | `/api/*` 返回 401 `{"error":"未登录"}` | Cookie 丢失/过期（跨域或隐私模式） | 确认同源访问、Cookie 未被拦截；重新登录 |
 | 启动 panic"无法绑定监听地址" | 监听地址绑定失败（端口被占、地址不可用等） | 确认端口空闲、监听地址正确，再重启 |
 
+| 启用 2FA 时返回 500 | MINIOS_TOTP_MASTER_KEY 未设置或格式非法 | 配置为 64 位十六进制后重启服务 |
+| 验证码总是错误 | 手机或服务器本地时间偏差超过容忍窗口（90 秒） | 核对时间，同步服务器或手机时区；确保服务端容忍窗口配置正确 |
+| 更换主密钥后旧用户无法验证 | 旧密文使用旧密钥加密，无法解密 | 通知用户先禁用 2FA，重新绑定新密钥；无在线迁移方案 |
+
 排障时优先看 JSONL 日志，用 `request_id` 串请求，用事件名（`service_started` / `backup_done` / `restore_done` 等）定位阶段。
+
+---
+
+## 8 两步验证（2FA）运维
+
+### 8.1 主密钥配置
+- 环境变量 `MINIOS_TOTP_MASTER_KEY` 用于 AES‑256‑GCM 加密用户 TOTP 密钥。64 个十六进制字符（32 字节）。启动时不校验，只有在调用 `setup`/`enable`/`verify` 时检查。校验失败返回 HTTP 500。未设置时 2FA 接口不可用。
+
+### 8.2 备用码发放与轮换
+- 启用时生成 10 个备用码，格式 `xxxx-xxxx`（8 位字符），存储在 `tfa_backup_codes` 表中，使用 `code_hash` 存储 argon2 哈希，每次校验一个，用完后设置 `used_at`。
+- 重生成通过 `POST /api/2fa/backup-codes/regenerate` 接口，需用户提供密码，旧码全部作废，新码生效。
+
+### 8.3 用户丢失验证器处理
+- 无自助重置时，管理员可直连 SQLite 清理用户 2FA 状态。
+- SQL：
+```sql
+-- 查询用户 ID
+SELECT id FROM users WHERE username = '<username>';
+-- 更新 users 表
+UPDATE users SET totp_secret = NULL, totp_enabled = 0 WHERE id = <id>;
+DELETE FROM tfa_backup_codes WHERE user_id = <id>;
+```
+- 建议备份数据库。处理后用户重新登录，可通过设置流程重新启用。
+
+### 8.4 排障与监控
+- 验证码始终错误：检查手机和服务器时间，容忍窗口为前后各 30 秒（共 90 秒）。时间偏差导致 "验证码错误，请检查手机时间是否准确"。
+- 二维码扫不出：`setup` 接口返回的 `secret` 可手工输入到验证器 App。
+- 启用时报 "密钥数据损坏，请重新设置"：可能是主密钥已变更或库已更新，重新执行 `setup`。
+- `setup`/`enable` 报 500：确认 `MINIOS_TOTP_MASTER_KEY` 已导出并为合法 64 位十六进制。
+- 监控指标（/metrics）新增计数器：`2fa_setup`、`2fa_enabled`、`2fa_disabled`、`2fa_backup_regenerated`、`2fa_login_ok`、`2fa_login_fail`、`2fa_backup_used`、`2fa_challenge`。
+- `2fa_login_fail` 突增时查日志中 `request_id`。
 
 ---
 
