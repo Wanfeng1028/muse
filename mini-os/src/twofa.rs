@@ -43,10 +43,38 @@ pub struct TwoFaStatusResponse {
     pub enabled: bool,
 }
 
+/// 删除已过期的登录二次验证挑战，返回删除行数。供 verify 入口与发挑战入口调用，
+/// 避免过期行在长期运行中堆积；不删除未过期行，不碰 attempts 计数。
+pub fn sweep_expired_challenges(conn: &rusqlite::Connection) -> Result<usize, String> {
+    let now = auth::now_epoch_secs();
+    conn.execute(
+        "DELETE FROM tfa_challenges WHERE expires_at <= ?1",
+        rusqlite::params![now],
+    )
+    .map_err(|e| format!("db error: {e}"))
+}
+
+/// 与 sweep_expired_challenges 相同，但排除 token_hash 等于 except_token_hash 的行。
+/// 供 verify_login 调用：本次请求的 challenge 行必须留给 handler 自己的过期分支处理
+/// （过期返回 410 GONE，不存在返回 401），清扫不得先把它删掉导致 410 退化为 401。
+pub fn sweep_expired_challenges_except(
+    conn: &rusqlite::Connection,
+    except_token_hash: &str,
+) -> Result<usize, String> {
+    let now = auth::now_epoch_secs();
+    conn.execute(
+        "DELETE FROM tfa_challenges WHERE expires_at <= ?1 AND token_hash != ?2",
+        rusqlite::params![now, except_token_hash],
+    )
+    .map_err(|e| format!("db error: {e}"))
+}
+
 pub fn create_tfa_challenge(conn: &rusqlite::Connection, user_id: i64) -> Result<String, String> {
+    let _ = sweep_expired_challenges(conn);
     let plain = auth::new_session_token()?;
     let h = auth::hash_token(&plain);
     let expires_at = auth::now_epoch_secs() + 300;
+
     conn.execute(
         "INSERT INTO tfa_challenges (token_hash, user_id, expires_at, attempts) VALUES (?1,?2,?3,0)",
         rusqlite::params![h, user_id, expires_at],
@@ -352,7 +380,7 @@ pub async fn verify_login(
     let th = auth::hash_token(&req.challenge);
     let conn = state.db.lock().unwrap();
     let now = auth::now_epoch_secs();
-
+    let _ = sweep_expired_challenges_except(&conn, &th);
     let row: Option<(i64, i64, i64)> = conn
         .query_row(
             "SELECT user_id, expires_at, attempts FROM tfa_challenges WHERE token_hash = ?1",

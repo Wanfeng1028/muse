@@ -39,6 +39,9 @@ pub struct AppState {
     pub metrics: Arc<crate::metrics::Metrics>,
     /// 登录限流器（IP + 账号双维度令牌桶）
     pub login_limiter: Arc<crate::ratelimit::RateLimiter>,
+    /// 两步验证限流器（IP 单维度令牌桶，与登录桶解耦；配额来自 MINIOS_2FA_RPS / MINIOS_2FA_BURST）
+    pub twofa_limiter: Arc<crate::ratelimit::RateLimiter>,
+
     /// 分享读取限流器（IP 单维度令牌桶，与登录桶解耦）
     pub share_limiter: Arc<crate::ratelimit::ShareReadLimiter>,
     /// 分享读限流总开关，来自 MINIOS_SHARE_RATE_LIMIT_ENABLED
@@ -91,6 +94,8 @@ pub fn init_state_with_full(
         burst: share_read_burst,
         enabled: share_ratelimit_enabled,
     };
+    let twofa_limit_cfg = crate::ratelimit::parse_twofa_limit().expect("parse_twofa_limit failed");
+
     let data_dir = resolve_data_dir(database_path);
     let terminals = Arc::new(crate::terminal::TerminalManager::new(
         data_dir.clone(),
@@ -111,6 +116,11 @@ pub fn init_state_with_full(
         .unwrap_or(true),
         metrics: Arc::new(crate::metrics::Metrics::new()),
         login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
+        twofa_limiter: Arc::new(crate::ratelimit::RateLimiter::new_with(
+            twofa_limit_cfg.rps,
+            twofa_limit_cfg.burst,
+        )),
+
         share_limiter: Arc::new(crate::ratelimit::ShareReadLimiter::new(&share_limiter_cfg)),
         share_ratelimit_enabled,
         data_dir,
@@ -445,8 +455,13 @@ pub fn build_app(state: Arc<AppState>) -> Router {
             "/api/2fa/backup-codes/regenerate",
             post(crate::twofa::regenerate_backup_codes),
         )
-        .route("/api/auth/2fa", post(crate::twofa::verify_login))
-        // route_layer 只包装已注册路由，必须在所有 .route() 之后、fallback_service 之前，
+        .route(
+            "/api/auth/2fa",
+            post(crate::twofa::verify_login).route_layer(axum::middleware::from_fn_with_state(
+                state.clone(),
+                crate::ratelimit::twofa_ratelimit_middleware,
+            )),
+        ) // route_layer 只包装已注册路由，必须在所有 .route() 之后、fallback_service 之前，
         // 这样中间件在路由匹配之后执行，才能拿到 MatchedPath。
         //
         // 三层 route_layer 的执行顺序（后挂载=更外层=先执行）：

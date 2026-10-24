@@ -67,6 +67,53 @@ pub fn parse_login_limit() -> Result<LoginLimitConfig, String> {
     let burst = parse_burst(raw_burst.as_deref())?;
     Ok(LoginLimitConfig { rps, burst })
 }
+#[derive(Debug, Clone, Copy)]
+pub struct TwoFaLimitConfig {
+    pub rps: f64,
+    pub burst: u64,
+}
+const ENV_TWOFA_RPS: &str = "MINIOS_2FA_RPS";
+const ENV_TWOFA_BURST: &str = "MINIOS_2FA_BURST";
+pub fn parse_twofa_limit() -> Result<TwoFaLimitConfig, String> {
+    parse_twofa_limit_raw(
+        std::env::var(ENV_TWOFA_RPS).ok().as_deref(),
+        std::env::var(ENV_TWOFA_BURST).ok().as_deref(),
+    )
+}
+pub fn parse_twofa_limit_raw(
+    raw_rps: Option<&str>,
+    raw_burst: Option<&str>,
+) -> Result<TwoFaLimitConfig, String> {
+    let rps = parse_twofa_rps(raw_rps)?;
+    let burst = parse_twofa_burst(raw_burst)?;
+    Ok(TwoFaLimitConfig { rps, burst })
+}
+fn parse_twofa_rps(raw: Option<&str>) -> Result<f64, String> {
+    let s = raw.unwrap_or("1");
+    let v: f64 = s
+        .parse()
+        .map_err(|_| format!("{} 非法：'{}'，期望大于 0 的数字", ENV_TWOFA_RPS, s))?;
+    if !v.is_finite() || v <= 0.0 {
+        return Err(format!(
+            "{} 非法：'{}'，期望大于 0 的有限数字",
+            ENV_TWOFA_RPS, s
+        ));
+    }
+    Ok(v)
+}
+fn parse_twofa_burst(raw: Option<&str>) -> Result<u64, String> {
+    let s = raw.unwrap_or("5");
+    let v: u64 = s
+        .parse()
+        .map_err(|_| format!("{} 非法：'{}'，期望大于 0 的整数", ENV_TWOFA_BURST, s))?;
+    if v == 0 {
+        return Err(format!(
+            "{} 非法：'{}'，期望大于 0 的整数",
+            ENV_TWOFA_BURST, s
+        ));
+    }
+    Ok(v)
+}
 
 /// 纯函数：解析 rps。`None` 表示未设置 → 使用默认 `"1"`。
 fn parse_rps(raw: Option<&str>) -> Result<f64, String> {
@@ -112,12 +159,16 @@ pub struct RateLimiter {
 impl RateLimiter {
     /// 根据配置构造限流器。所有桶初始为满（capacity = burst）。
     pub fn new(config: &LoginLimitConfig) -> Self {
+        Self::new_with(config.rps, config.burst)
+    }
+
+    pub fn new_with(rps: f64, burst: u64) -> Self {
         // idle_ttl = max(300s, 10 * burst / rps)；rps 已在解析层保证 > 0 且有限。
-        let ttl_secs = 10.0 * (config.burst as f64) / config.rps;
+        let ttl_secs = 10.0 * (burst as f64) / rps;
         let idle_ttl = Duration::from_secs_f64(ttl_secs.max(300.0));
         Self {
-            rps: config.rps,
-            burst: config.burst,
+            rps,
+            burst,
             idle_ttl,
             ip: Mutex::new(HashMap::new()),
             account: Mutex::new(HashMap::new()),
@@ -333,7 +384,34 @@ pub async fn login_ratelimit_middleware(
         }
     }
 }
-
+/// 两步验证限流中间件：只作用于 `/api/auth/2fa`，IP 单维度。
+/// 不读请求体、不重建请求，直接 next.run。
+pub async fn twofa_ratelimit_middleware(
+    State(state): State<Arc<AppState>>,
+    req: Request,
+    next: Next,
+) -> Response {
+    if req.uri().path() != "/api/auth/2fa" {
+        return next.run(req).await;
+    }
+    let ip_key = extract_ip_key(&req);
+    match state.twofa_limiter.try_acquire(&ip_key, None) {
+        Ok(()) => next.run(req).await,
+        Err(secs) => {
+            state.metrics.inc_auth("2fa_ratelimited");
+            let payload = json!({
+                "error": format!("两步验证尝试过于频繁，请 {} 秒后重试", secs),
+                "retry_after": secs,
+            });
+            (
+                axum::http::StatusCode::TOO_MANY_REQUESTS,
+                [(axum::http::header::RETRY_AFTER, secs.to_string())],
+                Json(payload),
+            )
+                .into_response()
+        }
+    }
+}
 /// 分享读取限流配置。
 pub struct ShareReadLimitConfig {
     /// 每秒请求数上限，来源变量 `MINIOS_SHARE_RPS`；必须为正的有限数。

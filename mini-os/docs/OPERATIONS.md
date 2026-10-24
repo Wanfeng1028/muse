@@ -89,6 +89,8 @@ journalctl -u mini-os -f
 | `MINIOS_SESSION_SLIDING` | `true` | 会话滑动续期开关：开启时，活跃请求在剩余寿命 < TTL/2 时自动顺延 expires_at 并重发 Cookie；取值为 true/false/1/0/yes/no/on/off，非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_RPS` | `1` | 登录限流每秒补充 token 数；非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_BURST` | `5` | 登录限流桶容量（突发上限）；非法值启动即报错退出（exit 2） |
+| `MINIOS_2FA_RPS` | `1` | 两步验证独立限流每秒补充 token 数（IP 单维度，与登录桶解耦）；非法值启动即报错退出（exit 2） |
+| `MINIOS_2FA_BURST` | `5` | 两步验证独立限流桶容量（突发上限）；非法值启动即报错退出（exit 2） |
 | MINIOS_TOTP_MASTER_KEY | 无（必填才可用 2FA） | 64 个十六进制字符（32 字节），用于 AES‑256‑GCM 加密用户 TOTP 密钥；启动时不校验，只有在调用 2FA 接口时检查。 |
 
 补充说明：
@@ -251,8 +253,7 @@ journalctl -u mini-os | grep '<request_id>'
 
 ### 5.3 health / readyz 语义
 
-- `GET /api/health`：存活探针。返回 200，体为 `{"status":"ok","version":"1.2.0"}`。其中 `version` 取自 Cargo.toml。
-- `GET /api/readyz`：就绪探针。DB 真实可查时返回 200 `{"status":"ready"}`；否则返回 503 `{"status":"not_ready"}`。
+- `GET /api/health`：存活探针。返回 200，体为 `{"status":"ok","version":"1.12.0"}`。其中 `version` 取自 Cargo.toml。- `GET /api/readyz`：就绪探针。DB 真实可查时返回 200 `{"status":"ready"}`；否则返回 503 `{"status":"not_ready"}`。
 
 用法建议：存活探针用于判断进程要不要重启，就绪探针用于判断要不要往这个实例导流量。
 

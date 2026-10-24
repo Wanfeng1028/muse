@@ -1,6 +1,23 @@
 
 # Changelog
 
+## [1.12.0] - 2026-10-24
+
+### 新增
+- 两步验证独立限流：`MINIOS_2FA_RPS`（默认 1）/ `MINIOS_2FA_BURST`（默认 5），IP 单维度令牌桶，只挂在 `POST /api/auth/2fa` 路由上，与登录限流桶解耦；超限返回 429 + `Retry-After` 头 + `{"error": "两步验证尝试过于频繁，请 <secs> 秒后重试", "retry_after": <secs>}`，并计入指标 `2fa_ratelimited`。背景：单 challenge 5 次上限可被重登录刷出新 challenge 绕过，登录桶只管发挑战不管验码；本限流补上验码路径的独立闸门。注意：该桶按 IP 计，不按账号计；同一出口 IP 下的多用户共享配额。
+- 过期挑战清扫：`twofa::sweep_expired_challenges` 删除 `expires_at <= now` 的 tfa_challenges 行，在发挑战（create_tfa_challenge）与验码（verify_login）两个入口调用；无 schema 变更，不新增迁移。
+- 版本跟进：Cargo.toml 1.9.0 → 1.12.0，`/api/health` 的 version 随之恢复正确（此前 CHANGELOG 已到 1.11.0 但 health 仍报 1.9.0）。
+
+### 文档
+- `.env.example` 补 `MINIOS_2FA_RPS` / `MINIOS_2FA_BURST` / `MINIOS_TOTP_MASTER_KEY` 三项；`docs/OPERATIONS.md` 环境变量表补 2FA 两行，探针示例版本号 1.2.0 → 1.12.0。
+
+### 测试
+- 新增 `tests/twofa_v112_test.rs` 3 例全绿；受影响套件合计 128/128 全绿；既有 twofa_test 套件修复后完整重跑 11/11 全绿（修复前首轮 10/11，tfa_challenge_expiry 因清扫误删本次挑战由 410 退化为 401 的回归已修复：清扫改为排除本次 challenge）。
+
+### 已知限制（诚实声明）
+- clippy 全量 -D warnings 下 3 个存量错误未修（config.rs:44、totp.rs:100/120），不在本轮改动文件，留待后续轮次。
+- 2FA 限流为 IP 维度；TOTP 猜解仍受“单 challenge 5 次 + IP 桶 + 5 分钟过期”三重约束，不等于彻底杜绝猜解。
+
 ## [1.11.0] - 2026-10-24
 
 ### 新增
