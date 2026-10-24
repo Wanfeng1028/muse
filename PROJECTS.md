@@ -650,6 +650,8 @@ fail-open 修复（P1 替代做智能召回）；4 个测试期望更新（D3/D4
 
 - **深耕轮 2026-10-20 午后（已合入，cfd8e02）**：深测文件验收全绿（366 个深测文件批次之一），dpsk 回喂修复 15 处失败中的相关项。
 
+- **深耕轮 2026-10-25 00:07（智谱 Coding Plan lane 主力 glm-4.7；轮换铁律：上轮 ledger，本轮按队列轮到 linkshort）**：**v1.14.0「burned_at 回填」**——关闭自 v1.5 挂账的已知缺口：v1.5 之前销毁的 burn 链没有 burned_at，定时清理永远跳过它们。①store 新文件 backfill.go：BackfillBurnedAt()，一条 SQL 回填 burn=1 AND enabled=0 AND burned_at IS NULL 的行，回填值取该链最后访问时间（MAX(ts)）、无访问记录回退 updated_at，幂等；②purge sweep 每轮删除前先回填，失败记日志并跳过本轮删除（fail-closed），成功记回填日志；③CHANGELOG v1.14.0 节 + OPERATIONS.md 3.7 节同步，v1.5/v1.7 两处已知缺口行划线标注已关闭。验收：backfill_test.go 5/5；go vet 全洁；go test ./... -race 14 包全绿；真实服务冒烟（建 burn 链 201→302→410，手工置空 burned_at 后重启日志见「回填完成：为 1 条已销毁 burn 短链补齐 burned_at」，再访仍 410 未误删）。无 UI 改动，故无新截图。编排机械修正：B1 文件尾换行（gofmt）、B3 模型漏掉的 Start 注释行补回、B4 模型编造的测试名以实测名重派 B4b 纠正、OPERATIONS.md 3.7 旧句「跳过不删」加 v1.14.0 注解。commit e30ce22e 已 push（origin/main 已核实）。
+
 ## mortisedb「榫卯 MortiseDB · 本地多源数据拼装层」
 
 **定位**：NAS 玩家/小团队的本地多源数据拼装层——把 SQLite/CSV/JSON/本地目录声明式映射成表，增量同步 + 冲突策略 + 类 SQL 查询视图 + 本地优先（数据落文件、可 Git 版本化）。Airbyte/dbt 对个人太重，Metabase 只读不解决拼装，这是真空位。
