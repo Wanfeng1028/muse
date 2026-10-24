@@ -213,6 +213,9 @@ async function createShotContext({ port, token }) {
   const { chromium } = resolvePlaywright();
   const browser = await chromium.launch({ executablePath: '/opt/meta-chromium/chrome', args: ['--no-sandbox', '--disable-blink-features=AutomationControlled'] });
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 }, locale: 'zh-CN' });
+  // Playwright context.route 后注册优先；本静态路由的 /** 通配同样匹配 /api/*，
+  // 因此它必须先注册、/api 代理路由后注册；顺序颠倒时 /api 请求会被本路由
+  // fulfill 成 index.html，接口永远走不到真实后端。
   await context.route(`http://127.0.0.1:${port}/**`, async (route) => {
     const u = new URL(route.request().url());
     let p = u.pathname;
@@ -224,6 +227,8 @@ async function createShotContext({ port, token }) {
       await route.fulfill({ body: fs.readFileSync(path.join(WEB_DIST, 'index.html')), contentType: 'text/html' });
     }
   });
+  // 本路由必须保持在静态路由之后注册（后注册优先），不许把两路合并成一个 handler
+  // 除非仍保证 /api 优先；改动注册顺序前必须跑 route-order-probe.mjs 验证。
   await context.route('**/api/**', async (route) => {
     const req = route.request();
     const u = new URL(req.url());

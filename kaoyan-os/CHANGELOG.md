@@ -4,6 +4,13 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.2] - 2026-10-24
+
+### Added
+
+- 前端接线后端已有的 POST /api/words/import：apps/web/src/api.ts 新增 WordImportItem/WordImportResult 类型与 importWordsJson 方法；核心词库页（/vocab）新增 JSON 批量导入卡片，粘贴单词数组或 { words: [...] } 均可导入，客户端 JSON 解析失败先行报错不发请求，成功后显示导入数/已有跳过数/无效数与逐条错误并刷新列表与词库状态。
+- 截图 harness 路由顺序铁律 P1-2 闭环：shot-harness.mjs 静态与 /api 两路注册点加注释（Playwright 后注册优先）；docs/SCREENSHOT_HARNESS.md 该节措辞纠正为 Playwright context.route 顺序并注明颠倒症状；self-check.mjs 新增第 6 项源码顺序断言；新增 scripts/shots/route-order-probe.mjs 浏览器实测探针。
+
 ## [1.12.1] - 2026-10-22
 
 ### 测试

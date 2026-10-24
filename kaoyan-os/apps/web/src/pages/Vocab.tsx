@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { WordSource } from '@kaoyan/shared';
-import { api, type VocabStatus } from '../api';
+import { api, type VocabStatus, type WordImportItem } from '../api';
 import type { WordWithState } from '@kaoyan/shared';
 
 const PAGE_SIZE = 20;
@@ -20,6 +20,11 @@ export default function Vocab() {
   const [seeding, setSeeding] = useState(false);
   const [seedMsg, setSeedMsg] = useState<string | null>(null);
   const [seedError, setSeedError] = useState<string | null>(null);
+  const [jsonText, setJsonText] = useState('');
+  const [importingJson, setImportingJson] = useState(false);
+  const [jsonMsg, setJsonMsg] = useState<string | null>(null);
+  const [jsonError, setJsonError] = useState<string | null>(null);
+  const [jsonErrors, setJsonErrors] = useState<Array<{ index: number; message: string }>>([]);
 
   const [keyword, setKeyword] = useState('');
   const [masterFilter, setMasterFilter] = useState<MasterFilter>('all');
@@ -96,6 +101,35 @@ export default function Vocab() {
     }
   };
 
+  const handleImportJson = async () => {
+    setJsonMsg(null);
+    setJsonError(null);
+    setJsonErrors([]);
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(jsonText);
+    } catch (err) {
+      setJsonError('JSON 格式不对：' + (err instanceof Error ? err.message : String(err)));
+      return;
+    }
+    const words = Array.isArray(parsed) ? parsed : (parsed as { words?: unknown }).words;
+    if (!Array.isArray(words) || words.length === 0) {
+      setJsonError('请粘贴一个单词数组，或形如 { "words": [...] } 的对象，数组不能为空。');
+      return;
+    }
+    setImportingJson(true);
+    try {
+      const result = await api.importWordsJson(words as WordImportItem[]);
+      setJsonMsg('导入 ' + result.imported + ' 个，已有 ' + result.skippedExisting + ' 个跳过，无效 ' + result.skippedInvalid + ' 个');
+      setJsonErrors(result.errors || []);
+      await Promise.all([loadWords(), loadStatus()]);
+    } catch (err) {
+      setJsonError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setImportingJson(false);
+    }
+  };
+
   const handleMaster = async (id: number) => {
     try {
       const updated = await api.reviewWord(id, 2);
@@ -127,6 +161,16 @@ export default function Vocab() {
 
       {seedError && <div className="error-box">{seedError}</div>}
       {seedMsg && <div className="text-muted" style={{ marginBottom: 12 }}>{seedMsg}</div>}
+
+      <div className="card">
+        <div className="stat-label">JSON 批量导入</div>
+        <div className="text-muted">{'粘贴单词数组 JSON，每项需要 word 与 meanings_zh，例如 [{"word": "abandon", "pos": "v.", "meanings_zh": ["抛弃", "放弃"]}]'}</div>
+        <textarea placeholder='[{"word": "abandon", "pos": "v.", "meanings_zh": ["抛弃", "放弃"]}]' value={jsonText} onChange={(e) => setJsonText(e.target.value)} style={{ width: '100%', minHeight: 120 }} />
+        <button type="button" className="btn btn-primary" disabled={importingJson} onClick={handleImportJson}>{importingJson ? '导入中…' : '导入 JSON'}</button>
+        {jsonError && <div className="error-box">{jsonError}</div>}
+        {jsonMsg && <div className="text-muted">{jsonMsg}</div>}
+        {jsonErrors.length > 0 && <ul>{jsonErrors.map((e, index) => <li key={index}>第 {e.index + 1} 个：{e.message}</li>)}</ul>}
+      </div>
 
       <div className="card">
         <div className="stat-label">词库状态</div>

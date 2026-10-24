@@ -59,6 +59,7 @@ describe('api route parity deep5', () => {
     'POST /api/plans',
     'POST /api/plans/auto-schedule',
     'POST /api/words',
+    'POST /api/words/import',
     'POST /api/words/:p/review',
     'POST /api/words/seed-vocab',
     'PUT /api/settings',
@@ -89,8 +90,8 @@ describe('api route parity deep5', () => {
     await app.close();
   });
 
-  it('解析出 47 个前端 api 调用（数量快照）', () => {
-    expect(pairs.length).toBe(47);
+  it('解析出 48 个前端 api 调用（数量快照）', () => {
+    expect(pairs.length).toBe(48);
   });
 
   it('解析结果与 EXPECTED 快照完全一致', () => {

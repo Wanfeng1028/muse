@@ -33,7 +33,7 @@ pnpm shot:build    # 先构建前后端，再截图
 
 ## 路由注册顺序铁律
 
-后端路由注册顺序决定匹配优先级：**静态资源先注册、/api 路由后注册**。后注册的路由匹配优先级更高，确保 `/api/*` 不会被静态文件中间件吞掉。新增路由时必须遵守此顺序。
+Playwright 的 context.route 是后注册优先，不是后端路由顺序：**截图 harness 里静态路由先注册、/api 代理路由后注册**。静态路由的 `/**` 通配同样会匹配 `/api/*`，只有让 /api 路由后注册、优先级更高，才能保证 `/api/*` 走真实后端代理而不被静态路由 fulfill 成 index.html。顺序颠倒的症状是页面能打开、数据接口全坏。改动注册顺序前必须跑 `scripts/shots/route-order-probe.mjs` 验证，self-check 第 6 项会断言源码中的注册顺序。
 
 ## playwright-core 解析顺序
 

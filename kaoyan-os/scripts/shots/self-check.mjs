@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { setTimeout as sleep } from 'node:timers/promises';
 import http from 'node:http';
-import { unlinkSync } from 'node:fs';
+import { unlinkSync, readFileSync } from 'node:fs';
 import {
   spawnServer,
   waitForHealth,
@@ -137,6 +137,12 @@ async function main() {
       );
     }
     console.log('PASS: 清理不留僵尸');
+    const src = readFileSync(new URL('./shot-harness.mjs', import.meta.url), 'utf8');
+    const staticIdx = src.indexOf("context.route(`http://127.0.0.1:");
+    const apiIdx = src.indexOf("context.route('**/api/**'");
+    assert.ok(staticIdx !== -1 && apiIdx !== -1, 'shot-harness must register both static and api routes');
+    assert.ok(staticIdx < apiIdx, 'static route must be registered before api route (last-registered-wins)');
+    console.log('PASS: 路由注册顺序（静态先于 /api）');
   } catch (err) {
     console.log(`SELF-CHECK FAIL: ${err.message}`);
     // Emergency cleanup: ensure no orphaned server process or DB file

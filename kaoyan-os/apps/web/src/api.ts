@@ -68,6 +68,20 @@ export interface VocabStatus {
   mastered: number;
   pending: number;
 }
+export interface WordImportItem {
+  word: string;
+  phonetic?: string;
+  pos?: string;
+  meanings_zh: string[];
+  example_en?: string;
+  example_zh?: string;
+}
+export interface WordImportResult {
+  imported: number;
+  skippedExisting: number;
+  skippedInvalid: number;
+  errors: Array<{ index: number; message: string }>;
+}
 const BASE = '/api';
 
 // 401 统一跳登录：排除 /api/auth/* 自身，避免登录页请求也被弹走
@@ -203,6 +217,8 @@ export const api = {
     request<void>(`/words/${id}`, { method: 'DELETE' }),
   seedVocab: () => request<VocabSeedResult>('/words/seed-vocab', { method: 'POST' }),
   vocabStatus: () => request<VocabStatus>('/words/vocab-status'),
+  importWordsJson: (words: WordImportItem[]) =>
+    request<WordImportResult>('/words/import', { method: 'POST', body: JSON.stringify({ words }) }),
 
   // 考试
   listExams: (subject?: string) => request<ExamRecord[]>(`/exams${qs({ subject })}`),
