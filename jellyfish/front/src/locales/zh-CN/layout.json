@@ -1,0 +1,17 @@
+{
+  "title": "Jellyfish",
+  "subtitle": "AI 短剧工作台",
+  "welcome": "欢迎使用 Jellyfish",
+  "menu": {
+    "settings": "系统设置"
+  },
+  "user": {
+    "profile": "个人中心",
+    "logout": "退出登录"
+  },
+  "lang": {
+    "zh": "简体中文",
+    "en": "English"
+  }
+}
+
