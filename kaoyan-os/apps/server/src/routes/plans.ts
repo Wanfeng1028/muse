@@ -224,6 +224,17 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     return reply.send(summary);
   });
 
+  // 逾期未完成计划：date 小于今天且未完成，按 date 升序、id 升序
+  app.get('/api/plans/overdue', async (req, reply) => {
+    const today = todayStr();
+    const rows = db
+      .prepare(
+        'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans WHERE user_id = ? AND date < ? AND done = 0 ORDER BY date ASC, id ASC',
+      )
+      .all(req.user!.id, today) as unknown as PlanRow[];
+    return reply.send({ date: today, count: rows.length, plans: rows.map(mapPlan) });
+  });
+
   // 新建计划
   app.post('/api/plans', async (req, reply) => {
     const body = (req.body ?? {}) as Partial<CreatePlanInput>;

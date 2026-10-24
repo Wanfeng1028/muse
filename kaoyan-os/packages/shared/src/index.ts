@@ -134,6 +134,12 @@ export interface PlanSummary {
   plans: PlanProgress[];
 }
 
+export interface OverduePlansResponse {
+  date: string;
+  count: number;
+  plans: Plan[];
+}
+
 /** 排期区间查询参数 */
 export interface PlansRangeQuery { from: string; to: string; }
 /** 单日负荷 */

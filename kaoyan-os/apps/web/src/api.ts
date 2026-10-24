@@ -6,6 +6,7 @@ import type {
   CreateFocusInput,
   FocusStats,
   PlanSummary,
+  OverduePlansResponse,
   AutoScheduleInput,
   AutoScheduleItem,
   AutoScheduleResult,
@@ -156,6 +157,8 @@ export const api = {
     request<Plan[]>(`/plans${qs(params)}`),
   planSummary: (date?: string) =>
     request<PlanSummary>(`/plans/summary${qs({ date })}`),
+  overduePlans: () =>
+    request<OverduePlansResponse>('/plans/overdue'),
   createPlan: (input: CreatePlanInput) =>
     request<Plan>('/plans', { method: 'POST', body: JSON.stringify(input) }),
   updatePlan: (id: number, patch: UpdatePlanInput) =>

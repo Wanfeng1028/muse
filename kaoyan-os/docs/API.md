@@ -219,6 +219,30 @@
 
 ---
 
+### `GET /api/plans/overdue`
+
+| GET | /api/plans/overdue | 需登录 |
+
+没参数。返回当天日期 date、逾期未完成总数 count、逾期计划数组 plans。逾期就是计划的 date 小于服务端今天且 done 为 false。plans 按 date 升序排，同一天内按 id 升序排。只返回当前登录用户自己的计划，别人的不碰。没登录返回 401。
+
+```json
+{
+  "date": "2026-10-25",
+  "count": 1,
+  "plans": [
+    {
+      "id": 42,
+      "date": "2026-10-20",
+      "subject": "math",
+      "title": "刷线代第三章习题",
+      "plannedMinutes": 90,
+      "done": false,
+      "createdAt": "2026-10-19T08:30:00Z"
+    }
+  ]
+}
+```
+
 ### `POST /api/plans`
 
 | 方法 | 路径 | 认证 |

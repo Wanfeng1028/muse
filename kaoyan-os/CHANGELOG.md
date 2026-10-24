@@ -4,6 +4,14 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.3] - 2026-10-25
+
+### Added
+
+- 后端新增 `GET /api/plans/overdue`，返回当前用户 date 小于服务端今天且 done 为 false 的计划，按 date 升序、id 升序排列。
+- 前端复习计划页顶部新增逾期区，count 大于 0 才显示，每项可一键标为完成（复用 PATCH /api/plans/:id）。
+- 测试 plans-overdue.test.ts 共 7 例：逾期纳入、已完成排除、今天与未来排除、排序、用户隔离、空库、未登录 401。
+
 ## [1.12.2] - 2026-10-24
 
 ### Added

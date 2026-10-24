@@ -5,6 +5,7 @@ import {
   type SubjectKey,
   type Plan,
   type PlanSummary,
+  type OverduePlansResponse,
   type PlanProgress,
   type AutoScheduleInput,
   type AutoScheduleItem,
@@ -35,6 +36,7 @@ export default function Plans() {
 
   const [plans, setPlans] = useState<Plan[]>([]);
   const [summary, setSummary] = useState<PlanSummary | null>(null);
+  const [overdue, setOverdue] = useState<OverduePlansResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -114,12 +116,14 @@ export default function Plans() {
     try {
       const params: { date: string; subject?: SubjectKey } = { date };
       if (subjectFilter) params.subject = subjectFilter;
-      const [list, sum] = await Promise.all([
+      const [list, sum, ov] = await Promise.all([
         api.listPlans(params),
         api.planSummary(date),
+        api.overduePlans(),
       ]);
       setPlans(list);
       setSummary(sum);
+      setOverdue(ov);
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -139,6 +143,15 @@ export default function Plans() {
   const handleToggle = async (plan: Plan) => {
     try {
       await api.updatePlan(plan.id, { done: !plan.done });
+      await loadList();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : '更新失败');
+    }
+  };
+
+  const handleOverdueDone = async (plan: Plan) => {
+    try {
+      await api.updatePlan(plan.id, { done: true });
       await loadList();
     } catch (e) {
       setError(e instanceof Error ? e.message : '更新失败');
@@ -253,6 +266,31 @@ export default function Plans() {
       {/* 概要 */}
       {summary && (
         <div className="stat-card plans-summary-card">{summaryText}</div>
+      )}
+
+      {overdue && overdue.count > 0 && (
+        <div className="card plans-overdue-card">
+          <h2>逾期未完成（{overdue.count}）</h2>
+          <ul className="list plans-overdue-list">
+            {overdue.plans.map((plan) => (
+              <li className="list-item plans-overdue-item" key={plan.id}>
+                <span className={`badge badge-${plan.subject}`}>
+                  {subjectMap[plan.subject]?.name ?? plan.subject}
+                </span>
+                <span>{plan.title}</span>
+                <span data-label="原定日期">{plan.date}</span>
+                <span>{`${plan.plannedMinutes} 分钟`}</span>
+                <button
+                  className="btn btn-primary btn-sm"
+                  type="button"
+                  onClick={() => void handleOverdueDone(plan)}
+                >
+                  标为完成
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
 
       {schedOpen && (

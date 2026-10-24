@@ -34,6 +34,7 @@ describe('api route parity deep5', () => {
     'GET /api/mistakes/summary',
     'GET /api/plans',
     'GET /api/plans/auto-schedule/preview',
+  'GET /api/plans/overdue',
     'GET /api/plans/overload',
     'GET /api/plans/range',
     'GET /api/plans/summary',
@@ -90,8 +91,8 @@ describe('api route parity deep5', () => {
     await app.close();
   });
 
-  it('解析出 48 个前端 api 调用（数量快照）', () => {
-    expect(pairs.length).toBe(48);
+  it('解析出 49 个前端 api 调用（数量快照）', () => {
+    expect(pairs.length).toBe(49);
   });
 
   it('解析结果与 EXPECTED 快照完全一致', () => {
