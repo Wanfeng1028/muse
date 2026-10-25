@@ -165,7 +165,7 @@
       if (!count) {
         html += '<p class="hint">' + esc(_t("prov.noProvidersInModule", "暂无")) + esc(moduleLabel(mod.id)) + esc(_t("prov.noProvidersSuffix", "供应商")) + "</p>";
       }
-      html += '<div style="margin:4px 0 20px;display:flex;gap:8px;flex-wrap:wrap">' +
+      html += '<div class="pv-preset-row">' +
         '<button type="button" class="btn btn-quiet btn-sm pv-preset-add" data-module="' + esc(mod.id) +
         '"><i data-lucide="sparkles"></i> ' + esc(_t("prov.addFromPreset", "从预设添加")) + '</button>' +
         '<button type="button" class="btn btn-quiet btn-sm pv-provider-add" data-module="' +
@@ -180,10 +180,10 @@
     var h = '<article class="card pv-card" data-pid="' + esc(p.id) + '">';
     h += '<div class="card-head">';
     h += '<div>';
-    h += '<div style="font-weight:600">' + esc(p.name) + "</div>";
+    h += '<div class="pv-name">' + esc(p.name) + "</div>";
     if (p.description) h += '<p class="hint">' + esc(p.description) + "</p>";
     h += "</div>";
-    h += '<div style="display:flex;align-items:center;gap:8px">';
+    h += '<div class="pv-head-actions">';
     h += '<input type="checkbox" class="pv-switch" data-pid="' + esc(p.id) + '"' + (p.enabled ? " checked" : "") + " />";
     h += '<button type="button" class="btn btn-quiet btn-sm pv-test" data-pid="' + esc(p.id) + '"><i data-lucide="plug-zap"></i> ' + esc(_t("prov.testConnection", "测试连接")) + '</button>';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-edit" data-pid="' + esc(p.id) + '"><i data-lucide="pencil"></i></button>';
@@ -191,7 +191,7 @@
     h += "</div>";
     h += "</div>";
 
-    h += '<div style="display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-3);margin:8px 0">';
+    h += '<div class="pv-meta">';
     if (p.apiAddress) h += '<span class="mono">' + esc(p.apiAddress) + "</span>";
     if (p.maskedKey) h += '<span class="mono">' + esc(p.maskedKey) + "</span>";
     h += "</div>";
@@ -202,24 +202,24 @@
       h += renderModel(p.id, models[j]);
     }
     h += "</div>";
-    h += '<div style="margin-top:8px">';
+    h += '<div class="pv-model-add-row">';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-model-add" data-pid="' + esc(p.id) + '"><i data-lucide="plus"></i> ' + esc(_t("prov.manualAdd", "手动添加")) + '</button>';
     h += "</div>";
-    h += '<div class="pv-test-result" style="margin-top:8px;font-size:12px" hidden></div>';
+    h += '<div class="pv-test-result" hidden></div>';
     h += "</article>";
     return h;
   }
 
   function renderModel(pid, m) {
-    var h = '<div class="pv-model-row" data-pid="' + esc(pid) + '" data-mid="' + esc(m.id) + '" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border-soft);flex-wrap:wrap">';
-    h += '<div style="min-width:160px">';
-    h += '<div style="font-weight:600;font-size:13px">' + esc(m.displayName) + "</div>";
-    if (m.modelId) h += '<div class="mono" style="font-size:12px;color:var(--text-3)">' + esc(m.modelId) + "</div>";
+    var h = '<div class="pv-model-row" data-pid="' + esc(pid) + '" data-mid="' + esc(m.id) + '">';
+    h += '<div class="pv-model-id">';
+    h += '<div class="pv-model-name">' + esc(m.displayName) + "</div>";
+    if (m.modelId) h += '<div class="mono pv-model-id-text">' + esc(m.modelId) + "</div>";
     h += "</div>";
     if (m.scale) h += '<span class="badge">' + esc(m.scale) + "</span>";
     if (m.description) h += '<span class="hint">' + esc(m.description) + "</span>";
     if (m.concurrency) h += '<span class="hint">×' + esc(m.concurrency) + "</span>";
-    h += '<div style="margin-left:auto;display:flex;gap:6px">';
+    h += '<div class="pv-model-actions">';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-model-edit" data-pid="' + esc(pid) + '" data-mid="' + esc(m.id) + '"><i data-lucide="pencil"></i></button>';
     h += '<button type="button" class="btn btn-quiet btn-sm pv-model-del" data-pid="' + esc(pid) + '" data-mid="' + esc(m.id) + '"><i data-lucide="trash-2"></i></button>';
     h += "</div>";
@@ -334,7 +334,7 @@
     api("POST", "/api/providers/" + encodeURIComponent(pid) + "/test", null, function (status, data) {
       btn.disabled = false;
       if (status !== 200 || !data) {
-        box.innerHTML = '<span class="badge" style="background:var(--red-soft);color:var(--red)">' + esc(_t("prov.testFailed", "检测失败")) + '</span>'
+        box.innerHTML = '<span class="badge pv-test-fail">' + esc(_t("prov.testFailed", "检测失败")) + '</span>'
           + ' <span class="hint">HTTP ' + esc(status) + '</span>';
         icons();
         return;

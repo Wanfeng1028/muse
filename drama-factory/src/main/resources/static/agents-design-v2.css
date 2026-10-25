@@ -1,0 +1,47 @@
+.pv-preset-row {
+  margin:4px 0 20px;display:flex;gap:8px;flex-wrap:wrap;
+}
+
+.pv-name {
+  font-weight:600;
+}
+
+.pv-head-actions {
+  display:flex;align-items:center;gap:8px;
+}
+
+.pv-meta {
+  display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--text-3);margin:8px 0;
+}
+
+.pv-model-add-row {
+  margin-top:8px;
+}
+
+.pv-test-result {
+  margin-top:8px;font-size:12px;
+}
+
+.pv-model-row {
+  display:flex;align-items:center;gap:10px;padding:8px 0;border-top:1px solid var(--border-soft);flex-wrap:wrap;
+}
+
+.pv-model-id {
+  min-width:160px;
+}
+
+.pv-model-name {
+  font-weight:600;font-size:13px;
+}
+
+.pv-model-id-text {
+  font-size:12px;color:var(--text-3);
+}
+
+.pv-model-actions {
+  margin-left:auto;display:flex;gap:6px;
+}
+
+.pv-test-fail {
+  background:var(--red-soft);color:var(--red);
+}
