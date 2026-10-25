@@ -91,3 +91,8 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 文件：static/official-skills-design-v1.css，只覆盖，app.css 之后引用。
 - 视觉逻辑：目录卡台账（纯白底、发丝边框、10px 圆角、零阴影；标题 16px/600、描述 14px、元信息 13px；操作区顶部发丝线；搜索框 8px 圆角、聚焦墨色边框）。
 - 截图：docs/screenshots/official-skills-v1.png（真实服务 + 1373 条真实数据）。
+
+## 12. 提示词库页设计层 v1（2026-10-25，Flash 路）
+- 文件：static/prompts-design-v1.css，只覆盖，app.css 之后引用。
+- 视觉逻辑：提示词档案柜（柜签 kicker、索引抽屉搜索与标签芯片、同行等高档案袋卡片、底部借阅条沉底对齐、详情卡为展开的档案全文，等宽字体换行）。
+- 截图：docs/screenshots/prompts-design-v1.png（真实服务 + 真实提示词库数据）。

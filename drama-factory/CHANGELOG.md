@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：提示词库页设计层 v1）
+- 新增 static/prompts-design-v1.css（只覆盖，不改 app.css 与任何 JS；prompts.html 在 app.css 之后引用 1 行）：视觉逻辑“提示词档案柜”——页头 kicker 是柜签、搜索与标签芯片是索引抽屉、卡片是同行等高的档案袋（标题、摘要、来源元数据行、底部借阅条沉底对齐）、详情卡是抽出展开的档案全文（等宽字体换行）；全部左对齐，层级只靠字重、字号、线宽与留白，token 全部取自 app.css。
+- 模型稿编排修正 1 处（已写进测试防回归）：删 .page .form-check.form-switch 的 margin-right: auto 规则（会把右对齐的只看收藏开关顶到左端，改布局不只改样式）；其余规则逐项核对：括号 47/47 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
+- 验收：新增 PromptsDesignV1Test 4 例全绿（引用顺序、括号与禁令、关键选择器、开关对齐禁令）；真实服务 + 真实提示词库数据截图亲眼核对（见下）；截图存 docs/screenshots/prompts-design-v1.png。验收后服务已停、复制库与 jar 已删。
+- 已知保留：长描述卡片的操作区在首屏折叠线下，属真实数据长度，不是布局缺陷；本轮未动 sentinel 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25 约 19:50-20:20：成本账本页设计层 v1）
 - 新增 static/cost-ledger-design-v1.css（只覆盖，不改 app.css 与任何 JS；cost-ledger.html 在 app.css 之后引用 1 行）：视觉逻辑“账本台账”——预算卡是总账（surface-2 底 + 2px 墨色顶线）、KPI 卡是分户、趋势与供应商是明细账页、最近明细表是流水；层级只靠字重、字号、线宽与留白，全部左对齐，token 全部取自 app.css；KPI 数字 tabular-nums，预算进度条实色填充，明细行 hover 只用淡底色。
 - 模型稿编排修正 2 处（均已写进测试防回归）：删 .card-header.justify-content-between 改 flex-start 的规则（会把趋势卡标题与天数按钮挤到一端，改布局不只改样式）；删 #providerBars .d-flex 改 flex-start 的规则（会把供应商名与金额从两端对齐改成并排）。其余规则逐项核对：括号 59/59 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
