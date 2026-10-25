@@ -1,4 +1,20 @@
 
+## [1.15.0] - 2026-10-25
+
+### 修复
+- 关闭 v1.12.0 已知限制里挂账的 clippy 全量 -D warnings 下 3 个存量错误（本轮改动文件内）：config.rs 文档注释与 impl 之间的空行（clippy::empty_line_after_doc_comments）、totp.rs `outer_hasher.update(&inner_result)` 的不必要借用（clippy::needless_borrows_for_generic_args）、totp.rs `vec![0u8; BLOCK_SIZE]` 改数组字面量（clippy::useless_vec）。三处均为模型稿原样落仓（GLM-5.3 via BotsRouter，令牌 id=5，单路串行，max_tokens 4000，API prompt 23971 / completion 802 / total 24773，无 429），行为不变：空行删除不影响文档内容、去借用后 inner_result 仍按值传入 update、数组下标读写与原 vec 完全一致。
+- 版本跟进：Cargo.toml 1.14.0 -> 1.15.0，`/api/health` 的 version 随之恢复正确（`env!("CARGO_PKG_VERSION")`，无硬编码断言）。
+
+### 测试
+- `cargo clippy --offline --all-targets` 本仓 config.rs / totp.rs 再无警告（其余均为 vendor 依赖警告，不在本轮范围）。
+- 相关套件：twofa 相关测试全绿；全量 `cargo test --offline --no-fail-fast` 跑到 86 个套件、764 过、0 败后卡在 ws_term_lifecycle_r2（见已知限制）；此前首轮全量亦在同一用例挂起后被停掉，两次均为套件内负载下挂起，与本轮改动无代码交集（该用例不走 totp/config 行为路径，config 改动仅为注释）。
+- ws_term_lifecycle_r2 单独跑：`cargo test --offline --test ws_term_lifecycle_r2` 2 例全绿、2.7 秒（本轮改动后的树），故判定为套件内负载敏感的偶发挂起，非本轮回归；全量剩余套件未跑完，如实记录、不谎称全绿。
+
+### 已知限制
+- 全量测试未跑完：ws_term_lifecycle_r2 在套件内两次挂起（单跑 2.7 秒全绿），属负载敏感偶发，留待后续在空闲时重跑全量确认。
+- `cargo fmt --check` 仍有 1 处既存 diff（tests/mig006_expiry_deep.rs:185，v1.13.0 已注明），不在本轮改动文件，未动。
+- vendor 依赖的 clippy 警告（unexpected cfg、deprecated 等）不在本轮范围，未动。
+
 ## [1.14.0] - 2026-10-25
 
 ### 前端美化（桌面布局真修，不是换皮）

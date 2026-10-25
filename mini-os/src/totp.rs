@@ -97,7 +97,7 @@ fn hmac_sha1(key: &[u8], msg: &[u8]) -> [u8; 20] {
     };
 
     // Pad key to block size
-    let mut padded_key = vec![0u8; BLOCK_SIZE];
+    let mut padded_key = [0u8; BLOCK_SIZE];
     padded_key[..key.len()].copy_from_slice(&key);
 
     // ipad and opad
@@ -117,7 +117,7 @@ fn hmac_sha1(key: &[u8], msg: &[u8]) -> [u8; 20] {
     // Outer hash
     let mut outer_hasher = Sha1::new();
     outer_hasher.update(&opad);
-    outer_hasher.update(&inner_result);
+    outer_hasher.update(inner_result);
     let outer_result = outer_hasher.finalize();
 
     let mut result = [0u8; 20];

@@ -66,7 +66,6 @@ pub fn parse_backup_code_retention_days_raw(raw: Option<&str>) -> Result<i64, St
 }
 
 /// 从环境变量读取配置，缺失或解析失败时使用默认值
-
 impl Config {
     pub fn from_env() -> Self {
         let data_dir = compute_data_dir();
