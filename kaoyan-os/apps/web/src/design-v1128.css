@@ -1,0 +1,321 @@
+/* Kaoyan OS v1.12.8 番茄页覆盖层：专注仪器。
+   视觉逻辑：这一页是一台专注仪器，整体左对齐——计时数字是仪表读数（72px、700 字重、
+   等宽零字距，25:00 每一位落在固定刻度上），进度条 .pomo-progress 是表盘刻度（8px、
+   细边、浅底，填充 .pomo-progress-fill 实色无渐变、宽度由行内 style 控制），模式标签是档位；
+   读数、刻度、档位同处面板上部，构成一个整体，不再孤零零飘在白卡里。
+   开始按钮是主开关（48px 高、700 字重、内边距 0 24px，一眼可见），重置是副开关；
+   科目与关联计划并排一行，标签在上、控件在下（44px 高、15px 字号、撑满列宽）。
+   分科累计是各科的量表：.pomo-subject-bar-row 每行细线分隔，科名是刻度名，
+   分钟是读数（22px 粗体），次数是注记（12px），条形 8px、条长即量；填充色与宽度
+   由行内 style 按科目指定，只取四科既有色：var(--c-math) #4f7cff、var(--c-english) #22b07d、
+   var(--c-politics) #e05d5d、var(--c-major) #f0a13c，本层不引入任何新颜色。
+   底部统计收成单行紧凑条；.page 间距收紧、补 32px 底部呼吸，页面不再断层。
+   侧栏倒计时改纯白落在深底上，.sidebar-footer 内文字统一 var(--sidebar-text)。
+   禁令照旧：无紫渐变、无 Inter 等外来字体、无居中 hero、无三栏特性格、无 emoji 图标、
+   无阴影辉光、不用 !important；选择器只用页面已有类名与本层新列类名：
+   .pomo-progress、.pomo-progress-fill、.pomo-subject-bar-row、.pomo-subject-name、
+   .pomo-subject-minutes、.pomo-subject-sessions、.pomo-subject-bar、.pomo-subject-fill。
+   本层在 design-v1127.css 之后引用，index.css 与 v1.12.7 层原样保留。 */
+
+.page {
+  gap: 16px;
+  padding-bottom: 32px;
+}
+
+/* —— 仪器面板：档位、读数、刻度与操控区同板 —— */
+.pomo-timer-wrap {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px 20px;
+  align-content: start;
+  text-align: left;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  padding: 20px 24px;
+}
+
+.pomo-mode {
+  grid-column: 1 / -1;
+  justify-self: start;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 3px 12px;
+}
+
+.pomo-display {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: baseline;
+  font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 64px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1;
+  color: var(--text-main);
+  text-align: left;
+}
+
+/* 冒号单独成段、收窄居中：等宽字体下冒号自带左右空位是“25 : 00”发飘的根因，
+   不靠 letter-spacing 猜，冒号宽度直接定死 0.45em。 */
+.pomo-time-colon {
+  display: inline-block;
+  width: 0.45em;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.pomo-progress {
+  grid-column: 1 / -1;
+  width: 100%;
+  height: 8px;
+  box-sizing: border-box;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: #eceef3;
+  overflow: hidden;
+}
+
+.pomo-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c-math);
+  transition: width 0.4s ease;
+}
+
+/* —— 操控区：科目与关联计划并排，标签在上、控件在下 —— */
+.pomo-subject-row,
+.pomo-plan-row {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.pomo-subject-label,
+.pomo-plan-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+}
+
+.pomo-subject-select,
+.pomo-plan-select {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  font-size: 15px;
+  border-radius: var(--radius-sm);
+}
+
+.pomo-actions {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.pomo-btn {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.pomo-btn.btn-primary {
+  height: 48px;
+  padding: 0 24px;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.pomo-btn.btn-ghost {
+  height: 44px;
+  padding: 0 18px;
+  font-size: 14px;
+}
+
+/* —— 分科范围：小档位按钮 —— */
+.pomo-window-row {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.pomo-window-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pomo-window-btn {
+  display: inline-flex;
+  align-items: center;
+  height: 32px;
+}
+
+/* —— 分科量表：分钟是读数，条长是量，行间细线 —— */
+.pomo-subject-bar-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: baseline;
+  column-gap: 12px;
+  row-gap: 8px;
+  padding: 8px 0;
+  list-style: none;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.pomo-subject-bar-row + .pomo-subject-bar-row {
+  border-top: 1px solid var(--border);
+}
+
+.pomo-subject-bar-row:hover {
+  box-shadow: none;
+}
+
+.pomo-subject-name {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.pomo-subject-minutes {
+  grid-column: 2;
+  grid-row: 1;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  color: var(--text-main);
+  text-align: right;
+}
+
+.pomo-subject-bar {
+  grid-column: 1;
+  grid-row: 2;
+  align-self: center;
+  width: 100%;
+  height: 8px;
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: #eceef3;
+  overflow: hidden;
+}
+
+.pomo-subject-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--c-math);
+  transition: width 0.4s ease;
+}
+
+.pomo-subject-sessions {
+  grid-column: 2;
+  grid-row: 2;
+  align-self: center;
+  font-size: 12px;
+  color: var(--text-sub);
+  text-align: right;
+}
+
+.list:has(.pomo-subject-bar-row) {
+  gap: 0;
+  margin: 0;
+  padding: 0;
+}
+
+/* —— 底部统计：单行紧凑条，读数与提示同行 —— */
+.pomo-stats-card {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  padding: 10px 20px;
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.pomo-stats-card .pomo-stat-card {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8px;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.pomo-stat-card .stat-value {
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+  line-height: 1;
+  color: var(--text-main);
+}
+
+.pomo-stat-hint {
+  margin: 0 0 0 auto;
+}
+
+/* —— 侧栏倒计时：深底上的读数必须可见 —— */
+.sidebar-footer {
+  color: var(--sidebar-text);
+}
+
+[data-theme="dark"] .sidebar-footer {
+  color: var(--sidebar-text);
+}
+
+.sidebar-footer .countdown-big {
+  color: #ffffff;
+}
+
+.sidebar-footer .countdown-big span {
+  color: var(--sidebar-text);
+}
+
+.sidebar-footer .user-menu-name {
+  color: var(--sidebar-text);
+}
+
+/* —— 深色主题：表盘浅底转深 —— */
+[data-theme="dark"] .pomo-progress,
+[data-theme="dark"] .pomo-subject-bar {
+  background: #2a3040;
+}
+
+/* —— 窄屏：面板收成单列，读数缩小 —— */
+@media (max-width: 640px) {
+  .pomo-timer-wrap {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .pomo-display {
+    font-size: 56px;
+  }
+  .pomo-btn.btn-primary {
+    flex: 1 1 auto;
+  }
+}

@@ -241,7 +241,31 @@ export default function Pomodoro() {
 
       <div className="timer-wrap pomo-timer-wrap">
         <div className="timer-mode pomo-mode">{mode === 'focus' ? '专注' : '休息'}</div>
-        <div className="timer-display pomo-display">{fmt(remaining)}</div>
+        <div className="timer-display pomo-display">
+          <span className="pomo-time-part">{fmt(remaining).slice(0, 2)}</span>
+          <span className="pomo-time-colon" aria-hidden="true">:</span>
+          <span className="pomo-time-part">{fmt(remaining).slice(3, 5)}</span>
+        </div>
+        {(() => {
+          const total =
+            (mode === 'focus' ? settings.pomodoroMinutes : settings.breakMinutes) * 60;
+          const pct = total > 0 ? Math.min(100, Math.max(0, ((total - remaining) / total) * 100)) : 0;
+          const color = SUBJECTS.find((x) => x.key === subject)?.color ?? '#4f7cff';
+          return (
+            <div
+              className="pomo-progress"
+              role="progressbar"
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-valuenow={Math.round(pct)}
+            >
+              <span
+                className="pomo-progress-fill"
+                style={{ width: `${pct}%`, background: color }}
+              />
+            </div>
+          );
+        })()}
 
         <div className="form-row pomo-subject-row">
           <label className="pomo-subject-label">科目</label>
@@ -311,14 +335,26 @@ export default function Pomodoro() {
         <div className="card">
           <div className="stat-label">各科专注累计</div>
           <ul className="list">
-            {bySubject.subjects.map((row) => {
-              const s = SUBJECTS.find((x) => x.key === row.subject);
-              return (
-                <li key={row.subject} className="list-item">
-                  {s ? s.name : row.subject}：共 {row.totalMinutes} 分钟 · {row.sessions} 次
-                </li>
-              );
-            })}
+            {(() => {
+              const max = Math.max(1, ...bySubject.subjects.map((r) => r.totalMinutes));
+              return bySubject.subjects.map((row) => {
+                const s = SUBJECTS.find((x) => x.key === row.subject);
+                const pct = Math.min(100, Math.max(0, (row.totalMinutes / max) * 100));
+                return (
+                  <li key={row.subject} className="list-item pomo-subject-bar-row">
+                    <span className="pomo-subject-name">{s ? s.name : row.subject}</span>
+                    <span className="pomo-subject-minutes">{row.totalMinutes} 分钟</span>
+                    <span className="pomo-subject-bar">
+                      <span
+                        className="pomo-subject-fill"
+                        style={{ width: `${pct}%`, background: s?.color ?? '#4f7cff' }}
+                      />
+                    </span>
+                    <span className="pomo-subject-sessions">{row.sessions} 次</span>
+                  </li>
+                );
+              });
+            })()}
           </ul>
         </div>
       )}
