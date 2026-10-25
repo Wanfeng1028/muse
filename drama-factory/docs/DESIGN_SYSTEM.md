@@ -278,3 +278,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：滚动容器 260px/320px 上限 + 自动滚动；资产名 180px 截断隐藏；日志参数与结果格 220px 省略号截断不换行。
 - 截图：docs/screenshots/tools-design-v2.png（隔离构建真实服务 18207 端口 + 复制库；库内资产与操作日志均为空，页面为空态实测；两滚动容器计算样式直接取自真实元素，截断类以探针节点实测后即删，截图仍为真实态；零 console 错误）。
 - 已知保留：本层不改布局；label 规则刻意不补 text-overflow/white-space（原值只有 max-width 与 overflow，逐字保留）；§37 仍为 5.3 路对话页 v2 预留，本节顺延为 §39。
+
+## 40. 任务队列页设计层 v3（2026-10-26，Flash 路）
+- 文件：static/tasks-design-v3.css（模型稿 1 条规则原文入仓，tasks.html 在 v2 之后引用 1 行；HTML 机械迁移：3 处筛选字段容器删行内 style 改挂 task-filter-field 类）。
+- 视觉逻辑：项目 / 剧集 / 分镜三个筛选字段容器最小宽度 160px 不换行挤压，下拉框在窄视口仍可读。
+- 截图：docs/screenshots/tasks-design-v3.png（隔离构建真实服务 + 复制库；筛选区三字段计算样式实测 min-width 160px，零 console 错误）。
+- 已知保留：hint 提示框的 display:none 是 JS 显隐切换，保留行内，不在本层范围；本层不改布局。

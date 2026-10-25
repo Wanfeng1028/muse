@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：任务队列页设计层 v3）
+- 新增 static/tasks-design-v3.css（模型稿 1 条规则原文入仓，tasks.html 在 v2 之后引用 1 行）：关闭 v2 未覆盖的 3 处筛选字段行内样式——项目 / 剧集 / 分镜三个筛选字段容器 div 的 min-width:160px 改挂 task-filter-field 类；hint 提示框的 display:none 是 JS 显隐切换，保留行内，不在本轮范围。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，调用器为本轮现写最小新文件 relay-station/flash_call_n8.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、未读任何现成调用脚本）1 通产出：API prompt 23806 / completion 98 / total 23904，含上游缓存 23552，正文即入仓 1 条规则，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值 160px 逐字保留。
+- 验收：新增 TasksDesignV3Test 3/3，设计层合跑 120/120 全绿（隔离构建；首跑因隔离包内残留 target 导致资源陈旧致 18 败，删 target 重跑后全绿，属构建 hygiene 问题、非代码回归），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18209 端口，复制 H2 库）实测 tasks.html 与 v3 css 均 200、served 内容与文件对上、served html 旧行内 min-width 0 处；筛选区三字段计算样式实测 min-width 均为 160px、无行内 min-width、零 console 错误；视口截图亲眼核对三筛选字段横向排布、真实任务 1 条、无错位重叠。截图存 docs/screenshots/tasks-design-v3.png。验收后服务按真实 java PID 35604 停服、18209 复查已关、隔离构建与复制库已删。
+
 ### Added（Flash 路 2026-10-26：快捷工具页设计层 v2）
 - 新增 static/tools-design-v2.css（模型稿 4 条规则原文入仓，tools.html 在 v1 之后引用 1 行）：关闭 v1 未覆盖的工具页行内样式——两处滚动容器（max-height 260px/320px + overflow auto）、资产名 label（max-width 180px + overflow hidden）、日志表参数与结果格（max-width 220px + overflow hidden + text-overflow ellipsis + white-space nowrap）。JS/HTML 机械迁移（编排落仓）：滚动容器删行内 style、label 改挂 tool-asset-name 类、td4/td5 改挂 tool-log-cell 类、删 10 处 JS 行内赋值；label 规则刻意不补 text-overflow/white-space（原值只有两项，逐字保留）。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，调用器为本轮现写最小新文件 relay-station/flash_call_n7.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：正文即入仓 4 条规则，零编排修正（括号 4/4 平衡，无 !important、无 linear-gradient、无 backdrop-filter，值逐字照抄原值；调用统计未捕获，如实记录，不补数字）。
