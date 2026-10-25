@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：AI 音乐页设计层 v1）
+- 新增 static/music-design-v1.css（13 条规则，只覆盖，不改 app.css/harness.css、内联 style 块与任何 JS；music.html 在内联 style 块之后引用 1 行）：视觉逻辑“音乐台账”——页头标题 20px/700、副标题 13px 次文字、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、表单标签 12px/600 次文字、输入框与下拉与多行框 13px 8px 圆角、模式分段按钮 13px、生成按钮 13px/600 8px 圆角（不改颜色）、提示 13px 次文字、BYOK 空盒 1px 虚线发丝边 8px 圆角、生成区上下 1px 发丝线；token 全部取自 app.css/harness.css 与本页内联块（边框一律 1px solid/dashed var(--border)）。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，纯 CSS 短提示词，max_tokens 4000）1 通入仓（API prompt 24474（含上游缓存 23744）/ completion 3699 / total 28173，正文 1061 字即 13 条规则，单围栏、零编排修正，括号 13/13 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid/dashed var(--border) 完整形式）；测试文件 MusicDesignV1Test 由编排按 Settings 模式机械落仓（引用顺序断言含内联 style 块之后）。
+- 验收：新增 MusicDesignV1Test 3 例全绿，设计层合跑 65/65 全绿，Maven 离线 BUILD SUCCESS；真实服务（18197 端口，复制 H2 库，开放模式）+ 视口截图亲眼核对：计算样式实证页头 20/700、副标题 13px #555、卡片白底 1px 边 10px 圆角、卡片标题 16/700、表单标签 12/600、输入框 13px 8px 圆角、生成按钮 13/600/8px、提示 13px、BYOK 空盒 1px 虚线边 8px 圆角、生成区上下 1px 发丝线；MUSIC 模型列表实测 []，截图中空模型提示与禁用态生成按钮为真实空态；截图存 docs/screenshots/music-design-v1.png。验收后服务按 PID 停干净、18197 端口已关、复制库与验收 jar 已删。
+- 已知保留：本层不改布局；复选行 13px 未压成 12/600；模式分段激活态沿用内联 --ink 黑底；内联 padding 的卡片内层 div 不碰；截图 harness 说明：本页在 setContent 抓屏下文档 scrollHeight 约 75909px（去本层复测同样 75909px，属既有渲染 quirks、非本层所致），整页截图会把目标撑爆（首轮 fullPage 超时、次轮 Target crashed），故改用 1440x900 视口截图，表单全部内容均在首屏内；另有 1 条 console 错误（document.write 相关 SyntaxError，内联脚本中无 document.write 调用、来源未定位，不影响内容与样式）；打包插曲：共享 target 下的 jar 曾被他路构建截断为 18MB 残片致 repackage 两连败，删残片重打后 207MB 正常，验收 jar 复制到验收目录防覆盖；page.goto 直连 127.0.0.1 仍被 Local Network Access 拦截（符合既往结论），未绕过；本轮未动 chat、finals v2、second-brain、docseek eval 在跑工人的未提交文件。
+
+
 ### Added（Flash 路 2026-10-26：注册页设计层 v1）
 - 新增 static/register-design-v1.css（12 条规则，只覆盖，不改 app.css/auth.css 与任何 JS；register.html 在 auth.css 之后引用 1 行）：视觉逻辑“注册台账”——页头 20px/700、副标题 13px 次文字、分段器 surface-2 底发丝边 8px 圆角、签页 13px/600（当前签页 surface 底发丝边，与登录页一致）、录入行 surface 底发丝边 8px 圆角、输入框 13px、密码提示 12px 弱文字、错误提示 13px 红色、主按钮 13px/600 8px 圆角、协议行 12px 弱文字；token 全部取自 app.css/auth.css。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器沿用本轮现写最小新文件 relay-station/flash_call_n2.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24762 / completion 6888 / total 31650，reasoning_tokens 0，无 429；编排修正 4 处（均与登录页口径对齐）：删模型稿给页头加的带边卡片框（登录页页头不装框）；当前签页由 accent 反白改回 surface 底发丝边（与登录页一致）；输入框删内层边框（录入行已有边框，防双线）；未选中签页颜色由 text-2 改 text-3（与登录页一致）。括号 12/12 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，全部选择器均真实存在于本页 HTML 且均带 .auth-page 前缀（auth.css 规则全是 .auth-page 作用域，无前缀会被压住，登录页教训已写进提示词），全部边框均写成 1px solid var(--border) 完整形式。

@@ -1,0 +1,70 @@
+main.page {
+  background: var(--bg);
+}
+
+.page-head .page-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.page-head .page-sub {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+section.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.card-head .card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.fld>label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.fld input[type=text],.fld textarea,.fld select {
+  font-size: 13px;
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.check-row {
+  font-size: 13px;
+  color: var(--text);
+}
+
+.seg button {
+  font-size: 13px;
+}
+
+.gen-foot {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.gen-foot .btn {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.gen-foot .hint {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.byok-empty {
+  border: 1px dashed var(--border);
+  border-radius: 8px;
+}
