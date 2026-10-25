@@ -145,7 +145,7 @@ async fn note_partial_update_body_only() {
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["title"].as_str().unwrap(), "T-keep");
     assert_eq!(body["body"].as_str().unwrap(), "B2");
-    assert_eq!(body["pinned"].as_bool().unwrap(), false);
+    assert!(!body["pinned"].as_bool().unwrap());
 }
 
 #[tokio::test]

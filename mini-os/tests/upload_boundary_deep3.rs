@@ -34,7 +34,9 @@ async fn register(app: &axum::Router, username: &str) -> String {
     cookie
 }
 
-fn multipart_body(boundary: &str, parts: &[(&str, Option<&str>, Option<&str>, &[u8])]) -> Vec<u8> {
+type Part<'a> = (&'a str, Option<&'a str>, Option<&'a str>, &'a [u8]);
+
+fn multipart_body(boundary: &str, parts: &[Part<'_>]) -> Vec<u8> {
     let mut out: Vec<u8> = Vec::new();
     for (name, filename, ctype, data) in parts {
         out.extend_from_slice(format!("--{}\r\n", boundary).as_bytes());

@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
-use mini_os::terminal::{TermError, TerminalManager};
+use mini_os::terminal::TerminalManager;
 
 fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     let dir = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))

@@ -1,7 +1,7 @@
-use mini_os::plugins::{install_from_zip, list_installed, uninstall, PluginManifest};
+use mini_os::plugins::install_from_zip;
 use std::fs;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 use zip::write::FileOptions;
 
 fn tmp_dir(tag: &str) -> PathBuf {

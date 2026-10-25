@@ -198,7 +198,7 @@ async fn upload_filename_dot_rejected() {
 async fn upload_filename_length_boundary() {
     let (app, cookie) = test_app().await;
 
-    let name200: String = std::iter::repeat('a').take(200).collect();
+    let name200: String = "a".repeat(200);
     let resp200 = upload_request(
         app.clone(),
         "/api/files/upload",
@@ -212,7 +212,7 @@ async fn upload_filename_length_boundary() {
     let v200 = body_json(resp200).await;
     assert_eq!(v200["name"], serde_json::json!(name200));
 
-    let name201: String = std::iter::repeat('b').take(201).collect();
+    let name201: String = "b".repeat(201);
     let resp201 = upload_request(
         app,
         "/api/files/upload",

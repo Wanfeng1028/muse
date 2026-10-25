@@ -229,6 +229,9 @@ fn demo_zip() -> Vec<u8> {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn install_duplicate_400() {
     let (app, _g) = app_for("install_duplicate_400");
     let (_id, cookie) = register_cookie(&app, "admin1", "pw123456").await;
@@ -250,6 +253,9 @@ async fn install_duplicate_400() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn uninstall_missing_404() {
     let (app, _g) = app_for("uninstall_missing_404");
     let (_id, cookie) = register_cookie(&app, "admin2", "pw123456").await;
@@ -263,6 +269,9 @@ async fn uninstall_missing_404() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn install_uninstall_reinstall_200() {
     let (app, _g) = app_for("install_uninstall_reinstall_200");
     let (_id, cookie) = register_cookie(&app, "admin3", "pw123456").await;
@@ -291,6 +300,9 @@ async fn install_uninstall_reinstall_200() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn install_evil_manifest_id_400() {
     let (app, _g) = app_for("install_evil_manifest_id_400");
     let (_id, cookie) = register_cookie(&app, "admin4", "pw123456").await;
@@ -309,6 +321,9 @@ async fn install_evil_manifest_id_400() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn install_missing_manifest_400() {
     let (app, _g) = app_for("install_missing_manifest_400");
     let (_id, cookie) = register_cookie(&app, "admin5", "pw123456").await;
@@ -324,6 +339,9 @@ async fn install_missing_manifest_400() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn install_then_list_contains() {
     let (app, _g) = app_for("install_then_list_contains");
     let (_id, cookie) = register_cookie(&app, "admin6", "pw123456").await;
@@ -355,6 +373,9 @@ async fn install_then_list_contains() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn uninstall_then_list_gone() {
     let (app, _g) = app_for("uninstall_then_list_gone");
     let (_id, cookie) = register_cookie(&app, "admin7", "pw123456").await;
@@ -393,6 +414,9 @@ async fn uninstall_then_list_gone() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn preview_zip_slip_400() {
     let (app, _g) = app_for("preview_zip_slip_400");
     let (_id, cookie) = register_cookie(&app, "admin8", "pw123456").await;
@@ -411,6 +435,9 @@ async fn preview_zip_slip_400() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn preview_ok_200() {
     let (app, _g) = app_for("preview_ok_200");
     let (_id, cookie) = register_cookie(&app, "admin9", "pw123456").await;
@@ -432,10 +459,13 @@ async fn preview_ok_200() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn viewer_cannot_install_403() {
     let (app, _g) = app_for("viewer_cannot_install_403");
     let (_admin_id, admin_cookie) = register_cookie(&app, "adminA", "pw123456").await;
-    let (u2_id, u2_cookie) = register_cookie(&app, "userB", "pw123456").await;
+    let (u2_id, _u2_cookie) = register_cookie(&app, "userB", "pw123456").await;
 
     let resp = app
         .clone()
@@ -456,10 +486,13 @@ async fn viewer_cannot_install_403() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn viewer_cannot_uninstall_403() {
     let (app, _g) = app_for("viewer_cannot_uninstall_403");
     let (_admin_id, admin_cookie) = register_cookie(&app, "adminC", "pw123456").await;
-    let (u2_id, u2_cookie) = register_cookie(&app, "userD", "pw123456").await;
+    let (u2_id, _u2_cookie) = register_cookie(&app, "userD", "pw123456").await;
 
     let zip = demo_zip();
     let resp = app
@@ -487,6 +520,9 @@ async fn viewer_cannot_uninstall_403() {
 }
 
 #[tokio::test]
+// 此处的 guard 是进程全局的环境变量锁，测试全程必须持有，不能在 await 前释放，
+// 因此跨 await 持锁是预期行为，await_holding_lock 在此属于误报，故予以抑制。
+#[allow(clippy::await_holding_lock)]
 async fn install_empty_body_400() {
     let (app, _g) = app_for("install_empty_body_400");
     let (_id, cookie) = register_cookie(&app, "adminE", "pw123456").await;

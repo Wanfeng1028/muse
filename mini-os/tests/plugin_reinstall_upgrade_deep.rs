@@ -260,13 +260,10 @@ async fn list_plugins(router: &Router, cookie: &str) -> serde_json::Value {
 
 fn plugin_version_in_list(list: &serde_json::Value, id: &str) -> Option<String> {
     // 列表可能是裸数组，也可能包成 {"plugins":[...]}，两种都试。
-    let arr = if let Some(a) = list.as_array() {
-        a.clone()
-    } else if let Some(a) = list.get("plugins").and_then(|v| v.as_array()) {
-        a.clone()
-    } else {
-        return None;
-    };
+    let arr = list
+        .as_array()
+        .or_else(|| list.get("plugins").and_then(|v| v.as_array()))
+        .cloned()?;
     for item in arr {
         if item.get("id").and_then(|v| v.as_str()) == Some(id) {
             return item

@@ -3,7 +3,6 @@ use axum::body::Body;
 use axum::http::{header, Method, Request, StatusCode};
 use mini_os::auth::{hash_token, now_epoch_secs};
 use mini_os::{build_app, init_state};
-use rusqlite::params;
 use serde_json::json;
 use tower::ServiceExt;
 

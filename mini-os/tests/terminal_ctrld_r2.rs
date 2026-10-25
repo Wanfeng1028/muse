@@ -9,37 +9,6 @@ fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     TerminalManager::new(dir.to_string_lossy().into_owned(), max, idle)
 }
 
-fn read_until(m: &TerminalManager, uid: i64, sid: &str, needle: &str, timeout: Duration) -> String {
-    let start = Instant::now();
-    let mut acc: Vec<u8> = Vec::new();
-    let mut buf = [0u8; 4096];
-    while start.elapsed() < timeout {
-        match m.read_chunk(uid, sid, &mut buf) {
-            Ok(0) => {}
-            Ok(n) => {
-                acc.extend_from_slice(&buf[..n]);
-                if let Ok(s) = std::str::from_utf8(&acc) {
-                    if s.contains(needle) {
-                        return s.to_string();
-                    }
-                }
-            }
-            Err(e) => {
-                panic!(
-                    "read_chunk failed: {:?}, accumulated so far: {:?}",
-                    e,
-                    String::from_utf8_lossy(&acc)
-                );
-            }
-        }
-    }
-    panic!(
-        "timeout waiting for {:?}, accumulated so far: {:?}",
-        needle,
-        String::from_utf8_lossy(&acc)
-    );
-}
-
 // 测什么：在空行处写入 Ctrl+D（0x04，EOF），bash 收到 EOF 后应退出，
 // 随后 is_alive 必须在 15 秒内由 Ok(true) 翻转为 Ok(false)。
 // 为什么：Ctrl+D 是用户最常用的退出方式之一，is_alive 必须如实反映子进程

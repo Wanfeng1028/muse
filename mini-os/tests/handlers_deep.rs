@@ -8,7 +8,6 @@ use std::sync::Arc;
 
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
-use tower::ServiceExt;
 
 use axum::response::IntoResponse;
 use mini_os::handlers::{apps_registry, health, DownloadQuery, FsQuery, UploadQuery};

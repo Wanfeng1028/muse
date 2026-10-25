@@ -234,7 +234,7 @@ fn register_and_login_requests_use_camel_case_and_roundtrip() {
 
     let setup: SetupNeededResponse = serde_json::from_value(json!({ "needed": false }))
         .expect("SetupNeededResponse 反序列化失败");
-    assert_eq!(setup.needed, false);
+    assert!(!setup.needed);
     let setup_value = serde_json::to_value(&setup).expect("SetupNeededResponse 序列化失败");
     assert_eq!(setup_value["needed"], json!(false));
 }

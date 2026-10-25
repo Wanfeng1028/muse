@@ -44,17 +44,6 @@ fn settings_columns(conn: &Connection) -> Vec<String> {
     rows.map(|r| r.expect("column name")).collect()
 }
 
-/// 读取 users 表的列名集合。
-fn users_columns(conn: &Connection) -> Vec<String> {
-    let mut stmt = conn
-        .prepare("PRAGMA table_info(users)")
-        .expect("prepare table_info users");
-    let rows = stmt
-        .query_map([], |row| row.get::<_, String>(1))
-        .expect("query table_info users");
-    rows.map(|r| r.expect("column name")).collect()
-}
-
 /// 统计 schema_migrations 中某个版本的记录条数。
 fn migration_count(conn: &Connection, version: &str) -> i64 {
     conn.query_row(

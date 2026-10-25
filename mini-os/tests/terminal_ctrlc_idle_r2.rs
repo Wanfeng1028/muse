@@ -1,4 +1,4 @@
-use mini_os::terminal::{TermError, TerminalManager};
+use mini_os::terminal::TerminalManager;
 use std::path::PathBuf;
 use std::time::{Duration, Instant};
 

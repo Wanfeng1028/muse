@@ -15,9 +15,7 @@ use std::fs;
 use std::io::Write;
 use std::path::{Path, PathBuf};
 
-use mini_os::plugins::{
-    install_from_zip, list_installed, uninstall, PluginManifest, PluginRegistry,
-};
+use mini_os::plugins::{install_from_zip, list_installed};
 
 fn work_dir(tag: &str) -> PathBuf {
     let dir =

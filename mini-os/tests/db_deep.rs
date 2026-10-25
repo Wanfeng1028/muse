@@ -207,7 +207,7 @@ fn vfs_node_name_at_length_boundary_is_persisted() {
     let conn = db::open_db(&path).expect("打开数据库失败");
     db::seed(&conn).expect("seed 失败");
 
-    let long_name: String = std::iter::repeat('a').take(2000).collect();
+    let long_name: String = "a".repeat(2000);
     conn.execute(
         "INSERT INTO vfs_nodes (user_id, parent_id, name, kind, content) VALUES (1, NULL, ?1, 'file', '')",
         rusqlite::params![long_name],

@@ -1,3 +1,41 @@
+## [1.19.1] - 2026-10-26
+
+### 修复
+- `cargo clippy --offline --all-targets -- -D warnings` 全量清零（此前 CHANGELOG 挂账的
+  存量错误逐项清除，src 未动，全部改动只在 tests/）：未使用导入（terminal_ctrlc_idle_r2
+  的 TermError、plugin_rollback_deep4、handlers_deep 的 tower::ServiceExt、download_file_deep3
+  的 init_state_with、terminal_longline_r2 的 TermError、ws_handshake_deep2 的 Arc）；
+  `manual_str_repeat`（fs_traversal_deep2 两处、db_deep 一处、main_deep 一处 repeat_once）；
+  `bool_assert_comparison`（notes_crud_r2、lib_deep、models_deep）；`type_complexity`
+  （upload_boundary_deep3、upload_limits_deep2 各新增 `type Part<'a>` 别名）；
+  `question_mark`（plugin_reinstall_upgrade_deep 的 if-let-else 链改 `or_else` + `cloned()?`）；
+  `await_holding_lock`（plugin_api_boundary_deep 12 个测试各加 allow 并附误报原因注释：
+  app_for 返回的 guard 锁住进程全局环境变量，测试全程必须持有、不能在 await 前释放）；
+  死代码（terminal_ctrld_r2、terminal_read_edge_r2、terminal_quota_r2 三拷贝的 read_until
+  整段删除；plugin_install_test 的 write_basic_plugin、migrate_deep 的 users_columns、
+  share_expiry_test 的 read_bytes 与 multipart_body；auth_deep 的 allow(dead_code) 注释——
+  该文件用 `#[path]` 直编 src/auth.rs，公开项在测试模块里算私有，故不动 src/auth.rs）；
+  以及两处未使用变量改名（plugin_api_boundary_deep 的 userB/userD 两处 u2_cookie →
+  _u2_cookie）。删除跟进：quota_r2 的 Duration 导入改为只留 Instant（第 68 行仍在用），
+  read_edge_r2 的 Duration 与 Instant 删除后均无用故整行删，plugin_install_test 删除死函数
+  后 Path 导入改为只留 PathBuf。
+- 诚实记录：模型稿由 BotsRouter 大写 GLM-5.3-Flash（令牌 id=5，渠道 20，单路串行，
+  调用器为本轮现写最小新文件 relay-station/flash_call_n10.py、令牌经 SSH 现取不落盘，
+  按 data: 行解析 delta.content）产出；其中 plugin_api_boundary_deep 首通 reasoning-only
+  空响应、第二通只交元文本，拆成“改名两行”与“allow 注释”两通小稿后成功；
+  session_sliding_http_test 的 params 行模型调用连续 3 通 reasoning-only 空响应
+  （max_tokens 4000 两通、8000 一通）未获模型稿，编排按 handlers_deep 同款已授权模式
+  机械删除（文件内调用写的是全路径 rusqlite::params![...]）。同款机械复用另有：
+  db_deep 的 repeat（复用 fs_traversal 同款）、models_deep 的 bool（复用 notes_crud 同款）、
+  upload_limits_deep2 的 Part 别名（复用 upload_boundary 同款），以及死代码删除
+  （plugin_install_test、migrate_deep、share_expiry_test、ws_handshake_deep2、
+  terminal_longline_r2 均复用本轮已授权的删除模式）；download_file_deep3 一通中途遇
+  上游 500，调用器 90 秒后重试一次成功。另有一处编排失误已纠正：plugin_install_test
+  删除死函数时多删了 #[test] 与函数头一行，git diff 发现后原样恢复，最终 diff 干净。
+- 验收：clippy 全量 exit 0（仅 qrcode 依赖自身 4 条警告，不计入本包错误）；`cargo fmt
+  --all -- --check` 干净（fmt diff 均由本轮删除引入的空行/导入换行，已用 rustfmt 修掉）；
+  受影响 26 套件单跑 227/227 全绿；全量 `cargo test --offline` 775/775 全绿、0 失败。
+  版本跟进：Cargo.toml 1.19.0 -> 1.19.1，Cargo.lock 同步。
 
 ## [1.19.0] - 2026-10-26
 

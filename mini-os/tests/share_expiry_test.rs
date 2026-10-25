@@ -37,28 +37,6 @@ mod common {
         let bytes = to_bytes(resp.into_body(), usize::MAX).await.unwrap();
         serde_json::from_slice(&bytes).unwrap()
     }
-
-    pub async fn read_bytes(resp: axum::response::Response) -> Vec<u8> {
-        to_bytes(resp.into_body(), usize::MAX)
-            .await
-            .unwrap()
-            .to_vec()
-    }
-
-    pub fn multipart_body(boundary: &str, field: &str, filename: &str, data: &[u8]) -> Vec<u8> {
-        let mut body = Vec::new();
-        body.extend_from_slice(format!("--{boundary}\r\n").as_bytes());
-        body.extend_from_slice(
-            format!(
-                "Content-Disposition: form-data; name=\"{field}\"; filename=\"{filename}\"\r\n"
-            )
-            .as_bytes(),
-        );
-        body.extend_from_slice(b"Content-Type: application/octet-stream\r\n\r\n");
-        body.extend_from_slice(data);
-        body.extend_from_slice(format!("\r\n--{boundary}--\r\n").as_bytes());
-        body
-    }
 }
 
 use common::{read_json, register};

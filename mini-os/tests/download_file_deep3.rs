@@ -4,7 +4,7 @@ use serde_json::Value;
 use std::sync::Arc;
 use tower::ServiceExt;
 
-use mini_os::{build_app, init_state, init_state_with, AppState};
+use mini_os::{build_app, init_state, AppState};
 
 async fn register(app: &axum::Router, username: &str) -> String {
     let body = serde_json::json!({

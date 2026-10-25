@@ -1,10 +1,9 @@
 use std::fs;
 use std::io::Write;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 use mini_os::plugins::{
-    install_from_zip, list_installed, uninstall, PluginManifest, MAX_FILE_COUNT,
-    MAX_TOTAL_UNCOMPRESSED,
+    install_from_zip, list_installed, uninstall, MAX_FILE_COUNT, MAX_TOTAL_UNCOMPRESSED,
 };
 use zip::write::FileOptions;
 
@@ -42,19 +41,6 @@ fn manifest_json(id: &str, name: &str, version: &str, entry: &str) -> String {
         r#"{{"id":"{}","name":"{}","version":"{}","entry":"{}","description":"demo","icon":"x","permissions":["fs.read"]}}"#,
         id, name, version, entry
     )
-}
-
-fn write_basic_plugin(data_dir: &Path) -> PathBuf {
-    let zip = make_zip(&[
-        (
-            "plugin.json",
-            manifest_json("hello", "Hello", "1.0.0", "main.js").as_bytes(),
-        ),
-        ("main.js", b"console.log('hi');"),
-    ]);
-    let p = data_dir.join("hello.zip");
-    fs::write(&p, &zip).unwrap();
-    p
 }
 
 #[test]

@@ -14,9 +14,7 @@
 use std::sync::Arc;
 
 // 从 lib crate 顶层引入（lib.rs 中 pub mod 与 pub fn 均为 crate 根路径）
-use mini_os::ratelimit::{
-    LoginLimitConfig, RateLimiter, ShareReadKey, ShareReadLimitConfig, ShareReadLimiter,
-};
+use mini_os::ratelimit::{LoginLimitConfig, RateLimiter, ShareReadKey};
 use mini_os::rbac::{Permission, Role};
 use mini_os::{init_state, init_state_with, init_state_with_full, AppState};
 
@@ -74,7 +72,7 @@ fn init_state_with_full_sets_every_field_from_arguments() {
     assert_eq!(state.static_dir, static_dir);
     assert_eq!(state.max_upload_bytes, 1234567);
     assert_eq!(state.session_ttl_secs, 7200);
-    assert_eq!(state.share_ratelimit_enabled, true);
+    assert!(state.share_ratelimit_enabled);
 
     // 数据库确实被打开并可执行一次真实查询
     let conn = state.db.lock().expect("db lock");

@@ -1,43 +1,12 @@
 use mini_os::terminal::{TermError, TerminalManager};
 use std::path::PathBuf;
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 fn mgr(data_suffix: &str, max: usize, idle: u64) -> TerminalManager {
     let dir = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .join("target")
         .join(format!("tmp-term-{}-{}", data_suffix, std::process::id()));
     TerminalManager::new(dir.to_string_lossy().into_owned(), max, idle)
-}
-
-fn read_until(m: &TerminalManager, uid: i64, sid: &str, needle: &str, timeout: Duration) -> String {
-    let start = Instant::now();
-    let mut acc: Vec<u8> = Vec::new();
-    let mut buf = [0u8; 4096];
-    while start.elapsed() < timeout {
-        match m.read_chunk(uid, sid, &mut buf) {
-            Ok(0) => {}
-            Ok(n) => {
-                acc.extend_from_slice(&buf[..n]);
-                if let Ok(s) = std::str::from_utf8(&acc) {
-                    if s.contains(needle) {
-                        return s.to_string();
-                    }
-                }
-            }
-            Err(e) => {
-                panic!(
-                    "read_chunk failed: {:?}, accumulated so far: {:?}",
-                    e,
-                    String::from_utf8_lossy(&acc)
-                );
-            }
-        }
-    }
-    panic!(
-        "timeout waiting for {:?}, accumulated so far: {:?}",
-        needle,
-        String::from_utf8_lossy(&acc)
-    );
 }
 
 #[test]

@@ -75,7 +75,7 @@ fn now_rfc3339_millis_is_wellformed_and_monotonic() {
 
     // 形状检查：YYYY-MM-DDTHH:MM:SS(.mmm)?Z
     assert!(a.ends_with('Z'), "now() 必须以 Z 结尾，实际 = {a}");
-    assert_eq!(a.len() >= 20, true, "now() 太短，实际 = {a}");
+    assert!(a.len() >= 20, "now() 太短，实际 = {a}");
     assert_eq!(&a[4..5], "-");
     assert_eq!(&a[7..8], "-");
     assert_eq!(&a[10..11], "T");

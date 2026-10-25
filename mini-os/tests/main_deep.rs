@@ -426,7 +426,7 @@ fn rbac_and_username_validation_error_propagation() {
     let bad = auth::validate_username("bad name");
     assert!(bad.is_err());
 
-    let too_short = "a".repeat(1);
+    let too_short = "a".to_string();
     assert!(too_short.chars().count() < 8);
     let long_ok = "correcthorse".chars().count();
     assert!(long_ok >= 8);

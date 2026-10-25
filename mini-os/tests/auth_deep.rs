@@ -3,6 +3,8 @@
 //! 说明：本文件通过 `#[path]` 直接编译 src/auth.rs 以访问被测函数。
 //! 不依赖外部 crate 之外的测试框架。
 
+// 测试模块直接编译源码，库公开项在此不算公开 API，故对整个 auth 模块允许 dead_code。
+#[allow(dead_code)]
 #[path = "../src/auth.rs"]
 mod auth;
 
@@ -131,7 +133,7 @@ fn extract_session_token_parses_cookie_header_strictly() {
     // arrange
     let name = SESSION_COOKIE;
     let header = format!("foo=bar; {}=abc123 ; baz=qux", name);
-    let no_match = format!("other=1; another=2");
+    let no_match = "other=1; another=2".to_string();
     let empty_value = format!("{}=", name);
     let whitespace_only = format!("{}=   ", name);
 
