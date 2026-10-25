@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：Agent 机队页设计层 v1）
+- 新增 static/agents-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；agents.html 在 head 内联 style 块之后引用 1 行）：视觉逻辑“机队台账”——页头 20px/700、副标题 13px 次文字、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、徽标 12px/600、通道切换钮 12px/600 8px 圆角、提示 12px 次文字、元数据键 12px/600 次文字、值 13px、模板摘要 13px/600、模板全文等宽 12px surface-2 底 8px 圆角；token 全部取自 app.css/harness.css。
+- 模型稿 18 条规则原文入仓，编排修正 2 处：页头规则选择器由 .page-title 改为 .page-head .page-title（harness.css 的 .page-head h1 特异度更高，原规则字重会被压回 600，实测后修正）；模板全文 font-family 改用 --mono token。括号 18/18 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
+- 验收：新增 AgentsDesignV1Test 3 例 + 旧设计层 6 页合跑 21/21 全绿，Maven 离线 BUILD SUCCESS；真实服务（18090 端口，复制 H2 库，开放模式）+ 真实 Agent 数据截图亲眼核对：/api/agents 实查 7 条（编剧/分镜/视频生成/剪辑/质检/作词/作曲）与截图卡片逐项对上，通道当前 Mock 与 /api/agents/channels 对上；计算样式实证页头 20/700、Agent 卡 10px 圆角纯白底、与无设计层基线（页头 20/600、卡 8px 圆角 surface-2 底）对比确认本层生效；截图存 docs/screenshots/agents-design-v1.png。验收后服务按 PID 停干净、复制库已删。
+- 已知保留：本层不改布局；页内文案“管理 5 个专用 Agent”与实际 7 条 Agent 数据不一致，属既有文案未同步（本层只管样式，未改文案）；截图 harness 下 1 条 document.write console 报错在无设计层基线截图里同样出现，属 harness 产物、非本层回归；体外 style 块（弹窗/预设卡）选择器本层未碰，引用行放在 head 内联块之后即可；本轮未动 second-brain、new-api-src、botstalk、sentinel、docseek eval 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：Skill 市场页设计层 v1）
 - 新增 static/skills-design-v1.css（只覆盖，不改 app.css 与任何 JS；skills.html 在 app.css 之后引用 1 行，本页不引用 harness.css）：视觉逻辑“技能台账”——页头 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、表单标签 12px/600 次文字、输入框 13px 8px 圆角、标签钮 12px/600 8px 圆角、市场卡片名 15px/700、徽标 12px/600、已安装名 14px/600、空态 13px 次文字；token 全部取自 app.css。
 - 模型稿 16 条规则原文入仓，编排修正 1 处：标签钮模型稿写死 surface-2 底与次文字色，会把激活态主按钮也洗成灰色，改回只留字号/字重/圆角，激活态颜色沿用原按钮样式。其余 15 条为模型原文，括号 16/16 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。

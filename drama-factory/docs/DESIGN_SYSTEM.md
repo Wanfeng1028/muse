@@ -134,3 +134,8 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 截图：docs/screenshots/skills-design-v1.png（真实服务 + 真实技能数据）。
 - 已知保留：本层不改布局；已安装行底线颜色由 JS 行内 !important 写死，本层不硬压。
 
+## 19. Agent 机队页设计层 v1（2026-10-25，Flash 路）
+- 文件：static/agents-design-v1.css，只覆盖，agents.html 在 head 内联 style 块之后引用（本页不改 app.css/harness.css 与任何 JS）。
+- 视觉逻辑：机队台账（页头是台账眉、通道卡是台账案头、供应商区是台账名录、Agent 卡是台账格、元数据行是台账明细、模板全文是台账附录；页头 20px/700、卡片标题 16px/700、徽标 12px/600、元数据键 12px/600、值 13px、卡片 10px 圆角零阴影）。
+- 截图：docs/screenshots/agents-design-v1.png（真实服务 + 真实 Agent 数据）。
+- 已知保留：本层不改布局；页内“管理 5 个专用 Agent”文案与实际 7 条数据不一致属既有文案问题，本层未动。
