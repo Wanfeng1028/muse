@@ -145,3 +145,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：工具台账（页头是台账眉、工具卡是台账格、表单是台账录入行、操作记录表是台账明细、状态戳是台账戳；页头 20px/700、卡片标题 16px/700、表单标签 12px/600、输入框 13px 8px 圆角、表头 12px/600、单元格 13px、卡片 10px 圆角零阴影）。
 - 截图：docs/screenshots/tools-design-v1.png（真实服务 + 真实项目数据，资产与操作记录为真实空态）。
 - 已知保留：本层不改布局；状态戳绿/红两档因空记录未在截图里出现。
+
+## 21. 设置中心页设计层 v1（2026-10-25，Flash 路）
+- 文件：static/settings-design-v1.css，只覆盖，settings.html 在 harness.css 之后引用（不改 app.css/harness.css 与任何 JS）。
+- 视觉逻辑：配置台账（页头是台账眉、配置卡是台账格、表单行是台账录入行、开关文字是台账注脚；页头 20px/700、副标题 13px 次文字、卡片标题 16px/700、徽标 12px/600、主按钮 13px/600 8px 圆角、表单行上下 16px 发丝底线、表单标签 12px/600 次文字、输入框与下拉 13px 8px 圆角、卡片 10px 圆角零阴影）。
+- 截图：docs/screenshots/settings-design-v1.png（真实服务 + 真实配置数据）。
+- 已知保留：本层不改布局；模型稿 7 处把 --hairline（颜色 token）误当边框宽度写进简写，编排统一修正为 1px solid（颜色沿用模型稿的 --border-soft/--red）；重试按钮 #settings-retry 未入本层，沿用原次按钮样式。
