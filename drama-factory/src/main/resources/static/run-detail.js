@@ -369,7 +369,7 @@
         });
         html += '</div>';
       } else {
-        html += '<div class="dim" style="font-size:13px">' + esc(_t('rund.noShots', '暂无分镜')) + '</div>';
+        html += '<div class="dim rund-empty-text">' + esc(_t('rund.noShots', '暂无分镜')) + '</div>';
       }
 
       var videos = ep.videos || [];
@@ -377,7 +377,7 @@
         html += '<div class="sub">' + esc(_t('rund.videosCount', '视频（')) + videos.length + esc(_t('rund.closeParen', '）')) + '</div><div class="video-grid">';
         videos.forEach(function (v) {
           html += '<div class="video-item">' +
-            (v.url ? '<video src="' + esc(v.url) + '" controls preload="metadata"></video>' : '<div class="dim" style="padding:24px;text-align:center">' + esc(_t('rund.noPreview', '无预览')) + '</div>') +
+            (v.url ? '<video src="' + esc(v.url) + '" controls preload="metadata"></video>' : '<div class="dim rund-no-preview">' + esc(_t('rund.noPreview', '无预览')) + '</div>') +
             '<div class="video-meta">' +
               '<div class="l"><span>' + esc(v.provider || '') + (v.modelUsed ? ' · ' + esc(v.modelUsed) : '') + '</span>' + badge(v.status, v.statusLabel) + '</div>' +
               '<div class="l"><span>' + esc(_t('rund.costLabel', '费用 ')) + esc(fmtMoney(v.costCents)) + '</span>' +
@@ -392,7 +392,7 @@
         html += '<div class="sub">' + esc(_t('rund.finalCutsCount', '成片（')) + cuts.length + esc(_t('rund.closeParen', '）')) + '</div><div class="video-grid">';
         cuts.forEach(function (c) {
           html += '<div class="video-item">' +
-            (c.url ? '<video src="' + esc(c.url) + '" controls preload="metadata"></video>' : '<div class="dim" style="padding:24px;text-align:center">' + esc(_t('rund.noPreview', '无预览')) + '</div>') +
+            (c.url ? '<video src="' + esc(c.url) + '" controls preload="metadata"></video>' : '<div class="dim rund-no-preview">' + esc(_t('rund.noPreview', '无预览')) + '</div>') +
             '<div class="video-meta">' +
               '<div class="l"><span>' + esc(c.filePath || '') + '</span>' + badge(c.status, c.status) + '</div>' +
               '<div class="l"><span>' + esc(_t('rund.qcPrefix', 'QC ')) + esc(c.qcStatus || '—') + '</span><span>' + esc(c.durationSeconds == null ? '—' : c.durationSeconds + esc(_t('rund.seconds', ' 秒'))) + '</span></div>' +
