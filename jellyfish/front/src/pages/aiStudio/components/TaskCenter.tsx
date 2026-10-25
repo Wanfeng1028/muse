@@ -351,7 +351,7 @@ export function TaskCenter() {
           <Card
             title="任务中心"
             size="small"
-            className="shadow-lg"
+            className="task-center-panel"
             extra={
               <Button size="small" type="text" onClick={() => setOpen(false)}>
                 收起
@@ -513,7 +513,7 @@ export function TaskCenter() {
           onPointerMove={handleButtonPointerMove}
           onPointerUp={handleButtonPointerUp}
           onPointerCancel={handleButtonPointerUp}
-          className="shadow-lg pointer-events-auto touch-none select-none"
+          className="pointer-events-auto touch-none select-none"
         >
           <span className="inline-flex items-center gap-1">
             <span>{open ? '收起任务' : '任务中心'}</span>
