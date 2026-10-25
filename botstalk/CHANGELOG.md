@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 9 轮（配对码入驻，后端 + 设备侧兑码客户端）
+### 新增
+- 配对码入驻（抄清单 9 第一期）：网关 gateway/src/pairing.ts（XXXX-XXXX 码生成/归一化/哈希/TTL 钳制）+ pairing_codes 表与 issue/get/redeem 存取；POST /api/rooms/:room/pairing-codes（房主/管理员签发，默认 10 分钟、钳制 1–60 分钟，码只在响应返回一次、库里只存哈希）与 POST /api/pairing-codes/redeem（格式非法 400、未知码 404、已兑 409、过期 410；兑码成功即入房成员）；byo-bridge 新增 pairing.ts 兑码客户端（PairingError 原样透传服务端错误码）。
+### 验收
+- 网关新测 pairing.test.ts 19/19、byo-bridge 新测 pairing.test.ts 5/5、网关与 byo-bridge tsc 全洁；真实网关冒烟 scripts/smoke-pairing.mjs 9/9（SMOKE_PAIRING_PASS）；验收修冒烟脚本真 bug 1 个（process.exit 跳过 finally 致网关孤儿，改为 exit 前显式清理）。
+- 已知保留：码为房间级单次码，设备信任二期（稳定 device key、多工作区配对表、连接令牌签发）未做；REST requester 仍自报身份无鉴权；Web 发码/兑码 UI 未做；只读分享链接（抄清单 12）未做。详见 docs/OPENAGENTS_ROUND9.md。
+
 ## Unreleased - Web 聊天室 AirBuild 版（前端，布局与风格照 AirBuild，模块与角色用自己的）
 ### 新增
 - 新增 `web/src/design-airbuild.css` 覆盖层（原 `styles.css`、`design-v1.css`、`design-v2.css` 不动，`main.tsx` 在三者之后引用本层）：布局照 AirBuild——中间聊天列、右侧成员列、底部模块条；风格为浅底卡片聊天室风（底色 #f6f6f7、白色卡片、1px #e8e8ec 边线、12px 圆角、扁平无渐变无阴影），不再用“值班室台账”风作该聊天室主风格。内容来源：BotsRouter 大写 GLM-5.3，6 通各 3 条规则；编排时按真实布局过滤，剔掉 .chat 圆角、.chat-body 内边距与滚动、.msg-self 的 margin-left:auto、.member-dot 的实色背景（会让离线也变绿）。

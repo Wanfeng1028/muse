@@ -5,7 +5,8 @@ import type { ServerResponse } from "node:http";
 import { WebSocketServer } from "ws";
 import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom, canClearOrKick, canManageRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
-import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, getPermRole, setPermRole, isPermRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
+import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, getPermRole, setPermRole, isPermRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession, issuePairingCode, getPairingCode, redeemPairingCode } from "./db.js";
+import { generatePairingCode, normalizePairingCode, hashPairingCode, clampPairingTtlMinutes } from "./pairing.js";
 
 // 房主恒为 admin，其余情况查成员权限列
 function managePerm(db: Db, roomOwner: string | null, roomId: string, requester: string): string | undefined {
@@ -969,6 +970,89 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       const member = listRoomMembers(db, roomId).find((m) => m.adapter_id === adapterId);
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ member }));
+      return;
+    }
+
+    // POST /api/rooms/:room/pairing-codes  body: { requester?, ttl_minutes? } —— 房主/管理员签发一次性配对码，码只在本次响应返回，库里只存哈希
+    const pairingIssueMatch = url.match(/^\/api\/rooms\/([^/?]+)\/pairing-codes(?:\?|$)/);
+    if (pairingIssueMatch && method === "POST") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(pairingIssueMatch[1]);
+      const room = getRoom(db, roomId);
+      if (!room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      const body = (await readJsonBody(req)) as { requester?: unknown; ttl_minutes?: unknown } | undefined;
+      const requester = typeof body?.requester === "string" ? body.requester : "";
+      const isOwner = requester !== "" && requester === room.owner;
+      if (!canManageRoom(room.type, isOwner, managePerm(db, room.owner, roomId, requester))) {
+        res.writeHead(403, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+        return;
+      }
+      const code = generatePairingCode();
+      const normalized = normalizePairingCode(code);
+      if (!normalized) {
+        res.writeHead(500, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "pairing code generation failed" }));
+        return;
+      }
+      const nowMs = Date.now();
+      const ttlMinutes = clampPairingTtlMinutes(body?.ttl_minutes);
+      const expiresAtMs = nowMs + ttlMinutes * 60000;
+      issuePairingCode(db, { codeHash: hashPairingCode(normalized), room: roomId, createdAtMs: nowMs, expiresAtMs });
+      res.writeHead(201, { "content-type": "application/json" });
+      res.end(JSON.stringify({ code, room: roomId, expires_at_ms: expiresAtMs }));
+      return;
+    }
+
+    // POST /api/pairing-codes/redeem  body: { code, adapter_id } —— 设备凭配对码入驻：兑码成功即成为该房成员
+    const pairingRedeemMatch = url.match(/^\/api\/pairing-codes\/redeem(?:\?|$)/);
+    if (pairingRedeemMatch && method === "POST") {
+      res.setHeader("access-control-allow-origin", "*");
+      const body = (await readJsonBody(req)) as { code?: unknown; adapter_id?: unknown } | undefined;
+      const adapterId = typeof body?.adapter_id === "string" ? body.adapter_id : "";
+      if (!adapterId) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "adapter_id required" }));
+        return;
+      }
+      const normalized = normalizePairingCode(body?.code);
+      if (!normalized) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "INVALID_PAIRING_CODE" }));
+        return;
+      }
+      const row = getPairingCode(db, hashPairingCode(normalized));
+      if (!row) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "PAIRING_CODE_NOT_FOUND" }));
+        return;
+      }
+      const nowMs = Date.now();
+      if (row.redeemed_at_ms !== null) {
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "PAIRING_CODE_USED" }));
+        return;
+      }
+      if (nowMs > row.expires_at_ms) {
+        res.writeHead(410, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "PAIRING_CODE_EXPIRED" }));
+        return;
+      }
+      const result = redeemPairingCode(db, hashPairingCode(normalized), adapterId, nowMs);
+      if (result !== "ok") {
+        res.writeHead(409, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "PAIRING_CODE_USED" }));
+        return;
+      }
+      if (!listRoomMembers(db, row.room).some((m) => m.adapter_id === adapterId)) {
+        addRoomMember(db, row.room, adapterId, null);
+      }
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ room: row.room, adapter_id: adapterId, redeemed_at_ms: nowMs }));
       return;
     }
 

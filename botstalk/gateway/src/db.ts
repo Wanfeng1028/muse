@@ -130,9 +130,65 @@ export function openDb(dataDir: string): DatabaseSync {
     );
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_game_sessions_room ON game_sessions(room_id);");
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pairing_codes (
+      code_hash TEXT PRIMARY KEY,
+      room TEXT NOT NULL,
+      created_at_ms INTEGER NOT NULL,
+      expires_at_ms INTEGER NOT NULL,
+      redeemed_at_ms INTEGER,
+      redeemed_adapter_id TEXT
+    );
+  `);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_pairing_codes_room ON pairing_codes(room);");
   ensureScheduledTaskTable(db);
   ensureTriggerRuleTable(db);
   return db;
+}
+
+export interface PairingCodeRow {
+  code_hash: string;
+  room: string;
+  created_at_ms: number;
+  expires_at_ms: number;
+  redeemed_at_ms: number | null;
+  redeemed_adapter_id: string | null;
+}
+
+export function issuePairingCode(
+  db: Db,
+  row: { codeHash: string; room: string; createdAtMs: number; expiresAtMs: number },
+): void {
+  const stmt = db.prepare(
+    "INSERT INTO pairing_codes (code_hash, room, created_at_ms, expires_at_ms, redeemed_at_ms, redeemed_adapter_id) VALUES (?, ?, ?, ?, NULL, NULL)",
+  );
+  stmt.run(row.codeHash, row.room, row.createdAtMs, row.expiresAtMs);
+}
+
+export function getPairingCode(db: Db, codeHash: string): PairingCodeRow | undefined {
+  const stmt = db.prepare(
+    "SELECT code_hash, room, created_at_ms, expires_at_ms, redeemed_at_ms, redeemed_adapter_id FROM pairing_codes WHERE code_hash = ?",
+  );
+  return stmt.get(codeHash) as unknown as PairingCodeRow | undefined;
+}
+
+export type RedeemPairingResult = "ok" | "not_found" | "expired" | "already";
+
+export function redeemPairingCode(
+  db: Db,
+  codeHash: string,
+  adapterId: string,
+  nowMs: number,
+): RedeemPairingResult {
+  const row = getPairingCode(db, codeHash);
+  if (!row) return "not_found";
+  if (row.redeemed_at_ms !== null) return "already";
+  if (nowMs > row.expires_at_ms) return "expired";
+  const stmt = db.prepare(
+    "UPDATE pairing_codes SET redeemed_at_ms = ?, redeemed_adapter_id = ? WHERE code_hash = ? AND redeemed_at_ms IS NULL",
+  );
+  const info = stmt.run(nowMs, adapterId, codeHash);
+  return Number(info.changes) === 1 ? "ok" : "already";
 }
 
 export function getGatewayState(db: Db, key: string): string | undefined {
