@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：AI 对话页设计层 v1）
+- 新增 static/chat-design-v1.css（10 条规则，只覆盖，不改 app.css 与任何 JS；chat.html 在 app.css 之后引用 1 行）：视觉逻辑“对话台账”——页头 h1 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、表单标签 12px/600 次文字、下拉框 14px 8px 圆角、对话区 surface-2 底发丝边 8px 圆角、快捷提问 13px/600、费用提示 12px 弱文字、提示框 surface 底发丝边 10px 圆角；token 全部取自 app.css（本页不引 harness.css/auth.css）。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器为本轮现写最小新文件 relay-station/flash_call_n3.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24831 / completion 3314 / total 28145，reasoning_tokens 0，无 429，正文即入仓的 10 条规则，零编排修正。括号 10/10 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid var(--border) 或 1px solid var(--border-soft) 完整形式。插曲：首通令牌 SSH 取数报 host key 校验失败（子 agent 以 root 身份跑、ssh 默认读 /root/.ssh/known_hosts 的过期条目），显式指定 UserKnownHostsFile=/home/hatch/.ssh/known_hosts 后恢复。
+- 验收：新增 ChatDesignV1Test 3 例全绿，设计层合跑 71/71 全绿，Maven 离线 BUILD SUCCESS；隔离构建（源码拷到 relay-station 单独打包，避开他路在跑的仓库 target/）+ 复制 H2 库起真实服务（18201 端口，开放模式，启动 281 秒）实测：chat.html 与 chat-design-v1.css 均 200， served 页内引用与层文件内容对上；内联截图 + 计算样式亲眼核对：页头 20/700、卡片白底 1px 边 10px 圆角零阴影、标签 12/600 #555、下拉 14px 8px 圆角、对话区 #f4f4f5 底 1px 边 8px 圆角、快捷提问 13/600、费用提示 12px #999、提示框白底 1px 边 10px 圆角；截图存 docs/screenshots/chat-design-v1.png（下拉与对话区为空是无 JS 数据的真实空态；内联截图 1 条 favicon file:// 报错是 harness 剥离脚本所致，真页可正常加载 favicon）。验收后服务按真实 java PID 停干净、端口已关、隔离构建与复制库已删。
+- 已知保留：本层不改布局；输入区定位与发送钮沿用 app.css 原样式，本层不重复覆盖；对话区原有最小/最大高度逻辑不动。
+
 ### Added（5.3 路 2026-10-26：成片库页设计层 v2）
 - 新增 static/finals-design-v2.css（13 条规则，只覆盖，不改 app.css/harness.css 与 v1 文件；finals.html 在 v1 之后引用 1 行）：关闭 v1 已知保留“成片卡片本体沿用原样式”——卡片本体本是 finals.js 内联样式，覆盖层压不住，故本轮把卡片内联样式原样平移到 v2（数值逐字照搬，不 redesign、不改布局）：卡片 880px 宽弹性纵列、首末边线改由兄弟选择器与 :last-child 表达（与旧 idx 逻辑逐项等价：单张仅下边线、多张中间张有上边线、末张加下边线）、海报盒 400px 16/9 10px 圆角、正文区弹性列、标题 18px/600、元信息 13px 次文字、分隔点弱文字、说明 13px 次文字、操作行 16px 间距、操作控件 15px、播放视频黑底；JS 侧同步机械迁移（cssText 全部删除、改挂 final-poster/final-body/final-title/final-meta/final-sep/final-note/final-actions 类，卡片 article 与海报图、视频沿用结构选择器，btn-quiet 类保留），行为与渲染数值不变。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器沿用本轮现写最小新文件 relay-station/glm53_r17_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）5 通输出：API prompt 合计 120241 / completion 合计 1102 / total 121343，reasoning_tokens 0，正文即入仓的 13 条规则，零编排修正。括号 13/13 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji；两处十六进制色（海报盒 #211d1b、视频 #000）为旧内联原值逐字保留，非新选色，已如实注明。JS 迁移与测试文件由编排机械落仓（非模型稿）。
