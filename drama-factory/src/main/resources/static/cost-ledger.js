@@ -287,7 +287,7 @@
           '<div class="mb-2">' +
             '<div class="d-flex justify-content-between align-items-center mb-1">' +
               '<span class="text-truncate">' + esc(provider) + '</span>' +
-              '<span style="font-variant-numeric: tabular-nums;">' + esc(fmtMoney(spentUsd)) + '</span>' +
+              '<span class="cl-num">' + esc(fmtMoney(spentUsd)) + '</span>' +
             '</div>' +
             '<div class="progress progress-sm">' +
               '<div class="progress-bar bg-blue" style="width: ' + width + '%"></div>' +
@@ -335,13 +335,13 @@
         const actualText = (act === null || act === undefined) ? '—' : fmtMoney(act);
         parts.push(
           '<tr>' +
-            '<td style="font-variant-numeric: tabular-nums;">' + esc(fmtDateTime(row.createdAt)) + '</td>' +
+            '<td class="cl-num">' + esc(fmtDateTime(row.createdAt)) + '</td>' +
             '<td>' + esc(provider) + '</td>' +
             '<td>' + esc(model) + '</td>' +
             '<td>' + esc(operation) + '</td>' +
             '<td>' + statusBadge(row.status) + '</td>' +
-            '<td style="font-variant-numeric: tabular-nums;">' + esc(fmtMoney(est)) + '</td>' +
-            '<td style="font-variant-numeric: tabular-nums;">' + esc(actualText) + '</td>' +
+            '<td class="cl-num">' + esc(fmtMoney(est)) + '</td>' +
+            '<td class="cl-num">' + esc(actualText) + '</td>' +
           '</tr>'
         );
       }

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：成本账本页设计层 v2）
+- 新增 static/cost-ledger-design-v2.css（模型稿 1 条规则原文入仓，cost-ledger.html 在 v1 之后引用 1 行）：关闭上一位留下的 v2 候选——cost-ledger.js 里 4 处行内 style="font-variant-numeric: tabular-nums;"（供应商明细金额 span、最近明细表时间/预估/实际 3 个 td）改由 CSS 接管。JS 机械迁移（编排落仓，非模型稿）：4 处统一挂 cl-num 类、删行内样式；动态进度条宽度（数据驱动）仍留行内；页内 inline style 块的 .kpi-value 等宽规则与本层无关，不碰。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r21_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：API prompt 23902 / completion 76 / total 23978，reasoning_tokens 0，正文即入仓 1 条规则，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制颜色字面量，选择器 .cl-num 为本轮新增、无冲突。
+- 验收：新增 CostLedgerDesignV2Test 4 例全绿，设计层合跑 97/97 全绿（隔离构建；含他路未提交的 skills v3 测试 3 例，本轮不提交他路文件），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18205 端口，复制 H2 库，开放模式，启动约 50 秒）实测：cost-ledger.html 与 cost-ledger-design-v2.css 均 200、served 内容与文件对上；/api/cost-ledger/entries 真实 1 条（2026-10-20 mock video-generate 已完成）与最近明细表对上；计算样式实证 3 个 td.cl-num 全部 font-variant-numeric=tabular-nums；供应商明细今日真实空态（“今天还没有供应商产生花费”，库内无今日行），同规则以注入节点实测 tabular-nums、注入后即删、截图仍为真实空态；视口截图亲眼核对布局撑满、无错位重叠、零 console 错误；另有 1 条 pageerror（setContent 下 document.write SyntaxError，与音乐页同款 harness 环境 artifact，内联脚本中无 document.write 调用，不影响内容与样式）。截图存 docs/screenshots/cost-ledger-design-v2.png。验收后服务按真实 java PID 24422 停干净、18205 端口已关、隔离构建与复制库已删。
+
 ### Added（5.3 路 2026-10-26：任务队列页设计层 v2）
 - 新增 static/tasks-design-v2.css（模型稿 12 条规则原文入仓，分 4 通、每通 3 条规则，tasks.html 在 v1 之后引用 1 行）：关闭 v1 已知保留——任务行底线、任务名与元数据字号颜色、进度条宽高、百分比字号颜色改由 CSS 接管，不再由行内样式写死。JS 机械迁移（编排落仓，非模型稿）：任务行渲染的行内 style 赋值全部改挂 task-row/task-top/task-left/task-status/task-name/task-progress-wrap/task-progress/task-pct/task-link/task-retry/task-meta/task-error 类；动态进度条宽度（数据驱动）与显隐切换仍留行内；v1 已有的进度条底色与圆角不重复写；百分比等宽字体由原字体栈改用 var(--mono) token；错误行颜色 var(--danger, #b0453f) 为原值逐字保留。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r19_20261026_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）4 通产出：API prompt 合计 96250 / completion 合计 476 / total 96726，reasoning_tokens 0，正文即入仓 12 条规则，零编排修正。括号 12/12 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，选择器均以 #taskGrid 开头且真实存在于本页 DOM。

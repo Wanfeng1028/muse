@@ -230,3 +230,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：配置台账续篇——关闭 v1 已知保留的重试钮缺口（重试钮与保存钮同口径：13px/600、8px 圆角、8px 16px 内边距、1.4 行高；surface 底、1px 发丝边、主文字色；hover/focus/active 沿用 app.css 次按钮原样式）。
 - 截图：docs/screenshots/settings-design-v2.png（内联截图核计算样式 + 隔离构建真实服务验 200；harness 侧取消 error 容器隐藏以便实测，页面代码一字未动）。
 - 已知保留：本层不改布局；重试钮 hover/focus/active 沿用 app.css 次按钮原样式。
+
+## 32. 成本账本页设计层 v2（2026-10-26，5.3 路）
+- 文件：static/cost-ledger-design-v2.css（1 条规则，只覆盖，cost-ledger.html 在 v1 之后引用 1 行；JS 机械迁移：供应商明细金额 span 与最近明细表时间/预估/实际 td 统一挂 cl-num 类、删行内样式；动态进度条宽度仍留行内；不改 app.css 与布局）。
+- 视觉逻辑：账本台账续篇——数字列全部等宽对齐，金额与时间在纵向上一眼可比。
+- 截图：docs/screenshots/cost-ledger-design-v2.png（隔离构建真实服务 18205 端口 + 复制库真实数据：最近明细 1 条、供应商今日真实空态；视口截图；td 计算样式实证 tabular-nums）。
+- 已知保留：本层不改布局；页内 inline style 块的 .kpi-value 等宽规则与本层无关，不碰。
