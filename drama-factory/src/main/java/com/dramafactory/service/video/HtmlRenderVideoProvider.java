@@ -1,10 +1,12 @@
 package com.dramafactory.service.video;
 
+import com.dramafactory.metrics.DramaMetrics;
 import com.dramafactory.model.Shot;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -65,6 +67,13 @@ public class HtmlRenderVideoProvider implements VideoProvider {
 
     private final CommandRunner commandRunner;
 
+    private DramaMetrics dramaMetrics;
+
+    @Autowired(required = false)
+    public void setDramaMetrics(DramaMetrics dramaMetrics) {
+        this.dramaMetrics = dramaMetrics;
+    }
+
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "htmlrender-render");
         t.setDaemon(true);
@@ -89,6 +98,11 @@ public class HtmlRenderVideoProvider implements VideoProvider {
         this.fps = 24;
         this.engineConfig = "chromium";
         this.hyperframesCli = "hyperframes";
+    }
+
+    HtmlRenderVideoProvider(CommandRunner commandRunner, DramaMetrics dramaMetrics) {
+        this(commandRunner);
+        this.dramaMetrics = dramaMetrics;
     }
 
     /**
@@ -247,18 +261,26 @@ public class HtmlRenderVideoProvider implements VideoProvider {
             return RenderEngine.CHROMIUM;
         }
         if ("hyperframes".equals(e)) {
+            long start = System.currentTimeMillis();
             try {
                 CommandRunner.ExecResult result = commandRunner.run(
                         List.of(hyperframesCli, "--version"),
                         Paths.get(System.getProperty("user.dir")),
                         15);
-                if (result.exitCode() == 0) {
+                boolean ok = result.exitCode() == 0;
+                if (dramaMetrics != null) {
+                    dramaMetrics.recordHyperFramesVersionCheck(System.currentTimeMillis() - start, ok);
+                }
+                if (ok) {
                     return RenderEngine.HYPERFRAMES;
                 }
                 log.warn("[htmlrender] hyperframes CLI 不可用（exit={}），降级为 chromium 引擎",
                         result.exitCode());
                 return RenderEngine.CHROMIUM;
             } catch (Exception ex) {
+                if (dramaMetrics != null) {
+                    dramaMetrics.recordHyperFramesVersionCheck(System.currentTimeMillis() - start, false);
+                }
                 log.warn("[htmlrender] hyperframes CLI 不可用（{}），降级为 chromium 引擎",
                         ex.getMessage() != null ? ex.getMessage() : ex.getClass().getSimpleName());
                 return RenderEngine.CHROMIUM;

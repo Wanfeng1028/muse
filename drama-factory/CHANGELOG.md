@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（深耕轮 2026-10-25 17:15：HyperFrames --version 自检指标，关闭 2026-10-25 13:07 已知限制）
+- DramaMetrics 新增 recordHyperFramesVersionCheck(long latencyMs, boolean ok)，暴露 Counter dramafactory_hyperframes_version_checks_total{result}（result=ok/error，与全站口径一致）与 Timer dramafactory_hyperframes_version_check_duration（负延迟截断为 0）
+- HtmlRenderVideoProvider 经 @Autowired(required=false) setter 注入 DramaMetrics（另增 CommandRunner+DramaMetrics 测试构造器），在 resolveEngine 的 hyperframes --version 成功/非零退出/异常三处各记一次，metrics 为 null 时不记不报错，降级行为不变
+- 新增 HtmlRenderVersionCheckMetricsTest 测试 5 例（直接记 ok/error 与负延迟截断、--version 成功记 ok、非零退出记 error、异常记 error、无 metrics 仍降级不抛 NPE）；关联旧类 HtmlRenderEngineSelectionTest 7 例、HyperFramesRenderMetricsTest 5 例全绿
+
 ### Added（深耕轮 2026-10-25 13:07：HyperFrames 渲染可观测性）
 - DramaMetrics 新增 recordHyperFramesRender(String template, long latencyMs, boolean ok)，暴露 Counter dramafactory_hyperframes_renders_total{template,result}（result=ok/error）与 Timer dramafactory_hyperframes_render_duration{template}
 - HyperFramesVideoProvider 经 @Autowired(required=false) setter 注入 DramaMetrics，于 runRender 结束时记一次，失败含非零退出码/无产物/异常三种情形，ok 按 failure==null 传

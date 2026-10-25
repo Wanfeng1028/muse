@@ -38,6 +38,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *   <li>dramafactory_finalcut_build_duration_seconds —— 成片构建耗时，单位：秒</li>
  *   <li>dramafactory_hyperframes_renders_total{template,result} —— HyperFrames 渲染总次数，单位：次</li>
  *   <li>dramafactory_hyperframes_render_duration_seconds{template} —— HyperFrames 渲染耗时，单位：秒</li>
+ *   <li>dramafactory_hyperframes_version_checks_total{result} —— HyperFrames --version 自检总次数，单位：次（与渲染失败分开记，2026-10-25 深耕轮补齐 2026-10-25 13:07 已知限制）</li>
+ *   <li>dramafactory_hyperframes_version_check_duration_seconds —— HyperFrames --version 自检耗时，单位：秒</li>
  *   <li>dramafactory_ffmpeg_retries_total{operation,kind,result} —— ffmpeg 单步重试次数，operation=concat/burn-subtitles/probe-duration/download-clip，kind=transient/permanent，result=ok/error，单位：次（v2.29 新增）</li>
  *   <li>dramafactory_video_poll_skipped_total —— 视频任务轮询因单飞保护被跳过的次数，单位：次（v2.29 新增）</li>
  * </ul>
@@ -141,6 +143,26 @@ public class DramaMetrics {
                 .increment();
         registry.timer("dramafactory_hyperframes_render_duration",
                 "template", safeTemplate)
+                .record(Duration.ofMillis(safeLatency));
+    }
+
+    /**
+     * 记录一次 HyperFrames --version 自检（HtmlRender 引擎探活）。
+     * <p>与渲染指标分开记：自检失败（非零退出码或异常）只说明 CLI 不可用、会降级为 chromium，
+     * 不等于一次渲染失败；此前自检失败只有 warn 日志、无单独指标，无法在 Prometheus 里
+     * 区分“CLI 缺失”和“渲染失败”。</p>
+     * <p>耗时单位毫秒（负值截断为 0），与 {@link #recordHyperFramesRender} 口径一致；
+     * result 标签取 ok/error（与全站一致，不用 success/failure）。</p>
+     *
+     * @param latencyMs 自检耗时（毫秒）
+     * @param ok 自检是否成功（退出码 0）
+     */
+    public void recordHyperFramesVersionCheck(long latencyMs, boolean ok) {
+        long safeLatency = Math.max(0L, latencyMs);
+        registry.counter("dramafactory_hyperframes_version_checks_total",
+                "result", ok ? "ok" : "error")
+                .increment();
+        registry.timer("dramafactory_hyperframes_version_check_duration")
                 .record(Duration.ofMillis(safeLatency));
     }
 
