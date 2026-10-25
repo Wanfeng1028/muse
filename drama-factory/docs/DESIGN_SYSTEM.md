@@ -248,3 +248,21 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：分镜台账续篇——对白换行保留、技能下拉宽度 200px、提示层级 1080 压住页面内容。
 - 截图：docs/screenshots/storyboard-design-v2.png（隔离构建真实服务 18207 端口 + 复制库真实数据：项目 3“验证用短剧”第 1 集 4 场、4 场全带对白；探针：对白 white-space=pre-wrap、skillSelect maxWidth=200px、toast zIndex=1080、console 0 错误；另有 1 条 pageerror，setContent 下 document.write SyntaxError，与音乐页、成本账本页同款 harness 环境 artifact，不影响内容与样式）。
 - 已知保留：本层不改布局；§34/§35 为 Flash 路预留（skills v3、run-detail v2 的文档补推归 Flash 路，本路不代写）；验收服务已停、18207 端口复查无监听、隔离构建与复制库已删。
+
+## 34. Skill 市场页设计层 v3（2026-10-26，Flash 路，文档补推）
+- 文件：static/skills-design-v3.css（模型稿 6 条声明原文入仓，skills.html 在 v2 之后引用 1 行；JS 机械迁移：详情弹窗模板 pre 改挂 skill-detail-pre 类、删行内 style 与 tabler p-2/border/rounded 类，边线改由本层全权接管，关闭 v2 已知保留）。
+- 视觉逻辑：详情弹窗模板块——padding 8px、1px solid 浅色边线、圆角 8px、pre-wrap、12px、等宽字体栈。
+- 截图：docs/screenshots/skills-design-v3.png（隔离构建真实服务 18205 端口 + 复制库真实数据；点开首张卡片详情弹窗实测 pre 计算样式与之一致，零 console 错误）。
+- 已知保留：本层不改布局；圆角由 tabler rounded 的 4px 变为本层惯例 8px（与弹窗内其他控件同口径），非回归。
+
+## 35. 运行详情页设计层 v2（2026-10-26，Flash 路，文档补推）
+- 文件：static/run-detail-design-v2.css（模型稿 2 条规则原文入仓，run-detail.html 在 v1 之后引用 1 行；JS 机械迁移：无分镜空行挂 rund-empty-text 类、视频与成片两处无预览盒挂 rund-no-preview 类、删行内样式，dim 类保留，关闭 v1 未覆盖的 3 处空态行内样式）。
+- 视觉逻辑：空态小字 13px、无预览盒 24px 居中。
+- 截图：docs/screenshots/rundetail-design-v2.png（隔离构建真实服务 18206 端口 + 复制库；空态片段内联截图 + 计算样式亲眼核对，零 console 错误）。
+- 已知保留：本层不改布局、dim 类保留。
+
+## 38. Agent 机队页 providers 行设计层 v2（2026-10-26，Flash 路）
+- 文件：static/agents-design-v2.css（模型稿 12 条规则原文入仓，agents.html 在 v1 之后引用 1 行；JS 机械迁移：providers.js 12 处行内样式改挂 pv-preset-row/pv-name/pv-head-actions/pv-meta/pv-model-add-row/pv-test-result/pv-model-row/pv-model-id/pv-model-name/pv-model-id-text/pv-model-actions/pv-test-fail 类，pv-test-result 的 hidden 属性保留；数据驱动 badge（entry[0]/entry[1] 拼背景与文字色）保留行内，不为其写规则）。
+- 视觉逻辑：供应商卡片行——模型行 flex、gap 10px、上下 8px、顶线 1px solid；模型名 13px/600、模型 id 12px 次文字色；元数据 12px、gap 12px、上边距 8px；操作区 margin-left:auto 右对齐；预设行 flex、gap 8px、上边距 4px。
+- 截图：docs/screenshots/agents-providers-v2.png（隔离构建真实服务 18207 端口 + 复制库；库内 providers 为空，注入 1 供应商 + 1 模型经真实 API 实测后即删，截图仍为真实态；计算样式与之一致；唯一 console 错误为 /api/agents 的 409，属既有 LYRICS 模板种子缺口，与本层无关）。
+- 已知保留：本层不改布局；数据驱动 badge 保留行内；§37 为 5.3 路对话页 v2 预留，本节顺延为 §38。
