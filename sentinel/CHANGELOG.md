@@ -3,6 +3,42 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.6] - 2026-10-26
+
+### 新增
+- internal/handlers/handlers.go 中的 `handleSMSLogAPI`（GET /api/sms/log）新增状态校验：当 `status` 参数非空且不等于 `sent`/`failed` 时返回 `400`，文案为“status 参数非法，只支持 sent/failed”。
+- internal/handlers/handlers.go 中的 `handleSMSLogAPI` 校验 `limit` 参数：存在但不是整数时返回 `400`，文案为“limit 参数非法”。
+- internal/handlers/handlers.go 中的 `handleSMSLogAPI` 校验 `offset` 参数：存在但不是整数时返回 `400`，文案为“offset 参数非法”。
+- internal/handlers/handlers.go 中的 `handleSMSLogAPI` 校验 `monitor_id` 参数：解析失败或解析为负数时均返回 `400`，文案为“无效的监控 ID”。
+
+### 修复
+- 修复短信日志接口与投递列表接口在状态校验、`limit` 和 `monitor_id` 校验上的口径不一致问题。短信接口现与 `handleListDeliveries` 保持一致，严格返回 `400` 错误。合同变更声明：原 `internal/handlers/handlers_deep2_test.go` 中的 `TestHandleSMSLogAPIInvalidParamsDeep3` 曾期望“非法 limit/offset 回退默认值 50/0”（例如 `limit=abc&offset=xyz` 返回 `200`）。v0.20.6 起该行为改为直接返回 `400`，对应测试已同步更新为断言 `400`。这属于有意的合同变更，而非回归。
+
+### 测试
+- 新增测试文件 `internal/handlers/sms_log_validation_test.go`，包含测试函数 `TestHandleSMSLogValidation`，共 9 个子用例（status=sent/failed/非法值、limit/offset 类型非法、limit=2、monitor_id=-1、无参）全部通过。
+- 全量测试套件执行 `go test ./...`，16 个包均通过，零失败。notify 包用时 239.8 秒，为现有最慢包。
+- `go vet` 检查通过，无问题。
+- 真实服务冒烟测试：监听端口 18471，种子创建 3 条短信记录（1 条 sent、2 条 failed）。验证矩阵如下：
+  * status=sent → 200，返回 1 条记录
+  * status=failed → 200，返回 2 条记录
+  * status=pending → 400
+  * status=SENT → 400
+  * limit=abc → 400
+  * offset=abc → 400
+  * monitor_id=-1 → 400
+  * limit=2 → 200，返回 2 条记录
+  * 无参查询 → 200，返回 total 为 3
+  * 无鉴权请求 → 401
+  * /sms-log 页面 → 200
+  * 冒烟二进制与隔离库已清理。
+- 无 UI 改动，故无新截图；无 schema 变更；无新环境变量。
+
+### 模型稿
+- 代码批与测试批均由 OpenRouter 免费 lane（cohere/north-mini-code:free）输出。
+- 代码批首版曾包含 `strings.TrimSpace` 等规格外改动，已机械剥离。
+- 测试批首版复用了旧文件已定义的 `smsLogResp` 类型名，后经机械改名统一为 `smsLogValidationResp`；同时在 sent 用例中给 `Logs[0]` 访问增加了长度守卫。
+- dpsk lane 本轮未探活；Zhipu lane 本轮因周限额于 05:07 轮触及 429，于 2026-10-30 01:14:56 重置。
+
 ## [0.20.5] - 2026-10-26
 
 ### 修复

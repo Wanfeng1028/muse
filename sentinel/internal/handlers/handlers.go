@@ -384,33 +384,51 @@ func (s *Server) handleSMSLogPage(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleSMSLogAPI(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	phone := q.Get("phone")
+
 	status := q.Get("status")
+	if status != "" {
+		if status != "sent" && status != "failed" {
+			writeErr(w, http.StatusBadRequest, "status 参数非法，只支持 sent/failed")
+			return
+		}
+	}
+
 	limit := 50
-	offset := 0
 	if v := q.Get("limit"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			limit = n
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, "limit 参数非法")
+			return
 		}
+		limit = n
 	}
+
+	offset := 0
 	if v := q.Get("offset"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			offset = n
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, "offset 参数非法")
+			return
 		}
+		offset = n
 	}
+
 	var monitorPtr *int64
 	if v := q.Get("monitor_id"); v != "" {
 		n, err := strconv.ParseInt(v, 10, 64)
-		if err != nil {
+		if err != nil || n < 0 {
 			writeErr(w, http.StatusBadRequest, "无效的监控 ID")
 			return
 		}
 		monitorPtr = &n
 	}
+
 	rows, total, err := s.store.ListSMSLogFiltered(phone, status, monitorPtr, limit, offset)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "读取短信记录失败"})
 		return
 	}
+
 	writeJSON(w, http.StatusOK, map[string]any{
 		"logs":   rows,
 		"total":  total,

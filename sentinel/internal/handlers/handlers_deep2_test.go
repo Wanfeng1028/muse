@@ -500,19 +500,14 @@ func TestHandleSMSLogAPIPaginationDeep3(t *testing.T) {
 	}
 }
 
-// TestHandleSMSLogAPIInvalidParamsDeep3 覆盖非法 limit/offset 回退默认值。
+// TestHandleSMSLogAPIInvalidParamsDeep3 覆盖非法 limit/offset 返回 400（v0.20.6 起收紧：
+// 非法 limit/offset 不再静默回退默认值，与投递接口的严格校验口径一致）。
 func TestHandleSMSLogAPIInvalidParamsDeep3(t *testing.T) {
 	srv, _ := newTestServer(t)
 	h := srv.Routes()
-	rec, m := deep3DoJSON(t, h, http.MethodGet, "/api/sms/log?limit=abc&offset=xyz", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
-	}
-	if v, _ := m["limit"].(float64); int(v) != 50 {
-		t.Fatalf("expected default limit 50, got %v", m["limit"])
-	}
-	if v, _ := m["offset"].(float64); int(v) != 0 {
-		t.Fatalf("expected default offset 0, got %v", m["offset"])
+	rec, _ := deep3DoJSON(t, h, http.MethodGet, "/api/sms/log?limit=abc&offset=xyz", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
 	}
 }
 
