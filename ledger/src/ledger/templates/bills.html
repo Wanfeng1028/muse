@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block title %}拍照记账{% endblock %}
+{% block extra_css %}<link rel="stylesheet" href="/static/bills.css">{% endblock %}
 {% block content %}
 <h1>拍照记账</h1>
 <p class="ocr-mock-note">识别完成后结果进入 <a href="/bills/review">OCR 审核台</a>，核对无误再入账；也可在下方直接快速入账。</p>
