@@ -1,0 +1,18 @@
+/*
+ * ledger 分类页覆盖层：置于 style.css 之后加载，仅 categories 页引用。
+ * 承接 v2.17.5 已验证的顶栏单行口径。
+ */
+.topbar .nav {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.topbar .nav::-webkit-scrollbar {
+  display: none;
+}
+.topbar .nav a {
+  padding: 7px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}

@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2.17.6 - 2026-10-25
+### 新增
+- 分类页顶栏不换行：新文件 `src/ledger/static/categories.css`（仅 categories 页引用，categories.html 加 extra_css 行，style.css 不动），与预算页 v2.17.5 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.5 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭分类页一页，其余页仍走原 wrap，不谎称全站关闭。编排修正 1 处：模型稿头注释误写“仅 budgets 页引用”，落盘时改回 categories，3 条规则原文未动。
+### 测试
+- 新增 `tests/test_categories_design_v2176.py` 1 例（分类页引用顺序、顶栏单行规则齐全、括号平衡）；与 v2.17.5/v2.17.4/v2.17.3/v2.17.2/v2.17.1/v2.17.0 设计层合跑 9/9 全绿；ruff 新测文件全洁。
+### 视觉验收
+- 真实服务（8109 端口，demo.db 复制库）分类页截图亲眼核对：1440 宽下顶栏单行、15 链全可见（仪表盘至月度报告），实测顶栏高 60px、导航滚动宽与可见宽均为 953px（无截断、无溢出）、零 console 错误；分类真实数据亦正常渲染（支出 12 类、收入 6 类）；截图存 `docs/screenshots/categories-v2176.png`。本截图为 setContent 内联样式 harness 拍摄，仅作顶栏与页面静态渲染验收。
+
 ## v2.17.5 - 2026-10-25
 ### 新增
 - 预算页顶栏不换行：新文件 `src/ledger/static/budgets.css`（仅 budgets 页引用，budgets.html 加 extra_css 行，style.css 不动），与账户页 v2.17.4 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.4 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭预算页一页，其余页仍走原 wrap，不谎称全站关闭。
