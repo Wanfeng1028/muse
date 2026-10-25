@@ -71,3 +71,6 @@
 
 - P1-6 终端大输出背压：已交付（见本条标注）。
 - P1-9 迁移版本号硬编码断言：已交付（见本条标注）。
+## 2026-10-25 偿还
+
+- P0-3 分享 token 过期/撤销：就此闭合。过期与撤销本身此前已落地（迁移 006 的 expires_at 列、创建时未来时间校验、三路公开读路径过期返回 410、DELETE /api/shares/:id 与 /api/shares/token/:token 撤销端点），本轮补上最后一块尾巴——过期分享清扫：`sweep_expired_shares`（DELETE FROM shares WHERE expires_at IS NOT NULL AND expires_at <= now，出错返回 0 不 panic）由 `list_shares` 入口驱动调用，清扫是全局的（不限调用者本人），NULL 永不过期行与未到期行不动；公开读路径仍保持 410 语义，未改动。测试 `tests/share_sweep_test.rs` 3 例：过期行被列表清扫、未到期与永不过期行保留、他人列表调用也能清扫别人物过期行。

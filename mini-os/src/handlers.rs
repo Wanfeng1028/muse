@@ -1904,12 +1904,23 @@ pub async fn set_user_role(
     Ok(Json(updated).into_response())
 }
 
+fn sweep_expired_shares(conn: &rusqlite::Connection) -> usize {
+    conn.execute(
+        "DELETE FROM shares WHERE expires_at IS NOT NULL AND expires_at <= ?1",
+        rusqlite::params![now_unix()],
+    )
+    .unwrap_or(0)
+}
+
 /// GET /api/shares：列出分享（admin 全部，editor 仅自己创建的）
 pub async fn list_shares(
     State(state): State<Arc<AppState>>,
     Extension(user): Extension<auth::CurrentUser>,
 ) -> ApiResult {
     let conn = state.db.lock().unwrap();
+    // 入口驱动清扫：列出分享时顺手删掉已过期行（NULL 永不过期行不动）。
+    // 清扫是全局的（不限当前用户），过期分享对所有人已失效；公开读路径仍保持 410 语义，本处不改。
+    let _ = sweep_expired_shares(&conn);
     let base = "SELECT s.id, s.token, s.share_type, s.owner_id, u.username, s.created_at, v.name, \
                 s.expires_at \
                 FROM shares s \
