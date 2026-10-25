@@ -41,6 +41,7 @@
 - 一键发布的公开状态页静态站：`docs/screenshots/status-published-20261020.png`
 - 快照归档管理页（定时计划/立即生成/下载/删除）：`docs/screenshots/snapshots-20261024.png`
 - 事件页状态筛选（全部/仅进行中）：`docs/screenshots/incidents-status-all.png`、`docs/screenshots/incidents-status-open.png`
+- 事件页点击行展开详情（事件 ID、监控、开始时间、恢复时间、持续、状态、触发原因）：`docs/screenshots/incidents-detail-collapsed.png`、`docs/screenshots/incidents-detail-expanded.png`
 
 ## 快速开始
 

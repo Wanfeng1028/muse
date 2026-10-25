@@ -2,6 +2,14 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.13.0] - 2026-10-25
+
+### 新增
+- 事件页 internal/web/static/incidents.html 点击数据行展开详情行（关闭 docs/TECH_DEBT_GAP_incidents.md 缺口二“点击行展开详情不存在”）。数据行加 incident-row、tabindex、aria-expanded、title“点击查看详情”；详情行 class incident-detail、单列 colSpan=6；详情只用 /api/incidents 已返回字段：事件 ID、监控、开始时间、恢复时间（未恢复显示“未恢复”）、持续（复用 fmtDuration）、状态（已恢复/未恢复）、触发原因（空值显示“无”）；同一时间只展开一行；Enter/Space 键盘同样切换；筛选/翻页重载后详情默认关闭；副标题追加“点击一行可展开详情。”。
+
+### 测试
+- 新增 internal/web/incidents_detail_test.go 4 例（静态标记/7 字段标签/单开与键盘标记/副标题提示），go test 全绿；无新 API、无后端改动、无假数据。Go 静态测试只断言页面静态标记齐全，浏览器内真实点击行为由真服务冒烟与截图验收。
+
 ## [0.12.0] - 2026-10-25
 
 ### 新增

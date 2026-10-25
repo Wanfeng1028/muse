@@ -20,3 +20,8 @@
 - 但 CHANGELOG 同时提到"状态筛选"和"点击展开详情"，这两条在代码里不存在，属于文档写在了代码前面。要么补代码，要么把 CHANGELOG 里这两句删掉，别让文档骗人。
 
 补充说明：测试文件按仓库现有约定放在 `internal/web` 包内，直接用包里的 `FS`（`go:embed all:static`），路径 `static/incidents.html` 与嵌入根一致。断言里的 `fetch("/api/incidents` 和 `fetch("/api/monitors")` 与 incidents.html 里逐字出现的调用一致，`/api/incidents`、`/api/monitors` 与事实来源二的路由注册逐字一致。没有改任何 HTML，因为审计结论是已无模拟数据。
+
+## 关闭记录（2026-10-25，v0.13.0）
+- renderRows 已为数据行补充点击与键盘切换，详情行紧跟数据行且单列 colSpan=6，详情字段全部取自 /api/incidents 已返回字段（事件 ID、监控、开始时间、恢复时间、持续、状态、触发原因），未新增接口、未拼假详情。
+- 恢复原因与通知记录不在本次详情字段内，仍属未实现项，已如实写明。
+- internal/web/incidents_detail_test.go 4 例静态标记断言通过；浏览器内真实点击行为留待真服务冒烟与截图验收，未做自动化测试。

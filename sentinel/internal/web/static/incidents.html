@@ -19,7 +19,7 @@
 </div>
 <div class="page-header">
   <h1>事件</h1>
-  <p class="subtitle">这里能看到每次监控出问题到恢复的记录，可以按监控和状态筛选，每页 20 条。</p>
+  <p class="subtitle">这里能看到每次监控出问题到恢复的记录，可以按监控和状态筛选，每页 20 条。点击一行可展开详情。</p>
 </div>
 <div class="page-header">
   <label for="monitor-filter">监控</label>
@@ -66,6 +66,8 @@
   var nextBtn = document.getElementById("next-btn");
   var pageInfo = document.getElementById("page-info");
   var totalInfo = document.getElementById("total-info");
+  var expandedRow = null;
+  var expandedDetail = null;
   function totalPages() {
     if (state.total <= 0) return 1;
     return Math.ceil(state.total / PAGE_SIZE);
@@ -110,6 +112,8 @@
   }
   function renderRows(items) {
     bodyEl.innerHTML = "";
+    expandedRow = null;
+    expandedDetail = null;
     if (!items || items.length === 0) {
       renderEmpty();
       return;
@@ -117,6 +121,11 @@
     for (var i = 0; i < items.length; i++) {
       var it = items[i];
       var tr = document.createElement("tr");
+      tr.className = "incident-row";
+      tr.setAttribute("tabindex", "0");
+      tr.setAttribute("aria-expanded", "false");
+      tr.style.cursor = "pointer";
+      tr.title = "点击查看详情";
       var tdMon = document.createElement("td");
       tdMon.textContent = it.monitor_name || "";
       tr.appendChild(tdMon);
@@ -142,6 +151,58 @@
       tdErr.textContent = it.start_error || "";
       tr.appendChild(tdErr);
       bodyEl.appendChild(tr);
+      var detailTr = document.createElement("tr");
+      detailTr.className = "incident-detail";
+      detailTr.style.display = "none";
+      var detailTd = document.createElement("td");
+      detailTd.colSpan = 6;
+      var fields = [
+        { label: "事件 ID", value: String(it.id || "") },
+        { label: "监控", value: it.monitor_name || "" },
+        { label: "开始时间", value: it.started_at || "" },
+        { label: "恢复时间", value: it.ended_at ? String(it.ended_at) : "未恢复" },
+        { label: "持续", value: fmtDuration(it.downtime_sec, it.ended_at) },
+        { label: "状态", value: it.ended_at ? "已恢复" : "未恢复" },
+        { label: "触发原因", value: it.start_error ? String(it.start_error) : "无" }
+      ];
+      for (var j = 0; j < fields.length; j++) {
+        var line = document.createElement("div");
+        var labelSpan = document.createElement("strong");
+        labelSpan.textContent = fields[j].label + "：";
+        line.appendChild(labelSpan);
+        var valueSpan = document.createElement("span");
+        valueSpan.textContent = fields[j].value;
+        line.appendChild(valueSpan);
+        detailTd.appendChild(line);
+      }
+      detailTr.appendChild(detailTd);
+      bodyEl.appendChild(detailTr);
+      (function (rowTr, detailRowTr) {
+        function toggleDetail() {
+          if (expandedRow && expandedRow !== rowTr) {
+            expandedRow.setAttribute("aria-expanded", "false");
+            expandedDetail.style.display = "none";
+          }
+          if (expandedRow === rowTr) {
+            rowTr.setAttribute("aria-expanded", "false");
+            detailRowTr.style.display = "none";
+            expandedRow = null;
+            expandedDetail = null;
+          } else {
+            rowTr.setAttribute("aria-expanded", "true");
+            detailRowTr.style.display = "";
+            expandedRow = rowTr;
+            expandedDetail = detailRowTr;
+          }
+        }
+        rowTr.addEventListener("click", toggleDetail);
+        rowTr.addEventListener("keydown", function (e) {
+          if (e.key === "Enter" || e.key === " ") {
+            if (e.key === " ") e.preventDefault();
+            toggleDetail();
+          }
+        });
+      })(tr, detailTr);
     }
   }
   function updatePager() {
