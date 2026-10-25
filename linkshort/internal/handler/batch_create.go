@@ -2,10 +2,12 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 
+	"github.com/Wanfeng1028/muse/linkshort/internal/auth"
 	"github.com/Wanfeng1028/muse/linkshort/internal/config"
 	"github.com/Wanfeng1028/muse/linkshort/internal/store"
 	"github.com/Wanfeng1028/muse/linkshort/internal/util"
@@ -50,10 +52,20 @@ func handleBatchCreateLink(w http.ResponseWriter, r *http.Request, st *store.Sto
 	for i, req := range reqs {
 		item := batchItemResp{Index: i}
 
+		var pwHash *string
 		if req.Password != "" {
-			item.Error = "批量暂不支持密码"
-			items = append(items, item)
-			continue
+			if err := auth.ValidPasswordPolicy(req.Password); err != nil {
+				item.Error = err.Error()
+				items = append(items, item)
+				continue
+			}
+			h, err := auth.HashPassword(req.Password)
+			if err != nil {
+				item.Error = "密码处理失败"
+				items = append(items, item)
+				continue
+			}
+			pwHash = &h
 		}
 
 		if req.URL == "" {
@@ -127,6 +139,18 @@ func handleBatchCreateLink(w http.ResponseWriter, r *http.Request, st *store.Sto
 			item.Error = err.Error()
 			items = append(items, item)
 			continue
+		}
+
+		if pwHash != nil {
+			if err := st.SetLinkPassword(id, *pwHash); err != nil {
+				// 密码落库失败时回滚删除该条，避免"建了链但密码没设上"的半吊子状态。
+				if derr := st.DeleteLink(id); derr != nil {
+					log.Printf("handler: 批量设置密码失败且回滚删除失败 id=%d: %v / %v", id, err, derr)
+				}
+				item.Error = "密码设置失败"
+				items = append(items, item)
+				continue
+			}
 		}
 
 		created, gerr := st.GetLink(id)

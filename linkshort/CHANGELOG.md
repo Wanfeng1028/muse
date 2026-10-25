@@ -5,6 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.16.0] - 2026-10-25
+
+### 新增
+
+- 批量建链支持逐项密码：`POST /api/links/batch` 每项的 `password` 不再拒单，复用单条建链口径——先 `auth.ValidPasswordPolicy` + `auth.HashPassword`，策略失败则该项失败、不建链；建链后 `st.SetLinkPassword`，设密码失败则 `st.DeleteLink` 回滚该条、该项失败，不影响同批其他项；成功项形状不变，响应与详情均不回显密码明文，密码只以 bcrypt 哈希落库。由此关闭 v1.13.0 文档中“批量暂不支持密码”的缺口（仅 API 层；批量 Web UI 仍无密码输入框，本轮未改）。
+- 公开 API 文档页 `POST /api/links/batch` 说明同步更新。
+
+### 测试
+
+- 新增 `internal/handler/batch_create_password_test.go`（3 例）：带密码与无密码混批全部成功且详情 `has_password=true`、响应不含明文；密码超 128 字符该项失败、其他项照常成功（207）；带密码链先出密码门、错密码 401、对密码 302 到目标。
+- 旧 `TestBatch_Password` 语义更新：密码项不再拒单，改为断言 201 成功（深测见新文件）。
+
 ## [v1.15.0] - 2026-10-25
 
 ### 新增

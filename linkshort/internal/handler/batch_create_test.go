@@ -156,6 +156,7 @@ func TestBatch_DupSlug(t *testing.T) {
 }
 
 func TestBatch_Password(t *testing.T) {
+	// v1.16.0 起批量不再拒单密码项；密码落库与密码门由 batch_create_password_test.go 深测。
 	srv := newTestServerWithPurge(t, false)
 	defer srv.Close()
 
@@ -163,15 +164,15 @@ func TestBatch_Password(t *testing.T) {
 		{"url": "https://a.com/7", "slug": "pw", "password": "x"},
 	}
 	resp, data := doJSON(t, http.MethodPost, srv.URL+"/api/links/batch", testKey, body)
-	if resp.StatusCode != http.StatusBadRequest {
-		t.Fatalf("status = %d, want 400", resp.StatusCode)
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("status = %d, want 201, body = %s", resp.StatusCode, string(data))
 	}
 	m, items := parseBatch(t, data)
-	if got := batchOKCount(m); got != 0 {
-		t.Fatalf("ok_count = %d, want 0", got)
+	if got := batchOKCount(m); got != 1 {
+		t.Fatalf("ok_count = %d, want 1", got)
 	}
-	if !strings.Contains(batchErr(items[0]), "密码") {
-		t.Fatalf("items[0].error = %q, want contains 密码", batchErr(items[0]))
+	if !batchOK(items[0]) {
+		t.Fatalf("items[0].ok = false, error = %q, want true", batchErr(items[0]))
 	}
 }
 
