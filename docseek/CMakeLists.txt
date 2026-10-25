@@ -221,6 +221,7 @@ add_executable(docseek_tests
   tests/test_v032_consequence.cpp
   tests/test_v033_safety.cpp
   tests/test_v034_refill_cap.cpp
+  tests/test_v037_section_heading.cpp
   tests/test_md_title.cpp
   tests/test_v015_filler_words.cpp
   tests/test_v015_search_question.cpp

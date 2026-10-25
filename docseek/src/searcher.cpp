@@ -936,6 +936,43 @@ static void scoreOneHit(Hit& hit,
     finalScore += r1Gain;
     bd.structuralBonus += r1Gain;
         }
+        // R8（专节标题精确命中）加成：对查询 tokens 中每个互异 token，若任一节标题精确字节全等，则该 token 计 0.5，封顶 1.0。
+        std::vector<std::string> headings8 = extractHeadingTexts(content);
+        std::vector<std::string> seen8;
+        double r8Gain = 0.0;
+        for (const auto& tok : tokens) {
+            if (tok.empty()) {
+                continue;
+            }
+            bool dup8 = false;
+            for (const auto& s : seen8) {
+                if (s == tok) { dup8 = true; break; }
+            }
+            if (dup8) {
+                continue;
+            }
+            seen8.push_back(tok);
+            bool exactMatch = false;
+            for (const auto& h : headings8) {
+                std::string t = trimStr(stripHtmlTags(h));
+                // 跳过与文档标题全等的标题行
+                if (t == hit.title) {
+                    continue;
+                }
+                if (t == tok) {
+                    exactMatch = true;
+                    break;
+                }
+            }
+            if (exactMatch) {
+                r8Gain += 0.5;
+            }
+        }
+        if (r8Gain > 1.0) {
+            r8Gain = 1.0;
+        }
+        finalScore += r8Gain;
+        bd.structuralBonus += r8Gain;
 
         // R2（块级同现）：仅 tokens.size()>=2 时。跳过含 "<title" 的行，跳过
         // stripHtmlTags 后与 hit.title 完全相同的行。某一行同时含全部 token 子串则 +0.5，
