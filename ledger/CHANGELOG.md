@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2.17.5 - 2026-10-25
+### 新增
+- 预算页顶栏不换行：新文件 `src/ledger/static/budgets.css`（仅 budgets 页引用，budgets.html 加 extra_css 行，style.css 不动），与账户页 v2.17.4 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.4 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭预算页一页，其余页仍走原 wrap，不谎称全站关闭。
+### 测试
+- 新增 `tests/test_budgets_design_v2175.py` 1 例（预算页引用顺序、顶栏单行规则齐全、括号平衡）；与 v2.17.4/v2.17.3/v2.17.2/v2.17.1/v2.17.0 设计层合跑 8/8 全绿；ruff 新测文件全洁。
+### 视觉验收
+- 真实服务（8108 端口，demo.db 复制库）预算页截图亲眼核对：1440 宽下顶栏单行、15 链全可见（仪表盘至月度报告），实测顶栏高 60px、导航滚动宽与可见宽均为 953px（无截断、无溢出）、零 console 错误；截图存 `docs/screenshots/budgets-v2175.png`。本截图为 setContent 内联样式 harness 拍摄，仅作顶栏与页面静态渲染验收。
+
 ## v2.17.4 - 2026-10-25
 ### 新增
 - 账户页顶栏不换行：新文件 `src/ledger/static/accounts.css`（仅 accounts 页引用，accounts.html 加 extra_css 行，style.css 不动），与拍照记账页 v2.17.3 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.3 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭账户页一页，其余页仍走原 wrap，不谎称全站关闭。
