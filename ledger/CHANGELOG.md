@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2.17.14 - 2026-10-25
+### 新增
+- 对账工作台页顶栏不换行：新文件 `src/ledger/static/workbench.css`（仅 workbench 页引用，workbench.html 加 extra_css 行，style.css 不动），与账单导入向导页 v2.17.13 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.13 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭对账工作台页一页，其余页仍走原 wrap，不谎称全站关闭。模型稿 3 条规则原文未动，测试文件由模型同通生成。对账工作台页路由实测为 `/workbench`，测试按实测路由写。模型 1 通即出可用正文、无 429。
+### 测试
+- 新增 `tests/test_workbench_design_v21714.py` 1 例（对账工作台页引用顺序、顶栏单行规则齐全、括号平衡）；与 v2.17.13/v2.17.12/v2.17.11/v2.17.10/v2.17.9/v2.17.8/v2.17.7/v2.17.6/v2.17.5/v2.17.4/v2.17.3/v2.17.2/v2.17.1/v2.17.0 设计层合跑 17/17 全绿；ruff 新测文件全洁。
+### 视觉验收
+- 真实服务（8117 端口，demo.db 复制库）对账工作台页截图亲眼核对：1440 宽下顶栏单行、15 链全可见（仪表盘至月度报告），实测顶栏高 60px、导航滚动宽与可见宽均为 953px（无截断、无溢出）、零 console 错误；截图存 `docs/screenshots/workbench-v21714.png`。本截图为 setContent 内联样式 harness 拍摄，仅作顶栏验收：图中红色“Failed to parse URL from /api/workbench/batches”是 harness 下相对地址在 about:blank 解析失败的已知假象，真实服务上该接口已 curl 实测返回 200 正常 JSON（含 1 条招商银行储蓄卡批次、10 条待处理），不作门面问题。验收后服务已按真实 PID 停掉、复制库已删。
+
 ## v2.17.13 - 2026-10-25
 ### 新增
 - 账单导入向导页顶栏不换行：新文件 `src/ledger/static/statement.css`（仅 statement 页引用，statement.html 加 extra_css 行，style.css 不动），与复核页 v2.17.12 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.12 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭账单导入向导页一页，其余页（workbench 等）仍走原 wrap，不谎称全站关闭。模型稿 3 条规则原文未动，测试文件由模型同通生成。账单导入向导页路由实测为 `/statement`，测试按实测路由写。模型 1 通即出可用正文、无 429。
