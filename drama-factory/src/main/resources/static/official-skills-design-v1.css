@@ -1,0 +1,123 @@
+/* ==========================================================================
+   official-skills-design-v1.css —— 官方 Skill 库设计层：目录卡台账
+   只做覆盖，不改 app.css / HTML / JS。
+   台账语言：纯白底、发丝边框、10px 圆角、零阴影；只引用既有 token。
+   ========================================================================== */
+
+/* ---- 次级文字对齐 token ---- */
+.text-secondary {
+  color: var(--text-2);
+}
+
+/* ---- 卡片 = 台账头 / 台账行 ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.card-body {
+  padding: 16px 18px;
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 0;
+  padding: 16px 18px 4px;
+}
+
+/* ---- 卡片标题：16px / 600 墨色 ---- */
+.card-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+  letter-spacing: normal;
+}
+
+/* ---- 描述：14px 次文字 ---- */
+.card-body .card-title + .text-secondary {
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* ---- 作者 / 许可 / 版本行：13px 弱文字 ---- */
+.card-body .card-title + .text-secondary ~ .text-secondary {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--text-3);
+}
+
+/* ---- 来源仓库链接：与元信息行同级弱文字 ---- */
+.card-body a.text-secondary {
+  font-size: 13px;
+  color: var(--text-3);
+  text-decoration: none;
+}
+
+.card-body a.text-secondary:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+
+/* ---- 卡片底部操作区：顶部一条发丝线，按钮右对齐 ---- */
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  background: transparent;
+  border-top: 1px solid var(--border);
+  border-bottom: 0;
+  padding: 12px 18px;
+  box-shadow: none;
+}
+
+.card-footer .btn {
+  box-shadow: none;
+}
+
+/* ---- 已安装徽章：淡绿底、字重 550 ---- */
+.card-footer .badge {
+  font-weight: 550;
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--green) 12%, var(--surface));
+  color: var(--green);
+  box-shadow: none;
+}
+
+/* ---- 台账头：搜索区 ---- */
+.form-label {
+  font-size: 13px;
+  font-weight: 550;
+  color: var(--text-3);
+  margin-bottom: 6px;
+}
+
+#officialSearch {
+  border-radius: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border-soft);
+  color: var(--text);
+  box-shadow: none;
+}
+
+#officialSearch::placeholder {
+  color: var(--text-3);
+}
+
+#officialSearch:focus {
+  border-color: var(--ink);
+  box-shadow: none;
+  outline: 0;
+}
+
+/* ---- 空态 ---- */
+#officialEmpty,
+#installedEmpty {
+  color: var(--text-3);
+  font-size: 13px;
+}

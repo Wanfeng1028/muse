@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25 约 19:18-19:55：官方 Skill 库页设计层 v1）
+- 新增 static/official-skills-design-v1.css（只覆盖，不改 app.css 与任何 JS；official-skills.html 在 app.css 之后引用 1 行）：视觉逻辑“目录卡台账”——纯白底、发丝边框、10px 圆角、零阴影；标题 16px/600 墨色、描述 14px 次文字、作者/许可/版本行 13px 弱文字；卡片底部操作区顶部发丝线、按钮右对齐；搜索框 8px 圆角、聚焦墨色边框；已安装徽章淡绿底、字重 550。
+- 模型稿编排修正 1 处：标题色由 var(--ink)（按钮底色）改 var(--text)，更合设计体系语义；其余规则逐项核对：括号 17/17 平衡，无 linear-gradient、无 backdrop-filter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS，全部 token 均在 app.css 里。
+- 验收：新增 OfficialSkillsDesignV1Test 3 例全绿（引用顺序、括号与禁令、关键选择器）；真实服务（18082 端口，复制 H2 库）+ 真实官方 Skill 数据（1373 条）截图亲眼核对：首屏 3 卡无重叠、无阴影、无渐变，计算样式实证卡片纯白底、10px 圆角、box-shadow none、搜索框 8px；截图存 docs/screenshots/official-skills-v1.png。验收后服务已停、复制库与 jar 已删。
+- 已知保留：长描述卡片的操作区按钮在首屏折叠线下，属真实数据长度，不是布局缺陷；本轮未动 skillhub 在跑工人的未提交文件。
+
 ### Added（技能库增量 2026-10-25：zenstory-ai/drama-skills +12，原件收录）
 - 官方技能库 1361 → 1373：新增 drama-skills-short-drama / -write / -develop / -assets / -image-prompts / -storyboard / -video-prompts / -produce / -edit / -review / -novel-analyze / -knowhow（上游 zenstory-ai/drama-skills，commit fdb7b7c，v0.9.2，MIT）
 - 收录方式：整目录原件照搬（SKILL.md + references/scripts/assets/agents 共 204 个文件逐字节核对无差异），每目录另补仓库 MIT LICENSE；_index.json 新增 12 条（name/description 取 frontmatter 原文，frontmatter 无 version 故按既有规则记 1.0.0，author zenstory-ai，rewritten false）
