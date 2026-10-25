@@ -232,18 +232,57 @@ std::vector<Passage> rankPassages(int64_t doc_id, const std::string& path,
     // 命中判定：kwLower 在 titleLower 或 headingLower 中的字面出现；同一词在
     // 两处同时出现只计一次。glue 词已在 query_parser 层剔除出 keywords；
     // 仅按词长权重缩放（不用 weights：idf 已在段落级计分中体现）。
+    // v0.36.0：重叠认领去重，按词长降序处理，先长后短，已认领区间不重复计分。
     double titleBonus = 0.0;
     {
         const std::string titleLower = toLowerAscii(title);
         const std::string headingLower = toLowerAscii(firstMarkdownHeading(content));
-        for (size_t ki = 0; ki < kwLower.size(); ++ki) {
+
+        // 按字节长度降序排列关键词索引（长度相同按原顺序，先长后短）
+        std::vector<size_t> sortedKi(kwLower.size());
+        for (size_t i = 0; i < kwLower.size(); ++i) sortedKi[i] = i;
+        std::stable_sort(sortedKi.begin(), sortedKi.end(), [&](size_t a, size_t b) {
+            return kwLower[a].size() > kwLower[b].size();
+        });
+
+        std::vector<std::pair<size_t, size_t>> claimedTitle;
+        std::vector<std::pair<size_t, size_t>> claimedHeading;
+
+        // 从左到右扫描，寻找未被认领区间覆盖的出现位置
+        auto findUnclaimed = [](const std::string& haystack,
+                                const std::string& needle,
+                                const std::vector<std::pair<size_t, size_t>>& claimed) -> std::pair<size_t, size_t> {
+            if (haystack.empty()) return {std::string::npos, std::string::npos};
+            size_t pos = 0;
+            while ((pos = haystack.find(needle, pos)) != std::string::npos) {
+                size_t end = pos + needle.size();
+                bool overlap = false;
+                for (const auto& interval : claimed) {
+                    if (pos < interval.second && end > interval.first) {
+                        overlap = true;
+                        break;
+                    }
+                }
+                if (!overlap) return {pos, end};
+                ++pos;
+            }
+            return {std::string::npos, std::string::npos};
+        };
+
+        for (size_t ki : sortedKi) {
             const std::string& lower = kwLower[ki];
             if (lower.empty()) continue;
-            const bool inTitle = !titleLower.empty() &&
-                                 titleLower.find(lower) != std::string::npos;
-            const bool inHeading = !headingLower.empty() &&
-                                   headingLower.find(lower) != std::string::npos;
-            if (inTitle || inHeading) {
+
+            auto interval = findUnclaimed(titleLower, lower, claimedTitle);
+            if (interval.first != std::string::npos) {
+                claimedTitle.push_back(interval);
+                titleBonus += kTitleTermBonus * termLengthWeight(pq.keywords[ki]);
+                continue;
+            }
+
+            interval = findUnclaimed(headingLower, lower, claimedHeading);
+            if (interval.first != std::string::npos) {
+                claimedHeading.push_back(interval);
                 titleBonus += kTitleTermBonus * termLengthWeight(pq.keywords[ki]);
             }
         }

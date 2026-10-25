@@ -213,6 +213,7 @@ add_executable(docseek_tests
   tests/test_v022_wordlevel_prune.cpp
   tests/test_v024_overlap_dedup.cpp
   tests/test_v025_title_signal.cpp
+  tests/test_v036_title_overlap.cpp
   tests/test_v026_rare_term_bonus.cpp
   tests/test_v027_recurrence.cpp
   tests/test_v029_chinese_numeral.cpp
