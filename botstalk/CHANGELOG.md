@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Web 聊天室 AirBuild 版（前端，布局与风格照 AirBuild，模块与角色用自己的）
+### 新增
+- 新增 `web/src/design-airbuild.css` 覆盖层（原 `styles.css`、`design-v1.css`、`design-v2.css` 不动，`main.tsx` 在三者之后引用本层）：布局照 AirBuild——中间聊天列、右侧成员列、底部模块条；风格为浅底卡片聊天室风（底色 #f6f6f7、白色卡片、1px #e8e8ec 边线、12px 圆角、扁平无渐变无阴影），不再用“值班室台账”风作该聊天室主风格。内容来源：BotsRouter 大写 GLM-5.3，6 通各 3 条规则；编排时按真实布局过滤，剔掉 .chat 圆角、.chat-body 内边距与滚动、.msg-self 的 margin-left:auto、.member-dot 的实色背景（会让离线也变绿）。
+- 底部模块条（`Chat.tsx` 内新增 `<nav class="module-bar">`，复用顶栏同一批开关处理器）：任务、审批（含待审批数）、工作流、娱乐厅、斗地主、狼人杀，全部是 BotsTalk 已有真实功能与自己的名字，不含 AirFeedback/AirPayment/AirRouter/AirKnowledge/AirTraffic。
+- 右侧角色卡（`Members.tsx`）：只渲染网关 presence 的真实成员，不硬编人名；头像色只由 adapter_id 字符和取模派生（同一成员每次同一色）；职责只分两档——老板“派活、验收、拍板”，Agent“接活、交接”；在线状态取 presence 的 status。验收中发现并修了两处：在线圆点曾被换行挤到卡片左下角（改为名字+职责包一层，圆点回第一行右侧）、Agent 职责行曾被挤成孤字（改短为“接活、交接”）。
+### 验收
+- Web `tsc -b && vite build` 通过，构建产物 CSS 含本层规则（`.module-bar`、`.member-role` 实证）；真实网关（8765 端口、隔离库）+ REST 新建 `lobby` 工作坊 + seed-demo 6 任务 4 消息 + presence 种子（deepseek 在线、echo 离线），截图亲眼核对（`docs/screenshots/botstalk-airbuild-chat.png`）：浅底聊天列与白色消息卡、右侧三张成员卡（deepseek 在线带用量、老板、echo 离线）与职责行、底部六个自有模块按钮、控制台零错误、页面文本不含 Ato/Pluto/Coin/Camo 与 Air 模块名；计算样式实证：聊天底 #f6f6f7、顶栏与模块条白底、消息卡与成员卡 12px 圆角、头像圆。
+- 已知保留：成员栏宽仍为原 240px（本轮未改布局宽度）；deepseek 的用量行在窄栏里仍按原有省略规则截断（既存行为）；本轮不动网关后端、协议、adapter，OpenAgents 第 9/10 轮未动。
+- 验收用网关已停，隔离库与提示词/模型原文在 `relay-station/botstalk-airbuild/`，未入提交。
+
 ## Unreleased - OpenAgents 第 8 轮（拉人守卫 + 设权限角色端点，后端）
 ### 新增
 - 拉人守卫：POST 成员接 canManageRoom（guest 否决、workroom 仅房主、playroom 非 guest 成员放行，错误 ROOM_MANAGE_FORBIDDEN；先鉴权后校验）。

@@ -1,0 +1,110 @@
+/* BotsTalk Web —— 聊天室 AirBuild 版 · 覆盖层
+ * 加载顺序：在 styles.css、design-v1.css、design-v2.css 之后引用，只覆盖，不改原样式表与任何原规则文件。
+ * 用户决策（2026-10-25 21:21）：布局用 AirBuild 的（中间聊天＋右侧成员＋底部模块条），风格用 AirBuild 的
+ * 浅底卡片聊天室风，不再用“值班室台账”风作该聊天室主风格；底部模块用 BotsTalk 自己的名字；
+ * 右侧角色卡由助理自做，不照搬 AirBuild 的人名与品牌素材。
+ * 内容来源：BotsRouter 大写 GLM-5.3，6 通各 3 条规则；编排时按真实布局过滤——剔掉 .chat 圆角、
+ * .chat-body 内边距与滚动、.msg-self 的 margin-left:auto、.member-dot 的实色背景（会让离线也变绿）；
+ * 补了 .member 换行、.member-role 换行缩进、.member 卡片间距、.module-bar 内边距与换行，均在下方标注。
+ */
+.chat {
+  background: #f6f6f7;
+}
+.chat-top {
+  background: #ffffff;
+  border-bottom: 1px solid #e8e8ec;
+}
+.chat-body {
+  background: #f6f6f7;
+}
+.msgs {
+  background: #f6f6f7;
+}
+.msg {
+  background: #ffffff;
+  border: 1px solid #e8e8ec;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 10px;
+}
+.msg-self {
+  background: #f2f4f7;
+  border: 1px solid #dfe3ea;
+}
+.members {
+  background: #f6f6f7;
+  border-left: 1px solid #e8e8ec;
+}
+.members-head {
+  background: transparent;
+  color: #3c3c43;
+  font-size: 13px;
+  font-weight: 600;
+}
+.member {
+  background: #ffffff;
+  border: 1px solid #e8e8ec;
+  border-radius: 12px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+}
+.member-text {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.member-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: #7c8899;
+  color: #ffffff;
+  align-items: center;
+  justify-content: center;
+}
+.member-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.member-role {
+  font-size: 12px;
+  color: #7a736a;
+  line-height: 1.4;
+}
+.composer {
+  background: #ffffff;
+  border-top: 1px solid #e8e8ec;
+  padding: 10px 12px;
+}
+.composer-input {
+  border: 1px solid #e8e8ec;
+  border-radius: 20px;
+  background: #f7f7fa;
+  padding: 8px 14px;
+}
+.composer-input:focus {
+  border-color: #b3541e;
+  background: #ffffff;
+  outline: none;
+}
+.module-bar {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #ffffff;
+  border-top: 1px solid #e8e8ec;
+  padding: 10px 16px;
+}
+.module-bar-btn {
+  background: #f6f6f7;
+  border: 1px solid #e8e8ec;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--ink-soft);
+}
+.module-bar-btn:hover {
+  background: #efede8;
+  border-color: #dedcd4;
+}

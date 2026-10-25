@@ -336,6 +336,32 @@ export default function Chat({ nick, room, onLeave }: Props) {
             </button>
           )}
           <Composer members={members} onSend={handleSend} onSendTask={handleSendTask} />
+          <nav className="module-bar" aria-label="服务模块">
+            <button className="module-bar-btn" type="button" onClick={() => setShowTasks((v) => !v)}>
+              <ClipboardList size={14} strokeWidth={2} />
+              <span>任务</span>
+            </button>
+            <button className="module-bar-btn" type="button" onClick={() => setShowApprovals((v) => !v)}>
+              <ShieldCheck size={14} strokeWidth={2} />
+              <span>审批{approvals.length > 0 ? ` (${approvals.length})` : ''}</span>
+            </button>
+            <button className="module-bar-btn" type="button" onClick={() => setShowWorkflows((v) => !v)}>
+              <CalendarClock size={14} strokeWidth={2} />
+              <span>工作流</span>
+            </button>
+            <button className="module-bar-btn" type="button" onClick={() => setShowGame((v) => !v)}>
+              <Gamepad2 size={14} strokeWidth={2} />
+              <span>娱乐厅</span>
+            </button>
+            <button className="module-bar-btn" type="button" onClick={() => { setDoudizhuErr(null); setShowDoudizhuLobby(true); }}>
+              <Spade size={14} strokeWidth={2} />
+              <span>斗地主</span>
+            </button>
+            <button className="module-bar-btn" type="button" onClick={() => { setWerewolfErr(null); setShowWerewolfLobby(true); }}>
+              <Moon size={14} strokeWidth={2} />
+              <span>狼人杀</span>
+            </button>
+          </nav>
         </main>
         <Members members={members} selfNick={nick} />
       </div>

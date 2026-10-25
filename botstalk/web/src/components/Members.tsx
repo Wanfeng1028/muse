@@ -42,25 +42,38 @@ export default function Members({ members, selfNick }: Props) {
   );
 }
 
+const ROLE_COLORS = ['#7c8899', '#b3541e', '#2e7d32', '#8a6d3b', '#5b7fa6', '#4a7d7a'];
+
+// 角色卡头像色只由 adapter_id 本身派生（字符和取模），同一成员每次渲染同一色，
+// 不引入外部人名或品牌素材；职责只分老板与 Agent 两档，取自房间的派活/汇报规则。
+function roleColor(adapterId: string): string {
+  let sum = 0;
+  for (let i = 0; i < adapterId.length; i += 1) sum += adapterId.charCodeAt(i);
+  return ROLE_COLORS[sum % ROLE_COLORS.length];
+}
+
 function MemberRow({ m, selfNick }: { m: MemberEntry; selfNick: string }) {
   const isSelf = m.adapter_id === selfNick || m.isSelf;
   const hasUsage = typeof m.usage_in === 'number' || typeof m.usage_out === 'number';
   return (
     <div className={`member ${m.status === 'online' ? 'is-online' : 'is-offline'}`}>
-      <span className="member-icon" aria-hidden="true">
+      <span className="member-icon" aria-hidden="true" style={{ backgroundColor: roleColor(m.adapter_id) }}>
         {isSelf ? <User size={14} strokeWidth={2} /> : <Bot size={14} strokeWidth={2} />}
       </span>
-      <span className="member-name">
-        {m.adapter_id}
-        {isSelf && <span className="member-you">（我）</span>}
-        {m.status === 'online' && hasUsage && (
-          <span className="member-usage">
-            {fmt(m.usage_in ?? 0)} in / {fmt(m.usage_out ?? 0)} out
-          </span>
-        )}
-        {m.status !== 'online' && (
-          <span className="member-offline-tag">离线</span>
-        )}
+      <span className="member-text">
+        <span className="member-name">
+          {m.adapter_id}
+          {isSelf && <span className="member-you">（我）</span>}
+          {m.status === 'online' && hasUsage && (
+            <span className="member-usage">
+              {fmt(m.usage_in ?? 0)} in / {fmt(m.usage_out ?? 0)} out
+            </span>
+          )}
+          {m.status !== 'online' && (
+            <span className="member-offline-tag">离线</span>
+          )}
+        </span>
+        <span className="member-role">{isSelf ? '老板 · 派活、验收、拍板' : 'Agent · 接活、交接'}</span>
       </span>
       <span className="member-dot" aria-hidden="true" />
     </div>
