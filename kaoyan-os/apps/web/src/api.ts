@@ -182,8 +182,8 @@ export const api = {
   createFocus: (input: CreateFocusInput) =>
     request<FocusSession>('/focus', { method: 'POST', body: JSON.stringify(input) }),
   focusStats: (days?: number) => request<FocusStats>(`/focus/stats${qs({ days })}`),
-  focusBySubject: () =>
-    request<FocusBySubjectResponse>('/focus/summary/by-subject'),
+  focusBySubject: (days?: number) =>
+    request<FocusBySubjectResponse>(`/focus/summary/by-subject${qs({ days })}`),
 
   // 错题
   listMistakes: (params?: { subject?: string; mastered?: boolean; q?: string }) => {

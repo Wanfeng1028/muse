@@ -4,6 +4,16 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.7] - 2026-10-25
+
+### Added
+
+- 后端 `GET /api/focus/summary/by-subject` 新增可选 `days` 参数：只统计最近 N 天（含今天），N 按 1~31 钳制，不传或非法时统计全部历史（与 `GET /api/focus/stats` 同款钳制口径）。
+- 前端番茄专注页「各科专注累计」卡片上方新增范围切换：全部 / 近 7 天 / 今日，切换即重新拉取分科汇总。
+- 前端番茄页新增设计层 `design-v1127.css`（原样式表不动，main.tsx 在 index.css 之后引用）：专注台仪表视觉逻辑——左对齐、计时数字等宽 64px/800 字重、模式标签小号墨色细边框、主按钮去辉光、卡片去阴影只留 1px 细边、窗口切换激活态为墨底白字；无渐变、无阴影、无外来字体、无 emoji、无居中 hero。设计层计时器部分稿件由 GLM-5.3 微批产出，编排剪掉不存在的类名与未定义变量后落仓，其余行（科目/计划行、统计卡、窗口切换）为编排按同一视觉逻辑补写。
+- 新增 `tests/focus-summary-by-subject-days.test.ts` 4 例：days=1 排除旧记录且不传 days 仍计入、days 超 31 钳制与非法 days 视为全部历史、窗口内用户隔离、未登录 401。
+- API 文档 `GET /api/focus/summary/by-subject` 一节补 `days` 参数说明。
+
 ## [1.12.6] - 2026-10-25
 
 ### Added

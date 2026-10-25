@@ -1,0 +1,104 @@
+/* Kaoyan OS v1.12.7 番茄页设计层：专注台仪表。
+   视觉逻辑：计时器是一台仪器，不是海报。左对齐；计时数字等宽、64px、800 字重；
+   模式标签是小号墨色细边框；主按钮去辉光、只留实色与细边；卡片去阴影、只留 1px 细边；
+   分科列表每行左缘统一墨色、数字右对齐；标题 20px、正文 14px、次要 12px。
+   去 AI 味：无渐变、无阴影、无外来字体、无 emoji、无居中 hero、无三栏特性格。
+   本层只覆盖番茄页类名，原 index.css 不动；深色下同样只用页面变量。 */
+.pomo-timer-wrap {
+  text-align: left;
+  align-items: flex-start;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: none;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.pomo-mode {
+  font-size: 12px;
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+  display: inline-block;
+}
+.pomo-display {
+  font-size: 64px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-main);
+  text-align: left;
+  line-height: 1.1;
+  margin: 0;
+}
+.pomo-subject-row,
+.pomo-plan-row,
+.pomo-window-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+.pomo-subject-label,
+.pomo-plan-label {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--text-sub);
+}
+.pomo-subject-select,
+.pomo-plan-select {
+  border-radius: var(--radius-sm);
+}
+.pomo-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.pomo-btn {
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  box-shadow: none;
+  font-weight: 600;
+  padding: 8px 20px;
+}
+.pomo-btn:focus-visible {
+  outline: 2px solid var(--text-main);
+  outline-offset: 2px;
+}
+.pomo-window-btns {
+  display: flex;
+  gap: 8px;
+}
+.pomo-window-btn {
+  background: var(--card-bg);
+  color: var(--text-sub);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.pomo-window-btn.active {
+  background: var(--text-main);
+  border-color: var(--text-main);
+  color: var(--card-bg);
+  font-weight: 600;
+}
+.pomo-stats-card {
+  box-shadow: none;
+  border: 1px solid var(--border);
+}
+.pomo-stat-card .stat-value {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+}
+.pomo-stat-hint {
+  font-size: 12px;
+}
+@media (max-width: 480px) {
+  .pomo-timer-wrap { padding: 18px; }
+  .pomo-display { font-size: 48px; }
+  .pomo-actions { gap: 8px; }
+}

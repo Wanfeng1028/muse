@@ -203,13 +203,26 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
   });
 
   // GET /api/focus/summary/by-subject —— 分科汇总专注时长：仅返回有记录的科目，按 SUBJECTS 顺序排列
-  app.get('/api/focus/summary/by-subject', (req, reply) => {
+  // 可选 ?days=N：只统计最近 N 天（含今天），N 按 1~31 钳制；不传或非法时统计全部历史
+  app.get<{ Querystring: StatsQuery }>('/api/focus/summary/by-subject', (req, reply) => {
+    let startDate: string | undefined;
+    if (req.query.days !== undefined) {
+      const parsed = Number(req.query.days);
+      if (Number.isFinite(parsed)) {
+        const days = Math.min(Math.max(Math.floor(parsed), 1), 31);
+        startDate = addDays(todayStr(), -(days - 1));
+      }
+    }
     const rows = db
       .prepare(
         'SELECT subject, COUNT(*) AS sessions, COALESCE(SUM(minutes), 0) AS totalMinutes ' +
-          'FROM focus_sessions WHERE user_id = ? GROUP BY subject'
+          'FROM focus_sessions WHERE user_id = ? ' +
+          (startDate ? 'AND substr(started_at, 1, 10) >= ? ' : '') +
+          'GROUP BY subject'
       )
-      .all(req.user!.id) as Array<{ subject: string; sessions: number; totalMinutes: number }>;
+      .all(
+        ...(startDate ? [req.user!.id, startDate] : [req.user!.id])
+      ) as Array<{ subject: string; sessions: number; totalMinutes: number }>;
 
     const subjectMap = new Map(rows.map((r) => [r.subject, r]));
 

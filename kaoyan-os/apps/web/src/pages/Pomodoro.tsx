@@ -52,6 +52,7 @@ export default function Pomodoro() {
   const [remaining, setRemaining] = useState(DEFAULT_SETTINGS.pomodoroMinutes * 60);
   const [todayMinutes, setTodayMinutes] = useState(0);
   const [bySubject, setBySubject] = useState<FocusBySubjectResponse | null>(null);
+  const [subjectWindow, setSubjectWindow] = useState<'all' | '7' | '1'>('all');
   const [todayPlans, setTodayPlans] = useState<Plan[]>([]);
   const [planId, setPlanId] = useState<number | ''>('');
 
@@ -101,12 +102,12 @@ export default function Pomodoro() {
         // 忽略错误
       });
     api
-      .focusBySubject()
+      .focusBySubject(subjectWindow === 'all' ? undefined : Number(subjectWindow))
       .then((data) => setBySubject(data))
       .catch(() => {
         // 忽略错误
       });
-  }, []);
+  }, [subjectWindow]);
 
   // 本地日期 -> YYYY-MM-DD
   const todayLocal = () => {
@@ -281,6 +282,28 @@ export default function Pomodoro() {
           <button className="btn btn-ghost pomo-btn" onClick={reset}>
             重置
           </button>
+        </div>
+      </div>
+
+      <div className="form-row pomo-window-row">
+        <label className="pomo-subject-label">分科范围</label>
+        <div className="pomo-window-btns">
+          {(
+            [
+              ['all', '全部'],
+              ['7', '近 7 天'],
+              ['1', '今日'],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              className={`pomo-window-btn${subjectWindow === value ? ' active' : ''}`}
+              onClick={() => setSubjectWindow(value)}
+            >
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
