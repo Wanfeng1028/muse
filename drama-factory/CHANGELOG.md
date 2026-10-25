@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：运行详情页设计层 v1）
+- 新增 static/run-detail-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；run-detail.html 在 app.css 与 harness.css 之后引用 1 行）：视觉逻辑“运行台账”——页头 20px/700、元数据行 12px 次文字、章节标题 16px/700、步骤行距 16px、步骤名 15px/700、步骤 Agent 12px/600、耗时等宽 12px 次文字、步骤标签 12px/600 次文字、摘要框等宽 12px surface-2 底 8px 圆角、工具表头 12px/600 次文字、产物卡 surface 底发丝边 10px 圆角零阴影、产物标题 15px/700、汇总卡 surface 底发丝边 10px 圆角 16px 内边距、抽屉标题 15px/700；token 全部取自 app.css/harness.css。
+- 模型稿即入仓的 15 条规则原文，未做编排修正：括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
+- 验收：新增 RunDetailDesignV1Test 3 例全绿（引用顺序、括号与禁令、关键选择器）；真实服务 + 真实运行数据截图亲眼核对（见下）；截图存 docs/screenshots/run-detail-design-v1.png。验收后服务已停、复制库与 jar 已删。
+- 已知保留：本层不改布局（时间线竖线、步骤圆点色、失败步骤红线、抽屉位置与动画维持 harness.css 原样）；截图 harness 侧注入 id=4（setContent 下 location 为空取不到 ?id=，仓库代码一字未动，数据走真实服务 API）；本轮未动 cost-ledger.js、second-brain、docseek eval、feedflow、linkshort 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：运行列表页设计层 v1）
 - 新增 static/runs-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；runs.html 在 app.css 与 harness.css 之后引用 1 行）：视觉逻辑“运行台账”——页头 20px/700、页头按钮 8px 圆角、统计条 13px/600 加 12px 下距与发丝底线作总计线、全部运行标题 16px/700、运行行上下 16px、目标 15px/700、状态徽标 12px/600、空态 13px 次文字、向导卡纯白底发丝边 10px 圆角零阴影、向导标题 15px/700、向导标签 12px/600 次文字、目标输入框 13px 8px 圆角、错误框 13px 8px 圆角；token 全部取自 app.css/harness.css。
 - 模型稿即入仓的 13 条规则原文，未做编排修正：括号 13/13 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。

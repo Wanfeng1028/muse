@@ -1,0 +1,83 @@
+/* 运行台账 */
+
+.page-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.page-head .actions .btn {
+  border-radius: 8px;
+}
+
+#runMeta.meta-grid .item {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.section .section-title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+#detailBody .timeline .step {
+  margin-bottom: 16px;
+}
+
+.step-head .name {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.step-head .agent {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.step-head .dur {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+.step-body .lbl {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.step-body .summary-box {
+  font-family: var(--mono);
+  font-size: 12px;
+  background: var(--surface-2);
+  border-radius: 8px;
+}
+
+.step-body table.tools th {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+#artifactsArea .ep-card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.ep-head .t {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+#summaryArea.card {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.drawer-head .t {
+  font-size: 15px;
+  font-weight: 700;
+}
