@@ -5,7 +5,7 @@
 
 ## [Unreleased]
 
-### Added（Flash 路 2026-10-25 约 19:18-19:55：官方 Skill 库页设计层 v1）
+### Added（Flash 路 2026-10-25 约 19:18-19:46：官方 Skill 库页设计层 v1）
 - 新增 static/official-skills-design-v1.css（只覆盖，不改 app.css 与任何 JS；official-skills.html 在 app.css 之后引用 1 行）：视觉逻辑“目录卡台账”——纯白底、发丝边框、10px 圆角、零阴影；标题 16px/600 墨色、描述 14px 次文字、作者/许可/版本行 13px 弱文字；卡片底部操作区顶部发丝线、按钮右对齐；搜索框 8px 圆角、聚焦墨色边框；已安装徽章淡绿底、字重 550。
 - 模型稿编排修正 1 处：标题色由 var(--ink)（按钮底色）改 var(--text)，更合设计体系语义；其余规则逐项核对：括号 17/17 平衡，无 linear-gradient、无 backdrop-filter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS，全部 token 均在 app.css 里。
 - 验收：新增 OfficialSkillsDesignV1Test 3 例全绿（引用顺序、括号与禁令、关键选择器）；真实服务（18082 端口，复制 H2 库）+ 真实官方 Skill 数据（1373 条）截图亲眼核对：首屏 3 卡无重叠、无阴影、无渐变，计算样式实证卡片纯白底、10px 圆角、box-shadow none、搜索框 8px；截图存 docs/screenshots/official-skills-v1.png。验收后服务已停、复制库与 jar 已删。
