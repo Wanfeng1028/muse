@@ -3,6 +3,26 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.5] - 2026-10-26
+
+### 修复
+
+- 全站导航互通，关闭各页导航互相缺链的缺口：monitors.html、incidents.html、deliveries.html、sms_log.html 四页导航末尾补快照归档链；index.html 与 snapshots.html 导航末尾补短信记录链；profile.html 导航末尾补短信记录链与快照归档链。
+- 全部为末尾追加，既有链接顺序与 active 标记一字未动；各页首页文案（总览/仪表盘）沿用各页原有；未新建任何路由与页面。
+
+### 测试
+
+- 新增 internal/web/nav_reachability_test.go（3 组：四页含快照归档链；首页与快照页含短信记录链；详情页同时含短信记录链与快照归档链且顺序为投递队列在前、短信记录居中、快照归档在后）。
+- 与 v0.20.4 的 nav_missing_links_test.go 及 internal/web 包全量合跑通过；go vet 全洁。
+
+**模型稿**：只走 BotsRouter，大写 GLM-5.3，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，调用器为本轮现写最小新文件 glm53_r29_call.py，令牌经 SSH 现取不落盘、未读任何现成调用脚本：导航稿与测试稿各 1 通成功（沿用 v0.20.4 已验证的“无文件访问、原文照抄/按给定断言组装”口径）；无 429。
+
+### 视觉验收
+
+- 真实服务冒烟（隔离库 18436 端口）：monitors、incidents、deliveries、sms-log、snapshots、profile 与首页 / 均 200，七页响应体均含补入的新链且零 /settings；/index 返回 404 是既有路由口径（首页路由就是 /），非回归。
+- 浏览器 DOM 实测监控页导航为“总览 监控管理 事件 投递队列 短信记录 快照归档”；截图存 docs/screenshots/monitors-nav-v0205.png，亲眼核对导航 6 链齐全、监控管理 active 绿下划线正常、无重叠。
+- 验收后服务按端口反查真实 PID 停掉、端口已关、隔离库与二进制与临时令牌已删。
+
 ## [0.20.4] - 2026-10-26
 
 ### 修复
