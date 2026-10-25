@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>批量建链 · 短链</title>
 <link rel="stylesheet" href="assets/css/style.css">
+<link rel="stylesheet" href="assets/css/design-v117.css">
 </head>
 <body>
 <div id="key-banner" class="key-banner" hidden>
@@ -60,6 +61,11 @@
           <textarea id="bulk-input" rows="8" class="input mono" placeholder="https://example.com/活动页&#10;https://example.com/手册 自定义短码"></textarea>
           <div class="hint">每行一条；URL 后面空一格可加自定义短码；最多 100 行</div>
         </div>
+        <div class="field">
+          <label for="bulk-password">统一访问密码（选填）</label>
+          <input class="input" type="password" id="bulk-password" placeholder="留空表示不设密码，填了则应用于本批全部" autocomplete="new-password">
+          <div class="hint">不同条目要不同密码时请走单条新建或直接调 API；批量页只支持统一密码，密码不会回显在结果里</div>
+        </div>
         <div class="form-actions">
           <button type="submit" class="btn primary" id="bulk-submit">批量生成短链</button>
           <span class="form-err" id="bulk-err"></span>
@@ -76,6 +82,7 @@
             <th>序号</th>
             <th>目标 URL</th>
             <th>短链</th>
+            <th>密码</th>
             <th>状态</th>
           </tr>
         </thead>

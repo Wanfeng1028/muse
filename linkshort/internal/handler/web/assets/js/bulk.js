@@ -10,6 +10,7 @@
   var summaryEl = document.getElementById("bulk-summary");
   var tbody = document.getElementById("bulk-rows");
   var copyAllBtn = document.getElementById("copy-all");
+  var passwordEl = document.getElementById("bulk-password");
 
   var allSuccessLinks = [];
   var rawUrls = [];
@@ -20,6 +21,7 @@
     resultPanel.hidden = true;
     allSuccessLinks = [];
 
+    var sharedPassword = passwordEl ? passwordEl.value : "";
     var text = input.value;
     var lines = text.split("\n");
     var items = [];
@@ -34,6 +36,7 @@
       var slug = match[2] || "";
       var item = { url: url };
       if (slug) item.slug = slug;
+      if (sharedPassword) item.password = sharedPassword;
       items.push(item);
       rawUrls.push(url);
     }
@@ -92,6 +95,10 @@
           tdLink.textContent = "—";
         }
         tr.appendChild(tdLink);
+
+        var tdPw = document.createElement("td");
+        tdPw.textContent = (item.ok && sharedPassword) ? "已设" : "—";
+        tr.appendChild(tdPw);
 
         var tdStatus = document.createElement("td");
         if (item.ok) {

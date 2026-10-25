@@ -1,0 +1,61 @@
+/* linkshort v1.17.0 design layer (loaded after style.css).
+   Visual logic: waybill / postal label — paper ground, ink text, stamp red only for action and active state.
+   Scope: topbar title, panel head, table, sidebar active, focus rings. No HTML structure or JS hooks changed by this file.
+   Orchestrator corrections to model output: slug font stack -> var(--font-mono); sidebar active padding corrected so text does not shift (3px border + 9px left padding = 12px); tbody nowrap removed (ellipsis stays on .slug/.url); color-mix -> rgba stamp 0.08 matching existing hover token.
+   De-AI check: no gradient added, no glow, no serif body, no emoji, no centered hero. */
+
+/* linkshort v1.17.0 design layer */
+.topbar-title {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-align: left;
+}
+
+.panel-head h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.table thead th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-transform: none;
+  letter-spacing: normal;
+  border-bottom: 1px solid var(--ink);
+  padding: 8px 16px;
+}
+
+.table tbody td {
+  font-size: 14px;
+  line-height: 1.6;
+  padding: 8px 16px;
+}
+
+.table .slug {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar nav a.active {
+  border-left: 3px solid var(--stamp);
+  color: var(--ink);
+  background: rgba(179, 64, 42, 0.08);
+  border-radius: 6px;
+  padding: 8px 12px 8px 9px;
+}
+
+.btn.primary:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+.input:focus-visible {
+  outline: 2px solid var(--stamp);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
