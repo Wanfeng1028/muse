@@ -36,6 +36,102 @@ public sealed partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string? _audioFilePath;
 
+    /// <summary>当前音频文件的全部音轨（仅非 WAV 格式经 ffprobe 列出；WAV 为空）。</summary>
+    private List<AudioTrack> _audioTracks = new();
+
+    /// <summary>音轨下拉框显示文本，与 _audioTracks 一一对应。</summary>
+    [ObservableProperty]
+    private ObservableCollection<string> _audioTrackLabels = new();
+
+    /// <summary>当前选中的音轨下标（对应 _audioTracks 的位置；-1 表示无音轨可选）。</summary>
+    [ObservableProperty]
+    private int _selectedAudioTrackIndex = -1;
+
+    /// <summary>音轨数是否大于 1（下拉框仅在多轨时可见）。</summary>
+    [ObservableProperty]
+    private bool _hasMultipleAudioTracks;
+
+    private bool _suppressTrackReload;
+
+    /// <summary>音轨下拉框显示文本：轨号从 1 起显示。</summary>
+    public static string TrackDisplay(AudioTrack t)
+    {
+        var channelsText = t.Channels switch
+        {
+            1 => "单声道",
+            2 => "立体声",
+            _ => $"{t.Channels}声道"
+        };
+
+        return $"轨 {t.AudioIndex + 1} · {t.CodecName} · {t.SampleRate}Hz · {channelsText}";
+    }
+
+    /// <summary>
+    /// 列出 path 的音轨并刷新下拉框状态；WAV 只有一条轨，不列出。
+    /// 调用期间不触发选轨重载；刷新后默认选中第 0 条轨（不自动导入，导入由调用方决定）。
+    /// </summary>
+    public void RefreshAudioTracks(string path, AudioFormat format)
+    {
+        _suppressTrackReload = true;
+        try
+        {
+            _audioTracks.Clear();
+            AudioTrackLabels.Clear();
+            if (format != AudioFormat.Wav)
+            {
+                _audioTracks = FfmpegDecoder.ListAudioTracks(path);
+                foreach (var track in _audioTracks)
+                {
+                    AudioTrackLabels.Add(TrackDisplay(track));
+                }
+            }
+
+            HasMultipleAudioTracks = _audioTracks.Count > 1;
+            SelectedAudioTrackIndex = _audioTracks.Count > 0 ? 0 : -1;
+        }
+        finally
+        {
+            _suppressTrackReload = false;
+        }
+    }
+
+    partial void OnSelectedAudioTrackIndexChanged(int value)
+    {
+        if (_suppressTrackReload) return;
+        if (string.IsNullOrEmpty(AudioFilePath)) return;
+        if (value < 0 || value >= _audioTracks.Count) return;
+        _ = ReloadSelectedTrackAsync();
+    }
+
+    /// <summary>
+    /// 按当前选中的音轨重新导入 AudioFilePath（仅更新音频与状态，不动转写稿之外的编辑态；
+    /// 转写稿随旧音频失效故清空，与 ImportAudioAsync 同口径）。
+    /// </summary>
+    public async Task ReloadSelectedTrackAsync()
+    {
+        var path = AudioFilePath;
+        if (string.IsNullOrEmpty(path)) return;
+        if (SelectedAudioTrackIndex < 0 || SelectedAudioTrackIndex >= _audioTracks.Count) return;
+        var trackIndex = _audioTracks[SelectedAudioTrackIndex].AudioIndex;
+        try
+        {
+            var clip = await Task.Run(() => AudioImporter.Import(path, null, trackIndex));
+            _clip = clip;
+            _doc = null;
+            _fillerRanges = new List<TimeRange>();
+            _fillersDetected = false;
+            Words.Clear();
+            AudioDurationSeconds = clip.Duration.TotalSeconds;
+            FillerCount = 0;
+            StatusText = $"已切换音频轨：{AudioTrackLabels[SelectedAudioTrackIndex]}（{AudioDurationSeconds:F1} 秒），请再导入转写稿";
+            RaiseWaveformInvalidated();
+        }
+        catch (Exception ex)
+        {
+            StatusText = $"切换音频轨失败：{ex.Message}";
+        }
+    }
+
     [ObservableProperty]
     private double _audioDurationSeconds;
 
@@ -85,6 +181,10 @@ public sealed partial class MainViewModel : ObservableObject
         _fillersDetected = false;
         ProjectName = name;
         AudioFilePath = null;
+        _audioTracks.Clear();
+        AudioTrackLabels.Clear();
+        HasMultipleAudioTracks = false;
+        SelectedAudioTrackIndex = -1;
         AudioDurationSeconds = clip.Duration.TotalSeconds;
         FillerCount = 0;
         RefreshWords();
@@ -110,7 +210,11 @@ public sealed partial class MainViewModel : ObservableObject
             format = AudioImporter.DetectFormat(path);
             using var op = Services.DesktopBoot.Logger.BeginOperation("import-audio");
             Services.DesktopBoot.Logger.Info("开始导入音频", new { path, format = AudioImporter.FormatDisplayName(format) });
-            var clip = await Task.Run(() => AudioImporter.Import(path));
+            RefreshAudioTracks(path, format);
+            var trackIndex = SelectedAudioTrackIndex >= 0 && SelectedAudioTrackIndex < _audioTracks.Count
+                ? _audioTracks[SelectedAudioTrackIndex].AudioIndex
+                : 0;
+            var clip = await Task.Run(() => AudioImporter.Import(path, null, trackIndex));
             _clip = clip;
             _doc = null;
             _fillerRanges = new List<TimeRange>();

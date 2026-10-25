@@ -19,6 +19,8 @@
         <TextBlock Text="{Binding ProjectName}" Classes="muted" VerticalAlignment="Center" Margin="0,0,16,0"/>
         <Button Content="载入演示" Command="{Binding LoadDemoCommand}"/>
         <Button Content="导入音频" Command="{Binding ImportAudioCommand}"/>
+        <TextBlock Text="音频轨" Classes="muted" VerticalAlignment="Center" IsVisible="{Binding HasMultipleAudioTracks}"/>
+        <ComboBox ItemsSource="{Binding AudioTrackLabels}" SelectedIndex="{Binding SelectedAudioTrackIndex}" IsVisible="{Binding HasMultipleAudioTracks}" MinWidth="220"/>
         <Button Content="导入转写稿" Command="{Binding ImportTranscriptCommand}"/>
         <Button Content="删除选中词" Command="{Binding DeleteSelectedCommand}"/>
         <Button Content="弱化语气词" Command="{Binding WeakenFillersCommand}"/>

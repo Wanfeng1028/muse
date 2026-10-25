@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added（桌面多轨选轨，TD-004 偿还完成）
+- 桌面选轨下拉：MainViewModel.RefreshAudioTracks（非 WAV 经 ffprobe 列轨，WAV 清空）+ AudioTrackLabels/SelectedAudioTrackIndex/HasMultipleAudioTracks + TrackDisplay（“轨 N · 编码 · 采样率 · 声道”）；ImportAudioAsync 导入时用选中轨；改选下拉经 OnSelectedAudioTrackIndexChanged 重载选中轨（转写稿随旧音频失效故清空，与导入同口径）；LoadDemoProject 清空选轨状态；工具栏 ComboBox 仅多轨时可见（编译绑定校验通过）。
+- 验证：一次性控制台验证器实跑 ViewModel（验完已删）：双轨 fixture 标签 2 条与文案精确一致、切轨 1 后重载为 880Hz（过零率 1746）、WAV 清空状态；桌面工程构建 0 错。已知保留：GUI 截图未补——截图模式只渲染演示工程（AudioFilePath 为空，下拉隐藏），多轨下拉的真实界面截图待有办法喂多轨演示工程后补，不虚报为已验收。
+
 ### Added（多轨选轨，偿还 TD-004 Core 层）
 - 多轨音频列出与选轨：`FfmpegDecoder.ListAudioTracks`（ffprobe `-select_streams a`，AudioIndex 按音频流顺序从 0 编号，StreamIndex 为 ffprobe 流号）+ `Decode(path, ffmpegPath, audioTrackIndex)`（探针与解码分别用 `a:{idx}` / `0:a:{idx}`，越界抛 AudioFormatException 并报轨数）；`AudioImporter.Import(path, ffmpegPath, audioTrackIndex)` 透传，WAV 非 0 轨号抛错。旧双参 Decode 语义不变（等价于轨 0）。
 - 测试：AudioTrackSelectionTests 9 例（单轨列出、空/缺失文件、多轨列出、越界、440Hz/880Hz 双轨过零率区分、Importer 透传、WAV 非 0 轨拒绝），fixture dual-tone.m4a（两条 AAC 单声道轨，440Hz/880Hz 各 2 秒）。
