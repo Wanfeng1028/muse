@@ -1,0 +1,615 @@
+// fallow-ignore-file code-duplication
+import { spawnSync } from "node:child_process";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  renameSync,
+  rmSync,
+  symlinkSync,
+  utimesSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
+import { satisfies } from "compare-versions";
+import { buildSync } from "esbuild";
+import { describe, expect, it, vi } from "vitest";
+import {
+  OPTIONAL_PACKAGES,
+  install,
+  installedOptionalPackageVersion,
+  loadBesideCli,
+  loadInstalledOptionalPackage,
+  loadOptionalPackage,
+  loadSharp,
+  loadSharpInBackground,
+  optionalPackageDir,
+  requireSharpBesideCli,
+  SHARP_VERSION,
+  type OptionalPackageDeps,
+} from "./optionalPackages.js";
+
+function fakeDeps(overrides: Partial<OptionalPackageDeps> = {}) {
+  const installed = new Map<string, unknown>();
+  const log = vi.fn();
+  const install = vi.fn(async (dir: string) => {
+    installed.set(dir, { fake: "module" });
+  });
+  const deps: OptionalPackageDeps = {
+    cacheDir: "/cache",
+    loadBesideCli: () => null,
+    loadInstalled: (dir) => installed.get(dir) ?? null,
+    install,
+    log,
+    ...overrides,
+  };
+  return { deps, install, log, installed };
+}
+
+describe("loadInstalledOptionalPackage", () => {
+  it("returns null without installing when the package is not on this machine", () => {
+    const { deps, install } = fakeDeps();
+
+    expect(loadInstalledOptionalPackage("onnxruntime-node", deps)).toBeNull();
+    expect(install).not.toHaveBeenCalled();
+  });
+});
+
+describe("installedOptionalPackageVersion from the cache", () => {
+  it.each(['{"version":', "null", '"1.52.0"', "[]", "{}", '{"version":123}', '{"version":""}'])(
+    "treats an invalid cached manifest as unavailable: %s",
+    (manifest) => {
+      const cache = mkdtempSync(join(tmpdir(), "hf-optional-version-"));
+      const name = "@google/genai";
+      const packageDir = join(optionalPackageDir(name, cache), "node_modules", name);
+      mkdirSync(packageDir, { recursive: true });
+      writeFileSync(join(packageDir, "package.json"), manifest);
+      const cliUrl = pathToFileURL(join(cache, "cli.js")).href;
+      try {
+        expect(installedOptionalPackageVersion(name, cache, cliUrl)).toBeNull();
+      } finally {
+        rmSync(cache, { recursive: true, force: true });
+      }
+    },
+  );
+
+  it("returns the cached version without loading the package entry", () => {
+    const cache = mkdtempSync(join(tmpdir(), "hf-optional-version-"));
+    const name = "@google/genai";
+    const packageDir = join(optionalPackageDir(name, cache), "node_modules", name);
+    mkdirSync(packageDir, { recursive: true });
+    writeFileSync(join(packageDir, "package.json"), '{"version":"1.52.0","main":"index.js"}');
+    writeFileSync(join(packageDir, "index.js"), 'throw new Error("entry must not load");');
+    const cliUrl = pathToFileURL(join(cache, "cli.js")).href;
+    try {
+      expect(installedOptionalPackageVersion(name, cache, cliUrl)).toBe("1.52.0");
+    } finally {
+      rmSync(cache, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("loadOptionalPackage", () => {
+  it("installs on first use with one plain line, then loads from the cache without installing again", async () => {
+    const { deps, install, log } = fakeDeps();
+
+    const first = await loadOptionalPackage("onnxruntime-node", "background removal", deps);
+    const second = await loadOptionalPackage("onnxruntime-node", "background removal", deps);
+
+    expect(first).toBe(second);
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(install).toHaveBeenCalledWith(
+      optionalPackageDir("onnxruntime-node", "/cache"),
+      "onnxruntime-node",
+      OPTIONAL_PACKAGES["onnxruntime-node"],
+    );
+    expect(log.mock.calls).toEqual([["installing onnxruntime-node for background removal, once"]]);
+  });
+
+  it("uses the pinned copy installed beside the CLI, without installing", async () => {
+    const beside = { beside: "module" };
+    const { deps, install, log } = fakeDeps({ loadBesideCli: () => beside });
+
+    expect(await loadOptionalPackage("onnxruntime-node", "on-device search", deps)).toBe(beside);
+    expect(install).not.toHaveBeenCalled();
+    expect(log).not.toHaveBeenCalled();
+  });
+
+  it("names the manual command when the install fails", async () => {
+    const { deps } = fakeDeps({
+      install: async () => {
+        throw new Error(
+          "npm error code ENOTFOUND\nnpm error syscall getaddrinfo\nnpm error at Foo.bar",
+        );
+      },
+    });
+
+    const failure = loadOptionalPackage("@google/genai", "--describe", deps);
+
+    await expect(failure).rejects.toThrow(
+      /--describe needs @google\/genai, and installing it failed \(npm error code ENOTFOUND\)\. /,
+    );
+    await expect(failure).rejects.toThrow(
+      `npm install @google/genai@${OPTIONAL_PACKAGES["@google/genai"]} --prefix "${optionalPackageDir("@google/genai", "/cache")}"`,
+    );
+  });
+
+  it("blames the network only for network failures", async () => {
+    const failWith = (msg: string) =>
+      loadOptionalPackage(
+        "@google/genai",
+        "--describe",
+        fakeDeps({
+          install: async () => {
+            throw new Error(msg);
+          },
+        }).deps,
+      );
+
+    await expect(failWith("npm error code ENOTFOUND")).rejects.toThrow(/Check your network/);
+    const fsFailure = failWith("npm error code EACCES");
+    await expect(fsFailure).rejects.not.toThrow(/network/);
+    await expect(fsFailure).rejects.toThrow(/npm install @google\/genai@/);
+  });
+
+  it("does not treat an install that leaves nothing loadable as installed", async () => {
+    const { deps } = fakeDeps({ install: async () => {} });
+
+    await expect(loadOptionalPackage("onnxruntime-node", "on-device search", deps)).rejects.toThrow(
+      /could not be loaded/,
+    );
+  });
+
+  it("keeps each version in its own directory so a pin bump never reads a stale install", () => {
+    expect(optionalPackageDir("@google/genai", "/cache")).toMatch(
+      /[\\/]cache[\\/]@google__genai@\d+\.\d+\.\d+$/,
+    );
+  });
+});
+
+describe("loadSharp", () => {
+  const sharp = { fake: "sharp" };
+  const absent = () => null;
+
+  it("uses the installed copy, whatever its version, without installing", async () => {
+    const { deps, install } = fakeDeps();
+
+    expect(await loadSharp("compare", deps, () => sharp as never)).toBe(sharp);
+    expect(install).not.toHaveBeenCalled();
+  });
+
+  it("installs once when the host left sharp out, then loads it from the cache", async () => {
+    const { deps, install, log } = fakeDeps();
+
+    const first = await loadSharp("compare", deps, absent);
+    const second = await loadSharp("compare", deps, absent);
+
+    expect(first).toBe(second);
+    expect(install).toHaveBeenCalledTimes(1);
+    expect(install).toHaveBeenCalledWith(
+      optionalPackageDir("sharp", "/cache"),
+      "sharp",
+      SHARP_VERSION,
+    );
+    expect(log.mock.calls).toEqual([["installing sharp for compare, once"]]);
+  });
+
+  it("runs one install for concurrent callers, and does not retry a failed one", async () => {
+    const { deps, install } = fakeDeps();
+    const loaded = await Promise.all([1, 2, 3].map(() => loadSharp("compare", deps, absent)));
+    expect(new Set(loaded).size).toBe(1);
+    expect(install).toHaveBeenCalledTimes(1);
+
+    const offline = vi.fn(async () => {
+      throw new Error("npm error code ENOTFOUND");
+    });
+    const failing = fakeDeps({ install: offline }).deps;
+    await expect(loadSharp("compare", failing, absent)).rejects.toThrow(/ENOTFOUND/);
+    await expect(loadSharp("compare", failing, absent)).rejects.toThrow(/ENOTFOUND/);
+    expect(offline).toHaveBeenCalledTimes(1);
+  });
+
+  it("offline with no cached copy, fails with the command to run", async () => {
+    const { deps } = fakeDeps({
+      install: async () => {
+        throw new Error("npm error code ENOTFOUND\nnpm error syscall getaddrinfo");
+      },
+    });
+
+    await expect(loadSharp("compare", deps, absent)).rejects.toThrow(
+      `compare needs sharp, and installing it failed (npm error code ENOTFOUND). ` +
+        `Check your network connection, then retry, or install it yourself: ` +
+        `npm install sharp@${SHARP_VERSION} --prefix "${optionalPackageDir("sharp", "/cache")}"`,
+    );
+  });
+
+  it.each(["1", " sharp , onnxruntime-node "])(
+    "with HYPERFRAMES_NO_OPTIONAL_INSTALL=%s, fails fast with a stable message instead of installing",
+    async (value) => {
+      vi.stubEnv("HYPERFRAMES_NO_OPTIONAL_INSTALL", value);
+      try {
+        const { deps, install, log } = fakeDeps();
+
+        await expect(loadSharp("compare", deps, absent)).rejects.toThrow(
+          "sharp is not installed, and HYPERFRAMES_NO_OPTIONAL_INSTALL turns off installing it; compare needs it.",
+        );
+        await expect(
+          loadOptionalPackage("onnxruntime-node", "background removal", deps),
+        ).rejects.toThrow("onnxruntime-node is not installed, and HYPERFRAMES_NO_OPTIONAL_INSTALL");
+        expect(install).not.toHaveBeenCalled();
+        expect(log).not.toHaveBeenCalled();
+      } finally {
+        vi.unstubAllEnvs();
+      }
+    },
+  );
+
+  it("with a package list, still installs the packages it does not name", async () => {
+    vi.stubEnv("HYPERFRAMES_NO_OPTIONAL_INSTALL", "sharp");
+    try {
+      const { deps, install } = fakeDeps();
+
+      await expect(loadSharp("compare", deps, absent)).rejects.toThrow(
+        "HYPERFRAMES_NO_OPTIONAL_INSTALL turns off installing it",
+      );
+      await loadOptionalPackage("@google/genai", "--describe", deps);
+      expect(install).toHaveBeenCalledTimes(1);
+      expect(install).toHaveBeenCalledWith(
+        optionalPackageDir("@google/genai", "/cache"),
+        "@google/genai",
+        OPTIONAL_PACKAGES["@google/genai"],
+      );
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  it("installs a version the CLI's own dependency range accepts", () => {
+    const manifest = JSON.parse(
+      readFileSync(new URL("../../package.json", import.meta.url), "utf8"),
+    );
+    expect(satisfies(SHARP_VERSION, manifest.optionalDependencies.sharp)).toBe(true);
+  });
+});
+
+describe("loadSharpInBackground", () => {
+  it("rejects at once, installs once in the background, then serves the installed copy", async () => {
+    const sharp = { fake: "sharp" };
+    const { deps, installed } = fakeDeps();
+    let finish = () => {};
+    const install = vi.fn(
+      (dir: string) =>
+        new Promise<void>((resolve) => {
+          finish = () => {
+            installed.set(dir, sharp);
+            resolve();
+          };
+        }),
+    );
+    deps.install = install;
+    const load = () => loadSharpInBackground("image thumbnails", deps, () => null);
+
+    await expect(load()).rejects.toThrow("installing it once for image thumbnails");
+    await expect(load()).rejects.toThrow("installing it once for image thumbnails");
+    expect(install).toHaveBeenCalledTimes(1);
+
+    finish();
+    expect(await load()).toBe(sharp);
+  });
+
+  it("says why when installing is off, instead of promising an install", async () => {
+    vi.stubEnv("HYPERFRAMES_NO_OPTIONAL_INSTALL", "1");
+    try {
+      const { deps, install, log } = fakeDeps();
+      const load = () => loadSharpInBackground("image thumbnails", deps, () => null);
+
+      await expect(load()).rejects.toThrow(
+        "HYPERFRAMES_NO_OPTIONAL_INSTALL turns off installing it",
+      );
+      await expect(load()).rejects.toThrow(
+        "HYPERFRAMES_NO_OPTIONAL_INSTALL turns off installing it",
+      );
+      expect(install).not.toHaveBeenCalled();
+      expect(log).toHaveBeenCalledTimes(1);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+});
+
+describe("requireSharpBesideCli", () => {
+  function sharpPackage(dir: string, body: string) {
+    const pkg = join(dir, "node_modules", "sharp");
+    mkdirSync(pkg, { recursive: true });
+    writeFileSync(
+      join(pkg, "package.json"),
+      JSON.stringify({ version: "0.1.0", main: "index.js" }),
+    );
+    writeFileSync(join(pkg, "index.js"), body);
+  }
+
+  it("loads whatever version is installed beside the CLI, and null when there is none", () => {
+    const root = mkdtempSync(join(tmpdir(), "hf-sharp-beside-"));
+    const cliUrl = pathToFileURL(join(root, "node_modules", "hyperframes", "dist", "cli.js")).href;
+    try {
+      expect(requireSharpBesideCli("compare", cliUrl)).toBeNull();
+      sharpPackage(root, `module.exports = { copy: "beside" };`);
+      expect(requireSharpBesideCli("compare", cliUrl)).toEqual({ copy: "beside" });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("names the feature when the installed copy cannot load", () => {
+    const root = mkdtempSync(join(tmpdir(), "hf-sharp-broken-"));
+    sharpPackage(root, `throw new Error("libvips was blocked");`);
+    const cliUrl = pathToFileURL(join(root, "node_modules", "hyperframes", "dist", "cli.js")).href;
+    try {
+      expect(() => requireSharpBesideCli("remove-background", cliUrl)).toThrow(
+        "remove-background needs sharp, which is installed but could not load (libvips was blocked). ",
+      );
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("finds a host's runtime pack on NODE_PATH", () => {
+    const root = mkdtempSync(join(tmpdir(), "hf-sharp-node-path-"));
+    const pack = join(root, "pack");
+    sharpPackage(pack, `module.exports = { copy: "pack" };`);
+    // Bundled into a folder with no node_modules above it, so only NODE_PATH can supply sharp.
+    const bundle = join(root, "cli", "optionalPackages.mjs");
+    buildSync({
+      entryPoints: [fileURLToPath(new URL("./optionalPackages.ts", import.meta.url))],
+      bundle: true,
+      platform: "node",
+      format: "esm",
+      outfile: bundle,
+    });
+    const script = `const m = await import(${JSON.stringify(pathToFileURL(bundle).href)});
+console.log(JSON.stringify(await m.loadSharp("compare", { cacheDir: "/no-cache", loadBesideCli: () => null,
+  loadInstalled: () => null, install: async () => { throw new Error("installed"); }, log() {} })));`;
+    try {
+      const child = spawnSync(process.execPath, ["--input-type=module", "-e", script], {
+        encoding: "utf-8",
+        env: { ...process.env, NODE_PATH: join(pack, "node_modules") },
+      });
+      expect(child.stderr).toBe("");
+      expect(JSON.parse(child.stdout)).toEqual({ copy: "pack" });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("a copy installed beside the CLI", () => {
+  // node_modules/hyperframes/dist/cli.js with onnxruntime-node installed next to hyperframes.
+  function layout(version: string, name = "onnxruntime-node") {
+    const root = mkdtempSync(join(tmpdir(), "hf-beside-"));
+    const pkg = join(root, "node_modules", name);
+    mkdirSync(pkg, { recursive: true });
+    writeFileSync(join(pkg, "package.json"), JSON.stringify({ version, main: "index.js" }));
+    writeFileSync(join(pkg, "index.js"), `module.exports = { copy: "beside ${version}" };`);
+    const cliUrl = pathToFileURL(join(root, "node_modules", "hyperframes", "dist", "cli.js")).href;
+    return { root, cliUrl };
+  }
+
+  it("loads it and reports its version when it is the pinned version", () => {
+    const pin = OPTIONAL_PACKAGES["onnxruntime-node"];
+    const { root, cliUrl } = layout(pin);
+    try {
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toEqual({ copy: `beside ${pin}` });
+      expect(installedOptionalPackageVersion("onnxruntime-node", "/no-cache", cliUrl)).toBe(pin);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it.each(["1.13.8", "1.13.7"])("accepts only the Sherpa 1.13.8 pin, received %s", (version) => {
+    const { root, cliUrl } = layout(version, "sherpa-onnx-node");
+    try {
+      const result = loadBesideCli("sherpa-onnx-node", cliUrl);
+      if (version === "1.13.8") expect(result).toEqual({ copy: "beside 1.13.8" });
+      else expect(result).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("keeps a missing optional-package entry eligible for cache fallback", () => {
+    const { root, cliUrl } = layout("1.21.1");
+    try {
+      rmSync(join(root, "node_modules", "onnxruntime-node", "index.js"));
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("ignores it when its manifest is unreadable, instead of throwing", () => {
+    const { root, cliUrl } = layout(OPTIONAL_PACKAGES["onnxruntime-node"]);
+    writeFileSync(join(root, "node_modules", "onnxruntime-node", "package.json"), "{ version: 1");
+    try {
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toBeNull();
+      expect(installedOptionalPackageVersion("onnxruntime-node", "/no-cache", cliUrl)).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("checks the copy require would load first, not a later pinned one", () => {
+    const { root, cliUrl } = layout(OPTIONAL_PACKAGES["onnxruntime-node"]);
+    const nearer = join(root, "node_modules", "hyperframes", "node_modules", "onnxruntime-node");
+    mkdirSync(nearer, { recursive: true });
+    writeFileSync(join(nearer, "index.js"), `module.exports = { copy: "unversioned" };`);
+    try {
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("loads a symlinked copy, as bun and pnpm lay packages out", () => {
+    const pin = OPTIONAL_PACKAGES["onnxruntime-node"];
+    const { root, cliUrl } = layout(pin);
+    const linked = join(root, "node_modules", "onnxruntime-node");
+    const store = join(root, "store", "onnxruntime-node");
+    mkdirSync(join(root, "store"), { recursive: true });
+    renameSync(linked, store);
+    symlinkSync(store, linked, "dir");
+    try {
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toEqual({ copy: `beside ${pin}` });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("loads a symlinked copy when Node preserves symlinks", () => {
+    const pin = OPTIONAL_PACKAGES["onnxruntime-node"];
+    const { root, cliUrl } = layout(pin);
+    const linked = join(root, "node_modules", "onnxruntime-node");
+    const store = join(root, "store", "onnxruntime-node");
+    mkdirSync(join(root, "store"), { recursive: true });
+    renameSync(linked, store);
+    symlinkSync(store, linked, "dir");
+    // Bundled first: a TS loader cannot itself load under --preserve-symlinks in a bun store.
+    const bundle = join(root, "optionalPackages.mjs");
+    buildSync({
+      entryPoints: [fileURLToPath(new URL("./optionalPackages.ts", import.meta.url))],
+      bundle: true,
+      platform: "node",
+      format: "esm",
+      outfile: bundle,
+    });
+    const script = `const m = await import(${JSON.stringify(pathToFileURL(bundle).href)});
+const url = ${JSON.stringify(cliUrl)};
+console.log(JSON.stringify([m.loadBesideCli("onnxruntime-node", url),
+  m.installedOptionalPackageVersion("onnxruntime-node", "/no-cache", url)]));`;
+    try {
+      const child = spawnSync(
+        process.execPath,
+        ["--preserve-symlinks", "--input-type=module", "-e", script],
+        { encoding: "utf-8" },
+      );
+      expect(child.stderr).toBe("");
+      expect(JSON.parse(child.stdout)).toEqual([{ copy: `beside ${pin}` }, pin]);
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("looks past an empty folder that require skips", () => {
+    const pin = OPTIONAL_PACKAGES["onnxruntime-node"];
+    const { root, cliUrl } = layout(pin);
+    mkdirSync(join(root, "node_modules", "hyperframes", "node_modules", "onnxruntime-node"), {
+      recursive: true,
+    });
+    try {
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toEqual({ copy: `beside ${pin}` });
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("ignores a file require would load before the pinned folder", () => {
+    const { root, cliUrl } = layout(OPTIONAL_PACKAGES["onnxruntime-node"]);
+    const nearer = join(root, "node_modules", "hyperframes", "node_modules");
+    mkdirSync(nearer, { recursive: true });
+    writeFileSync(join(nearer, "onnxruntime-node.js"), `module.exports = { copy: "file" };`);
+    try {
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+
+  it("ignores it at any other version, so the cache install is used", () => {
+    const { root, cliUrl } = layout("1.0.0");
+    try {
+      expect(loadBesideCli("onnxruntime-node", cliUrl)).toBeNull();
+      expect(installedOptionalPackageVersion("onnxruntime-node", "/no-cache", cliUrl)).toBeNull();
+    } finally {
+      rmSync(root, { recursive: true, force: true });
+    }
+  });
+});
+
+describe("install", () => {
+  const name = "@google/genai";
+  const version = "1.0.0";
+
+  function setup() {
+    const cache = mkdtempSync(join(tmpdir(), "hf-optional-"));
+    const dir = join(cache, "pkg@1.0.0");
+    const stubNpm = async (args: string[]) => {
+      await new Promise((r) => setTimeout(r, 50));
+      const prefix = args[args.indexOf("--prefix") + 1] as string;
+      if (!existsSync(prefix)) throw new Error("ENOENT: staging dir vanished mid-install");
+      mkdirSync(join(prefix, "node_modules", name), { recursive: true });
+      writeFileSync(join(prefix, "node_modules", name, "package.json"), "{}");
+    };
+    return { cache, dir, stubNpm };
+  }
+
+  it("gives each overlapping install in one process its own staging dir", async () => {
+    const { cache, dir, stubNpm } = setup();
+    try {
+      await Promise.all([
+        install(dir, name, version, stubNpm),
+        install(dir, name, version, stubNpm),
+      ]);
+      expect(existsSync(join(dir, "node_modules", name, "package.json"))).toBe(true);
+    } finally {
+      rmSync(cache, { recursive: true, force: true });
+    }
+  });
+
+  it("leaves another live process's in-progress staging dir alone while it installs", async () => {
+    const { cache, dir, stubNpm } = setup();
+    const foreign = `${dir}.tmp-${process.ppid}-abcd1234`;
+    mkdirSync(foreign, { recursive: true });
+    writeFileSync(join(foreign, "partial"), "downloading");
+    try {
+      await install(dir, name, version, stubNpm);
+      expect(existsSync(join(foreign, "partial"))).toBe(true);
+    } finally {
+      rmSync(cache, { recursive: true, force: true });
+    }
+  });
+
+  it("sweeps a staging dir whose pid is dead and keeps one whose pid is alive", async () => {
+    const { cache, dir, stubNpm } = setup();
+    const deadPid = spawnSync(process.execPath, ["-e", ""]).pid as number;
+    const dead = `${dir}.tmp-${deadPid}-abcd1234`;
+    const deadOldFormat = `${dir}.tmp-${deadPid}`;
+    const alive = `${dir}.tmp-${process.ppid}-abcd1234`;
+    mkdirSync(dead, { recursive: true });
+    mkdirSync(deadOldFormat, { recursive: true });
+    mkdirSync(alive, { recursive: true });
+    try {
+      await install(dir, name, version, stubNpm);
+      expect(existsSync(dead)).toBe(false);
+      expect(existsSync(deadOldFormat)).toBe(false);
+      expect(existsSync(alive)).toBe(true);
+    } finally {
+      rmSync(cache, { recursive: true, force: true });
+    }
+  });
+
+  it("sweeps a staging dir hours old even when its pid is alive, since pids get reused", async () => {
+    const { cache, dir, stubNpm } = setup();
+    const reused = `${dir}.tmp-${process.ppid}-abcd1234`;
+    mkdirSync(reused, { recursive: true });
+    const sevenHoursAgo = new Date(Date.now() - 7 * 60 * 60 * 1000);
+    utimesSync(reused, sevenHoursAgo, sevenHoursAgo);
+    try {
+      await install(dir, name, version, stubNpm);
+      expect(existsSync(reused)).toBe(false);
+    } finally {
+      rmSync(cache, { recursive: true, force: true });
+    }
+  });
+});

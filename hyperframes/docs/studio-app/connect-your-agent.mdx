@@ -1,0 +1,74 @@
+---
+title: "Connect your agent"
+description: "Pick the agent the HyperFrames Studio app works with: Claude Code, Codex, Grok, Antigravity, GitHub Copilot, or OpenCode for free. The app installs it for you."
+---
+
+import { HoverVideo } from "/snippets/hover-video.jsx";
+
+The app makes your videos with an agent that runs on your computer. The first time you send a request without one,
+the **Connect an agent** sheet opens: choose an agent and the app installs it for you, then helps you sign in.
+
+| Agent | Sign-in | Cost |
+| --- | --- | --- |
+| Claude Code | Your browser opens Claude's sign-in: a Claude account or an Anthropic Console account. | Billed by Anthropic |
+| Codex | Your browser opens Codex's sign-in: your ChatGPT account. | Billed by OpenAI |
+| Grok | Grok gives you a code to confirm in your browser. | Billed by xAI |
+| Antigravity | Signs in from Terminal: the sheet gives you the command. | Billed by Google |
+| GitHub Copilot | Signs in from Terminal: the sheet gives you the command. | Billed by GitHub |
+| OpenCode | None: it runs free models. Sign in to a provider from Terminal to add its models. | Free |
+
+Runs bill to the plan of the account your agent is signed in with. To use an API key instead, change **Bill runs
+to** in **Settings** > **Permissions**.
+
+## Set one up
+
+<HoverVideo className="hf-aside hf-spot" src="https://static.heygen.ai/hyperframes-oss/docs/studio-demos/settings-permissions-v2.mp4" poster="/public/images/studio-app/spots/settings-permissions-v2.jpg" hasAudio={false} label="Settings, Permissions: every agent and its state" />
+
+<Steps>
+  <Step title="Choose an agent">
+    In **Connect an agent**, choose **Install** next to the agent you want, or **Use** next to one already on your
+    computer. The app asks **Install … from …?** and runs that company's official installer. It takes about a minute.
+  </Step>
+  <Step title="Sign in">
+    Choose **Sign in to Claude Code** (or your agent's name) and finish in your browser, or follow the sheet's
+    Terminal step for Antigravity, GitHub Copilot and OpenCode.
+  </Step>
+  <Step title="Send">
+    When the agent answers, the app sends the request you started with.
+  </Step>
+</Steps>
+
+If a step fails, the sheet shows the command to run yourself: choose **Copy**, then **Open Terminal**, and paste it.
+
+| Agent | Install command | Sign in |
+| --- | --- | --- |
+| Claude Code | `curl -fsSL https://claude.ai/install.sh \| bash` | `claude auth login` |
+| Codex | `curl -fsSL https://chatgpt.com/codex/install.sh \| sh` | `codex login` |
+| Grok | `curl -fsSL https://x.ai/cli/install.sh \| bash` | `grok login` |
+| Antigravity | `curl -fsSL https://antigravity.google/cli/install.sh \| bash` | run `agy` once |
+| GitHub Copilot | `curl -fsSL https://gh.io/copilot-install \| bash` | `copilot login` |
+| OpenCode | `curl -fsSL https://opencode.ai/v2/install \| bash` | optional: `opencode providers login` |
+
+## Access: Auto or Full access
+
+<HoverVideo className="hf-aside hf-spot" src="https://static.heygen.ai/hyperframes-oss/docs/studio-demos/settings-agent-v2.mp4" poster="/public/images/studio-app/spots/settings-agent-v2.jpg" hasAudio={false} label="Settings, Agent: Auto or Full access" />
+
+**Auto**, the default, lets your agent work in your project and use the internet, and blocks risky steps. **Full
+access** lets it install and run anything, with no checks. Change it in **Settings** > **Agent**.
+
+GitHub Copilot and OpenCode only run with **Full access**: the first time you send to one, the app asks to **Turn on**
+Full access.
+
+## Switch agents
+
+<HoverVideo className="hf-aside hf-spot" src="https://static.heygen.ai/hyperframes-oss/docs/studio-demos/agent-picker-v2.mp4" poster="/public/images/studio-app/spots/agent-picker-v2.jpg" hasAudio={false} label="The agent picker in the chat header" />
+
+Open the agent picker in the chat header and choose a ready agent; it's used from your next request. To set the
+agent, model and effort for every new request, use **Settings** > **Agent**. **Settings** > **Permissions** lists
+every agent with its state (**Ready**, **Not signed in**, **Not installed**, **Needs an update**) and the button that
+fixes it.
+
+## Related topics
+
+- [Make your first video](/studio-app/first-video)
+- [Troubleshooting](/studio-app/troubleshooting)

@@ -1,0 +1,272 @@
+---
+title: AWS Lambda
+description: "Deploy distributed HyperFrames rendering to AWS Lambda and drive renders from a laptop or CI."
+---
+
+HyperFrames ships a first-class AWS Lambda deployment: one Lambda function fronts a Step Functions standard workflow that fans renders out across many parallel chunk workers, with intermediate artifacts in S3. End-to-end is three commands once your AWS credentials are configured.
+
+```bash
+hyperframes lambda deploy
+hyperframes lambda render ./my-project --width 1920 --height 1080 --wait
+hyperframes lambda destroy
+```
+
+Templates with [variables](/concepts/variables) work on the same Lambda stack — declare `data-composition-variables` on the composition, then pass values per render with `--variables` or fan a whole batch out with `lambda render-batch`. See the [Templates on Lambda](/deploy/templates-on-lambda) guide for the personalised-render pipeline (single render, batch from JSONL, programmatic SDK) and the 256 KiB Step Functions execution-input cap.
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ Step Functions state machine                                     │
+│   Plan → Map(N) RenderChunk → Assemble                           │
+└──────────────────────────────────────────────────────────────────┘
+                              │ dispatches by event.Action
+                              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ One Lambda function (packages/aws-lambda/dist/handler.zip)       │
+│   handler.mjs                                                    │
+│     ├─ Action="plan"        → @hyperframes/producer/distributed  │
+│     ├─ Action="renderChunk" → @hyperframes/producer/distributed  │
+│     └─ Action="assemble"    → @hyperframes/producer/distributed  │
+│   bin/ffmpeg                — ffmpeg-static                      │
+│   node_modules/@sparticuz/chromium/ — Lambda-optimised Chromium  │
+└──────────────────────────────────────────────────────────────────┘
+                              │ pure functions over local paths
+                              ▼
+┌──────────────────────────────────────────────────────────────────┐
+│ S3 bucket — plan tarball + per-chunk outputs + final mp4         │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+The Lambda handler is a thin dispatch: parse the Step Functions event, download inputs from S3 into `/tmp`, call the OSS primitive from `@hyperframes/producer/distributed`, upload outputs back, return a small JSON result. Everything heavy — capture, encode, audio mix — happens inside the OSS primitives.
+
+## Prerequisites
+
+| Tool | Why | Install |
+|------|-----|---------|
+| AWS credentials | The CLI and the deploy step both call AWS APIs. | Env vars, `~/.aws/credentials`, SSO, or IMDS — any chain the AWS SDK for JavaScript v3 would resolve. |
+| AWS SAM CLI | `hyperframes lambda deploy/destroy` shells out to `sam deploy`/`sam delete`. | [Install guide](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/install-sam-cli.html) |
+| Lambda adapter | The published CLI loads the AWS adapter only for Lambda commands. Each release pins a prebuilt Lambda handler ZIP (a GitHub release asset); `lambda deploy` downloads it, checks its SHA-256 and deploys it with the adapter's SAM template. No repo checkout needed. | `npm install -g @hyperframes/aws-lambda` alongside the CLI, at the same version |
+| HyperFrames repo checkout (optional) | Inside a checkout, or with `HYPERFRAMES_REPO_ROOT` pointing at one, `lambda deploy` builds the handler ZIP from source instead (needs `bun`). Use it to deploy unreleased changes, `--chrome-source=chrome-headless-shell`, or an adapter release older than the prebuilt handler. A checkout deploy on arm64 also needs the video image built from that checkout (`HYPERFRAMES_LAMBDA_VIDEO_IMAGE`), or `--video-arch x86_64`. | `git clone https://github.com/heygen-com/hyperframes`, and `npm install -g bun` or [bun.sh](https://bun.sh) |
+
+## Three deployment paths
+
+### Path 1 — `hyperframes lambda` CLI (recommended)
+
+The CLI is a thin wrapper around the SAM template + the `@hyperframes/aws-lambda` SDK. For most adopters this is the right starting point.
+
+```bash
+hyperframes lambda deploy \
+  --stack-name=hyperframes-prod \
+  --region=us-east-1 \
+  --memory=10240
+```
+
+By default the stack reserves no concurrency. Each render reads the account's
+unreserved Lambda concurrency when it plans, and runs up to 90% of it at once
+(at most 256 chunks), leaving the rest for other functions in the account. The
+plan logs the number it chose. Pass `--concurrency=N` to reserve `N` executions
+for the function instead; every render then runs at most `N` chunks at once.
+
+Upgrading: redeploying an existing stack without `--concurrency` keeps the
+reservation it already has, and `deploy` prints it. Stacks deployed by earlier
+CLI versions reserved 8 by default, so they stay at 8 until you pass
+`--concurrency=N`. Pass `--concurrency=none` to remove the reservation so each
+render sizes itself to the account.
+
+`deploy` records the stack's bucket and state machine in `.hyperframes/lambda-stack-<stack-name>.json` under the current directory. Every other `lambda` command reads that file, so run them from the same directory with the same `--stack-name`, or they stop with "no stack state". Redeploying to upgrade rewrites the same file.
+
+After `deploy`, render anything with:
+
+```bash
+hyperframes lambda render ./my-project --width 1920 --height 1080 --wait
+```
+
+The `--wait` flag blocks and streams per-chunk progress + accrued cost; drop it to fire-and-forget, then poll with `hyperframes lambda progress <renderId>` on your own cadence.
+
+See the [CLI reference](/packages/cli#hyperframes-lambda) for full flag documentation.
+
+#### Pre-staging a project with `sites create`
+
+Every `lambda render` call without `--site-id` hashes the project tree and checks each file against the bucket. For tight inner loops (CI smoke jobs, prompt iteration in a demo flow), pre-stage the project once and reuse the upload:
+
+```bash
+hyperframes lambda sites create ./my-project
+# → Site ID: a1b2c3d4e5f6g7h8 (content-addressed)
+
+hyperframes lambda render ./my-project --site-id=a1b2c3d4e5f6g7h8 \
+  --width 1920 --height 1080 --wait
+```
+
+The `siteId` is content-addressed via a SHA-256 of the project tree. A site is a small `sites/<siteId>/files.json` that lists each file's path and SHA-256. The files themselves live once per bucket under `cas/sha256/`, shared by every site and render, so a file another project already uploaded is never uploaded again. Pass the same `--site-id` to as many `lambda render` calls as you like.
+
+The stack's bucket expires objects under `cas/sha256/` 30 days after they were last written (the `ExpireSharedContent` lifecycle rule). Each render or `sites create` that reuses a file at least 7 days old rewrites it in place, so files in use never expire. If a site's files did expire, `lambda render --site-id` re-uploads them from the project directory, if its copies still match. Otherwise, or when `renderToLambda` gets a `siteHandle` but no `projectDir`, the render stops with `SITE_FILES_MISSING` before starting; run `sites create` again to restore them.
+
+#### Upgrading from a version that deployed x86 only
+
+`lambda deploy` now runs the plan and the render chunks on an arm64 container-image function by default; audio and assemble stay on the x86 function. Redeploying an existing stack without `--video-arch` moves it to arm64 and adds the `<stack>-video` ECR repository. To keep a stack on x86, pass `--video-arch x86_64` on every deploy. `--chrome-source chrome-headless-shell` also needs `--video-arch x86_64`, because the arm64 image bundles sparticuz Chrome only.
+
+#### Upgrading from a version before shared content storage
+
+- **Redeploy the stack before upgrading the CLI or SDK that starts renders.** A stack from an earlier version cannot read `files.json` sites. The CLI and `renderToLambda` check the state machine first and stop with `STACK_TOO_OLD` before uploading anything; run `hyperframes lambda deploy` (or redeploy your SAM template or CDK construct from the same version) and render again.
+- **Existing site ids keep working.** When `sites/<siteId>/files.json` is missing, the render uses that site's `project.tar.gz` from the earlier version. If neither exists the render stops with `SITE_NOT_FOUND`, naming both keys; run `sites create` again.
+- **Every project uploads once more.** The site id scheme changed (it now also covers symlinked files), so `sites create` or the first `lambda render` of each project after the upgrade returns a new site id and uploads its files once.
+
+### Path 2 — Direct SAM deploy
+
+If you want to read the CloudFormation before you deploy, or you need to customise the topology (extra alarms, SNS subscribers, KMS keys, …), invoke SAM directly against the template at `examples/aws-lambda/template.yaml`:
+
+```bash
+cd packages/aws-lambda
+bun run build:zip                     # produces dist/handler.zip
+cd ../../examples/aws-lambda
+sam deploy \
+  --stack-name=hyperframes-prod \
+  --region=us-east-1 \
+  --resolve-s3 \
+  --capabilities CAPABILITY_IAM \
+  --no-confirm-changeset \
+  --parameter-overrides ChromeSource=sparticuz ReservedConcurrency=8
+```
+
+The template emits three CloudFormation outputs you'll need to invoke renders:
+
+- `RenderBucketName` — S3 bucket for plan tarballs + per-chunk outputs + final renders.
+- `RenderStateMachineArn` — the Step Functions standard workflow that orchestrates Plan → Map → Assemble.
+- `RenderFunctionArn` — the single Lambda function the state machine dispatches against.
+
+<Warning>
+The SAM template's default for `ReservedConcurrency` is `-1` (unreserved), the same as the Path 1 CLI: each render runs up to 90% of the account's unreserved concurrency. Set it to bound how many chunks run at once.
+</Warning>
+
+### Path 3 — CDK construct
+
+For users already running CDK, the `@hyperframes/aws-lambda` package exports a `HyperframesRenderStack` L2 construct that emits the same topology as the SAM template:
+
+```ts
+import { App, CfnOutput, Stack } from "aws-cdk-lib";
+import { HyperframesRenderStack } from "@hyperframes/aws-lambda/cdk";
+
+const app = new App();
+const stack = new Stack(app, "MyApp");
+const render = new HyperframesRenderStack(stack, "Render", {
+  projectName: "hyperframes",
+  lambdaMemoryMb: 10240,
+  reservedConcurrency: 8,
+  chromeSource: "sparticuz",
+});
+
+new CfnOutput(stack, "RenderBucketName", { value: render.bucket.bucketName });
+new CfnOutput(stack, "StateMachineArn", { value: render.stateMachine.stateMachineArn });
+```
+
+`aws-cdk-lib` and `constructs` are declared as **optional peer dependencies** of `@hyperframes/aws-lambda`, so consumers who only need the SDK don't pay the CDK import cost.
+
+The construct exposes `.bucket`, `.renderFunction`, and `.stateMachine` so you can wire dashboards, SNS topics, or other AWS resources alongside it without re-deriving ARNs.
+
+## IAM permissions
+
+The CLI ships a built-in IAM bootstrap to avoid the "User is not authorized to perform iam:CreateRole" first-deploy trap:
+
+```bash
+# Print an inline policy doc to attach to the IAM user that runs the CLI.
+hyperframes lambda policies user
+
+# Print { TrustRelationship, InlinePolicy } for a CloudFormation service role.
+hyperframes lambda policies role
+
+# Validate a checked-in policy still covers the CLI's needs (exit non-zero on missing).
+hyperframes lambda policies validate ./infra/iam/hyperframes-deploy.json
+```
+
+Code that calls the SDK's `renderToLambda` with its own role needs `states:DescribeStateMachine` on the state machine besides `states:StartExecution` and S3 read/write on the bucket: each render reads the definition to confirm the stack is new enough.
+
+The generated documents grant `Resource: "*"` for the CLI's required action set. After your first successful deploy you can narrow `Resource` to the deployed ARNs — predictable per the CloudFormation outputs above. Adopters running the CLI in CI typically check the policy doc into source control and run `policies validate` as a pre-deploy step to catch drift.
+
+## Cost shape
+
+Lambda renders are billed by GB-seconds (Lambda billed duration × configured memory) plus a tiny per-state-transition fee for Step Functions standard workflows. `hyperframes lambda progress` exposes the running tally:
+
+```bash
+hyperframes lambda progress my-render-id
+# Status:    SUCCEEDED
+# Progress:  100%
+# Frames:    480 / 480
+# Lambdas:   5
+# Cost:      $0.0214 (Lambda $0.0210 + SFN $0.0004)
+# Output:    s3://hyperframes-renders/.../output.mp4
+```
+
+The cost number is an estimate: Lambda duration comes from the handler result,
+and S3 transfer is not included. Use AWS billing data for actual spend.
+
+## Troubleshooting
+
+### `sam deploy` fails with "Stack already exists"
+
+Pass the same `--stack-name` you used the first time. SAM is idempotent — re-running on an existing stack resolves to a no-op or an in-place update.
+
+### `User is not authorized to perform iam:CreateRole`
+
+The IAM credential running `lambda deploy` doesn't have permission to create the service role CloudFormation needs. Run `hyperframes lambda policies user` and attach the printed policy to your IAM user (or take the `policies role` output and have your admin create a deploy role).
+
+### `Lambda function failed: PLAN_HASH_MISMATCH`
+
+Step Functions invoked a `renderChunk` with a plan hash that didn't match the planDir on S3. Almost always means the producer version differs between the local `plan()` build and the deployed Lambda ZIP. Re-run `hyperframes lambda deploy` (which rebuilds the ZIP) and re-render.
+
+### `Lambda function failed: BROWSER_GPU_NOT_SOFTWARE`
+
+The handler launched Chromium but the runtime probe found a non-SwiftShader GL backend. Hardware GL is non-deterministic across chunk boundaries, so distributed renders refuse it at the runtime-image / launch-flags layer (not at the composition layer). Rebuild the handler ZIP and redeploy:
+
+```bash
+bun run --cwd packages/aws-lambda build:zip
+hyperframes lambda deploy --stack-name=<your-stack>
+```
+
+The build pipeline pins `@sparticuz/chromium` + the Chrome flags (`--use-gl=swiftshader --use-angle=swiftshader`) so a fresh deploy almost always resolves this. If it persists, your stack's Lambda function is pointing at a stale handler ZIP from a previous deploy — `lambda deploy` always rebuilds, so re-running unsticks it.
+
+### Render seems stuck at `RUNNING`
+
+Most often a Lambda cold-start chain on a many-chunk render. The Map state's reserved concurrency caps how many chunks can run in parallel — if you set `--concurrency=4` and your render has 16 chunks, the state machine processes them in batches of 4. `hyperframes lambda progress <id>` shows how many invocations are in flight.
+
+If progress doesn't advance for >10 minutes, check the Step Functions execution in the AWS console — failed Lambda invocations include the typed error name (`FONT_FETCH_FAILED`, `FFMPEG_VERSION_MISMATCH`, etc.) which short-circuits the state machine.
+
+### Tearing down doesn't reclaim S3 storage
+
+The render bucket is created with CloudFormation `Retain` on delete — `hyperframes lambda destroy` (or `sam delete`) tears the function + state machine down but the bucket survives. This is intentional: it protects final-rendered MP4s from being lost when you re-deploy. To fully reclaim storage, empty + delete the bucket via the AWS console / `aws s3 rb`.
+
+A stack deployed on arm64 (the default) also has an ECR repository, `<stack>-video`, holding the video function's image. `hyperframes lambda destroy` deletes it after the stack.
+
+### `STACK_TOO_OLD`
+
+The stack was deployed by an earlier version that cannot read this version's sites. Redeploy it (`hyperframes lambda deploy`), then render again. See [Upgrading](#upgrading-from-a-version-before-shared-content-storage).
+
+### `SITE_FILES_MISSING` or `SITE_NOT_FOUND`
+
+`SITE_FILES_MISSING`: some of the site's files expired from `cas/sha256/` after 30 days unused. Render from the project directory the site was created from, or run `sites create` again. `SITE_NOT_FOUND`: the bucket has no site under that id in either format; run `sites create` again and use the id it prints.
+
+## Current limits
+
+- There is no completion webhook. Poll with `hyperframes lambda progress` or
+  watch the Step Functions execution.
+- There is no Lambda-specific composition-discovery verb. Point
+  `lambda render` at the project directory containing `index.html`.
+- Each `--region` is an independent stack. Cross-region failover is not built
+  in.
+- The distributed AWS path is SDR-only.
+- Each render chunk extracts only the video frames it shows, so the plan step
+  no longer grows with video length. On a 10,240 MB function, a 26-minute
+  576×1024 24 fps H.264 clip plans in about 20 seconds. Each chunk reads
+  only the byte ranges of each video it shows, straight from the bucket. Variable-frame-rate and HDR
+  sources are the exception: the plan step still extracts every frame of those,
+  inside Lambda's 15-minute limit, in 2-minute segments, so
+  `FFMPEG_PROCESS_TIMEOUT_MS` applies to each segment, not to the whole clip.
+- A chunk must also finish inside 15 minutes. For long renders, raise
+  `--max-parallel-chunks` (`maxParallelChunks` in the SDK) so each chunk covers
+  fewer frames.
+
+## Related topics
+
+- [Render variable-driven templates on Lambda](/deploy/templates-on-lambda)
+- [Use the AWS Lambda package](/packages/aws-lambda)
+- [Choose another rendering path](/deploy/overview)

@@ -1,0 +1,162 @@
+---
+title: "Install and update agent skills"
+sidebarTitle: "Agent skills"
+description: "Teach a coding agent how to create valid HyperFrames projects."
+---
+
+import { DocsVideo } from "/snippets/docs-video.jsx";
+
+HyperFrames skills teach coding agents the project format, animation rules, media workflow, and validation loop that generic web knowledge does not cover.
+
+<DocsVideo
+  title="One command installs the skills"
+  src="https://static.heygen.ai/hyperframes-oss/docs/images/showcase/skills-install-demo-v2.mp4"
+  poster="https://static.heygen.ai/hyperframes-oss/docs/images/showcase/skills-install-demo-v2.jpg"
+/>
+
+The terminal output is a real run of the command. Afterwards the agent reads
+`/hyperframes` before it builds, instead of guessing at the framework's rules.
+
+Prefer a [versioned plugin](/guides/plugins) when your agent supports one. This
+page covers standalone installs, including OpenCode. Plugin users should update
+through their agent's plugin manager instead of running the commands below.
+
+## Install for a person
+
+Run the interactive installer:
+
+```bash
+npx skills add heygen-com/hyperframes
+```
+
+Run this command from your video project's directory. If you cloned HyperFrames
+to contribute, use `npx hyperframes skills update` for a global install from that
+checkout, or run the project installer in a separate video project. Project-local
+installer targets can overlap the checkout's tracked `skills/` source and
+overwrite uncommitted edits.
+
+Select **Core Skills**. That covers every kind of video; the other skills install when a request needs them, so you do not need the full catalog up front.
+
+Start a fresh agent chat after installation, then ask it to use `/hyperframes`.
+
+## Install or refresh from an agent
+
+For a non-interactive agent or CI environment, use:
+
+```bash
+npx hyperframes skills update
+```
+
+This installs or refreshes the core set and any HyperFrames skills already present in the global install, then links those bundles into compatible installed agents. It does not add every optional skill.
+
+Check freshness without changing anything:
+
+```bash
+npx hyperframes skills check
+```
+
+Install or refresh one skill explicitly:
+
+```bash
+npx hyperframes skills update slideshow
+```
+
+## Use the skills in GitHub Copilot CLI
+
+Run `npx hyperframes skills update`, open the project, and start Copilot:
+
+```bash
+copilot
+```
+
+If Copilot was already running, use `/skills reload`. Use `/skills list` or
+`/skills info hyperframes` to confirm discovery. GitHub's [current skills
+guide](https://docs.github.com/en/copilot/how-tos/copilot-cli/customize-copilot/add-skills)
+lists its project and personal skill locations.
+
+Both agents can use the same first request:
+
+```text
+Using /hyperframes, make a 10-second product intro for https://example.com.
+```
+
+Continue in the same conversation for revisions. For hosted creation instead
+of a local project, use the [HyperFrames MCP guide](/guides/mcp).
+
+## Use the skills in Google Antigravity
+
+Install the skills from the root of the project you open in Antigravity:
+
+```bash
+npx skills add heygen-com/hyperframes
+```
+
+Select **Core Skills** and **Antigravity**. This uses Antigravity's supported
+project location, `.agents/skills`, and keeps the skills with the project. Start
+a fresh Antigravity conversation after installation.
+
+Antigravity also supports a global `~/.gemini/config/skills` directory. See
+Google's [current skills guide](https://antigravity.google/docs/skills?app=antigravity-ide)
+before managing that directory by hand.
+
+## Use the skills in IBM Bob
+
+Run `npx hyperframes skills update`, then open or restart Bob Shell in the
+project folder so it discovers the skills linked under `~/.bob/skills`:
+
+```bash
+bob
+```
+
+Ask Bob to use `/hyperframes` for the first request. Running the update again
+refreshes the same global skill bundles without changing the project format.
+
+## What the skills cover
+
+Make any video by asking for it; the `/hyperframes` skill carries the contract and the references (each kind of film, story, motion, look, sound, review, captions, overlays).
+
+| Skill | What it covers |
+| --- | --- |
+| `/hyperframes` | Read first for any request to make, edit, animate or render a video, motion graphic, captions or overlays. Holds the render contract and the work loop, and points to the references for format, motion, look, captions, whole films and storyboards. |
+| `/hyperframes-cli` | The CLI by job: scaffold, check, look at frames, edit the timeline, preview, render locally or in the cloud, publish, project history. |
+| `/hyperframes-registry` | About 450 ready-made blocks and components installed as editable source: transitions, overlays, titles, kinetic type, captions, charts, maps, 3D, camera moves. |
+| `/media-use` | Music, sound effects, images, icons, logos, voiceover, avatar and generated video, transcripts, cutouts, colour grades and looks, with HeyGen or free local tools; mixes placed audio. |
+| `/figma` | A Figma file or frame: rendered assets, brand tokens, components, and storyboard frames as reconstructed motion. |
+| `/slideshow` | A presentation, pitch deck or interactive deck. Output is a navigable deck, not a rendered MP4. |
+| `/remotion-to-hyperframes` | Bringing existing video code or footage into HyperFrames (Remotion first; also Motion Canvas, Lottie, Three.js, canvas, other tools' renders), verified frame by frame. |
+
+You can name a skill directly, but you do not need to memorize the names to start.
+
+## Install more only when you need it
+
+Install the complete published set deliberately with:
+
+```bash
+npx hyperframes skills
+```
+
+`npx skills add heygen-com/hyperframes --all` also installs the complete published set. Repo-internal skills are excluded by default.
+
+Or install one named skill:
+
+```bash
+npx skills add heygen-com/hyperframes --skill slideshow
+```
+
+Use the full set for an environment that must work across many HyperFrames tasks without fetching later. For a normal project, the core set is smaller and easier to keep current.
+
+## If the agent cannot see a skill
+
+1. Start a new agent session.
+2. Confirm that the project or global skill directory belongs to the agent you are using.
+3. Run `npx hyperframes skills check`.
+4. Run `npx hyperframes skills update` when the check reports a missing or stale core skill.
+
+The individual skill definitions remain the source of truth for agents and are
+available in the [HyperFrames repository](https://github.com/heygen-com/hyperframes/tree/main/skills).
+
+## Related topics
+
+- [Make your first video](/quickstart)
+- [Choose what to make](/workflows)
+- [Use authentication and hosted services](/guides/authentication)
