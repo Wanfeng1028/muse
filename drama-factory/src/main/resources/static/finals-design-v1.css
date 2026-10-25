@@ -1,0 +1,57 @@
+.page {
+  background: var(--bg);
+  color: var(--text);
+}
+
+.page-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.d-flex.flex-wrap {
+  align-items: center;
+  gap: 8px;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+#projectSelect {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+}
+
+#episodeSelect {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 6px 8px;
+}
+
+#generateBtn {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid var(--border);
+  padding: 6px 14px;
+}
+
+#hint {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+#finalsList {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}

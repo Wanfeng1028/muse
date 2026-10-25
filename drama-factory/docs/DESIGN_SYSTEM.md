@@ -157,3 +157,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：工作台账（问候语是台账眉、状态条是台账总计行、新建面板是台账录入格、最近动态是台账明细；问候语 20px/700、状态条 13px 次文字、下拉 13px 8px 圆角、新建面板 surface 底发丝边 10px 圆角零阴影、新建块标题 15px/700、输入框 13px 8px 圆角、小按钮 12px/600 8px 圆角、对话区 13px 行高 1.6、chips 12px/600 8px 圆角、费用提示 12px 弱文字、最近动态标题 16px/700、空态 13px 次文字）。
 - 截图：docs/screenshots/index-design-v1.png（真实服务 + 真实项目数据）。
 - 已知保留：本层不改布局；发送钮只留尺寸与圆角、不改颜色；模型稿边框写法正确（1px solid var(--hairline)，hairline 本就是颜色值），零编排修正。
+
+## 23. 成片库页设计层 v1（2026-10-25，5.3 路）
+- 文件：static/finals-design-v1.css，只覆盖，finals.html 在 harness.css 之后引用（不改 app.css/harness.css 与任何 JS）。
+- 视觉逻辑：成片台账（页头是台账眉、筛选条是工具条面板、提示是台账注脚、成片列表是纵向台账列；页头 20px/700 加 1px 发丝底线、筛选条 surface 底发丝边、下拉 13px、生成按钮 13px/600 8px 圆角、提示 13px 次文字、列表纵向排列行距 12px）。
+- 截图：docs/screenshots/finals-design-v1.png（真实服务 + 复制库真实项目与成片数据）。
+- 已知保留：本层不改布局；成片卡片本体（海报、标题、状态戳、操作行）沿用原样式，本轮未覆盖；模型稿 2 处编排修正：.page 的 padding 20px 会覆盖 harness 已有的 24px 20px 64px，已删；#finalsList 的 surface 底发丝边内边距会让空列表渲出空框，已删，只留纵向排列与行距。

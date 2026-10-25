@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-25：成片库页设计层 v1）
+- 新增 static/finals-design-v1.css（8 条规则，只覆盖，不改 app.css/harness.css 与任何 JS；finals.html 在 harness.css 之后引用 1 行）：视觉逻辑“成片台账”——页头 20px/700 加 1px 发丝底线、筛选条 surface 底发丝边、下拉 13px、生成按钮 13px/600 8px 圆角、提示 13px 次文字、成片列表纵向排列行距 12px；token 全部取自 app.css/harness.css。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000）1 通输出：API prompt 24033 / completion 1349 / total 25382，reasoning_tokens 0，正文 1055 字即入仓的 8 条规则；编排修正 2 处（见 DESIGN_SYSTEM 第 23 节已知保留），其余为模型原文，括号 8/8 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML，全部 token 均在 app.css/harness.css 里。
+- 验收：新增 FinalsDesignV1Test 3 例全绿，Maven 离线 BUILD SUCCESS；真实服务（18195 端口，复制 H2 库，开放模式）+ 截图亲眼核对：计算样式实证页头 20/700、筛选条白底 1px 边、生成按钮 13/600/8px、提示 13px 次文字、零 console 错误；下拉 6 个真实项目（都市奇缘/最后一班地铁/验证用短剧/取消测试/冒烟测试项目/逐字稿演示项目）与 /api/projects 对上，剧集“重逢”与成片“第 1 集成片·时长 0:09·已完成·待质检”与库内数据对上；截图存 docs/screenshots/finals-design-v1.png。验收后服务按 PID 停干净、端口已关、复制库已删。
+- 已知保留：本层不改布局；成片卡片本体（海报、标题、状态戳、操作行）沿用原样式，本轮未覆盖；本轮未动 second-brain、docseek eval、feedflow（另一路在跑）、avatar 页（另一路在跑）工人的未提交文件；18095 端口已被另一路 drama 服务占用，本轮改用 18195 验收。
+
+
 ### Added（Flash 路 2026-10-25：账号页设计层 v1）
 - 新增 static/account-design-v1.css（只覆盖，不改 app.css/auth.css 与任何 JS；account.html 在 auth.css 之后引用 1 行，本页不引用 harness.css）：视觉逻辑“账号台账”——页头 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、资料标签 12px/600 次文字、资料值 13px、输入框 13px 8px 圆角、安全块上下发丝底线分隔、表单标签 12px/600 次文字、字段提示 12px 弱文字、行内错误 13px 红色、会话列表 13px 次文字、单选行 13px、个性化选项组发丝边 8px 圆角；token 全部取自 app.css/auth.css。
 - 模型稿 18 条规则原文入仓，零编排修正：括号 18/18 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid var(--border)/var(--border-soft) 完整形式；无设计层基线对照：本页此前无设计层。
