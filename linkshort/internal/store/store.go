@@ -273,6 +273,10 @@ func (s *Store) ListLinksFiltered(search string, page, perPage int, orderBy stri
 }
 
 func (s *Store) ListLinksFilteredEx(search string, page, perPage int, orderBy string, enabled *bool, burn *bool) ([]*model.Link, int64, error) {
+	return s.ListLinksFilteredEx2(search, page, perPage, orderBy, enabled, burn, nil)
+}
+
+func (s *Store) ListLinksFilteredEx2(search string, page, perPage int, orderBy string, enabled *bool, burn *bool, expired *bool) ([]*model.Link, int64, error) {
 	if orderBy != "clicks" && orderBy != "created_at" {
 		orderBy = "created_at"
 	}
@@ -286,47 +290,57 @@ func (s *Store) ListLinksFilteredEx(search string, page, perPage int, orderBy st
 		perPage = 200
 	}
 
-	where := ""
-	args := []any{}
+	var conds []string
+	var args []any
+
 	if search != "" {
 		like := "%" + search + "%"
-		where = " WHERE (slug LIKE ? OR url LIKE ? OR title LIKE ?)"
+		conds = append(conds, "(slug LIKE ? OR url LIKE ? OR title LIKE ?)")
 		args = append(args, like, like, like)
 	}
 	if enabled != nil {
-		enVal := 0
+		v := 0
 		if *enabled {
-			enVal = 1
+			v = 1
 		}
-		if search != "" {
-			where += " AND enabled = ?"
-		} else {
-			where = " WHERE enabled = ?"
-		}
-		args = append(args, enVal)
+		conds = append(conds, "enabled = ?")
+		args = append(args, v)
 	}
 	if burn != nil {
-		burnVal := 0
+		v := 0
 		if *burn {
-			burnVal = 1
+			v = 1
 		}
-		if where != "" {
-			where += " AND burn = ?"
+		conds = append(conds, "burn = ?")
+		args = append(args, v)
+	}
+	if expired != nil {
+		now := time.Now().UTC().Format(timeLayout)
+		if *expired {
+			conds = append(conds, "expires_at IS NOT NULL AND expires_at < ?")
 		} else {
-			where = " WHERE burn = ?"
+			conds = append(conds, "(expires_at IS NULL OR expires_at >= ?)")
 		}
-		args = append(args, burnVal)
+		args = append(args, now)
 	}
 
-	// 总数
+	cond := ""
+	for i, c := range conds {
+		if i == 0 {
+			cond += " WHERE " + c
+		} else {
+			cond += " AND " + c
+		}
+	}
+
 	var total int64
-	countSQL := "SELECT COUNT(*) FROM links" + where
+	countSQL := "SELECT COUNT(*) FROM links" + cond
 	if err := s.db.QueryRow(countSQL, args...).Scan(&total); err != nil {
 		return nil, 0, fmt.Errorf("count links: %w", err)
 	}
 
 	offset := (page - 1) * perPage
-	listSQL := "SELECT " + linkColumns + " FROM links" + where +
+	listSQL := "SELECT " + linkColumns + " FROM links" + cond +
 		" ORDER BY " + orderBy + " DESC, id DESC LIMIT ? OFFSET ?"
 	listArgs := append(append([]any{}, args...), perPage, offset)
 

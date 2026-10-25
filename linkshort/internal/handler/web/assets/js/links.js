@@ -9,6 +9,7 @@
     sort: "created_at",
     enabled: "",
     burn: "",
+    expired: "",
     page: 1,
     per: 20
   };
@@ -18,6 +19,7 @@
   var sortEl = document.getElementById("sort");
   var enabledEl = document.getElementById("enabled-filter");
   var burnEl = document.getElementById("burn-filter");
+  var expiredEl = document.getElementById("expired-filter");
   var table = document.getElementById("links-table");
   var tbody = table ? table.querySelector("tbody") : null;
   var pageInfo = document.getElementById("page-info");
@@ -36,6 +38,7 @@
     params.push("sort=" + encodeURIComponent(state.sort));
     if (state.enabled) params.push("enabled=" + encodeURIComponent(state.enabled));
     if (state.burn) params.push("burn=" + encodeURIComponent(state.burn));
+    if (state.expired) params.push("expired=" + encodeURIComponent(state.expired));
     var url = "/api/links?" + params.join("&");
 
     api(url).then(function (data) {
@@ -239,6 +242,13 @@
   if (burnEl) {
     burnEl.addEventListener("change", function () {
       state.burn = burnEl.value;
+      state.page = 1;
+      load();
+    });
+  }
+  if (expiredEl) {
+    expiredEl.addEventListener("change", function () {
+      state.expired = expiredEl.value;
       state.page = 1;
       load();
     });

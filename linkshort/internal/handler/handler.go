@@ -663,7 +663,23 @@ func handleListLinks(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		return
 	}
 
-	links, total, err := st.ListLinksFilteredEx(search, page, perPage, sort, enabledPtr, burnPtr)
+	var expiredPtr *bool
+	expiredStr := q.Get("expired")
+	switch expiredStr {
+	case "":
+		expiredPtr = nil
+	case "true":
+		v := true
+		expiredPtr = &v
+	case "false":
+		v := false
+		expiredPtr = &v
+	default:
+		writeError(w, http.StatusBadRequest, "expired 非法")
+		return
+	}
+
+	links, total, err := st.ListLinksFilteredEx2(search, page, perPage, sort, enabledPtr, burnPtr, expiredPtr)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

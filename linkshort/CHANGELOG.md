@@ -5,6 +5,16 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.21.0] - 2026-10-26
+
+### 新增
+
+- 链接列表支持过期筛选：GET /api/links?expired=true 只返回已过期链、expired=false 只返回未过期链（含永不过期），不带参数返回全部；非法值返回 400（expired 非法）；过期判定与跳转一致（expires_at 早于当前时刻为已过期，等于当前时刻算未过期）；筛选与启用状态筛选、搜索、排序、分页组合使用时 total 与分页一致。store 新增 ListLinksFilteredEx2（enabled、burn、expired 三个可选指针，expired=nil 时行为与旧 ListLinksFilteredEx 一致，旧函数改为委托调用，签名不变）；列表页工具栏新增“全部有效期 / 已过期 / 未过期”下拉框，切换后回到第 1 页重载。API 文档页 GET /api/links 说明同步更新过期筛选口径。
+
+### 测试
+
+- 新增 internal/store/list_links_expired_test.go（6 组断言：不过滤/仅已过期/仅未过期/与启用筛选组合/与搜索组合/分页 total 一致且两页无交集）与 internal/handler/list_links_expired_test.go（5 个子测试：已过期筛选/未过期筛选/非法值 400 且体含 expired/与启用组合/不带参数返回全部）。全量测试：14 个包全部通过；go vet/gofmt 全洁；links.js 经 node --check 通过。真实服务冒烟（隔离库 18433）：建已过期链、已过期已停用链、未过期链、永不过期链各 1 条，expired=true 只返已过期链 total=2、expired=false 只返未过期链 total=2、expired=true 与 enabled=false 组合只返已过期已停用链 total=1、非法值 400（expired 非法）、不带参数返全部 total=4；浏览器实测链接管理页：默认 4 行、选“已过期”后剩 2 行，真实截图亲眼验收通过。
+
 ## [v1.20.0] - 2026-10-26
 
 ### 新增
