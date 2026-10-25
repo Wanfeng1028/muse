@@ -1,0 +1,11 @@
+/* settings-design-v2.css — 设置中心页设计覆盖层 v2（settings.html），只覆盖 #settings-retry */
+#settings-retry {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 8px 16px;
+  line-height: 1.4;
+}

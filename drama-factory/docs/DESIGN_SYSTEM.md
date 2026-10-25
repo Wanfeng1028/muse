@@ -217,3 +217,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：画布台账外框（只统一尚未统一的外框，内联已覆盖的组件一律不碰；页头 h1 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、卡片内副文案 13px 次文字、页头操作按钮 13px/600 8px 圆角、工具栏下拉框 14px）。
 - 截图：docs/screenshots/canvas-design-v1.png（内联截图核计算样式 + 隔离构建真实服务 18202 端口验 200；时间轴与镜头网格为空是无 JS 数据的真实空态）。
 - 已知保留：本层不改布局；时间轴、镜头卡片、弹窗、提示条沿用页内内联样式；agent-canvas 组件内部不动；验收服务按真实 java PID 停干净、18202 端口已关、隔离构建与复制库已删。
+
+## 31. 设置中心页设计层 v2（2026-10-26，Flash 路）
+- 文件：static/settings-design-v2.css（1 条规则，只覆盖，settings.html 在 v1 之后引用 1 行；不改 app.css/harness.css 与 v1 文件）。
+- 视觉逻辑：配置台账续篇——关闭 v1 已知保留的重试钮缺口（重试钮与保存钮同口径：13px/600、8px 圆角、8px 16px 内边距、1.4 行高；surface 底、1px 发丝边、主文字色；hover/focus/active 沿用 app.css 次按钮原样式）。
+- 截图：docs/screenshots/settings-design-v2.png（内联截图核计算样式 + 隔离构建真实服务验 200；harness 侧取消 error 容器隐藏以便实测，页面代码一字未动）。
+- 已知保留：本层不改布局；重试钮 hover/focus/active 沿用 app.css 次按钮原样式。

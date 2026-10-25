@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：设置中心页设计层 v2）
+- 新增 static/settings-design-v2.css（1 条规则，只覆盖 #settings-retry，不改 app.css/harness.css 与 v1 文件；settings.html 在 v1 之后引用 1 行）：关闭 v1 已知保留“重试按钮 #settings-retry 未入本层”——重试钮与保存钮同口径（13px/600、8px 圆角、8px 16px 内边距、1.4 行高），底色 var(--surface)、边框 1px solid var(--border)、文字 var(--text)，与成片质检页通过/打回次按钮同款；hover/focus/active 沿用 app.css 次按钮原样式，本层不碰；布局与定位一字不改。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器为本轮现写最小新文件 relay-station/flash_call_n4.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）产出：首通正文 0 字（API prompt 24086 / completion 1790 / total 25876，推理占大头未出正文，作废，按规不原样重发）；换新提示词（首行改写为 Do not reason、直接输出）第 2 通 1 通可用（API prompt 23862 / completion 1535 / total 25397，reasoning_tokens 0，无 429），正文即 1 条规则；编排修正 1 处（模型稿漏了 padding 与 line-height，按 v1 主按钮口径补 8px 16px 与 1.4，已如实注明）。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制色，边框为 1px solid var(--border) 完整形式。
+- 验收：新增 SettingsDesignV2Test 3 例全绿，设计层合跑 87/87 全绿（合跑含他路未提交的 skills v2 测试 3 例，本轮不提交他路文件），Maven 离线 BUILD SUCCESS；内联截图 + 计算样式亲眼核对：重试钮 13px/600、8px 圆角、白底、1px 发丝边、#111 文字、8px 16px 内边距、行高 18.2px（=13×1.4）、零 console 错误；截图存 docs/screenshots/settings-design-v2.png（harness 侧取消 error 容器隐藏以便实测，页面代码一字未动；加载态与空态同框是剥离脚本后的静态空态，非设计层问题）；隔离构建真实服务（18204 端口，复制 H2 库，开放模式，启动 137.7 秒）实测：settings.html 与 settings-design-v2.css 均 200，served 页内引用与层文件内容对上；验收后服务按真实 java PID 停干净、端口已关、隔离构建与复制库已删。
+- 已知保留：本层不改布局；重试钮 hover/focus/active 沿用 app.css 次按钮原样式；本轮未动 skills v2、second-brain、docseek eval 在跑工人的未提交文件。
+
 ### Added（5.3 路 2026-10-26：Skill 市场页设计层 v2）
 - 新增 static/skills-design-v2.css（模型稿 2 条规则原文入仓，skills.html 在 v1 之后引用 1 行）：关闭 v1 已知保留——已安装行底线由行内 !important 改由 CSS 接管；行间 1px solid var(--border-soft)、末行去底线。JS 机械迁移（编排落仓，非模型稿）：已安装行类名加 installed-row、删行内 style；实测发现 tabler 的 .border-bottom utility 自带 !important 会压住层规则（首拍末行仍有 1px 实线），故行类名同时去掉 border-bottom utility（py-2 与 flex 布局类保留），边线改由 v2 CSS 全权接管。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r19_20261026_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24056 / completion 97 / total 24153，reasoning_tokens 0，正文即入仓 2 条规则，零编排修正。括号 2/2 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无十六进制颜色字面量，选择器均真实存在于本页 DOM。
