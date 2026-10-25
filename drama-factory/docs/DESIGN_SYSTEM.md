@@ -290,3 +290,8 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：生成卡片体上下 16px、左右 20px 内边距，三页同口径。
 - 截图：docs/screenshots/byok-genbody-v2.png（隔离构建真实服务 + 复制库；音乐页生成卡片体计算样式实测 padding 16px 20px，零 console 错误）。
 - 已知保留：音乐页纯音乐 label 的 margin:0 行内样式与本轮无关，不碰；本层不改布局。
+## 42. 剩余静态行内样式扫尾（2026-10-26，Flash 路）
+- 文件：static/qc-design-v2.css、static/cost-ledger-design-v3.css（模型稿各 1 条规则原文入仓；质检页在 v1 之后引用 v2，成本账本页在 v2 之后引用 v3；HTML 机械迁移：质检视频删行内 style、预算行 div 改挂 cl-budget-meta 类）。
+- 视觉逻辑：质检视频满宽、最高 480px、黑底；预算行两 span 间距 8px。原值逐字保留，不补属性。
+- 截图：docs/screenshots/sweep-static-v2.png（隔离构建真实服务 + 复制库；质检视频与预算行计算样式实测，见 CHANGELOG）。
+- 已知保留：各页 display:none 显隐切换、数据驱动宽度、toast z-index 均不在本轮范围；Agent 密钥行 flex div 由他路同期落地（agents-design-v3.css），本轮不重复做。

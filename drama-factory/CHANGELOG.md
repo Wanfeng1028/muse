@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：剩余静态行内样式扫尾）
+- 新增 static/qc-design-v2.css、static/cost-ledger-design-v3.css（模型稿各 1 条规则原文入仓）：关闭质检页视频行内样式（width:100%;max-height:480px;background:#000）与成本账本页预算行行内样式（gap:8px），分别改由 #qcVideo 规则与 cl-budget-meta 类接管；qc.html 在 v1 之后引用 v2，cost-ledger.html 在 v2 之后引用 v3。Agent 密钥行 flex div 由他路同期落地（agents-design-v3.css），本轮不重复提交。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/flash_call_n9.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、ProxyCommand 齐全、未读任何现成调用脚本）产出：首通 6 代码块 max_tokens 32000 出 reasoning-only 空响应作废；查实 max_tokens 32000 会触发纯思考（同提示词降至 8000 即出正文），遂拆两通各 max_tokens 8000——CSS 3 条规则 1 通（API prompt 23917 / completion 1404 / total 25321，其中 Agent 规则因他路同期落地未入仓）、测试 2 文件 1 通（API prompt 23859 / completion 4302 / total 28161），正文即入仓，零编排修正。括号各 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
+- 验收：新增 QcDesignV2Test / CostLedgerDesignV3Test 各 3/3，设计层合跑 144/144 全绿（隔离构建，含他路未提交测试，本轮不提交他路文件），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18211 端口，复制 H2 库）实测两页 html 与新 css 均 200、served 内容与文件对上、旧行内 0 处、jar 内两新 css 字节数 69/32 正常；质检视频计算样式实测 width 100%/max-height 480px/背景 rgb(0,0,0)、行内 style 为空，预算行 gap 8px、行内 style 为空，两页零 console 错误；视口截图亲眼核对：成本账本页真实预算数据排布正常无错位，质检页为空态（视频元素本身未展示，视频规则以计算样式探针为准）。截图存 docs/screenshots/sweep-static-v2.png 与 sweep-static-v2-cost.png。验收后服务按端口反查的真实 java PID 41179 停服、18211 复查已关、隔离构建与复制库已删。
+
 ### Added（Flash 路 2026-10-26：BYOK 三页生成卡片体设计层）
 - 新增 static/music-design-v2.css、static/images-design-v3.css、static/avatar-design-v2.css（模型稿各 1 条规则原文入仓）：关闭音乐 / 图片 / 数字人三页生成卡片体唯一一处行内 padding:16px 20px，分别改挂 mus-gen-body / img-gen-body / ava-gen-body 类；音乐页纯音乐 label 的 margin:0 与本轮无关，不碰。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，调用器为本轮现写最小新文件 relay-station/flash_call_n8.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、未读任何现成调用脚本）产出：三页合一首通 reasoning-only 空响应作废；拆两通后音乐页 1 通（API prompt 23719 / completion 457 / total 24176）、图片+数字人 1 通（API prompt 23797 / completion 1123 / total 24920），正文即入仓 3 条规则，零编排修正。括号各 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值 16px 20px 逐字保留。
