@@ -1,3 +1,15 @@
+## [1.19.3] - 2026-10-26
+
+### 修复
+- 夜墨深色主题小组件浅色残留（TECH_DEBT P1-8）：[data-theme="dark"] 块补 3 个变量——--card-bg: rgba(33,29,23,0.92)、--border-color: rgba(237,230,214,0.14)、--text-color: #ede6d6，取值与深色块已有 --glass-bg / --glass-border / --text 同源；.widget 的 var(...) fallback 原样保留，浅色下行为不变。顺带发现未动：深色块之后另有一段无选择器的孤立声明块（约 126–138 行，slate/blue 系变量），浏览器会直接丢弃，与本轮无关，留待后续单独处理。
+- 模型稿由 BotsRouter 大写 GLM-5.3-Flash（令牌 id=5、渠道 20、单路串行，调用器为本轮现写 flash_call_n12.py，令牌经 SSH 现取不落盘，按 data: 行解析 delta.content）产出：CSS 3 行 1 通即出；测试稿首通 reasoning-only 空响应作废，缩小目标后第 2 通出稿；无 429。
+- 编排修正 1 处：rustfmt 把测试末尾多行 assert 折叠成单行后落仓。
+
+### 测试
+- 新增 tests/widget_dark_theme_test.rs 1 例（深色块含 3 个新变量、.widget fallback 未删改）：cargo test --offline --test widget_dark_theme_test 1/1 通过；cargo fmt --all -- --check 干净。
+- 计算样式实测（Chromium 隔离渲染 style.css，不走登录态桌面）：深色下 .widget 背景 rgba(33,29,23,0.92)、文字 rgb(237,230,214)、边框 rgba(237,230,214,0.14)，均为深色值；浅色下仍为白色 fallback（rgba(255,255,255,0.92) / rgb(43,38,32) / rgba(0,0,0,0.08)），无回归。
+- 版本跟进：Cargo.toml 1.19.2 -> 1.19.3，Cargo.lock 同步。
+
 ## [1.19.2] - 2026-10-26
 
 ### 补齐
