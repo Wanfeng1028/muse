@@ -1,0 +1,35 @@
+/* canvas-design-v1.css — 分镜画布页外框覆盖层 */
+
+.page-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.card-body p.text-secondary {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+.page-head-actions .btn {
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.canvas-toolbar .form-select {
+  font-size: 14px;
+}

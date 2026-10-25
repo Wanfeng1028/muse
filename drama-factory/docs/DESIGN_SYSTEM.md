@@ -205,3 +205,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：拆解台账（页头是台账眉、卡片是台账格、表单标签是台账字段名、详情小节是台账章节、逐镜网格是台账附图、提示词块是台账底稿；眉标 11px/600 次文字、页头标题 20px/700、副标题 13px 次文字、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、表单标签 12px/600 次文字、下拉与输入框 13px 8px 圆角、按钮 13px/600 8px 圆角（主按钮除外，见保留）、空态 13px 次文字、详情小节标题 14px/700、时间线条 1px 发丝边 8px 圆角、逐镜帧 8px 圆角、元数据 12px 次文字、提示词块 12px 等宽 surface-2 底 8px 圆角）。
 - 截图：docs/screenshots/deconstruct-design-v1.png（隔离构建真实服务 18199 端口 + 复制库真实项目数据：都市奇缘/第 1 集/无视频素材，本项目拆解为空态是真实空态，未伪造数据；视口截图）。
 - 已知保留：本层不改布局；主按钮（.btn-primary）沿用 app.css 胶囊形（999px/500），本层不改产品按钮语言，非主按钮实测 13px/600/8px；逐镜帧与元数据在空态下无真实 DOM，计算样式为 harness 注入测量（注入后即删，截图本身仍为真实空态）；模型稿 1 处编排修正：提示词块字体由通用 monospace 改为 var(--mono) token；眉标选择器由 .dc-kicker 提为 .page-head .dc-kicker——app.css 的 .page-head p（0,1,1）会压住单类选择器，提后实测 11px/600/次文字色；截图 harness 说明：deconstruct.js 的 api() 会给相对路径补 /api/projects/ 前缀，通用 /api/ 绝对化改写会把绝对路径调用拼成双段 URL（已改 harness 为只改写 api() 的 URL 构造行）；setContent 下 about:blank 无 localStorage，页内主题脚本读 localStorage 抛 SecurityError 一条，属 harness 环境 artifact、真实源站不受影响；验收服务按真实 java PID 停干净、18199 端口已关、隔离构建与复制库已删；本轮未动 canvas、chat、finals、second-brain、docseek、linkshort 在跑工人的未提交文件。
+
+## 29. 分镜画布页设计层 v1（2026-10-26，Flash 路）
+- 文件：static/canvas-design-v1.css（6 条规则，只覆盖，canvas.html 在内联 style 块之后引用 1 行；不改 app.css、内联 style 块与任何 JS；本页不引 harness.css/auth.css，token 全部取自 app.css）。
+- 视觉逻辑：画布台账外框（只统一尚未统一的外框，内联已覆盖的组件一律不碰；页头 h1 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、卡片内副文案 13px 次文字、页头操作按钮 13px/600 8px 圆角、工具栏下拉框 14px）。
+- 截图：docs/screenshots/canvas-design-v1.png（内联截图核计算样式 + 隔离构建真实服务 18202 端口验 200；时间轴与镜头网格为空是无 JS 数据的真实空态）。
+- 已知保留：本层不改布局；时间轴、镜头卡片、弹窗、提示条沿用页内内联样式；agent-canvas 组件内部不动；验收服务按真实 java PID 停干净、18202 端口已关、隔离构建与复制库已删。

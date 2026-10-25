@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：分镜画布页设计层 v1）
+- 新增 static/canvas-design-v1.css（6 条规则，只覆盖，不改 app.css、内联 style 块与任何 JS；canvas.html 在内联 style 块之后引用 1 行）：本层只覆盖尚未统一口径的页面外框——页头 h1 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、卡片内副文案 13px 次文字、页头操作按钮 13px/600 8px 圆角（不改颜色）、工具栏下拉框 14px（不改内联已定的最小/最大宽度与布局）；时间轴、镜头卡片、弹窗、提示条等内联已覆盖的组件本层一字不碰；token 全部取自 app.css，全部边框均写成 1px solid var(--border) 完整形式。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器沿用本轮现写最小新文件 relay-station/flash_call_n3.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 26544 / completion 2033 / total 28577，reasoning_tokens 0，无 429，正文即入仓的 6 条规则，零编排修正。括号 6/6 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，全部选择器均真实存在于本页 HTML，禁区选择器（时间轴/镜头卡片/弹窗/提示条等）一条未犯。
+- 验收：新增 CanvasDesignV1Test 3 例全绿，设计层合跑 74/74 全绿，Maven 离线 BUILD SUCCESS；内联截图 + 计算样式亲眼核对：页头 20/700、卡片白底 1px 边 10px 圆角零阴影、卡片标题 16/700、副文案 13px 次文字、页头按钮 13/600 8px 圆角、工具栏下拉 14px、零 console 错误，布局（页头 flex、工具栏 flex、镜头网格）原样未动；隔离构建真实服务（18202 端口，复制 H2 库，开放模式，启动 124 秒）实测：canvas.html 与 canvas-design-v1.css 均 200，served 页内引用与层文件内容对上；截图存 docs/screenshots/canvas-design-v1.png（时间轴与镜头网格为空是无 JS 数据的真实空态）。插曲：首起服务在 exec 会话中断时被连带杀掉（日志停在启动初期），改走 setsid nohup 脱离会话重起后正常；验收后服务按真实 java PID 停干净、端口已关、隔离构建与复制库已删。
+- 已知保留：本层不改布局；镜头卡片、时间轴、弹窗、提示条沿用页内内联样式，本层不覆盖；agent-canvas 组件内部不动。
+
 ### Added（5.3 路 2026-10-26：视频拆解页设计层 v1）
 - 新增 static/deconstruct-design-v1.css（14 条规则，只覆盖，不改 app.css、内联 style 块与任何 JS；deconstruct.html 在内联 style 块之后引用 1 行）：视觉逻辑“拆解台账”——眉标 11px/600 次文字、页头标题 20px/700、副标题 13px 次文字、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、表单标签 12px/600 次文字、下拉与输入框 13px 8px 圆角、按钮 13px/600 8px 圆角（主按钮沿用 app.css 胶囊形，见保留）、空态 13px 次文字、详情小节标题 14px/700、时间线条 1px 发丝边 8px 圆角、逐镜帧 8px 圆角、元数据 12px 次文字、提示词块 12px 等宽 surface-2 底 8px 圆角；token 全部取自 app.css（边框一律 1px solid var(--border) 完整形式）。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r18_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24341（含上游缓存 24320）/ completion 2483 / total 26824，reasoning_tokens 0，正文即入仓的 14 条规则；编排修正 2 处：提示词块字体由通用 monospace 改为 var(--mono) token；眉标选择器由 .dc-kicker 提为 .page-head .dc-kicker（app.css 的 .page-head p 特异度更高，原稿 11px 被压回 12px，提后实测 11px/600/次文字色）。括号 14/14 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML。
