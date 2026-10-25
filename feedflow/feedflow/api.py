@@ -204,6 +204,19 @@ def list_clusters():
     return jsonify({"clusters": clusters, "total": len(clusters)})
 
 
+@bp.post("/clusters/<int:cluster_id>/read")
+def mark_cluster_read(cluster_id: int):
+    """按簇标记已读；solo 单篇按自身 id 命中；已全部已读时 updated 为 0 且仍返回 200（幂等）。"""
+    body = _json_body()
+    scope = body.get("scope", "unread")
+    if scope not in ("unread", "starred", "all"):
+        return _err("scope 非法", 400)
+    if not store.cluster_exists(_db(), cluster_id):
+        return _err("聚类不存在", 404)
+    count = store.mark_cluster_read(_db(), cluster_id, scope=scope)
+    return jsonify({"cluster_id": cluster_id, "updated": count})
+
+
 @bp.post("/articles/<int:article_id>/read")
 def set_article_read(article_id: int):
     """设置文章已读/未读。"""

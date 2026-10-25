@@ -464,6 +464,37 @@ def mark_all_read(db_path, feed_id=None, folder_id=None, scope="unread"):
             conn.close()
 
 
+def cluster_exists(db_path, cluster_id):
+    """判断指定簇是否存在。"""
+    conn = get_conn(db_path)
+    try:
+        cursor = conn.execute(
+            "SELECT 1 FROM articles WHERE cluster_id = ? OR id = ? LIMIT 1",
+            (cluster_id, cluster_id),
+        )
+        return cursor.fetchone() is not None
+    finally:
+        conn.close()
+
+
+def mark_cluster_read(db_path, cluster_id, scope="unread"):
+    """按簇标记已读。与 mark_all_read 一致，不写 last_read_at；solo 文章（cluster_id 为 NULL）按 id 命中。"""
+    where = [_scope_clause(scope)]
+    where.append("(cluster_id = ? OR id = ?)")
+    params = [cluster_id, cluster_id]
+    where_sql = " AND ".join(where).replace("a.", "")  # UPDATE 不支持表别名，去掉 a. 前缀
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            cursor = conn.execute(
+                f"UPDATE articles SET is_read = 1 WHERE {where_sql}", params
+            )
+            conn.commit()
+            return cursor.rowcount
+        finally:
+            conn.close()
+
+
 def _escape_fts5_query(q):
     """把用户输入转成安全的 FTS5 MATCH 查询串。
 

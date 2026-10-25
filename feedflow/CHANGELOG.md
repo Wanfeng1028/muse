@@ -1,6 +1,18 @@
 
 # 更新日志
 
+## v1.12.0 — 2026-10-25
+
+### 新增
+- 按簇标记已读：新增 POST /api/clusters/<cluster_id>/read，整簇未读文章一次标已读，返回 {"cluster_id": ..., "updated": ...}；solo 单篇（cluster_id 为 NULL）按自身 id 命中；已全部已读时 updated 为 0 且仍返回 200（幂等）；scope 可选 unread/starred/all，非法 scope 返回 400，不存在的簇返回 404。
+- 聚类 Top 页（/digest/clusters）每张卡片新增“本簇标已读”按钮，点后整簇标已读并刷新页面。
+- store 层新增 mark_cluster_read 与 cluster_exists（与 mark_all_read 一致，不写 last_read_at）。
+- 测试：tests/test_cluster_mark_read.py（store 层 4 例 + API 层 5 例）。
+
+### 已知限制
+- 批量标记已读不写 last_read_at，与既有 mark_all_read 行为一致；Fever 的 unread_recently_read 仍以单篇 set_read 记录的时间为准。
+- 本版关闭 v1.11.0 已知限制之外的独立缺口，不改动单用户密码门与登录锁定行为。
+
 ## v1.11.0 — 2026-10-25
 
 ### 新增

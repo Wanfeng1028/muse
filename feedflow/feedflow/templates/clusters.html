@@ -110,6 +110,21 @@
     color: #6B655B;
     text-align: left;
   }
+.clu-read-btn {
+  background: #FFFFFF;
+  border: 1px solid #E7E2D6;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #6B655B;
+  padding: 4px 10px;
+  margin-left: 36px;
+  margin-top: 10px;
+  cursor: pointer;
+}
+.clu-read-btn:hover {
+  border-color: #C2410C;
+  color: #C2410C;
+}
 </style>
 
 <div class="clu-wrap">
@@ -152,10 +167,37 @@
       {% if c.members > 1 %}
       <p class="clu-folded">还有 {{ c.members - 1 }} 篇同事件报道已折叠</p>
       {% endif %}
+      <button type="button" class="clu-read-btn" data-cluster-id="{{ c.cluster_id }}">本簇标已读</button>
     </div>
     {% endfor %}
   {% else %}
     <div class="clu-empty">今天没有可聚类的未读文章</div>
   {% endif %}
 </div>
+<script>
+document.querySelectorAll(".clu-read-btn").forEach(function(btn) {
+  btn.addEventListener("click", function() {
+    var clusterId = btn.getAttribute("data-cluster-id");
+    btn.disabled = true;
+    btn.textContent = "正在标记…";
+    fetch("/api/clusters/" + clusterId + "/read", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: "{}"
+    }).then(function(response) {
+      if (response.ok) {
+        location.reload();
+      } else {
+        btn.disabled = false;
+        btn.textContent = "本簇标已读";
+        alert("标记失败，请重试");
+      }
+    }).catch(function() {
+      btn.disabled = false;
+      btn.textContent = "本簇标已读";
+      alert("标记失败，请重试");
+    });
+  });
+});
+</script>
 {% endblock %}
