@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/app.css">
   <link rel="stylesheet" href="/chat-design-v1.css">
+  <link rel="stylesheet" href="/chat-design-v2.css">
 </head>
 <body>
 
@@ -20,18 +21,18 @@
       <div class="card">
         <div class="card-body border-bottom">
           <div class="d-flex gap-3 flex-wrap">
-            <div class="flex-fill" style="min-width:200px;">
+            <div class="flex-fill chat-field">
               <label class="form-label" data-i18n="chat.project">项目</label>
               <select id="projectSelect" class="form-select"></select>
             </div>
-            <div class="flex-fill" style="min-width:200px;">
+            <div class="flex-fill chat-field">
               <label class="form-label" data-i18n="chat.targetEpisode">目标剧集</label>
               <select id="episodeSelect" class="form-select"></select>
             </div>
           </div>
         </div>
         <div class="card-body">
-          <div id="chatLog" class="mb-3" style="min-height:320px; max-height:52vh; overflow-y:auto;"></div>
+          <div id="chatLog" class="mb-3"></div>
 
           <div class="mb-3 d-flex flex-wrap gap-2">
             <button type="button" class="btn btn-sm chip" data-text="写一个3镜小剧本" data-i18n="chat.chipScript">写一个3镜小剧本</button>

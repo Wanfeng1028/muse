@@ -1,0 +1,11 @@
+/* chat-design-v2.css — AI 对话页设计覆盖层 v2（chat.html）：关闭 v1 未覆盖的静态行内样式 */
+
+.chat-field {
+  min-width: 200px;
+}
+
+#chatLog {
+  min-height: 320px;
+  max-height: 52vh;
+  overflow-y: auto;
+}

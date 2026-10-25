@@ -261,6 +261,12 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 截图：docs/screenshots/rundetail-design-v2.png（隔离构建真实服务 18206 端口 + 复制库；空态片段内联截图 + 计算样式亲眼核对，零 console 错误）。
 - 已知保留：本层不改布局、dim 类保留。
 
+## 37. AI 对话页设计层 v2（2026-10-26，5.3 路）
+- 文件：static/chat-design-v2.css（2 条规则，只覆盖，chat.html 在 v1 之后引用 1 行；HTML 机械迁移：筛选区两个字段外层 div 删行内 min-width:200px 改挂 chat-field 类、对话记录容器删行内 min-height:320px/max-height:52vh/overflow-y:auto 改由 #chatLog 规则接管；不改 app.css 与布局）。
+- 视觉逻辑：对话台账续篇——筛选字段最小宽 200px 不被压扁、对话记录区最小高 320px、最高 52vh、纵向滚动。
+- 截图：docs/screenshots/chat-design-v2.png（隔离构建真实服务 18208 端口 + 复制库真实数据：项目 6 个、首选都市奇缘/剧集重逢；探针：两字段 minWidth 均为 200px、chatLog minHeight 320px/maxHeight 468px（52vh@900）/overflowY auto、console 0 错误；视口截图亲眼核对）。
+- 已知保留：本层不改布局；空对话态为真实空态（该剧集暂无对话记录），非种子缺口。
+
 ## 38. Agent 机队页 providers 行设计层 v2（2026-10-26，Flash 路）
 - 文件：static/agents-design-v2.css（模型稿 12 条规则原文入仓，agents.html 在 v1 之后引用 1 行；JS 机械迁移：providers.js 12 处行内样式改挂 pv-preset-row/pv-name/pv-head-actions/pv-meta/pv-model-add-row/pv-test-result/pv-model-row/pv-model-id/pv-model-name/pv-model-id-text/pv-model-actions/pv-test-fail 类，pv-test-result 的 hidden 属性保留；数据驱动 badge（entry[0]/entry[1] 拼背景与文字色）保留行内，不为其写规则）。
 - 视觉逻辑：供应商卡片行——模型行 flex、gap 10px、上下 8px、顶线 1px solid；模型名 13px/600、模型 id 12px 次文字色；元数据 12px、gap 12px、上边距 8px；操作区 margin-left:auto 右对齐；预设行 flex、gap 8px、上边距 4px。
