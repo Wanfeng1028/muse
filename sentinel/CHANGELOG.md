@@ -3,6 +3,17 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.1] - 2026-10-26
+
+### 新增
+- 投递记录页加监控筛选：筛选栏状态下拉后加监控 ID 输入框，查询时拼 monitor_id 参数，输入框 change 时自动重查；表格监控列此前已显示监控名，本轮不改。
+- 接口层 monitor_id 参数此前已落地（delivery_deep2_test.go 已覆盖非法值 400 与按监控过滤），本轮只补页面，未动后端。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行）输出：筛选栏与 JS 各 1 通片段稿（max_tokens 4000）；页面测试 1 通因推理占满 4000 致正文 0 字作废，改 max_tokens 16000 重发成功；无 429。
+
+### 测试
+- 新增 internal/web/deliveries_monitor_test.go（监控筛选输入框、monitor_id 参数拼接、change 监听、筛选框位于状态筛选之后刷新按钮之前）；go vet 全洁；web 包与 handlers 投递测试合跑全绿。
+- 真实服务冒烟（18221 端口隔离库）：种子 3 条（监控 5 两条、监控 6 一条）；未过滤 total 3、monitor_id=5 total 2 且监控列均为官网首页、abc 400“monitor_id 参数非法”；截图亲眼核对筛选框可见、过滤后仅剩监控 5 两行；验收后服务按 PID 停掉、端口已关、隔离库与二进制与临时令牌已删。
+
 ## [0.20.0] - 2026-10-26
 
 ### 新增

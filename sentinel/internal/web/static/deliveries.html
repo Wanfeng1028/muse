@@ -357,6 +357,8 @@ color: #57606a;
 <option value="done">已送达</option>
 <option value="failed">已失败</option>
 </select>
+<label for="monitorFilter">监控</label>
+<input id="monitorFilter" placeholder="输入监控 ID">
 <button type="button" id="refreshBtn">刷新</button>
 </div>
 
@@ -453,8 +455,10 @@ document.getElementById('rows').innerHTML =
 
 function loadDeliveries() {
 var status = document.getElementById('statusFilter').value;
+var monitor = document.getElementById('monitorFilter').value;
 var path = '/api/alerts/deliveries?limit=100';
 if (status) path += '&status=' + encodeURIComponent(status);
+if (monitor) path += '&monitor_id=' + encodeURIComponent(monitor);
 return api(path).then(function (data) {
 renderRows(data && data.items ? data.items : []);
 }).catch(function (err) {
@@ -462,7 +466,13 @@ renderError(err.message || String(err));
 });
 }
 
+
+
 document.getElementById('statusFilter').addEventListener('change', function () {
+loadDeliveries();
+});
+
+document.getElementById('monitorFilter').addEventListener('change', function () {
 loadDeliveries();
 });
 
