@@ -22,7 +22,7 @@ curl -s http://127.0.0.1:8100/api/health
 预期返回：
 
 ```
-{"status":"ok","version":"2.10.0"}
+{"status":"ok","version":"2.14.0"}
 ```
 
 停止与清理：
@@ -133,7 +133,7 @@ curl -s http://127.0.0.1:8100/api/metrics | grep ledger_transactions_total
 kill $SRV
 ```
 
-第 5 步中 `/api/health` 返回 `{"status":"ok","version":"2.10.0"}`、`/api/ready` 返回 `{"ready":true}`、`ledger_transactions_total` 与第 2 步一致，即恢复成功。
+第 5 步中 `/api/health` 返回 `{"status":"ok","version":"2.14.0"}`、`/api/ready` 返回 `{"ready":true}`、`ledger_transactions_total` 与第 2 步一致，即恢复成功。
 
 ## 4. 升级
 

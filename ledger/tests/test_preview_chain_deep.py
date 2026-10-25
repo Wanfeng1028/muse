@@ -192,3 +192,26 @@ async def test_preview_chain_entry_fields(client):
     assert isinstance(entry["source"], str)
     assert isinstance(entry["confidence"], (int, float))
     assert isinstance(entry["matched"], bool)
+
+
+@pytest.mark.asyncio
+async def test_preview_fuzzy_chain_entry_has_detail(client):
+    cat_id = await _get_category_id(client)
+    fuzzy_rule = await _create_rule(
+        client, "星巴克", cat_id, direction="out", is_enabled=1, priority=10,
+        pattern_type="fuzzy",
+    )
+    keyword_rule = await _create_rule(client, "麦当劳", cat_id, direction="out", is_enabled=1, priority=20)
+    resp = await client.post(
+        "/api/match-rules/preview",
+        json={"counterparty": "星巴客咖啡", "summary": "", "direction": "out"},
+    )
+    assert resp.status_code == 200
+    chain = resp.json()["chain"]
+    fuzzy_entry = _find_chain_entry(chain, fuzzy_rule["id"])
+    assert fuzzy_entry is not None
+    assert fuzzy_entry["matched"] is True
+    assert fuzzy_entry["detail"] == {"matched": True, "distance": 1, "window": "星巴", "threshold": 1}
+    keyword_entry = _find_chain_entry(chain, keyword_rule["id"])
+    assert keyword_entry is not None
+    assert "detail" not in keyword_entry

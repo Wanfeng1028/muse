@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from fastapi.responses import JSONResponse
 from sqlalchemy import text
 
+from ledger import __version__
 from ledger.database import get_session_factory
 
 # 创建健康检查路由，统一带有 health 标签
@@ -11,7 +12,7 @@ router = APIRouter(tags=["health"])
 @router.get("/api/health")
 async def health() -> dict:
     """健康检查接口：返回服务状态和版本号。"""
-    return {"status": "ok", "version": "2.11.0"}
+    return {"status": "ok", "version": __version__}
 
 
 @router.get("/api/ready")

@@ -1,5 +1,18 @@
 # 更新日志
 
+## v2.14.0 - 2026-10-25
+### 新增
+- matching.py 新增 fuzzy_match_detail(pattern, haystack)，返回 matched / distance / window / threshold 四键解释（子串命中 distance 0；否则滑动窗口最小编辑距离与首次最小窗口；threshold 按词长取 1 或 2）。
+- POST /api/match-rules/preview 的 fuzzy 链条目追加 detail 字段（仅 fuzzy 分支，其他分支键不变）。
+- 新增 tests/test_fuzzy_detail_v214.py（12 例）与 tests/test_preview_chain_deep.py 的 fuzzy 链 detail 断言（1 例，另断言 keyword 条目不带 detail）。
+### 修复
+- fuzzy_rule_matches 改为复用 fuzzy_match_detail，阈值与窗口逻辑与 v2.13 完全一致（2 字词 1 字之差仍不命中）。
+- 关闭版本号漂移：src/ledger/__init__.py 的 __version__ 定为 2.14.0 作为单一来源，/api/health 与 pyproject.toml 同步至 2.14.0（此前 CHANGELOG 已到 2.13.0，但 health 与 pyproject 仍为 2.11.0、__init__ 为 0.1.0）；health 版本测试改为跟随 __version__ 断言。
+### 测试
+- pytest 全量 1414 通过、2 失败、1 跳过；2 失败为干净树既存 wlfl_t14/t15（git stash 对照验证，零新增回归）。
+- ruff check 在本轮改动文件上全洁（test_preview_chain_deep.py 第 89 行既存 I001/F401 未动）；ruff format 的整文件漂移为既存风格（单空行分隔顶层函数），干净树同样存在，未扩面重排。
+- 真实服务冒烟（uvicorn 真进程）：/api/health version=2.14.0、/api/ready true；建 fuzzy 规则“星巴克”后预览“星巴客咖啡”命中 92 rule_fuzzy，链条 detail 为 {matched: true, distance: 1, window: "星巴", threshold: 1}。
+
 ## v2.13.0 - 2026-10-24
 ### 新增
 - match_best 调度新增模糊规则层级（别名 > 正则 > 关键词 > 模糊 > 历史 > 候选 > 无匹配）。

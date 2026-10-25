@@ -557,18 +557,20 @@ def _levenshtein(a: str, b: str) -> int:
         prev, curr = curr, prev
     return prev[n]
 
-def fuzzy_rule_matches(pattern: str, haystack: str) -> bool:
+def fuzzy_match_detail(pattern: str, haystack: str) -> dict:
     if not pattern or not haystack or len(pattern) < 2:
-        return False
+        return {"matched": False, "distance": None, "window": None, "threshold": None}
     if pattern in haystack:
-        return True
+        return {"matched": True, "distance": 0, "window": pattern, "threshold": 1 if len(pattern) < 5 else 2}
     p_len = len(pattern)
     min_L = max(1, p_len - 1)
     max_L = p_len + 1
     h_len = len(haystack)
     min_dist = p_len + h_len
+    window = None
     if h_len < min_L:
         min_dist = _levenshtein(pattern, haystack)
+        window = haystack
     else:
         for L in range(min_L, max_L + 1):
             if L > h_len:
@@ -577,6 +579,7 @@ def fuzzy_rule_matches(pattern: str, haystack: str) -> bool:
                 dist = _levenshtein(pattern, haystack[i:i + L])
                 if dist < min_dist:
                     min_dist = dist
+                    window = haystack[i:i + L]
                     if min_dist == 0:
                         break
             if min_dist == 0:
@@ -585,7 +588,13 @@ def fuzzy_rule_matches(pattern: str, haystack: str) -> bool:
         thresh = 1
     else:
         thresh = 2
-    return min_dist <= thresh and min_dist * 2 < p_len
+    matched = min_dist <= thresh and min_dist * 2 < p_len
+    return {"matched": matched, "distance": min_dist, "window": window, "threshold": thresh}
+
+
+def fuzzy_rule_matches(pattern: str, haystack: str) -> bool:
+    """返回与 fuzzy_match_detail 的 matched 一致的模糊匹配结果"""
+    return fuzzy_match_detail(pattern, haystack)["matched"]
 
 def _pick_best_fuzzy(fuzzy_rules: list[dict], counterparty: str, summary: str, direction: str) -> dict | None:
     best_rule = None

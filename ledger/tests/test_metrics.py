@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from datetime import date
 
+from ledger import __version__
+
 PROM_LINE = re.compile(r"^[a-z_]+(\{[^}]*\})? [0-9.eE+-]+$")
 
 
@@ -87,4 +89,4 @@ async def test_ready_db_down(client, monkeypatch):
 async def test_health_version(client):
     resp = await client.get("/api/health")
     assert resp.status_code == 200
-    assert resp.json()["version"] == "2.11.0"
+    assert resp.json()["version"] == __version__

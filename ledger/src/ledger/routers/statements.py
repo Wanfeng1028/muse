@@ -1578,23 +1578,25 @@ async def preview_match_rule(
             else:
                 reason = "未命中"
         elif r.get("pattern_type") == "fuzzy":
-            matched = matching.fuzzy_rule_matches(matching.normalize(kw), haystack)
+            detail = matching.fuzzy_match_detail(matching.normalize(kw), haystack)
+            matched = bool(detail["matched"])
             conf = 92
             reason = "规则「" + kw + "」命中" if matched else "未命中"
         else:
             matched = bool(matching.normalize(kw)) and matching.normalize(kw) in haystack
             conf = 95
             reason = "规则「" + kw + "」命中" if matched else "未命中"
-        chain.append(
-            {
-                "source": source,
-                "rule_id": r["id"],
-                "category_id": r.get("category_id") if matched else None,
-                "confidence": conf if matched else 0,
-                "reason": reason,
-                "matched": matched,
-            }
-        )
+        entry = {
+            "source": source,
+            "rule_id": r["id"],
+            "category_id": r.get("category_id") if matched else None,
+            "confidence": conf if matched else 0,
+            "reason": reason,
+            "matched": matched,
+        }
+        if r.get("pattern_type") == "fuzzy":
+            entry["detail"] = detail
+        chain.append(entry)
 
     # 历史记录匹配：返回 (category_id, confidence) 或 None，需解包取值
     hist_hit = matching.match_by_history(counterparty, summary, direction, history)
