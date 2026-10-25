@@ -1,0 +1,18 @@
+.page-head h1 { font-size: 20px; font-weight: 700; color: var(--text); line-height: 1.3; }
+.card { background-color: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; box-shadow: none; }
+.card-body { padding: 16px; }
+.card-title { font-size: 16px; font-weight: 700; color: var(--text); line-height: 1.4; }
+.form-check-label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.form-select { font-size: 13px; color: var(--text); background-color: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; line-height: 1.5; }
+.form-control { font-size: 13px; color: var(--text); background-color: var(--surface-2); border: 1px solid var(--border); border-radius: 8px; line-height: 1.5; }
+.btn { font-size: 13px; border-radius: 8px; line-height: 1.5; }
+.btn-primary { font-weight: 600; color: var(--surface); background-color: var(--text); border-color: var(--text); }
+.btn-outline-secondary { color: var(--text-2); background-color: var(--surface); border: 1px solid var(--border); }
+.table thead th { font-size: 12px; font-weight: 600; color: var(--text-2); border-bottom: 1px solid var(--border); }
+.table tbody td { font-size: 13px; color: var(--text); border-bottom: 1px solid var(--border-soft); }
+.status-pill { font-size: 12px; font-weight: 600; color: var(--text-2); border: 1px solid var(--border-soft); border-radius: 8px; line-height: 1.5; }
+.status-pill.sp-green { color: var(--green); border-color: var(--green); }
+.status-pill.sp-red { color: var(--red); border-color: var(--red); }
+.text-secondary { color: var(--text-2); }
+#tag-asset-list { font-size: 13px; line-height: 1.6; color: var(--text); }
+#logs-body { font-size: 12px; line-height: 1.6; color: var(--text-2); }

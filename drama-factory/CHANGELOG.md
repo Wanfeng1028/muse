@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：快捷工具页设计层 v1）
+- 新增 static/tools-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；tools.html 在 harness.css 之后引用 1 行，本页无内联 style 块）：视觉逻辑“工具台账”——页头 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片内边距 16px、卡片标题 16px/700、表单标签 12px/600 次文字、输入框与下拉 13px 8px 圆角、主按钮 13px/600 8px 圆角（文字色与底色反转）、表头 12px/600 次文字、单元格 13px、状态戳 12px/600 发丝边 8px 圆角；token 全部取自 app.css/harness.css。
+- 模型稿 18 条规则原文入仓，编排修正 1 处：#logs-body 模型稿写了 surface-2 底、边框与内边距，tbody 上这些声明不可靠，改回只留字号/行高/文字色。其余 17 条为模型原文，括号 18/18 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
+- 验收：新增 ToolsDesignV1Test 3 例 + 旧设计层 3 页合跑 12/12 全绿，Maven 离线 BUILD SUCCESS；真实服务（18090 端口，复制 H2 库，开放模式）+ 真实工具数据截图亲眼核对：分镜表导出下拉 6 个真实项目（都市奇缘/最后一班地铁/验证用短剧/取消测试/冒烟测试项目/逐字稿演示项目）与 /api/projects 对上，导出剧集“第 1 集·重逢”与项目 1 的剧集对上；计算样式实证页头 20/700、工具卡 10px 圆角纯白底、卡片标题 16/700、零 console 错误；截图存 docs/screenshots/tools-design-v1.png。验收后服务按 PID 停干净、复制库已删。
+- 已知保留：本层不改布局；复制库里资产为空（/api/assets 为 []），故批量打标区显示“暂无资产”、视频转换/音频提取下拉显示“暂无视频资产”，操作记录为空（/api/tools/op-logs 为 []）显示“暂无记录”，均为真实空态，未伪造数据；状态戳绿/红两档因空记录未在截图里出现，只由测试覆盖选择器；本轮未动 second-brain、new-api-src、botstalk、sentinel、docseek eval 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：Agent 机队页设计层 v1）
 - 新增 static/agents-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；agents.html 在 head 内联 style 块之后引用 1 行）：视觉逻辑“机队台账”——页头 20px/700、副标题 13px 次文字、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、徽标 12px/600、通道切换钮 12px/600 8px 圆角、提示 12px 次文字、元数据键 12px/600 次文字、值 13px、模板摘要 13px/600、模板全文等宽 12px surface-2 底 8px 圆角；token 全部取自 app.css/harness.css。
 - 模型稿 18 条规则原文入仓，编排修正 2 处：页头规则选择器由 .page-title 改为 .page-head .page-title（harness.css 的 .page-head h1 特异度更高，原规则字重会被压回 600，实测后修正）；模板全文 font-family 改用 --mono token。括号 18/18 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
