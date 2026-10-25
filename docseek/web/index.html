@@ -1,55 +1,69 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<!-- 视觉逻辑：案卷检索桌——左对齐的检索台账：纸色底、墨色字、朱红点睛，细线分隔代替悬浮卡片，无衬线正文 + 等宽路径/分数/行号。 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>文溯 DocSeek · 全文检索服务</title>
 <style>
+  :root {
+    --mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+  }
   * { box-sizing: border-box; }
   body {
     margin: 0;
     padding: 0;
-    background: #f4f6f9;
-    color: #1f2733;
+    min-height: 100vh;
+    background: #f6f3ec;
+    color: #211d17;
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
                  "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
     font-size: 14px;
     line-height: 1.6;
   }
   .wrap {
-    max-width: 960px;
-    margin: 0 auto;
-    padding: 24px 16px 48px;
+    max-width: 1180px;
+    margin: 0;
+    padding: 0 32px 56px;
   }
   header.top {
-    text-align: center;
-    padding: 16px 0 24px;
+    text-align: left;
+    padding: 28px 0 16px;
+    border-bottom: 3px solid #211d17;
   }
   header.top h1 {
     margin: 0;
-    font-size: 24px;
-    font-weight: 600;
-    color: #10263f;
+    font-size: 20px;
+    font-weight: 700;
+    color: #211d17;
     letter-spacing: 0.5px;
   }
   header.top .sub {
-    margin-top: 6px;
+    margin-top: 4px;
     font-size: 13px;
-    color: #6b7785;
+    color: #6d6659;
+  }
+  .columns {
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 48px;
+    margin-top: 24px;
+    align-items: start;
   }
   .card {
-    background: #ffffff;
-    border: 1px solid #e3e8ef;
-    border-radius: 12px;
-    box-shadow: 0 1px 3px rgba(16, 38, 63, 0.05);
-    padding: 20px;
-    margin-bottom: 20px;
+    padding: 22px 0 26px;
+    border-top: 1px solid #ddd5c2;
+    background: none;
+  }
+  .card:first-child {
+    border-top: none;
+    padding-top: 6px;
   }
   .card h2 {
     margin: 0 0 14px;
-    font-size: 16px;
+    font-size: 15px;
     font-weight: 600;
-    color: #10263f;
+    color: #211d17;
     display: flex;
     align-items: center;
     gap: 8px;
@@ -58,8 +72,8 @@
     display: inline-block;
     width: 8px;
     height: 8px;
-    border-radius: 50%;
-    background: #2f7cf6;
+    background: #211d17;
+    flex: 0 0 auto;
   }
   .row {
     display: flex;
@@ -70,49 +84,61 @@
   input[type="text"], select {
     flex: 1 1 200px;
     min-width: 0;
-    padding: 9px 12px;
-    border: 1px solid #ccd4de;
-    border-radius: 8px;
+    padding: 8px 12px;
+    border: 1px solid #ddd5c2;
+    border-radius: 2px;
     font-size: 14px;
-    color: #1f2733;
-    background: #fbfcfe;
+    font-family: inherit;
+    color: #211d17;
+    background: #fffdf8;
     outline: none;
     transition: border-color 0.15s, box-shadow 0.15s;
   }
   input[type="text"]:focus, select:focus {
-    border-color: #2f7cf6;
-    box-shadow: 0 0 0 3px rgba(47, 124, 246, 0.15);
+    border-color: #b3402a;
+    box-shadow: 0 0 0 3px rgba(179, 64, 42, 0.18);
   }
   select {
     flex: 0 0 auto;
-    width: 110px;
+    width: 112px;
   }
   button {
-    padding: 9px 18px;
-    border: none;
-    border-radius: 8px;
-    background: #2f7cf6;
-    color: #ffffff;
+    padding: 8px 18px;
+    border: 1px solid #b3402a;
+    border-radius: 2px;
+    background: #b3402a;
+    color: #f6f3ec;
+    font-family: inherit;
     font-size: 14px;
     font-weight: 500;
     cursor: pointer;
-    transition: background 0.15s, opacity 0.15s;
     white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
   }
-  button:hover { background: #1e68e0; }
-  button:active { background: #1758c4; }
+  button:hover { background: #93392a; border-color: #93392a; }
+  button:active { background: #93392a; border-color: #93392a; }
   button.ghost {
-    background: #eef2f8;
-    color: #2f5b8f;
+    background: transparent;
+    color: #211d17;
+    border-color: #211d17;
   }
-  button.ghost:hover { background: #e0e8f4; }
+  button.ghost:hover {
+    background: #211d17;
+    border-color: #211d17;
+    color: #f6f3ec;
+  }
   button.danger {
-    background: #fdecec;
-    color: #c0392b;
-    padding: 5px 12px;
-    font-size: 13px;
+    background: transparent;
+    color: #93392a;
+    border-color: #93392a;
+    padding: 4px 12px;
+    font-size: 12px;
   }
-  button.danger:hover { background: #f9d7d5; }
+  button.danger:hover {
+    background: #93392a;
+    border-color: #93392a;
+    color: #f6f3ec;
+  }
   button:disabled {
     opacity: 0.55;
     cursor: not-allowed;
@@ -121,92 +147,78 @@
     margin-top: 16px;
   }
   .result-item {
-    border: 1px solid #e8edf4;
-    border-radius: 10px;
-    padding: 12px 14px;
-    margin-bottom: 10px;
-    background: #fcfdff;
+    padding: 14px 0 16px;
+    border-bottom: 1px solid #ddd5c2;
+  }
+  .results .result-item:first-child {
+    border-top: 2px solid #211d17;
+    padding-top: 14px;
   }
   .result-head {
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
   }
   .result-idx {
-    display: inline-block;
-    min-width: 24px;
-    text-align: center;
+    font-family: var(--mono);
     font-size: 12px;
     font-weight: 600;
-    color: #ffffff;
-    background: #6b8fd6;
-    border-radius: 6px;
-    padding: 1px 6px;
+    color: #b3402a;
+    min-width: 22px;
   }
   .result-title {
     font-weight: 600;
-    color: #10263f;
+    color: #211d17;
     word-break: break-all;
   }
   .result-score {
-    font-size: 12px;
-    color: #2f7cf6;
-    background: #eef4ff;
-    border-radius: 6px;
-    padding: 1px 8px;
     margin-left: auto;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: #6d6659;
+    text-align: right;
   }
   .result-type {
+    font-family: var(--mono);
     font-size: 11px;
-    color: #5b6b7f;
-    background: #eef1f6;
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 1px 8px;
+    color: #6d6659;
+    border: 1px solid #ddd5c2;
+    border-radius: 2px;
+    padding: 0 6px;
+    line-height: 1.6;
     white-space: nowrap;
   }
   .result-path {
     margin-top: 4px;
+    font-family: var(--mono);
     font-size: 12px;
-    color: #7a8798;
-    word-break: break-all;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    color: #6d6659;
+    overflow-wrap: break-word;
   }
   .result-loc {
     margin-top: 4px;
+    font-family: var(--mono);
     font-size: 12px;
-    color: #7a8798;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    color: #6d6659;
+    overflow-wrap: break-word;
   }
   .result-loc b {
-    color: #2f5b8f;
+    color: #211d17;
     font-weight: 600;
   }
-  .result-explain{margin-top:8px;border:1px solid #e8edf4;border-radius:6px;background:#fcfdff;padding:6px 10px;font-size:12px;color:#46505e}
-  .result-explain summary{cursor:pointer;font-size:13px;color:#2f5b8f;font-weight:600}
-  .result-explain-row{display:flex;align-items:center;gap:8px;margin-top:6px}
-  .result-explain-label{flex:0 0 auto;min-width:84px;font-size:12px;color:#46505e}
-  .result-explain-bar{flex:1 1 auto;height:8px;background:#eef4ff;border-radius:6px;overflow:hidden}
-  .result-explain-fill{display:block;height:100%;background:#2f7cf6;border-radius:6px}
-  .result-explain-val{flex:0 0 auto;min-width:44px;text-align:right;font-size:12px;color:#7a8798}
-  .result-explain-desc{margin-top:2px;margin-left:92px;font-size:12px;color:#7a8798}
-  .result-explain-final{margin-top:8px;padding-top:6px;border-top:1px solid #e8edf4;font-size:13px;color:#2f5b8f;font-weight:600}
-
   .result-explain {
-    margin-top: 8px;
-    border: 1px solid #e8edf4;
-    border-radius: 6px;
-    background: #fcfdff;
-    padding: 6px 10px;
+    margin-top: 10px;
+    padding: 8px 0 2px;
+    border-top: 1px solid #ddd5c2;
     font-size: 12px;
-    color: #46505e;
+    color: #6d6659;
   }
   .result-explain summary {
     cursor: pointer;
-    font-size: 13px;
-    color: #2f5b8f;
+    font-size: 12px;
     font-weight: 600;
+    color: #211d17;
   }
   .result-explain-row {
     display: flex;
@@ -218,97 +230,88 @@
     flex: 0 0 auto;
     min-width: 84px;
     font-size: 12px;
-    color: #46505e;
+    color: #6d6659;
   }
   .result-explain-bar {
     flex: 1 1 auto;
-    height: 8px;
-    background: #eef4ff;
-    border-radius: 6px;
+    height: 6px;
+    background: #ddd5c2;
     overflow: hidden;
   }
   .result-explain-fill {
     display: block;
     height: 100%;
-    background: #2f7cf6;
-    border-radius: 6px;
+    background: #211d17;
   }
   .result-explain-val {
     flex: 0 0 auto;
-    min-width: 44px;
+    min-width: 48px;
     text-align: right;
+    font-family: var(--mono);
     font-size: 12px;
-    color: #7a8798;
+    color: #6d6659;
   }
   .result-explain-desc {
-    margin-top: 2px;
-    margin-left: 92px;
+    margin: 2px 0 0 92px;
     font-size: 12px;
-    color: #7a8798;
+    color: #6d6659;
   }
   .result-explain-final {
     margin-top: 8px;
     padding-top: 6px;
-    border-top: 1px solid #e8edf4;
+    border-top: 1px solid #ddd5c2;
+    font-family: var(--mono);
     font-size: 13px;
-    color: #2f5b8f;
     font-weight: 600;
-  }
-  :root {
-    --mark-bg: #fff3b0;
-  }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --mark-bg: #5c4a00;
-    }
+    color: #211d17;
   }
   .result-snippet {
     margin-top: 8px;
     font-size: 13px;
-    color: #46505e;
-    word-break: break-word;
+    line-height: 1.7;
+    color: #211d17;
+    overflow-wrap: break-word;
   }
-  .result-snippet em {
-    font-style: normal;
-    background: #fff3c4;
-    color: #7a5a00;
-    padding: 0 2px;
-    border-radius: 3px;
-  }
+  .result-snippet em,
   .result-snippet mark {
-    background: var(--mark-bg);
-    color: inherit;
+    font-style: normal;
+    background: #ffe9a8;
+    color: #211d17;
     padding: 0 2px;
-    border-radius: 3px;
+    border-radius: 2px;
   }
   .empty {
-    text-align: center;
-    color: #93a0b0;
-    padding: 18px 0;
+    text-align: left;
+    color: #6d6659;
+    padding: 14px 0;
     font-size: 13px;
   }
   .stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 12px;
-    margin-bottom: 14px;
+    display: block;
+    margin-bottom: 16px;
+  }
+  .stats-grid .stat-box:first-child {
+    border-top: 2px solid #211d17;
   }
   .stat-box {
-    background: #f7f9fc;
-    border: 1px solid #e8edf4;
-    border-radius: 10px;
-    padding: 12px 14px;
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 12px;
+    padding: 9px 0;
+    border-bottom: 1px solid #ddd5c2;
   }
   .stat-box .label {
-    font-size: 12px;
-    color: #7a8798;
+    font-size: 13px;
+    color: #6d6659;
   }
   .stat-box .value {
-    margin-top: 4px;
-    font-size: 20px;
+    font-family: var(--mono);
+    font-size: 15px;
     font-weight: 600;
-    color: #10263f;
-    word-break: break-all;
+    color: #211d17;
+    overflow-wrap: break-word;
+    text-align: right;
   }
   .watch-list {
     margin-top: 14px;
@@ -317,42 +320,48 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
-    border: 1px solid #e8edf4;
-    border-radius: 8px;
-    margin-bottom: 8px;
-    background: #fcfdff;
+    padding: 8px 0;
+    border-bottom: 1px solid #ddd5c2;
+  }
+  .watch-item:first-child {
+    border-top: 2px solid #211d17;
   }
   .watch-item .path {
     flex: 1 1 auto;
-    word-break: break-all;
-    font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+    font-family: var(--mono);
     font-size: 13px;
-    color: #33404f;
+    color: #211d17;
+    overflow-wrap: break-word;
   }
   .hint {
     font-size: 12px;
-    color: #93a0b0;
+    color: #6d6659;
     margin-top: 10px;
   }
   .msg {
     margin-top: 12px;
     font-size: 13px;
-    padding: 10px 12px;
-    border-radius: 8px;
+    padding: 8px 0 8px 12px;
     display: none;
   }
   .msg.ok {
     display: block;
-    background: #eaf7ee;
-    color: #1e7a3c;
-    border: 1px solid #c9ebd3;
+    border-left: 3px solid #2f5e3f;
+    color: #2f5e3f;
   }
   .msg.err {
     display: block;
-    background: #fdecec;
-    color: #c0392b;
-    border: 1px solid #f5cfcc;
+    border-left: 3px solid #93392a;
+    color: #93392a;
+  }
+  @media (max-width: 900px) {
+    .wrap {
+      padding: 0 16px 48px;
+    }
+    .columns {
+      grid-template-columns: 1fr;
+      gap: 0;
+    }
   }
 </style>
 </head>
@@ -363,6 +372,9 @@
     <h1>文溯 DocSeek · 全文检索服务</h1>
     <div class="sub">本地全文检索引擎 · 常驻 HTTP 服务 · 实时文件监控</div>
   </header>
+
+  <div class="columns">
+  <div class="col-main">
 
   <!-- ① 搜索 -->
   <section class="card">
@@ -398,6 +410,9 @@
       <div class="empty">提问后，这里会列出原文段落与行号</div>
     </div>
   </section>
+
+  </div>
+  <div class="col-side">
 
   <!-- ② 服务状态 -->
   <section class="card">
@@ -446,7 +461,8 @@
     </div>
     <div class="hint">提示：监控目录发生变化时会自动增量索引（带防抖合并）。</div>
   </section>
-
+  </div>
+  </div>
 </div>
 
 <script>
