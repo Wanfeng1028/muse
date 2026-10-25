@@ -3,6 +3,20 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.17.0] - 2026-10-25
+
+### 新增
+- 前端美化设计层 internal/web/static/design-v017.css（值班日志本续篇）：关闭 v0.16.0 已知限制里的两页顶栏导航不统一缺口。两页均在 design-v016.css 之后引用本层。规则：监控页导航激活态文字改墨色 #1f2937、下划线改绿 #10b981；投递页导航激活态同款（墨色、600 字重、透明底、2px 绿下边框）；两页顶栏与投递筛选栏去阴影，筛选栏补 1px 细边 #e5e7eb（编排机械补一条，模型稿未含此条，如实记录）。
+- 投递页导航激活项由行内 style 改为 class="active"，样式表层才能真正覆盖它（v0.16.0 留下的“行内 style 无法覆盖”至此闭合）；两页顶栏结构（监控页 logo-area/user-area、投递页 topbar-left/badge）仍各用各的既有结构，不动布局。
+
+### 测试
+- 新增 internal/web/design_v017_test.go 1 例（设计层标记与禁令、两页在 v016 之后引用本层、投递页激活项用 class 且无旧行内 style、监控页激活锚点）；go vet 全洁；internal/web 包全绿。
+- 真实服务冒烟（18291 端口隔离库）：服务端内置种子监控 2 条（示例站点 https://example.com、示例 TCP 端口 example.com:80，均已禁用）+ 本轮直插投递 1 条（示例站点 down、已失败、2/8 次、connection refused），/monitors 与 /deliveries 均 200；截图亲眼核对两张：监控页激活项墨色 + 绿下划线、顶栏无阴影，投递页激活项墨色 + 2px 绿下边框、筛选栏无阴影 + 细边、失败徽标与重试按钮齐全，计算样式实证与规则一一对上。验收后服务已按 PID 停掉，演示库、二进制与服务端备份文件已删。
+
+### 已知限制
+- 两页顶栏结构仍不相同（监控页有 logo-area/user-area，投递页有 topbar-left/badge），只统一了激活态与阴影，未做顶栏结构归一。
+
+
 ## [0.16.0] - 2026-10-25
 
 ### 新增

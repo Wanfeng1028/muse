@@ -1,0 +1,27 @@
+/*
+ * Sentinel v0.17.0 设计层：把 monitors.html 与 deliveries.html 的顶栏导航激活态统一
+ * 加载顺序：在各页内联 <style> 块与 design-v016.css 之后以 <link> 引用，只覆盖，不改原内联样式与任何 JS。
+ * 视觉逻辑与 v0.15.0/v0.16.0 同款值班日志本：激活态一律墨色文字 + 2px 绿 #10b981 信号线，
+ * 顶栏与筛选栏去阴影、只留 1px 细边分隔；不用渐变、不用新字体、不用 emoji。
+ * 范围说明：本轮只统一导航激活态与阴影；两页顶栏结构（监控页 logo-area/user-area、
+ * 投递页 topbar-left/badge）仍各用各的既有结构，不动布局。
+ */
+.nav-links a.active {
+  color: #1f2937;
+}
+.nav-links .active::after {
+  background-color: #10b981;
+}
+.topbar-right a.active {
+  color: #1f2937;
+  font-weight: 600;
+  background: transparent;
+  border-bottom: 2px solid #10b981;
+}
+.topbar {
+  box-shadow: none;
+}
+.filter-bar {
+  box-shadow: none;
+  border: 1px solid #e5e7eb;
+}
