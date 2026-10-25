@@ -1,0 +1,9 @@
+#wizard .card-title svg {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+}
+
+#planArea {
+  margin-top: 16px;
+}

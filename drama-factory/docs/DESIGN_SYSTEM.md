@@ -295,3 +295,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：质检视频满宽、最高 480px、黑底；预算行两 span 间距 8px。原值逐字保留，不补属性。
 - 截图：docs/screenshots/sweep-static-v2.png（隔离构建真实服务 + 复制库；质检视频与预算行计算样式实测，见 CHANGELOG）。
 - 已知保留：各页 display:none 显隐切换、数据驱动宽度、toast z-index 均不在本轮范围；Agent 密钥行 flex div 由他路同期落地（agents-design-v3.css），本轮不重复做。
+## 43. 运行页设计层 v3（2026-10-26，Flash 路）
+- 文件：static/runs-design-v3.css（模型稿 2 条规则原文入仓；runs.html 在 v2 之后引用 v3；HTML 机械迁移：向导标题图标删行内 style、计划区 div 删行内 style）。
+- 视觉逻辑：向导标题图标 15px、基线 -2px；计划区上边距 16px。原值逐字保留，不补属性。
+- 关键点：图标规则必须以 svg 为目标——lucide 运行时把 i 换成 svg 并拷贝属性，i 选择器在渲染后失效（沿用 v2 的 .error-box svg 前例；探针实证图标已换成 svg）。
+- 截图：docs/screenshots/runs-design-v3.png（隔离构建真实服务 + 复制库；向导展开态，图标与计划区计算样式实测，见 CHANGELOG）。
+- 已知保留：display:none 显隐切换、数据驱动项、toast z-index 均不在本轮范围；统计条“总运行数 2”与列表 3 条的既有口径缺口非本层所致，不扩范围。

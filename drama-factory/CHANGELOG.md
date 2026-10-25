@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：运行页设计层 v3）
+- 新增 static/runs-design-v3.css（模型稿 2 条规则原文入仓）：关闭运行页向导标题图标行内样式（width:15px;height:15px;vertical-align:-2px）与计划区行内样式（margin-top:16px），分别改由 #wizard .card-title svg 规则与 #planArea 规则接管；runs.html 在 v2 之后引用 v3。图标规则以 svg 为目标（lucide 会把 i 换成 svg 并拷贝属性，i 选择器渲染后失效；探针实证图标已换成 svg）。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/flash_call_n9.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、ProxyCommand 齐全、未读任何现成调用脚本）产出：CSS+测试合一通 max_tokens 8000 出 reasoning-only 空响应作废（completion 8000 触顶，reasoning 约 29848 字符）；拆两通各 max_tokens 8000 后 CSS 1 通（API prompt 23731 / completion 81 / total 23812）、测试 1 通（API prompt 23756 / completion 6717 / total 30473），正文即入仓，零编排修正（CSS 首行注释按仓内惯例去掉，不改规则）。括号 2/2 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
+- 验收：新增 RunsDesignV3Test 3/3，设计层合跑 147/147 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18212 端口，复制 H2 库）实测 runs.html 与 v3 css 均 200、served 内容与文件对上、旧行内 0 处、jar 内 v3 css 118 字节；向导展开态计算样式实测 svg 15px/15px/-2px、计划区 margin-top 16px、零 console 错误；视口截图亲眼核对向导与真实运行列表排布正常无错位重叠。截图存 docs/screenshots/runs-design-v3.png。验收后服务按端口反查的真实 PID 停服、18212 复查已关、隔离构建与复制库已删。打包插曲：首个 repackage 因间歇写盘致中间 jar 损坏（zip END header not found），等 60 秒删包重打后终态 207MB fat jar 正常。
+
 ### Added（Flash 路 2026-10-26：剩余静态行内样式扫尾）
 - 新增 static/qc-design-v2.css、static/cost-ledger-design-v3.css（模型稿各 1 条规则原文入仓）：关闭质检页视频行内样式（width:100%;max-height:480px;background:#000）与成本账本页预算行行内样式（gap:8px），分别改由 #qcVideo 规则与 cl-budget-meta 类接管；qc.html 在 v1 之后引用 v2，cost-ledger.html 在 v2 之后引用 v3。Agent 密钥行 flex div 由他路同期落地（agents-design-v3.css），本轮不重复提交。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/flash_call_n9.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、ProxyCommand 齐全、未读任何现成调用脚本）产出：首通 6 代码块 max_tokens 32000 出 reasoning-only 空响应作废；查实 max_tokens 32000 会触发纯思考（同提示词降至 8000 即出正文），遂拆两通各 max_tokens 8000——CSS 3 条规则 1 通（API prompt 23917 / completion 1404 / total 25321，其中 Agent 规则因他路同期落地未入仓）、测试 2 文件 1 通（API prompt 23859 / completion 4302 / total 28161），正文即入仓，零编排修正。括号各 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
