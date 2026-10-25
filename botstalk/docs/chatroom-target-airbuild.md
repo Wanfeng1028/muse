@@ -25,7 +25,8 @@
 
 - 用户亲定：BotsTalk 的前端**可以参考或者完全抄 AirBuild 的项目来做**。
 - 旧口径“只借结构、不照抄素材品牌”就此作废，但落地前先问用户定设计细节（见下），不擅自替他定。
-- 待用户决策的设计点：①布局是否照图三栏（中间聊天＋右侧 Agent 名单＋底部服务模块）；②配色/风格是沿用 BotsTalk 现有 design-v1/v2“值班室台账”，还是换成图里那种浅底卡片风；③底部模块用 BotsTalk 自己的模块名（任务/交付物/审批等），还是照抄图里的 AirFeedback/AirPayment/AirRouter/AirKnowledge/AirTraffic；④右侧名单是否照图用 Ato/Pluto/Coin/Camo 等分工，还是用 BotsTalk 现有角色。
+- 用户已决策（2026-10-25 21:21）：①布局用 AirBuild 的；②风格用 AirBuild 的，且用户认为他的风格更像聊天室；③底部模块用 BotsTalk 自己的；④右侧角色由助理自己弄角色卡。
+- 据此，下一路 botstalk 前端工人按此四点直接开工，不再为此四点重复问用户。
 
 ## 不做的事
 
