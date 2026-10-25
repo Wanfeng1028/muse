@@ -1,3 +1,14 @@
+## [1.19.5] - 2026-10-26
+
+### 修复
+- 删 static/style.css 第 1615 行裸 --- 分隔线（depth 0 的非法内容，浏览器丢弃）。
+
+### 测试
+- css_no_orphan_block_test 扩展拦截 depth 0 纯破折号行；新旧测试同跑通过；cargo fmt --all -- --check 干净。
+- Chromium 实测删线前后 .icon-tile 计算样式均为 64px/16px，无回归。
+
+> **如实记录**：Flash 模型稿（BotsRouter GLM-5.3-Flash，令牌 id=5、渠道 20）；首版 CHANGELOG 稿截断、第二版仍截断，编排按提示词事实补全末句；删线与测试扩展为编排机械执行；无 429。
+
 ## [1.19.4] - 2026-10-26
 
 ### 修复

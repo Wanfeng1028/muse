@@ -1612,7 +1612,6 @@ ul {
 .fs-search:focus { outline: none; border-color: #d8a24a; box-shadow: 0 0 0 2px rgba(216, 162, 74, 0.2); }
 .search-row { cursor: pointer; }
 .search-path { margin-left: auto; font-size: 12px; color: #9aa5b1; font-family: ui-monospace, monospace; }
- ---
 /* Lucide 图标：纸色印章底（桌面）/ 随文字色（菜单与任务栏） */
 .icon-tile { width: 64px; height: 64px; display: flex; align-items: center; justify-content: center;
   background: var(--surface); border: 1px solid var(--border-strong); border-radius: 16px;

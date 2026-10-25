@@ -44,6 +44,11 @@ fn test_style_css_has_no_orphan_declaration_block() {
         if brace_depth == 0 && is_decl {
             panic!("第 {} 行存在孤立声明块: {}", line_no, trimmed);
         }
+        // 裸分隔线（如 ---）在 depth 0 同样不是合法内容，一并拦截。
+        let is_dash_line = trimmed.len() >= 2 && trimmed.chars().all(|c| c == '-');
+        if brace_depth == 0 && is_dash_line {
+            panic!("第 {} 行存在裸分隔线: {}", line_no, trimmed);
+        }
     }
 
     assert_eq!(
