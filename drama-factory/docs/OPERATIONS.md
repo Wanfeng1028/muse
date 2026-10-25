@@ -473,6 +473,8 @@ ls -1t backups/drama-factory-*.tar.gz
 - `dramafactory_script_llm_duration_seconds{model}`：剧本 LLM 调用耗时。
 - `dramafactory_finalcut_builds_total{result}`：成片构建次数。
 - `dramafactory_finalcut_build_duration_seconds`：成片构建耗时。
+- `dramafactory_hyperframes_renders_total{template,result}`：HyperFrames 渲染次数。
+- `dramafactory_hyperframes_render_duration_seconds{template}`：HyperFrames 渲染耗时。
 
 Gauge 类指标由 `@Scheduled(30s)` 刷内存快照，抓取时不打 DB。
 

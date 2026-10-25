@@ -36,6 +36,8 @@ import java.util.concurrent.atomic.AtomicLong;
  *   <li>dramafactory_script_llm_duration_seconds{model} —— 脚本生成 LLM 调用耗时，单位：秒</li>
  *   <li>dramafactory_finalcut_builds_total{result} —— 成片构建总次数，单位：次</li>
  *   <li>dramafactory_finalcut_build_duration_seconds —— 成片构建耗时，单位：秒</li>
+ *   <li>dramafactory_hyperframes_renders_total{template,result} —— HyperFrames 渲染总次数，单位：次</li>
+ *   <li>dramafactory_hyperframes_render_duration_seconds{template} —— HyperFrames 渲染耗时，单位：秒</li>
  *   <li>dramafactory_ffmpeg_retries_total{operation,kind,result} —— ffmpeg 单步重试次数，operation=concat/burn-subtitles/probe-duration/download-clip，kind=transient/permanent，result=ok/error，单位：次（v2.29 新增）</li>
  *   <li>dramafactory_video_poll_skipped_total —— 视频任务轮询因单飞保护被跳过的次数，单位：次（v2.29 新增）</li>
  * </ul>
@@ -117,6 +119,28 @@ public class DramaMetrics {
         registry.counter("dramafactory_finalcut_builds_total", "result", ok ? "ok" : "error")
                 .increment();
         registry.timer("dramafactory_finalcut_build_duration")
+                .record(Duration.ofMillis(safeLatency));
+    }
+
+/**
+     * 记录 HyperFrames 渲染指标。
+     * <p>模板名归一化规则：template 为 null 或空白时归一化为 "unknown"（Micrometer 不接受空标签值），其余原样使用。</p>
+     * <p>耗时单位毫秒（负值截断为 0）。</p>
+     * <p>ok 的含义：渲染成功产出 out/video.mp4；失败含非零退出码、无产物、异常三种情形，调用方按 failure==null 传 ok。</p>
+     *
+     * @param template 模板名
+     * @param latencyMs 耗时（毫秒）
+     * @param ok 渲染是否成功
+     */
+    public void recordHyperFramesRender(String template, long latencyMs, boolean ok) {
+        String safeTemplate = (template == null || template.isBlank()) ? "unknown" : template;
+        long safeLatency = Math.max(0L, latencyMs);
+        registry.counter("dramafactory_hyperframes_renders_total",
+                "template", safeTemplate,
+                "result", ok ? "ok" : "error")
+                .increment();
+        registry.timer("dramafactory_hyperframes_render_duration",
+                "template", safeTemplate)
                 .record(Duration.ofMillis(safeLatency));
     }
 

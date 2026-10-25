@@ -1,10 +1,12 @@
 
 package com.dramafactory.service.video;
 
+import com.dramafactory.metrics.DramaMetrics;
 import com.dramafactory.model.Shot;
 import jakarta.annotation.PreDestroy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
@@ -66,6 +68,13 @@ public class HyperFramesVideoProvider implements VideoProvider {
 
     private final CommandRunner commandRunner;
 
+    private DramaMetrics dramaMetrics;
+
+    @Autowired(required = false)
+    public void setDramaMetrics(DramaMetrics dramaMetrics) {
+        this.dramaMetrics = dramaMetrics;
+    }
+
     private final ExecutorService executor = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "hyperframes-render");
         t.setDaemon(true);
@@ -89,6 +98,11 @@ public class HyperFramesVideoProvider implements VideoProvider {
         this.timeoutMinutes = 30;
         this.browserGpu = false;
         this.template = "shot-card";
+    }
+
+    HyperFramesVideoProvider(CommandRunner commandRunner, DramaMetrics dramaMetrics) {
+        this(commandRunner);
+        this.dramaMetrics = dramaMetrics;
     }
 
     @Override
@@ -325,6 +339,7 @@ public class HyperFramesVideoProvider implements VideoProvider {
     }
 
     private void runRender(Path workDir, int seconds) {
+        long startedNanos = System.nanoTime();
         List<String> cmd = new ArrayList<>();
         cmd.add(cli);
         cmd.add("render");
@@ -365,6 +380,10 @@ public class HyperFramesVideoProvider implements VideoProvider {
             } catch (Exception ignored) {
                 // 标记写入失败时忽略，poll 会因缺少 mp4 而返回 PROCESSING
             }
+        }
+        long latencyMs = (System.nanoTime() - startedNanos) / 1_000_000L;
+        if (dramaMetrics != null) {
+            dramaMetrics.recordHyperFramesRender(template, latencyMs, failure == null);
         }
     }
 

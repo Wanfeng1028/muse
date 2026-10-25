@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（深耕轮 2026-10-25 13:07：HyperFrames 渲染可观测性）
+- DramaMetrics 新增 recordHyperFramesRender(String template, long latencyMs, boolean ok)，暴露 Counter dramafactory_hyperframes_renders_total{template,result}（result=ok/error）与 Timer dramafactory_hyperframes_render_duration{template}
+- HyperFramesVideoProvider 经 @Autowired(required=false) setter 注入 DramaMetrics，于 runRender 结束时记一次，失败含非零退出码/无产物/异常三种情形，ok 按 failure==null 传
+- 新增 HyperFramesRenderMetricsTest 测试 5 例（record_ok、record_normalization、provider_success_records_ok、provider_failure_records_error、provider_without_metrics_still_renders），指标由既有 /actuator/prometheus 端点直接可见，无需新增端点
+
 ### Added（深耕轮 2026-10-25 03:07：HyperFrames 可寻址时间线模板（关闭 TD-002））
 - HyperFramesVideoProvider 新增 drama.video.hyperframes.template 开关：shot-timeline 模板含 bg/title/subtitle/accent 四个带 data-clip/data-start/data-duration 的可寻址 clip；节拍数学（S=seconds）：bg(0,S)、title(0,max(1,(2*S)/3))、subtitle(S/3,S-S/3)、accent((2*S)/3,S-(2*S)/3)；shot-card 仍为默认，老行为不变；非法值 submit 直接拒绝；测试 HyperFramesTimelineTemplateTest 7 例全绿；视觉验收：真实生成 HTML 抓屏亲眼通过（标题/副标题分开、底部 accent 条正常扫过，零 console 错误），验收中抓出并修复 1 个真问题：模板缺全局 margin 清零致 accent 条被 body 默认 8px 边距顶出视口之外。
 
@@ -34,6 +39,7 @@
 ### 已知限制（发版级声明，2026-10-20）
 - 容器化一键部署已提供（Dockerfile / compose.yml / docker-compose.yml / .env.example），但未经本机实测、未做生产压测，生产上线前必须实测验证。
 - 本轮 OpenMontage/HyperFrames 集成范围内无可观测性指标埋点代码（渲染时长、CLI 失败率等未暴露）；仓库既有基础业务指标见 v2.4 条目，Prometheus 抓取配置仅覆盖既有端点。
+  注（2026-10-25 13:07 深耕轮部分关闭：渲染时长与渲染失败计数（含 CLI 渲染非零退出）已埋点；--version 自3检失败仍无单独指标，留待后续。
 - 滚动更新/零停机未验证：当前升级动作为停机更新（见升级指南），不支持滚动更新。
 
 ### 升级指南
