@@ -1,0 +1,22 @@
+/*
+ * ledger 月度报告页覆盖层（report.css）
+ * 仅 report.html 引用，置于 style.css 之后加载，原 style.css 不动。
+ * 承接 v2.17.10 已验证的顶栏单行口径，与 recurring.css / import.css 完全一致。
+ */
+
+.topbar .nav {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.topbar .nav::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar .nav a {
+  padding: 7px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
