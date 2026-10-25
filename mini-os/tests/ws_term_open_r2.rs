@@ -51,32 +51,40 @@ async fn spawn_server(app: axum::Router) -> std::net::SocketAddr {
     addr
 }
 
+async fn connect_ws_timeout(addr: std::net::SocketAddr, cookie: &str, dur: Duration) -> TcpStream {
+    timeout(dur, async {
+        let mut stream = TcpStream::connect(addr).await.unwrap();
+        let req = format!(
+            "GET /ws HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nCookie: {}\r\n\r\n",
+            addr.port(), cookie,
+        );
+        stream.write_all(req.as_bytes()).await.unwrap();
+        let mut buf = Vec::new();
+        let mut byte = [0u8; 1];
+        loop {
+            let n = stream.read(&mut byte).await.unwrap();
+            if n == 0 {
+                break;
+            }
+            buf.push(byte[0]);
+            if buf.len() >= 4 && &buf[buf.len() - 4..] == b"\r\n\r\n" {
+                break;
+            }
+        }
+        let status = String::from_utf8_lossy(&buf);
+        assert!(
+            status.starts_with("HTTP/1.1 101"),
+            "upgrade failed: {}",
+            status.lines().next().unwrap_or("")
+        );
+        stream
+    })
+    .await
+    .expect("ws upgrade handshake timeout")
+}
+
 async fn connect_ws(addr: std::net::SocketAddr, cookie: &str) -> TcpStream {
-    let mut stream = TcpStream::connect(addr).await.unwrap();
-    let req = format!(
-        "GET /ws HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nCookie: {}\r\n\r\n",
-        addr.port(), cookie,
-    );
-    stream.write_all(req.as_bytes()).await.unwrap();
-    let mut buf = Vec::new();
-    let mut byte = [0u8; 1];
-    loop {
-        let n = stream.read(&mut byte).await.unwrap();
-        if n == 0 {
-            break;
-        }
-        buf.push(byte[0]);
-        if buf.len() >= 4 && &buf[buf.len() - 4..] == b"\r\n\r\n" {
-            break;
-        }
-    }
-    let status = String::from_utf8_lossy(&buf);
-    assert!(
-        status.starts_with("HTTP/1.1 101"),
-        "upgrade failed: {}",
-        status.lines().next().unwrap_or("")
-    );
-    stream
+    connect_ws_timeout(addr, cookie, Duration::from_secs(30)).await
 }
 
 fn client_frame(opcode: u8, payload: &[u8]) -> Vec<u8> {
@@ -279,4 +287,18 @@ async fn ws_viewer_term_open_denied() {
         "message must contain 权限不足, got {:?}",
         msg
     );
+}
+
+#[tokio::test]
+#[should_panic(expected = "ws upgrade handshake timeout")]
+async fn ws_upgrade_handshake_timeout_blackhole() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        loop {
+            let (_stream, _) = listener.accept().await.unwrap();
+            std::future::pending::<()>().await;
+        }
+    });
+    connect_ws_timeout(addr, "x=1", Duration::from_secs(2)).await;
 }

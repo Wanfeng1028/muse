@@ -1,4 +1,21 @@
 
+## [1.19.0] - 2026-10-26
+
+### 修复
+- 同款无界握手收尾：`ws_term_conn_r2`、`ws_term_io_r2`、`ws_term_open_r2` 三个套件各自拷贝的
+  `connect_ws` 原为无界握手（与 v1.18.0 前的 lifecycle 拷贝同款），现统一改为
+  `connect_ws_timeout` + 30 秒薄壳（壳体与 v1.18.0 的 lifecycle 壳逐字一致），既有测试一字不改；
+  每文件各新增 1 个黑洞回归测试（2 秒超时 panic，与 lifecycle 同款），三套件自此不再有无界握手。
+- 版本跟进：Cargo.toml 1.18.0 -> 1.19.0，Cargo.lock 同步，`/api/health` 的 version
+  随 CARGO_PKG_VERSION 自动跟进。模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，
+  单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件
+  relay-station/glm53_r24_call.py、令牌经 SSH 现取不落盘）2 通产出：超时壳 1 通
+  （API prompt 24185 / completion 541 / total 24726，reasoning_tokens 0）与黑洞测试 1 通
+  （API prompt 23909 / completion 1098 / total 25007，reasoning_tokens 0），壳体与测试经编排
+  核对与 lifecycle 版逐字一致（仅测试内 Duration 引用归一化）后机械落仓。
+- 验收：4 套件单跑 13/13 全绿（含 3 个新增黑洞测试与 lifecycle 旧测试）；`cargo fmt --all -- --check`
+  干净；全量 `cargo test --offline` exit 0（全部 test result 段均为 ok）。
+
 ## [1.18.0] - 2026-10-26
 
 ### 修复
