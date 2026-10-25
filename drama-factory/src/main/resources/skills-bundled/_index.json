@@ -14377,6 +14377,138 @@
       "source": "heygen-com/hyperframes",
       "sourceUrl": "https://github.com/heygen-com/hyperframes",
       "version": "1.0.0"
+    },
+    {
+      "id": "drama-skills-short-drama",
+      "name": "short-drama",
+      "version": "1.0.0",
+      "description": "基于文件系统初始化和继续短剧或漫剧项目，提供 creator-first 五文档路由、本地 Dashboard、制作形态与 Look Development 决策。用户提出“创建/继续短剧项目”“看进度/下一步”“做 Look Development”“打开 dashboard/短剧创作台”“导出制作资料”，或任务跨多个创作阶段时使用；明确的写作、资产、提示词、分镜、剪辑或审查请求由对应子 skill 直接处理。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-write",
+      "name": "short-drama-write",
+      "version": "1.0.0",
+      "description": "编写或修订可拍摄的中文短剧、漫剧单集 Markdown 剧本，也负责保留作者原文并规范化现成剧本。用户提出“写/改一集短剧”“把大纲写成剧本”“优化场景/对白”“去模板感”“去 AI 味润色”“续写下一集”或提供剧本要求进入后续制作时使用；不负责资产、分镜、媒体提示词或终审。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-write/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-develop",
+      "name": "short-drama-develop",
+      "version": "1.0.0",
+      "description": "将中文小说、短剧或漫剧想法、梗概、改编材料、已有系列笔记或多集完整剧本发展成可追溯的改编方案、戏剧方向、创作简报、导演阐述、故事引擎与分集地图，并按题材与制作形态（画风）选择写法。用户提出“导入小说做短剧”“从多集整稿生成/补分集地图”“开发短剧/漫剧”“做故事设定/系列大纲/分集规划”“写导演阐述”“这个题材怎么写”“定画风/制作形态”“把这个点子变成短剧”或需要梳理人物冲突与集间交接时使用；已有单集剧本可直接进入写作、资产或审查流程，不强制补开发文件。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-develop/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-assets",
+      "name": "short-drama-assets",
+      "version": "1.0.0",
+      "description": "从短剧剧本拆出人物/造型、地点/视图、道具/状态和跨场连续性，写成创作者可读的视觉设定。用户说“拆角色/场景/道具”“做资产设定”“判断复用还是新变体”“更新造型/道具状态”，或拿现成剧本直接做视觉资产准备时使用；不写图片提示词，不生成媒体。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-assets/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-image-prompts",
+      "name": "short-drama-image-prompts",
+      "version": "1.0.0",
+      "description": "为短剧人物、造型、地点、道具和状态编写或修改可直接复制的图片提示词 Markdown。用户提到角色设定图、三视图、参考图、场景板、道具图、风格帧、Look Development、状态变体或局部编辑提示词时使用；不生成图片，也不调用供应商。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-image-prompts/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-storyboard",
+      "name": "short-drama-storyboard",
+      "version": "1.0.0",
+      "description": "把中文短剧剧本和视觉设定写成有戏剧职责、连续性边界与冻结关键帧提示词的分镜 Markdown。用户提出“拆分镜/设计镜头/做镜头表”“场次视觉计划/调度故事板”“比较导演方案”“写首帧/关键帧提示词”或检查轴线、站位、视线、持物连续性时使用；不生成媒体。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-storyboard/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-video-prompts",
+      "name": "short-drama-video-prompts",
+      "version": "1.0.0",
+      "description": "把短剧分镜和冻结关键帧写成可直接复制的视频提示词 Markdown，也可按用户要求写时间线配乐/主题曲意图。用户提到文生/图生视频动作、人物表演、运镜、口型、环境运动、镜头时长、起止状态、把分镜转成视频提示词或写配乐提示词时使用；不生成媒体、不创作歌词、不改分镜边界。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-video-prompts/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-produce",
+      "name": "short-drama-produce",
+      "version": "1.0.0",
+      "description": "在创作者明确确认后，执行短剧项目的图片、视频、TTS/配音或时间线音乐生产任务，并把结果与精简运行记录落回项目。用户说“生成这张图/这段视频/这句配音/这段配乐”“开始跑图/跑视频/合成语音/生成音乐”“把已确认提示词送去生产”，或要求批量执行已确认媒体任务时使用；不负责创作提示词、镜头、台词、歌词或声音身份，也绝不把预览、继续、预算说明或既有接受状态当作本次付费生产确认。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-produce/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-edit",
+      "name": "short-drama-edit",
+      "version": "1.0.0",
+      "description": "将已生成的短剧镜头剪成成片，记录入出点、镜序、声音、字幕与交付规格。用于套剪、加字幕、统一响度、调整节奏或导出精修素材；需要补素材或修改故事时转回对应创作阶段。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-edit/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-review",
+      "name": "short-drama-review",
+      "version": "1.0.0",
+      "description": "审查短剧项目中的原著分析、故事、剧本、视觉设定、图片提示词、分镜、冻结关键帧、视频提示词和已有媒体。用户提出“审稿/检查剧本”“检查资产或连续性”“检查图片/视频提示词”“检查原著分析”“审查模板感”“根据生产观察做项目校准”时使用；只写审查问题、结论和修订要求，不代替负责人修改来源文件。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-review/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-novel-analyze",
+      "name": "short-drama-novel-analyze",
+      "version": "1.0.0",
+      "description": "把长篇小说、连载网文或多集散稿拆成可追溯的原著分析：章节索引、改编价值快评、逐章功能提取、剧情单元与节奏聚合、人物与设定归并，最后给出改编价值判定与分集候选，交给 $short-drama-develop 立契约。用户说“导入这本小说”“拆这本书”“分析原著”“这本书能不能改短剧”“先看看值不值得拆”“把长篇拆成分集候选”，或直接给出小说文件路径时使用。只做只读的结构化分析，不写剧本、不建资产、不生成媒体，也不替创作者决定改编方案。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/skills/short-drama-novel-analyze/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "drama-skills-short-drama-knowhow",
+      "name": "short-drama-knowhow",
+      "version": "1.0.0",
+      "description": "维护者专用的短剧 know-how 学习、验证与生命周期治理。仅在维护者明确要求从其当前会话提供的授权只读文本源学习完整短剧项目链，并把私有观察逐步转成去标识、去复刻、经盲测与独立审查的公共 reference、rubric 或 synthetic fixture 候选时使用；不用于普通创作、公开运行时取数、媒体生成或粗略数据分析。",
+      "author": "zenstory-ai",
+      "license": "MIT",
+      "source": "zenstory-ai/drama-skills",
+      "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/maintainers/skills/short-drama-knowhow/SKILL.md",
+      "rewritten": false
     }
   ]
 }

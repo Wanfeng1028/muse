@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（技能库增量 2026-10-25：zenstory-ai/drama-skills +12，原件收录）
+- 官方技能库 1361 → 1373：新增 drama-skills-short-drama / -write / -develop / -assets / -image-prompts / -storyboard / -video-prompts / -produce / -edit / -review / -novel-analyze / -knowhow（上游 zenstory-ai/drama-skills，commit fdb7b7c，v0.9.2，MIT）
+- 收录方式：整目录原件照搬（SKILL.md + references/scripts/assets/agents 共 204 个文件逐字节核对无差异），每目录另补仓库 MIT LICENSE；_index.json 新增 12 条（name/description 取 frontmatter 原文，frontmatter 无 version 故按既有规则记 1.0.0，author zenstory-ai，rewritten false）
+- 核验：SkillRegistryTest / SkillLicenseComplianceTest / SkillReferenceIntegrityTest / SkillRegistryIndexDeepR2Test 共 24 例全绿（含 bundled 计数与索引一致性断言）；GLM-5.3 大上下文调用（prompt 59886 + completion 16000）本轮只产出推理 token、正文 0 字，索引与核对均以原文 bytes 与测试为准，未照抄模型输出
+
 ### Added（深耕轮 2026-10-25 17:15：HyperFrames --version 自检指标，关闭 2026-10-25 13:07 已知限制）
 - DramaMetrics 新增 recordHyperFramesVersionCheck(long latencyMs, boolean ok)，暴露 Counter dramafactory_hyperframes_version_checks_total{result}（result=ok/error，与全站口径一致）与 Timer dramafactory_hyperframes_version_check_duration（负延迟截断为 0）
 - HtmlRenderVideoProvider 经 @Autowired(required=false) setter 注入 DramaMetrics（另增 CommandRunner+DramaMetrics 测试构造器），在 resolveEngine 的 hyperframes --version 成功/非零退出/异常三处各记一次，metrics 为 null 时不记不报错，降级行为不变
