@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.19.0] - 2026-10-25
+
+### 新增
+- 事件页正文包进 <main class="container">：关闭 v0.15.0 已知限制“事件页无 .container/.page 包裹，内容贴视口边缘、筛选框拉满宽”。顶栏留在容器外、正文（页头、筛选、表格、分页）全部在容器内，不改任何 JS 与导航语义；容器口径与总览页、快照页同一条 .container 规则（max-width 1100px、居中、16px 内边距），无新增样式表。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 4000）输出：首通正文 0 字（4000 全被推理占满，按口径缩小目标重发，429 通两次各等 90 秒，不计用量）；缩小后的第 2 通出 3 行断言标记（89 completion），编排按本包 design_v018 口径改写成 t.Errorf 式测试落仓，HTML 包裹两处为编排机械插入并经测试与真实服务核对。API 口径：首通 prompt 23940 / completion 4000 / total 27940（正文 0 字），第 2 通 prompt 23818 / completion 89 / total 23907。
+
+### 测试
+- 新增 internal/web/incidents_container_test.go 1 例（容器标记齐全、表格与筛选在容器内、容器在 script 前闭合、顶栏在容器外）；与 v015–v018 设计层及 style.css alert 测试合跑全绿，go vet 全洁。
+- 真实服务冒烟（18295 端口隔离库）：/incidents 200 且实取 HTML 含容器标记 1 处，/api/incidents 200；截图亲眼核对 docs/screenshots/sentinel-v019-incidents.png：容器计算样式 max-width 1100px、宽 1100px、左缘 170px 居中、内边距 16px，筛选下拉不再拉满视口。截图里“加载失败”与空表是 setContent harness 下相对 /api/ 地址解析失败所致（真实服务 API 本身 200），非本轮回归；验收后服务按 PID 停掉、端口已关、隔离库与二进制已删。
+
+### 已知限制
+- 仅事件页包了容器，个人资料页与短信记录页仍无容器包裹，属同类既存差异，排期后续版本。
+
 ## [0.18.1] - 2026-10-25
 
 ### 修复
