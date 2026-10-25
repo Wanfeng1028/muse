@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：工作台首页设计层 v1）
+- 新增 static/index-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；index.html 在 harness.css 之后引用 1 行）：视觉逻辑“工作台账”——问候语 20px/700、状态条 13px 次文字、上下文栏下拉 13px 8px 圆角、新建链接 13px 次文字、新建面板 surface 底发丝边 10px 圆角零阴影、新建块标题 15px/700、新建表单输入框 13px 8px 圆角、新建表单小按钮 12px/600 8px 圆角、对话区 13px 行高 1.6、快捷 chips 12px/600 8px 圆角、输入框 13px 8px 圆角、发送钮只留尺寸与圆角不改颜色、费用提示 12px 弱文字、最近动态标题 16px/700、空态 13px 次文字、最近动态区上下 16px 发丝底线；token 全部取自 app.css/harness.css。
+- 模型稿 16 条规则原文入仓，零编排修正：括号 16/16 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里；边框写法正确（1px solid var(--hairline)）。
+- 验收：新增 IndexDesignV1Test 3 例 + 旧设计层合跑全绿，Maven 离线 BUILD SUCCESS；真实服务（复制 H2 库，开放模式）+ 真实项目数据截图亲眼核对；截图存 docs/screenshots/index-design-v1.png。验收后服务按 PID 停干净、复制库已删。
+- 已知保留：本层不改布局；发送钮颜色未动；本轮未动 second-brain、new-api-src、botstalk、sentinel、docseek eval、ledger 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：设置中心页设计层 v1）
 - 新增 static/settings-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；settings.html 在 harness.css 之后引用 1 行）：视觉逻辑“配置台账”——页头 20px/700、副标题 13px 次文字、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、徽标 12px/600、主按钮 13px/600 8px 圆角、加载/空态/错误提示 13px 次文字、表单行上下 16px 发丝底线、表单标签 12px/600 次文字、输入框与下拉 13px 8px 圆角、开关文字 12px 次文字；token 全部取自 app.css/harness.css。
 - 模型稿 15 条规则，编排修正 1 类（7 处）：模型把 --hairline（颜色 token）误当边框宽度写进 border 简写（`border: var(--hairline) solid …` 在浏览器里是无效声明），统一修正为 1px solid，颜色沿用模型稿的 --border-soft/--red；其余 15 条为模型原文，括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
