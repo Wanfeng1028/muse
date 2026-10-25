@@ -1,0 +1,26 @@
+/* BotsTalk Web —— 房间列表全宽台账 · 覆盖层 v2
+ * 加载顺序：在 styles.css 与 design-v1.css 之后引用，只覆盖，不改原样式表与任何 TSX。
+ * 视觉逻辑接 v1 值班室台账：房间列表页不再是居中卡片，改全宽台账页——
+ * 列表容器取消居中、面板取消卡片边框与最大宽，房间行只靠 1px 底线分隔，
+ * 页头用 2px 墨线收束；沿用既有纸色 token，不引入新配色。
+ * 不用渐变、不用阴影、不用新字体、不用 emoji。
+ */
+.room-list {
+  display: block;
+}
+.room-list-panel {
+  max-width: none;
+  border: none;
+  background: transparent;
+  padding: 0;
+}
+.room-row {
+  border: none;
+  border-bottom: 1px solid var(--line);
+  border-radius: 0;
+  padding: 12px 0;
+}
+.room-list-head {
+  border-bottom: 2px solid var(--ink);
+  padding-bottom: 12px;
+}

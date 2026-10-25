@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - Web 房间列表全宽台账（设计层 v2）
+### 新增
+- 新增 `web/src/design-v2.css` 覆盖层（原 `styles.css` 与 `design-v1.css` 不动，`main.tsx` 在 v1 之后引用本层）：关闭 v1 已知保留“房间列表页仍为居中卡片”。列表容器取消居中、面板取消卡片边框与最大宽，房间行只靠 1px 底线分隔，页头用 2px 墨线收束；沿用既有纸色 token，不引入新配色；不用渐变、不用阴影、不用新字体、不用 emoji；不改任何 TSX。
+### 验收
+- Web `tsc -b && vite build` 通过，构建产物 CSS 中 v2 规则压在旧规则之后（`max-width:none`、`display:block` 实证）；真实网关（8765 端口、隔离库）+ REST 新建 2 个真实房间（大厅 workroom、娱乐厅 playroom），截图亲眼核对（`docs/screenshots/botstalk-v2-rooms.png`）：页头 2px 墨线、两行全宽台账行、徽标右对齐、控制台零错误；计算样式实证：列表 display block、面板 max-width none / 无边框 / 透明底 / 内边距 0、行下边框 1px solid #E3DCD0、页头下边框 2px solid #1C1B1A。验收用网关已停，隔离库未入提交；截图下方空白属只有 2 个房间的数据量。
+- 已知保留：房间行悬停仍走 v1 的纸面白底（本轮未动悬停态）。
+
+
 ## Unreleased - Web 聊天室设计层 v1（值班室台账）
 ### 新增
 - 新增 `web/src/design-v1.css` 覆盖层（原 `styles.css` 不动，`main.tsx` 在主样式后引用本层）：视觉逻辑为值班室台账——房间是台账本，消息是一行行记录，成员是值班名单，任务是盖戳的条子；全部左对齐，层级只靠字重、字号、线宽三档；沿用既有纸色 token（纸面、墨色、赭石点睛），不引入新配色。
