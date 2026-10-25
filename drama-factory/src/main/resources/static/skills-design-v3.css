@@ -1,0 +1,8 @@
+.skill-detail-pre {
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  white-space: pre-wrap;
+  font-size: 12px;
+  font-family: var(--mono);
+}

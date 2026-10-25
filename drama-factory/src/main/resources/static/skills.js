@@ -328,7 +328,7 @@
 
     <div class="mb-3">
       <div class="form-label">${_t('sk.promptTemplate', 'Prompt 模板')}</div>
-      <pre class="p-2 border rounded" style="white-space: pre-wrap; border-color: var(--border) !important;">${esc((versions[0] && versions[0].promptTemplate) || '')}</pre>
+      <pre class="skill-detail-pre">${esc((versions[0] && versions[0].promptTemplate) || '')}</pre>
     </div>
 
     <div class="d-flex gap-2 mb-4">
