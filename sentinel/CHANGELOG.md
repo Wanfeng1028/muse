@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.18.0] - 2026-10-25
+
+### 新增
+- 投递页顶栏结构归一：关闭 v0.17.0 已知限制“两页顶栏结构仍不相同”。deliveries.html 的顶栏改用与 monitors.html 完全相同的三段式结构（logo-area + nav-links + user-area），内联顶栏 CSS 整段换成监控页同款数值（64px 白底顶栏、32px 内边距、logo-icon 蓝底 S、nav-links 28px 间距、user-area 管理员 + 头像）；旧 topbar-left / topbar-right / badge 顶栏标记全部删除。投递页导航链接目标保持自有（仪表盘 / 事件 / 投递队列 / 设置），只归一结构与样式，不改导航语义与任何 JS；状态徽标 badge-status 系列原样保留。v0.17.0 设计层的 .topbar-right a.active 规则对投递页不再生效（其激活态现走 .nav-links a.active，与监控页同一条规则，v017 文件本身未动）。
+- 模型稿 4 通均由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 4000，每通一个小片段）输出，编排逐项核对后落仓（数值与监控页逐字一致）；第 3 通两次撞 429，各等 90 秒重发成功，不计用量。4 通 API 合计 prompt 95890 / completion 1028 / total 96918。
+
+### 测试
+- 新增 internal/web/design_v018_test.go 1 例（两页三段式顶栏标记与槽位顺序、投递页无旧顶栏残留、投递页自有导航链接齐全、归一后内联顶栏 CSS 齐全）；go vet 全洁；internal/web 包全绿。
+- 真实服务冒烟（见本节视觉验收）：/monitors 与 /deliveries 均 200，截图亲眼核对两张，计算样式与归一规则一一对上；验收后服务已按 PID 停掉，演示库与二进制已删。
+
+### 已知限制
+- style.css 尾部 .alert 规则缺右括号（v0.15.0 已知限制）仍未动，排期后续版本。
+
 ## [0.17.0] - 2026-10-25
 
 ### 新增
