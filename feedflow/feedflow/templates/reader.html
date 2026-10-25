@@ -106,6 +106,12 @@
       <div class="reader-empty">
         <svg viewBox="0 0 48 48" width="42" height="42" aria-hidden="true"><path d="M8 10h14a4 4 0 014 4v24a4 4 0 00-4-4H8zM40 10H26a4 4 0 00-4 4v24a4 4 0 014-4h14z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg>
         <p>点中间的文章标题，正文会显示在这里。</p>
+        <ol class="reader-guide">
+          <li><span class="guide-step">1</span>左边订阅树选一个订阅源</li>
+          <li><span class="guide-step">2</span>中间文章列表选一篇文章</li>
+          <li><span class="guide-step">3</span>正文在这里打开，可星标、标已读或查看原文</li>
+        </ol>
+        <p class="reader-guide-foot">要加新源去<a href="{{ url_for('web.feeds_page') }}">订阅管理</a>，或先看<a href="{{ url_for('web.digest_page') }}">今日必读</a>。</p>
       </div>
     </div>
   </section>

@@ -1,0 +1,29 @@
+/* FeedFlow v1.14.0 design layer: 阅读器空态并入报纸视觉，变成功能导览。
+   视觉逻辑：空态不再是一句功能提示，而是一张报纸的“使用说明”小卡——
+   原提示句留作标题行，下方 1px 细线分隔出三步导览，柿色数字徽标只作序号信号，
+   不改三栏结构、不改 JS、不改后端；只覆盖 .reader-empty 内的新导览元素。 */
+
+.reader-guide {
+  margin: 0;
+  padding: 16px 0 0;
+  list-style: none;
+  border-top: 1px solid #E7E2D6;
+  line-height: 1.8;
+}
+
+.reader-guide li {
+  text-align: left;
+  font-size: 15px;
+  color: #1C1A17;
+  margin-bottom: 12px;
+}
+
+.guide-step {
+  display: inline-block;
+  color: #C2410C;
+  font-size: 13px;
+  background: #FBEDE6;
+  border-left: 2px solid #C2410C;
+  padding: 0 6px;
+  margin-right: 8px;
+}
