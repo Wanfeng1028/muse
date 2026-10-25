@@ -1,0 +1,96 @@
+/* register-design-v1.css —— 注册台账视觉层 v1
+   全部选择器以 .auth-page 开头，特异度压过 auth.css 的同名作用域规则。
+   只覆盖颜色、圆角、字号字重；不改布局、不加阴影与渐变、不改 disabled 行为。
+   视觉口径：台账眉=页头，台账签=分段器，台账录入行=表单行，台账注脚=密码提示，台账边注=协议行。 */
+
+/* 2. 台账眉标题：20px/700 */
+.auth-page .login-hero h1 {
+  color: var(--text);
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* 3. 台账眉副标题：13px 次文字 */
+.auth-page .login-hero p {
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 400;
+}
+
+/* 4. 台账签容器：8px 圆角 */
+.auth-page .seg {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+/* 5. 台账签页：13px/600 */
+.auth-page .seg a {
+  border-radius: 6px;
+  color: var(--text-3);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 6. 当前签页（注册）：accent 高亮 */
+.auth-page .seg a.on {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+
+/* 7. 台账录入行：8px 圆角 */
+.auth-page .field {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+/* 8. 录入行输入框：13px */
+.auth-page .field input {
+  color: var(--text);
+  font-size: 13px;
+}
+
+/* 9. 录入行显隐按钮 */
+.auth-page .field .eye-btn {
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  color: var(--text-3);
+}
+
+/* 10. 台账注脚：密码提示 12px 弱文字 */
+.auth-page .pw-hint {
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* 11. 错误提示：13px 红色 */
+.auth-page .form-error {
+  color: var(--red);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+/* 12. 台账主按钮：13px/600，8px 圆角 */
+.auth-page .btn-primary {
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  box-shadow: none;
+  color: var(--surface);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+/* 13. 台账边注：协议行 12px 弱文字 */
+.auth-page .agree {
+  color: var(--text-3);
+  font-size: 12px;
+  font-weight: 400;
+}

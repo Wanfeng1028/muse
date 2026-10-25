@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：注册页设计层 v1）
+- 新增 static/register-design-v1.css（12 条规则，只覆盖，不改 app.css/auth.css 与任何 JS；register.html 在 auth.css 之后引用 1 行）：视觉逻辑“注册台账”——页头 20px/700、副标题 13px 次文字、分段器 surface-2 底发丝边 8px 圆角、签页 13px/600（当前签页 surface 底发丝边，与登录页一致）、录入行 surface 底发丝边 8px 圆角、输入框 13px、密码提示 12px 弱文字、错误提示 13px 红色、主按钮 13px/600 8px 圆角、协议行 12px 弱文字；token 全部取自 app.css/auth.css。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器沿用本轮现写最小新文件 relay-station/flash_call_n2.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24762 / completion 6888 / total 31650，reasoning_tokens 0，无 429；编排修正 4 处（均与登录页口径对齐）：删模型稿给页头加的带边卡片框（登录页页头不装框）；当前签页由 accent 反白改回 surface 底发丝边（与登录页一致）；输入框删内层边框（录入行已有边框，防双线）；未选中签页颜色由 text-2 改 text-3（与登录页一致）。括号 12/12 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，全部选择器均真实存在于本页 HTML 且均带 .auth-page 前缀（auth.css 规则全是 .auth-page 作用域，无前缀会被压住，登录页教训已写进提示词），全部边框均写成 1px solid var(--border) 完整形式。
+- 验收：新增 RegisterDesignV1Test 3 例全绿，设计层合跑 65/65 全绿，Maven 离线 BUILD SUCCESS；磁盘内联截图 + 计算样式亲眼核对：页头 20/700、副标题 13px、分段器 8px 圆角、当前签页 13/600 白底、录入行 8px 圆角 1px 边、输入框 13px、密码提示 12px、主按钮 13/600/8px、协议行 12px、零 console 错误；截图存 docs/screenshots/register-design-v1.png（眼形图标为空框是 harness 剥离 lucide 脚本所致，真页有图标；注册按钮灰色是初始 disabled 真实态）。另用隔离构建（源码拷到 relay-station 单独打包，避开他路在跑的 target/）起真实服务（18098 端口，复制 H2 库）实测：register.html 与 register-design-v1.css 均 200，页内引用与层文件内容对上；验收后服务按真实 java PID 停干净、端口已关、隔离构建与复制库已删。构建教训：首轮直接在仓库 target/ 打包撞上他路测试/打包（jar 被截断损坏、PluginExecutionException），改走隔离构建才成；另有一次 exec 管道 tail 掩盖了 mvn 退出码，今后打包日志落文件再查。
+- 已知保留：本层不改布局；注册按钮初始 disabled 态沿用原透明度，不单独覆盖。
+
 ### Added（5.3 路 2026-10-26：AI 图片页设计层 v2）
 - 新增 static/images-design-v2.css（3 条规则，只覆盖，不改 app.css/harness.css、内联 style 块、v1 文件与任何 JS；images.html 在 v1 之后引用 1 行）：关闭 v1 已知保留“模型下拉、比例/尺寸下拉、参考图预览沿用原样式”——下拉框与 textarea 同一套表单控件语言（surface 底、10px 12px 内边距、14px、8px 圆角、1px 发丝边），参考图预览改块级布局并限高 280px 不裁剪（行内基线空隙消除），文件选择框字体与标签口径协调（12px/600 次文字）；token 全部取自 app.css/harness.css。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r17_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通输出：API prompt 24286 / completion 995 / total 25281，reasoning_tokens 0，正文即入仓的 3 条规则，零编排修正。括号 3/3 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML；v2 在内联 style 块与 v1 之后加载，同特异度规则压得住内联下拉规则（.fld select 与内联块同为一类一元特异度，后引用生效）。
