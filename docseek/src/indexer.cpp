@@ -69,6 +69,37 @@ constexpr size_t kMaxErrors = 50;
 
 }  // namespace
 
+// 去除字符串首尾空白（空格/制表符/回车/换页/垂直制表），全空白返回空串。
+static std::string trimAsciiWhitespace(const std::string& s) {
+    size_t b = s.find_first_not_of(" \t\r\v\f");
+    if (b == std::string::npos) return std::string();
+    size_t e = s.find_last_not_of(" \t\r\v\f");
+    return s.substr(b, e - b + 1);
+}
+
+// 提取 Markdown 正文的首个 ATX 标题（1-6 个 '#' 后跟空格）：
+// 逐行扫描，每行先做首尾空白 trim 再匹配，标题文本同样 trim 后返回；
+// 空标题行（如 "#   "）不算，继续向后找；完全无标题返回空串，由调用方回落 stem。
+// 不处理围栏代码块内的 '#' 行（与仓库现有的字符串级规则风格一致）。
+// 纯函数、无副作用，供 Indexer 与单元测试共用（外部链接，测试侧自行声明原型）。
+std::string extractMarkdownTitle(const std::string& content) {
+    size_t pos = 0;
+    while (pos < content.size()) {
+        size_t eol = content.find('\n', pos);
+        size_t lineEnd = (eol == std::string::npos) ? content.size() : eol;
+        std::string line = trimAsciiWhitespace(content.substr(pos, lineEnd - pos));
+        pos = lineEnd + 1;
+        size_t hashes = 0;
+        while (hashes < line.size() && line[hashes] == '#') ++hashes;
+        if (hashes >= 1 && hashes <= 6 && hashes < line.size() &&
+            line[hashes] == ' ') {
+            std::string text = trimAsciiWhitespace(line.substr(hashes + 1));
+            if (!text.empty()) return text;
+        }
+    }
+    return std::string();
+}
+
 Indexer::Indexer(Database& db, IndexOptions opts)
     : db_(db), opts_(std::move(opts)) {}
 
@@ -145,6 +176,13 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
                              "HTML 提取失败或正文为空，回落为原始文本",
                              {{"path", sp}, {"charset", res.usedCharset}});
             }
+        }
+
+        // Markdown 文件：提取首个 ATX 标题行作为 title，content 原样入库不改；
+        // 无标题或标题文本为空时回落为文件名 stem（与 PDF/Office 分支行为一致）。
+        if (ext == ".md") {
+            std::string mdTitle = extractMarkdownTitle(content);
+            if (!mdTitle.empty()) title = mdTitle;
         }
 
         // PDF 文件：子进程调 pdftotext 提文本（-layout 保持版式，页间 '\f' 分隔）；
@@ -239,9 +277,11 @@ void Indexer::indexOneFile(const std::string& path, IndexStats& st,
             content = assembled;
         }
 
-        // 与已有记录比较
+        // 与已有记录比较：mtime/size/title 全一致才算 unchanged；标题变化
+        // （如旧库的 stem 标题被新提取逻辑替换）也要 upsert 刷新，一次性自愈。
         auto old = db_.findByPath(sp);
-        if (old.has_value() && old->mtime == mtime && old->size == size) {
+        if (old.has_value() && old->mtime == mtime && old->size == size &&
+            old->title == title) {
             st.unchanged++;
         } else if (old.has_value()) {
             db_.upsert(sp, title, content, mtime, size);
