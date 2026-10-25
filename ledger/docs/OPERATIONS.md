@@ -304,7 +304,7 @@ macOS：
 ## 正则规则防护（v2.11.1）
 - 规则创建/更新时拒绝嵌套量词、回溯引用、超长（>200 字符）正则，400 返回具体原因；
 - 单次匹配 haystack 超过 500 字符时正则匹配自动跳过；
-- 历史脏数据中的灾难正则在调度时仍会被 search，但 preview 接口已做熔断；建议定期用 `check_pattern_safety` 扫描存量规则。
+- 历史脏规则在调度时即被跳过：match_best 与预览链均经 compile_rule_pattern（不安全返回 None）+ safe_regex_search（haystack 超 500 字符返回 False），不存在未设防的 search 路径；v2.17.16 起 {m,n} 形式的嵌套量词亦被扫描拦截。建议定期用 `check_pattern_safety` 扫描存量规则。
 ## 迁移回滚（v2.11.1）
 
 > 本节为 v2.11.1 新增。用于将数据库从 v2.11 schema 回滚至 v2.10 schema，或在迁移冲突时恢复一致状态。

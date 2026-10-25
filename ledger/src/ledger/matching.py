@@ -749,11 +749,125 @@ def match_best(
 
 MAX_REGEX_HAYSTACK = 500
 
-_NESTED_QUANTIFIER_RE = re.compile(
-    r"(\([^()]*[+*][^()]*\))[+*]|\([^()]*\)\{[0-9]+,[^}]*\}[+{]"
-)
 _BACKREF_RE = re.compile(r"\\[1-9]")
 _MULTI_DOTSTAR_RE = re.compile(r"\.\*.*\.\*")
+
+
+def _parse_brace_quantifier(pattern, i):
+    if i >= len(pattern) or pattern[i] != "{":
+        return None
+    j = i + 1
+    m_start = j
+    while j < len(pattern) and pattern[j].isdigit():
+        j += 1
+    if j == m_start:
+        return None
+    if j < len(pattern) and pattern[j] == "}":
+        return j + 1
+    if j < len(pattern) and pattern[j] == ",":
+        j += 1
+        while j < len(pattern) and pattern[j].isdigit():
+            j += 1
+        if j < len(pattern) and pattern[j] == "}":
+            return j + 1
+    return None
+
+
+def _has_nested_quantifier(pattern):
+    stack = []
+    i = 0
+    n = len(pattern)
+    while i < n:
+        c = pattern[i]
+        if c == "\\":
+            i += 2
+            continue
+        elif c == "[":
+            j = i + 1
+            closed = False
+            while j < n:
+                if pattern[j] == "\\":
+                    j += 2
+                    continue
+                if pattern[j] == "]":
+                    closed = True
+                    break
+                j += 1
+            if closed:
+                i = j + 1
+            else:
+                i += 1
+            continue
+        elif c == "(":
+            stack.append(False)
+            i += 1
+            if i < n and pattern[i] == "?":
+                i += 1
+                if i < n:
+                    pc = pattern[i]
+                    if pc == "P":
+                        if i + 1 < n and pattern[i + 1] == "<":
+                            i += 2
+                            while i < n and pattern[i] != ">":
+                                i += 1
+                            if i < n:
+                                i += 1
+                    elif pc == "<":
+                        i += 1
+                        if i < n and pattern[i] in ("=", "!"):
+                            i += 1
+                        else:
+                            while i < n and pattern[i] != ">":
+                                i += 1
+                            if i < n:
+                                i += 1
+                    elif pc in (":", "=", "!"):
+                        i += 1
+            continue
+        elif c == ")":
+            if stack:
+                has = stack.pop()
+                i += 1
+                is_q = False
+                if i < n and pattern[i] in ("*", "+", "?"):
+                    is_q = True
+                    i += 1
+                elif i < n and pattern[i] == "{":
+                    end_q = _parse_brace_quantifier(pattern, i)
+                    if end_q is not None:
+                        is_q = True
+                        i = end_q
+                if is_q:
+                    if has:
+                        return True
+                    if i < n and pattern[i] == "?":
+                        i += 1
+                if stack:
+                    stack[-1] = stack[-1] or has or is_q
+            else:
+                i += 1
+            continue
+        else:
+            is_q = False
+            if c in ("*", "+", "?"):
+                is_q = True
+                i += 1
+            elif c == "{":
+                end_q = _parse_brace_quantifier(pattern, i)
+                if end_q is not None:
+                    is_q = True
+                    i = end_q
+                else:
+                    i += 1
+            else:
+                i += 1
+            if is_q:
+                if stack:
+                    stack[-1] = True
+                if i < n and pattern[i] == "?":
+                    i += 1
+            continue
+    return False
 
 
 def check_pattern_safety(pattern: str) -> str | None:
@@ -762,7 +876,7 @@ def check_pattern_safety(pattern: str) -> str | None:
         return "正则不能为空"
     if len(pattern) > 200:
         return "正则过长（>200字符），请拆分成多条关键词规则"
-    if _NESTED_QUANTIFIER_RE.search(pattern):
+    if _has_nested_quantifier(pattern):
         return "含嵌套量词，有灾难性回溯风险"
     if _BACKREF_RE.search(pattern):
         return "暂不支持回溯引用，请用普通分组改写"
