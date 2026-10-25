@@ -3,6 +3,16 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.19.1] - 2026-10-25
+
+### 新增
+- 短信记录页正文包进 <main class="container">：关闭 v0.19.0 保留的同类缺口（短信记录页仍无容器，筛选栏与表格拉满视口）。顶栏留在容器外、正文全部在容器内，不改任何 JS 与导航语义；容器口径与事件页同款 .container 规则，无新增样式表。个人资料页未动：它已有自有 .wrap 容器（1080px 居中），不算缺口。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 4000）输出：1 通即出 3 行断言标记（prompt 23819 / completion 93 / total 23912，无 429），编排按本包口径改写成 t.Errorf 式测试落仓，HTML 两处为编排机械插入。
+
+### 测试
+- 新增 internal/web/sms_log_container_test.go 1 例（容器标记齐全、表格与筛选在容器内、容器在 script 前闭合、顶栏在容器外）；与 v0.19.0 事件页测试合跑全绿，go vet 全洁。
+- 真实服务冒烟（18296 端口隔离库）：/sms-log 200 且实取 HTML 含容器标记 1 处；截图亲眼核对 docs/screenshots/sentinel-v0191-smslog.png：容器计算样式 max-width 1100px、宽 1100px、左缘 170px 居中、内边距 16px，筛选输入框不再拉满视口，空表“还没有短信记录”为隔离库真实空态。验收后服务按 PID 停掉、端口已关、隔离库与二进制已删。
+
 ## [0.19.0] - 2026-10-25
 
 ### 新增
