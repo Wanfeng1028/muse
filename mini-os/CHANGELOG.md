@@ -1,4 +1,22 @@
 
+## [1.14.0] - 2026-10-25
+
+### 前端美化（桌面布局真修，不是换皮）
+- 根因（亲眼看 v13 桌面截图 + 对照代码核实）：桌面图标容器 HTML 是 `#icon-grid`，CSS 里只有 `.desktop-icons` 定义了网格，`#icon-grid` 从未被定义，图标只能竖排居中一列；开始菜单元素只有 `#start-menu` + JS 切换的 `.hidden` 类，CSS 里 `.start-menu` 面板样式从未生效；任务栏 HTML 实际是 `#start-btn` / `#taskbar-apps` / `.taskbar-right` / `#logout-btn` / `#ws-status` / `#clock`，CSS 里 `.taskbar-start` / `.taskbar-tasks` / `.taskbar-tray` 从未生效；任务栏毛玻璃底在黛蓝壁纸上洗成浅蓝色。
+- 新增设计层 `static/design-v114.css`（原 `style.css` 不动，`index.html` 在主样式后引用设计层）：`#icon-grid` 恢复网格（92px 列、116px 行，64px 瓷砖 + 标签放得下）、`#start-menu` 直接写面板样式且 `.hidden` 时隐藏、任务栏按实际 id 写样式并改实色纸面底（取消毛玻璃）、时钟用 tabular-nums、全部按钮与链接加 focus-visible 2px 赭石外圈。
+- 编排修正（GLM 稿后人工核对）：图标行高 100px 装不下 64px 瓷砖 + 标签，改 116px；hover 标签变赭石在壁纸上可读性差，删掉；`color-mix` 换成已有的 `--primary-soft` 变量。
+- 视觉逻辑写进 `docs/DESIGN.md` v1.14.0 一节；去 AI 味自查：无紫渐变、无霓虹辉光、无 Inter 首选字体、无 emoji 当图标（桌面图标本来就是 Lucide SVG 瓷砖）、无居中英雄区、无三栏特性格。
+
+### 测试
+- 新增 `tests/design_v114_test.rs` 3 例：设计层覆盖真实选择器、index 链接顺序在主样式之后、无紫/无 Inter/无渐变且大括号平衡。
+- 版本跟进：Cargo.toml 1.13.0 -> 1.14.0，`/api/health` 的 version 随之恢复正确（`env!("CARGO_PKG_VERSION")`，无硬编码断言）。
+
+### 已知限制
+- 壁纸本身（ocean 黛蓝渐变）未改，设计层只改任务栏与图标区；深色主题下设计层只用变量名，纸面底在深色下为夜墨面，未单独截图深色态。
+- 桌面图标仍需双击打开（单击只选中），本轮未改交互。
+- 真实服务截图验收（隔离库、端口 19014、注册用户 + 1 条日程 + 1 条便签）：`docs/screenshots/v114-desktop.png`（6 图标左上网格、任务栏实色纸面）与 `v114-startmenu.png`（开始菜单白卡面板）。截图里任务栏显示“WS: 已断开”是截图 harness 的 about:blank 下 WS 无法建连所致，真实浏览器下 WS 正常（服务 /api/* 均 200），不是本轮回归。
+
+
 # Changelog
 
 ## [1.13.0] - 2026-10-25

@@ -264,3 +264,11 @@ backdrop-filter 轻磨砂，不另起一套样式。
 防止旧主题下变量缺失导致白底黑字断裂。
 
 小屏（<900px）：小组件整组隐藏，桌面优先保图标区可用。
+---
+
+## v1.14.0 设计层 · 桌面布局真修
+
+- 一句话：图标回左上网格、任务栏回纸面、开始菜单回面板——不是换主题，是把写错选择器的样式接回真实 DOM。
+- 根因：`#icon-grid`、 `#start-menu`、 `#start-btn` / `#taskbar-apps` 等真实 id/class 在原样式表里没有对应规则，原规则写的是 `.desktop-icons`、`.start-menu`、`.taskbar-start` 等从未生效的名字。
+- 设计层 `static/design-v114.css`（原 `style.css` 不动，`index.html` 在主样式后引用）：图标网格左上 92px 列、116px 行；64px 纸面瓷砖 + Lucide SVG；任务栏实色纸面底、取消毛玻璃；时钟 tabular-nums；焦点环 2px 赭石。
+- 去 AI 味清单：无紫渐变、无霓虹辉光、无 Inter 首选字体、无 emoji 当图标、无居中英雄区、无三栏特性格；壁纸 ocean 渐变本身未动，设计层不新增渐变。
