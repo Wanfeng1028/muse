@@ -3,7 +3,7 @@
  * 分隔一律 1px 细线 #e5e7eb，全部左对齐，系统无衬线字体，不引入外来字体，不用渐变、不加阴影。
  * 本层只覆盖，不改原样式表与任何 JS；原 App.css 里紫渐变 .app-header 是死代码（全项目无组件使用），
  * 本层把它压成平色，万一将来有人用也不会再出紫渐变。
- * 注意：MainLayout.tsx 的 Content 内联样式（padding 5、背景 token）本层不覆盖，属既存结构，留待后续轮处理。
+ * 注意：MainLayout.tsx 的 Content 内联样式曾是本层不覆盖的保留项，第三轮已按壳层值机械改动（背景 #fafaf7、内边距 16），见 site 架构文档第三轮补充。
  * 9 条规则全部为 GLM-5.3 收窄三段输出原文拼接（每段 3 条、总行数不超过 30 行），未改动规则本身。
  */
 .ant-layout-sider { background: #fafaf7; border-right: 1px solid #e5e7eb; }

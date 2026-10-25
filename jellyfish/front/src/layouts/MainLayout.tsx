@@ -256,11 +256,12 @@ const MainLayout: React.FC = () => {
         </Header>
 
         <TaskRuntimeProvider>
+          {/* 外壳设计层 v1：Content 内联样式优先级高于样式表，故背景与内边距直接取壳层值（#fafaf7、16），不走样式表覆盖。 */}
           <Content
             style={{
               margin: 0,
-              padding: 5,
-              background: token.colorBgLayout,
+              padding: 16,
+              background: '#fafaf7',
               flex: 1,
               minHeight: 0,
               overflow: 'hidden',
