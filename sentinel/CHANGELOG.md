@@ -3,6 +3,16 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.18.1] - 2026-10-25
+
+### 修复
+- style.css 尾部 .alert 规则补右括号：关闭 v0.15.0 起挂账的已知限制（文件此前以未闭合的 .alert 规则结尾，大括号 118 对 117，解析器会丢弃该规则）。改动仅此 1 行；全仓 HTML 均无 class="alert" 元素，故本修复不改变任何页面的可见样式，只恢复样式表有效性（此前截图 harness 把两表拼进同一个 style 块时被该截断吞掉设计规则的问题亦随之消除，但各页仍按独立样式表加载，行为不变）。
+- 模型稿 1 通由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 4000）输出，即闭合后的 .alert 规则原文，编排核对后落仓。API 口径 prompt 23823 / completion 51 / total 23874，无 429。
+
+### 测试
+- 新增 internal/web/style_css_alert_test.go 1 例（大括号平衡、.alert 规则闭合且 padding 声明齐全、文件以闭合规则结尾）；go vet 全洁；internal/web 包全绿。
+- 真实服务冒烟（18293 端口隔离库）：/incidents 与 /static/style.css 均 200，样式表大括号 118 对 118；验收后服务已按 PID 停掉，演示库与二进制已删。
+
 ## [0.18.0] - 2026-10-25
 
 ### 新增
