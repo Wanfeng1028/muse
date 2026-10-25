@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="{{ .Lang }}">
+<head>
+{{ init_head }}
+<title>Edit Reference</title>
+<meta property="og:title" content="Edit Reference">
+{{ head_icon }}
+<style>
+{{ core_style }}
+.edit-block {
+ padding-left: 7px;
+ padding-bottom: 7px;
+ padding-top: 7px;
+ margin-top: 30px;
+ margin-bottom: 6px;
+}
+.edit-block > p {margin-top: 0; margin-bottom: 0}
+.edit-var {
+    position: relative;
+    left: -1px;
+    font-size: 85%;
+    font-style: italic;
+    font-family: monospace, monospace;
+}
+.edit-val {
+    color: #0B65B8;
+    font-size: 85%;
+    font-family: monospace, monospace;
+}
+.edit-block { background-color: #F9F5F5; border-top: 3px solid #EAEAEA}
+@media (prefers-color-scheme: dark) {
+  .edit-block {background-color: #323232; border-top: 3px solid #4A4A4A}
+  .edit-val {color: #A3DEFF}
+}
+</style>
+</head>
+<body>
+{{ nav }}
+<section class="section">
+<div class="container">
+<h1>Edit Reference</h1>
+<p>When you run:<p>
+<pre><code>auto-editor example.mp4 --edit audio:0.05,stream=0</code></pre>
+<p>You're writing the syntax-sugary equivalent of:</p>
+<pre><code>auto-editor example.mp4 --edit "(audio 0.05 (= stream 0))"</code></pre>
+<p>All the edit methods are listed below:</p>
+{{ exec gen_edit.nims }}
+</div>
+</section>
+</body>
+</html>

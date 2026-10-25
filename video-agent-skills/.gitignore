@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+# generated on the creator's computer by engine/setup.mjs
+skills/short-editing/.runtime/
+skills/short-editing/assets/music/*.mp3
+skills/short-editing/assets/icons/*.png
+skills/short-editing/assets/icons/glyph/

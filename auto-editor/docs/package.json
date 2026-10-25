@@ -1,0 +1,11 @@
+{
+  "name": "auto-editor.com",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "dev": "bun run --watch server.js"
+  },
+  "dependencies": {
+    "express": "latest"
+  }
+}

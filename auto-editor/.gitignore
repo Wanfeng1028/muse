@@ -1,0 +1,33 @@
+/auto-editor
+build*
+ffmpeg_sources
+tests
+
+# Editor
+.vscode
+
+# Models
+*.bin
+*.onnx
+
+# Generated
+*_ALTERED*
+*https*
+*.v3
+*.srt
+*_tracks
+
+# OS Files
+.DS_Store
+*.dylib
+*.o
+
+# Nimble
+nimble.develop
+nimble.paths
+nimbledeps
+
+# Wasm Files
+*\.wasm
+*-web\.js
+*-web64\.js

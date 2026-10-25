@@ -1,0 +1,376 @@
+:root {
+  --electric-blue-200: #DAF0FF;
+  --electric-blue-400: #B6E0FF;
+  --electric-blue-600: #91D1FF;
+  --electric-blue-800: #6CC1FF;
+  --electric-blue-1000: #48B2FF;
+
+  --charcoal-100: #F7F9FC;
+  --charcoal-200: #DDDFE2;
+  --charcoal-400: #AAACAF;
+  --charcoal-500: #86939B;
+  --charcoal-600: #787A7D;
+  --charcoal-800: #45474A;
+  --charcoal-900: #1B2326;
+  --charcoal-1000: #131417;
+
+  --flow-space: 1.25rem;
+
+  /* Syntax-highlight token colors for hunim's build-time hl-* spans. Anchored on
+     the brand blue, tuned to read on the light (#F9F5F5) code background; the
+     dark overrides below suit the dark (#323232) one. */
+  --hl-keyword: #0573D9;
+  --hl-string: #0E7C86;
+  --hl-number: #B45309;
+  --hl-comment: #787A7D;
+  --hl-operator: #45474A;
+  --hl-escape: #C0208A;
+  --hl-preprocessor: #7C3AED;
+  --hl-regex: #C0208A;
+  --hl-program: #0573D9;
+  --hl-option: #0E7C86;
+  @media (prefers-color-scheme: dark) {
+    --hl-keyword: #63C0F4;
+    --hl-string: #5FD0DA;
+    --hl-number: #F0A868;
+    --hl-comment: #AAACAF;
+    --hl-operator: #C9CBCE;
+    --hl-escape: #F58FC2;
+    --hl-preprocessor: #C4A2F0;
+    --hl-regex: #F58FC2;
+    --hl-program: #63C0F4;
+    --hl-option: #5FD0DA;
+  }
+}
+
+html {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  background-color: white;
+  @media (prefers-color-scheme: dark) { background-color: #262626 }
+}
+
+body, button, input { font-family: -apple-system, sans-serif }
+
+html, p, h1, h2, h3, h4, html, blockquote {
+  margin: 0;
+  padding: 0;
+}
+
+h1 {
+  line-height: 1.06;
+  word-break: break-word;
+  text-align: center;
+  font-size: 2.8rem;
+  font-weight: bold;
+  color: #323232;
+  margin-bottom: 0.2em;
+  letter-spacing: -1px;
+  @media (max-width: 55em) { font-size: 2.3rem }
+  @media (prefers-color-scheme: dark) { color: #F9F7F7 }
+}
+
+h2 {
+  font-size: 2.1rem;
+  font-weight: 600;
+  color: #323232;
+  @media (max-width: 55em) { font-size: 1.8rem }
+  @media (prefers-color-scheme: dark) { color: #F9F7F7 }
+}
+
+h3 {
+  font-size: 1.7rem;
+  font-weight: 500;
+  color: #323232;
+  @media (max-width: 55em) { font-size: 1.5rem }
+  @media (prefers-color-scheme: dark) { color: #F9F7F7 }
+}
+
+h4 {
+  font-size: 1.5rem;
+  color: #323232;
+  @media (max-width: 55em) { font-size: 1.3rem }
+  @media (prefers-color-scheme: dark) { color: #F9F7F7 }
+}
+
+li, ol { margin: 0 }
+ul { margin-top: 0 }
+li {
+  color: black;
+  text-decoration: black;
+  font-size: 1.28rem;
+  & + li { margin-top: .25rem }
+  @media (max-width: 55em) { font-size: 1.1rem }
+  @media (prefers-color-scheme: dark) { color: #F9F7F7; text-decoration: #F9F7F7 }
+}
+
+body {
+  font-size: 1em;
+  font-weight: 400;
+  line-height: 1.5;
+  padding: 0 2em;
+  margin: 0;
+  @media (max-width: 55em) { padding: 0 1rem }
+}
+
+hr {
+  margin: 0;
+  padding: 0;
+  height: .28rem;
+  border: 0;
+  overflow: hidden;
+  box-sizing: content-box;
+  background-color: #EAEAEA;
+  @media (prefers-color-scheme: dark) { background-color: #4A4A4A }
+}
+
+.container {
+  max-width: 1000px;
+  flex-grow: 1;
+  margin: 0 auto;
+  position: relative;
+  width: auto;
+}
+
+.navbar-brand {
+  margin-left: -.75rem;
+  display: flex;
+  min-height: 3.25rem;
+}
+
+.navbar {
+  display: flex;
+  align-items: stretch;
+  & > .container { display: flex }
+}
+.navbar-menu {
+  display: flex;
+  align-items: stretch;
+}
+.navbar-start {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  & > .navbar-item {
+    font-size: 1.3em;
+    font-weight: bold;
+    color: #323232;
+    @media (max-width: 45em) { font-size: 1em }
+    @media (prefers-color-scheme: dark) { color: #F9F7F7 }
+  }
+}
+.navbar-item img { max-height: 1.75rem }
+
+img { max-width: 100%; height: auto }
+
+a {
+  outline: none;
+  color: #0573D9;
+  &:hover { color: #63C0F4 }
+  &.navbar-item {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    padding: .5rem .4rem;
+    margin: 0 0.25rem;
+    position: relative;
+    text-decoration: none;
+    &:hover { background-color: #F9F7F7 }
+    @media (max-width: 45em) { padding: .5rem .2rem }
+    @media (prefers-color-scheme: dark) {
+      &:hover { background-color: #323232 }
+    }
+  }
+  @media (prefers-color-scheme: dark) {
+    color: #63C0F4;
+    &:hover { color: #A3DEFF }
+  }
+}
+
+code {
+  font-size: 80%;
+  border-radius: 5px;
+  padding: 2px;
+  color: #323232;
+  @media (prefers-color-scheme: dark) { color: #F9F7F7 }
+}
+
+code, pre {
+  -moz-osx-font-smoothing: auto;
+  -webkit-font-smoothing: auto;
+  font-family: monospace, monospace;
+}
+
+.mono {
+  font-family: monospace, monospace;
+  font-size: 110%;
+}
+
+pre {
+  padding: 1.25rem 1.5rem;
+  white-space: pre;
+  word-wrap: normal;
+  overflow-x: auto;
+  line-height: 1.25;
+  background-color: #F9F5F5;
+  color: #323232;
+  & code {
+    background-color: transparent;
+    color: currentColor;
+    padding: 0;
+  }
+  @media (max-width: 55em) {
+    padding: 1rem 1.25rem;
+    line-height: 1;
+  }
+  @media (prefers-color-scheme: dark) {
+    background-color: #323232;
+    color: #F9F7F7;
+  }
+}
+
+/* Build-time syntax-highlight tokens (hunim wraps code in hl-* spans). */
+pre code .hl-keyword      { color: var(--hl-keyword) }
+pre code .hl-string       { color: var(--hl-string) }
+pre code .hl-escape       { color: var(--hl-escape) }
+pre code .hl-number       { color: var(--hl-number) }
+pre code .hl-comment      { color: var(--hl-comment); font-style: italic }
+pre code .hl-operator     { color: var(--hl-operator) }
+pre code .hl-preprocessor { color: var(--hl-preprocessor) }
+pre code .hl-regex        { color: var(--hl-regex) }
+pre code .hl-program      { color: var(--hl-program); font-weight: 600 }
+pre code .hl-option       { color: var(--hl-option) }
+
+blockquote {
+  padding: 0 10px;
+  margin: 0;
+  border-left: 5px solid #EAEAEA;
+  & > p { color: #696969 }
+  @media (prefers-color-scheme: dark) {
+    border-left: 5px solid #4A4A4A;
+    & > p { color: #DBDBDB }
+  }
+}
+
+g-emoji {
+  font-family: Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol;
+  font-style: normal;
+  line-height: 1;
+  vertical-align: -.075em;
+}
+
+p {
+  display: block;
+  text-wrap: pretty;
+  max-width: 88ch;
+  font-size: 1.28rem;
+  color: #323232;
+
+  @media (max-width: 55em) { font-size: 1.1rem }
+  @media (prefers-color-scheme: dark) { color: #F9F7F7 }
+}
+
+.next {
+  text-decoration: underline;
+  border: 0;
+  font-size: xx-large;
+  text-align: center;
+  margin: auto;
+  display: block;
+  font-weight: bold;
+  padding: 1em;
+  &:before { content: "👉" }
+}
+
+.section {
+  padding: 1rem 0;
+  & > .container {
+    & > * + * { margin-top: var(--flow-space) }
+    & > * + :is(h2, h3, h4) { margin-top: 2rem }
+    & > :is(h1, h2, h3, h4) + * { margin-top: .5rem }
+  }
+}
+
+.huge { font-size: 5rem }
+.bigger { font-size: 2.5rem }
+.big { font-size: 2.1rem }
+.medium { font-size: 1.7rem }
+.smedium { font-size: 1.5rem }
+
+.small, pre, blockquote { font-size: 1.28rem }
+@media (max-width: 55em) {
+  .small, pre, blockquote { font-size: 1.1rem }
+}
+
+.tiny { font-size: 1rem }
+.bold { font-weight: bold }
+.underline { text-decoration: underline }
+
+table {
+  margin: 1.5rem 0 2rem;
+  border: 1px solid var(--charcoal-200);
+  border-radius: .65rem;
+  border-spacing: 0;
+  overflow: hidden;
+  background-color: white;
+  box-shadow: 0 .35rem 1rem rgba(19, 20, 23, .08);
+
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--charcoal-600);
+    background-color: rgba(19, 20, 23, .25);
+    box-shadow: 0 .45rem 1.25rem rgba(0, 0, 0, .12);
+  }
+}
+
+th, td {
+  padding: .75rem 1rem;
+  text-align: left;
+  vertical-align: middle;
+}
+
+th {
+  border-bottom: 1px solid var(--electric-blue-400);
+  background-color: var(--electric-blue-200);
+  color: var(--charcoal-900);
+  font-size: .9rem;
+  font-weight: 650;
+  letter-spacing: .045em;
+  line-height: 1.25;
+  text-transform: uppercase;
+
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--charcoal-600);
+    background-color: rgba(72, 178, 255, .12);
+    color: var(--charcoal-200);
+  }
+}
+
+td {
+  border-bottom: 1px solid var(--charcoal-200);
+  color: var(--charcoal-900);
+  font-size: 1.08rem;
+  line-height: 1.35;
+
+  @media (prefers-color-scheme: dark) {
+    border-color: var(--charcoal-800);
+    color: var(--charcoal-100);
+  }
+}
+
+tbody tr:last-child td { border-bottom: 0 }
+tbody tr { transition: background-color 120ms ease }
+tbody tr:hover { background-color: rgba(72, 178, 255, .07) }
+
+th[align="right"], td[align="right"] {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+@media (max-width: 55em) {
+  table { margin: 1.25rem 0 1.5rem }
+  th, td { padding: .65rem .7rem }
+  th { font-size: .75rem }
+  td { font-size: .95rem }
+}

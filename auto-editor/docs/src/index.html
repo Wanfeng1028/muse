@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="{{ .Lang }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auto-Editor</title>
+  <meta property="og:title" content="Auto-Editor">
+  <meta name="twitter:title" content="Auto-Editor">
+  <meta name="description" property="og:description" content="Automatically edit video and audio by analyzing where sections are silent or still and cut them out.">
+  <meta name="twitter:description" content="Automatically edit video and audio by analyzing where sections are silent or still and cut them out.">
+  <link rel="canonical" href="https://auto-editor.com">
+  <meta property="og:url" content="https://auto-editor.com">
+  <meta name="author" content="WyattBlue">
+  <meta name="Classification" content="video,video-processing,audio,audio-processing,automatic,video-editing,audio-editing">
+  <meta property="og:image" content="/img/1200x630_fb.jpg">
+  {{ head_icon }}
+  <style>
+  {{ core_style }}
+  {{ cls_center }}
+  #icon { aspect-ratio: auto 647 / 238 }
+  </style>
+</head>
+<body>
+{{ nav }}
+<section class="section">
+<div class="container">
+<img id="icon" class="center" src="/img/auto-editor-banner.svg" width="700" alt="Auto-Editor">
+<br>
+<p><strong>Auto-Editor</strong> automatically <strong>editing videos</strong> by analyzing with a variety of methods, including audio loudness, motion, and subtitles.</p>
+
+<p>You can use the <a href="https://github.com/WyattBlue/auto-editor">cli (command line interface)</a> or try <a href="https://app.auto-editor.com">the app</a>.</p>
+
+<h3>Docs</h3>
+<ul>
+  <li><a href="/installing">How To Install Auto-Editor</a></li>
+  <li><a href="/docs/cookbook">Cookbook (basic examples)</a></li>
+  <li><a href="/docs/actions">Actions Cookbook</a></li>
+  <li><a href="/docs/range-syntax">How Do I Cut the Beginning or End?</a></li>
+  <li><a href="/docs/file-size">How to Shrink File Size</a></li>
+  <li><a href="/docs/subcommands">Subcommands</a></li>
+  <li><a href="/docs/v1">The v1 timeline format</a></li>
+  <li><a href="/docs/">[more]</a></li>
+</ul>
+
+<h3>References</h3>
+<ul>
+  <li><a href="/ref/options">All the Options (and What They Do)</a></li>
+  <li><a href="/ref/edit">Edit Methods Reference</a></li>
+  <li><a href="/ref/actions">Actions Reference</a></li>
+</ul>
+
+</div>
+</section>
+</body>
+</html>

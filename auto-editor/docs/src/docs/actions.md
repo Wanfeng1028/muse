@@ -1,0 +1,569 @@
+---
+title: Actions
+---
+
+Actions define what auto-editor does to different parts of your media. By default, inactive (silent) sections are cut out and active (loud) sections are kept unchanged. Actions give you fine-grained control over this behavior.
+
+## Basic Syntax
+
+Actions are specified using the `--when-inactive` and `--when-active` options:
+
+```sh
+# Cut inactive sections (default behavior)
+auto-editor video.mp4 --when-inactive cut
+
+# Keep active sections unchanged (default behavior)
+auto-editor video.mp4 --when-active nil
+```
+
+These options have aliases:
+- `--when-inactive` = `--when-silent`, `-w:0`
+- `--when-active` = `--when-normal`, `-w:1`
+
+## Labels
+
+The `:0` and `:1` in `-w:0`/`-w:1` are **labels**. Auto-editor tags every moment
+of the timeline with an integer label (0–255) and runs that label's action. Two
+labels are built in:
+
+- **0** — *inactive* ("silent"): everything `--edit` does **not** match. Its
+  action is `--when-inactive` / `-w:0` / `--when:0` (default `cut`).
+- **1** — *active* ("normal"): what `--edit` matches. Its action is
+  `--when-active` / `-w:1` / `--when:1` (default `nil`).
+
+So `--edit METHOD` is shorthand for `--edit:1 METHOD` — it sets which moments get
+label 1.
+
+### Custom classes (`--edit:N` / `--when:N`)
+
+Define extra classes with `--edit:N EXPR` (where `N` is `2`–`255`) and give each
+its own action with `--when:N ACTION`. Where two classes overlap, the **higher
+label wins**, so later/larger labels layer on top of the basic silent/active split.
+
+```sh
+# Cut silence and keep speech as usual, but additionally speed up the loud parts
+auto-editor video.mp4 --edit:2 audio:-12dB --when:2 speed:1.5
+
+# -e/-w short forms; zoom wherever there is motion, on top of the audio edit
+auto-editor video.mp4 -e:2 motion:0.02 -w:2 zoom:2
+```
+
+## Available Actions
+
+### nil
+
+Do nothing. Keep the section unchanged.
+
+```sh
+# Keep everything, even silent sections
+auto-editor video.mp4 --when-inactive nil
+```
+
+### cut
+
+Remove the section completely from the output.
+
+```sh
+# Remove inactive sections (default behavior)
+auto-editor video.mp4 --when-inactive cut
+
+# Remove active ("loud") sections (inverted editing)
+auto-editor video.mp4 --when-active cut
+```
+
+### speed
+
+Change the playback speed while preserving pitch using time-stretching.
+
+```sh
+# Speed up inactive sections to 8x (preserving pitch)
+auto-editor video.mp4 -w:0 speed:8
+
+# Slow down active sections to half speed
+auto-editor video.mp4 -w:1 speed:0.5
+```
+
+### varispeed
+
+Change the playback speed by varying pitch, like analog tape or vinyl.
+- **Value range:** 0.2 to 100.0
+
+```sh
+# Speed up inactive sections with pitch variation
+auto-editor video.mp4 -w:0 varispeed:2
+
+# Create slow-motion effect with lower pitch
+auto-editor video.mp4 -w:1 varispeed:0.5
+```
+
+### pitch
+
+Shift the pitch of the section in semitones, leaving its speed and duration alone.
+- **Value range:** -24.0 to 24.0 semitones
+- **12** = one octave up, **-12** = one octave down, **0** = unchanged
+
+```sh
+# Chipmunk the silent sections
+auto-editor video.mp4 -w:0 pitch:12
+
+# Drop active sections a fifth
+auto-editor video.mp4 -w:1 pitch:-7
+
+# Subtle detune (a quarter tone)
+auto-editor video.mp4 -w:1 pitch:0.5
+```
+
+To change speed and pitch together, use `varispeed` instead.
+
+### tone
+
+Synthesize a wave at the pitch of a MIDI note, `tone:note[:waveform]`:
+
+- **note** — a whole MIDI note number, 0 to 127. `69` is A4 (440 Hz) and `60`
+  is middle C; each step is a semitone, so `f = 440 * 2^((note-69)/12)`.
+- **waveform** — `sine` (the default), `saw`, `square`, or `triangle`.
+
+`tone` is a **generator action**: it does not alter existing audio, it stands in for a file in `add:` and lays the note on its own audio layer (see [add](#add) below). Because it adds a layer rather than a second output stream, the tone is mixed into the audio you already have.
+
+```sh
+# A 440 Hz reference tone over every kept section
+auto-editor video.mp4 -w:1 add:tone:69
+
+# Beep the silent sections instead of cutting them
+auto-editor video.mp4 -w:0 nil,add:tone:81
+
+# A C major chord: one layer per note, summed by the mix
+auto-editor video.mp4 -w:1 add:tone:60,add:tone:64,add:tone:67
+
+# A buzzy bass instead of a pure tone
+auto-editor video.mp4 -w:1 add:tone:36:saw
+
+# Square for a chiptune blip, triangle for something softer
+auto-editor video.mp4 -w:1 add:tone:84:square
+auto-editor video.mp4 -w:1 add:tone:72:triangle
+```
+
+It has no envelope of its own, so a bare `tone` holds flat for the whole
+section. Chain the animatable `volume` action for fades and decays:
+
+```sh
+# A plucked note that decays away
+auto-editor video.mp4 -w:1 add:tone:60,volume:1..0:ease=out
+
+# Quieter, so it sits under the program audio
+auto-editor video.mp4 -w:1 add:tone:69,volume:0.3
+```
+
+### volume
+
+Adjust the audio volume level.
+- **1.0** = normal volume
+- **0.5** = half volume (-6dB)
+- **2.0** = double volume (+6dB)
+
+```sh
+# Reduce silent section volume to 20%
+auto-editor video.mp4 -w:0 volume:0.2
+
+# Boost loud sections
+auto-editor video.mp4 -w:1 volume:1.5
+
+# Fade the audio in across the section (see Animations below)
+auto-editor video.mp4 -w:1 volume:0..1
+```
+
+### deesser
+
+Reduce harsh "s" and "sh" sibilance in the audio section. Takes up to three
+positional args, `deesser:intensity[:max[:freq]]`, each in the range 0.0 to 1.0:
+- **intensity** — how much to de-ess (0.0 = none, 1.0 = maximum)
+- **max** — caps the maximum reduction (default 0.5)
+- **freq** — split frequency (default 0.5)
+
+```sh
+# De-ess active (spoken) sections
+auto-editor video.mp4 -w:1 deesser:0.5
+
+# Stronger de-essing with a higher max reduction and tuned frequency
+auto-editor video.mp4 -w:1 deesser:0.8:0.7:0.4
+```
+
+### invert
+
+Invert all pixels in the video section.
+
+```sh
+auto-editor video.mp4 -w:0 invert
+```
+
+### zoom
+
+Zoom in or out by a factor.
+- **Value range:** greater than 0.0, up to 100.0
+- **1.0** = no zoom
+
+```sh
+# Zoom in 2x on active sections
+auto-editor video.mp4 -w:1 zoom:2
+
+# Zoom out on silent sections
+auto-editor video.mp4 -w:0 zoom:0.5
+```
+
+### rotate
+
+Rotate the picture clockwise about its center by a **fixed** `deg` angle,
+`rotate:deg`. The picture is **expanded** so nothing is clipped (a 90° rotation
+turns a landscape picture upright), and the corners exposed by the rotation are
+filled with the background color. The rotated picture is then fit into the output
+`--resolution` as usual, so pair `rotate:90` with a matching `--resolution` for a
+true portrait output. For a continuous rotation, use [`spin`](#spin) instead.
+
+```sh
+# Turn the picture upside-down
+auto-editor video.mp4 -w:1 rotate:180
+
+# Turn a 1920x1080 landscape video into a 1080x1920 portrait one
+auto-editor video.mp4 -w:1 rotate:90 --resolution 1080,1920
+```
+
+**How it works:** Uses FFmpeg's `rotate` filter with `ow=rotw:oh=roth`. Unlike
+the ramp effects below, `rotate` is not affected by `ease`.
+
+### spin
+
+Spin the picture continuously, `spin:deg/rate`: start at `deg` and turn at `rate`
+degrees per second (negative `rate` spins counter-clockwise).
+
+```sh
+# Spin at 120 degrees/second (one full turn every 3 seconds)
+auto-editor video.mp4 -w:1 spin:0/120
+
+# Start at 90 degrees and spin counter-clockwise at 45 degrees/second
+auto-editor video.mp4 -w:1 spin:90/-45
+```
+
+The picture spins inside a constant square big enough to contain every rotation,
+so it is **never clipped** at any angle. When `spin` is applied to an overlay
+layer (see [`add`](#add)) the exposed corners are left **transparent**, so only
+the picture shows over the layers below; otherwise they are filled with the
+background color.
+
+```sh
+# Spin a logo overlay over the video
+auto-editor video.mp4 -w:1 add:./logo.png,spin:0/-30
+```
+
+**How it works:** Uses FFmpeg's `rotate` filter with the angle driven by a
+per-frame time expression. Like `rotate`, it is not affected by `ease`.
+
+### drawbox
+
+Draw a filled rectangle onto the picture. Takes five positional args,
+`drawbox:x:y:w:h:color`:
+
+- **x**, **y** — the top-left corner, in pixels.
+- **w**, **h** — the width and height, in pixels (both must be positive).
+- **color** — an RGB color, either a name (`red`) or a hex value (`#ff0000`).
+
+```sh
+# Cover the top-left corner with a 400x200 red box
+auto-editor video.mp4 -w:1 drawbox:100:100:400:200:red
+
+# A black bar across part of the frame (e.g. to redact something)
+auto-editor video.mp4 -w:1 drawbox:0:0:1920:200:#000000
+```
+
+`drawbox` is also a **generator action**: `add:drawbox:...` paints the box on
+its own overlay layer instead of onto the picture (see [add](#add) below).
+
+**How it works:** Uses FFmpeg's `drawbox` filter with `t=fill`, so the
+rectangle is filled rather than outlined. Only RGB colors are supported.
+
+### pos
+
+Place this clip as an overlay when it is composited over a lower video track,
+`pos:x:y[:scale]`:
+
+- **x**, **y** — the overlay's top-left corner, in canvas pixels.
+- **scale** — optional size multiplier of the source's native size (default
+  `1.0`).
+
+`pos` has no effect on the base (bottom) track. It is mainly used inside a v3
+timeline's effects array (see [The v3 format](./v3)) or attached automatically by
+the `add` action below.
+
+### add
+
+Overlay a media file on top of the matched sections, `add:path` or
+`add:path:x:y:scale`:
+
+- **path** — a media file (e.g. a PNG logo, a video, or an audio file). Still
+  images are held for the whole section. In place of a file, a **generator action** (with its
+  usual arguments) may be given: the layer starts as a transparent canvas that
+  the action paints, so the picture below shows through everywhere it did not
+  draw. The video generators are [confetti](/ref/actions#confetti) and
+  [drawbox](/ref/actions#drawbox); [tone](/ref/actions#tone) is an audio
+  generator, and adds an audio layer instead of a picture (all are marked `G`
+  in the [quick reference](/ref/actions#quick-reference)).
+- **x**, **y**, **scale** — optional placement, applied via a `pos` action
+  (above). When omitted, the overlay is scaled to fit the canvas (preserving
+  aspect ratio) and centered, like a full-frame layer. Each may be a **ramp**
+  (e.g. `0..600`), so the overlay animates across the section.
+
+```sh
+# Overlay a logo scaled to fit and centered over every kept (normal) section
+auto-editor video.mp4 -w:1 add:./logo.png
+
+# Put a logo at (600, 300)
+auto-editor video.mp4 -w:1 add:./logo.png:600:300:1.0
+
+# Slide a logo across the frame while shrinking it (ramps in x and scale)
+auto-editor video.mp4 -w:1 add:./logo.png:0..1000:300:1..0.5
+
+# Shrink an overlay video to a quarter size in the corner
+auto-editor video.mp4 -w:1 add:./pip.mp4:900:60:0.25
+
+# Overlay only over a specific time range (frames where 1s..2s plays)
+auto-editor video.mp4 --set-action add:./logo.png:600:300:1.0,1sec,2sec
+
+# Confetti on its own layer, over the picture rather than baked into it
+auto-editor video.mp4 -w:1 add:confetti:300
+
+# Recolor the layer without touching the video below
+auto-editor video.mp4 -w:1 add:confetti:300:white,invert
+
+# Audio plus a confetti layer: a video with no footage
+auto-editor song.mp3 -w:1 add:confetti:300:white
+
+# A box on its own layer, so later actions hit only the box
+auto-editor video.mp4 -w:1 add:drawbox:100:100:400:200:red,opacity:0.5
+
+# A tone on its own audio layer, mixed under the video's own audio
+auto-editor video.mp4 -w:1 add:tone:69,volume:0.3
+```
+
+`add` brings **every stream** the source holds, so an added clip sounds like it
+looks. A video with sound becomes a video layer plus one audio layer per audio
+stream, on exactly the same sections, so picture and sound stay together. A file
+with no picture (an mp3, a wav) adds only sound — handy for background music —
+and grows no video stream; a still image adds only picture. Actions chained after
+the `add` reach whichever of the two exist, so `add:pip.mp4,volume:0.3` tucks the
+overlay's audio under the base while leaving the base's own audio alone.
+
+```sh
+# Picture-in-picture that you can also hear
+auto-editor video.mp4 -w:1 add:./pip.mp4:900:60:0.25
+
+# ...with its audio tucked under the original
+auto-editor video.mp4 -w:1 add:./pip.mp4:900:60:0.25,volume:0.3
+
+# Background music over the whole edit (no picture added)
+auto-editor video.mp4 -w:1 add:./music.mp3,volume:0.4
+```
+
+An added layer is an overlay, so its audio is **mixed into** the output's audio
+rather than written beside it as a second stream — which is also why several
+`add:tone` layers stack into a chord, and why `-o out.wav` still works. An audio
+generator likewise needs no canvas and never grows a video stream.
+
+Unlike the other actions, `add` is **virtual**: it is not a per-frame effect but
+adds an overlay layer to the timeline (the same compositing used by stacked v3
+tracks; see [The v3 format](./v3)). It is colon-separated (one comma-field), so
+it chains with other actions.
+
+**Actions chained after an `add` apply to that new overlay layer, not the
+original.** So in `-w:1 add:./logo.png,spin:0/-30` the `spin` rotates the
+logo, while `-w:1 zoom:2,add:./logo.png` zooms the base video and then
+overlays the logo on top. A later `add` starts a new overlay, and following
+actions attach to it.
+
+The overlay only appears where the section it is attached to is kept — so
+`-w:0 add:...` requires keeping those sections too, e.g.
+`-w:0 nil,add:./logo.png`. With `--set-action`, the range is kept
+automatically. Overlay transparency (a PNG alpha channel) is preserved.
+
+For an **audio-only** input, `add` synthesizes a background video canvas (the
+`--background` color, at `--resolution`) so the output gains a video stream —
+handy for turning an audio file plus an image into a video. The video is only
+created when there is an active section for the overlay to sit on: e.g.
+`auto-editor song.mp3 -bg white -w:1 add:./cover.png` makes a video, but if the
+edit leaves no active sections (so the `-w:1` overlay matches nothing) the
+output stays audio-only.
+
+The default output name copies the input's extension, which could not hold that
+video (`song.mp3` → `song_ALTERED.mp3`), so it switches to `.mp4` instead. An
+explicit `-o out.mp3` is still honored, with a warning that the video is dropped.
+
+## Multiple Actions (Chaining)
+
+You can combine multiple actions using commas. Actions are applied in the order specified.
+
+```sh
+# Speed up AND reduce volume
+auto-editor video.mp4 -w:0 speed:3,volume:0.5
+
+# Combine speed and varispeed
+# Effective speed: 1.25 × 1.25 = 1.5625x
+auto-editor video.mp4 -w:1 varispeed:1.25,speed:1.25
+
+# Triple action: speed, varispeed, and volume
+auto-editor video.mp4 -w:0 speed:2,varispeed:1.5,volume:0.8
+```
+
+## Animations
+
+For transitions between clips, use the [edit-point option](./transition) instead of an action:
+
+```sh
+# Cross-dissolve cuts of at least 1 second; fade the timeline endpoints.
+auto-editor video.mp4 --transition dissolve:0.5sec
+
+# Override the minimum cut duration, or use :0 to include every eligible cut.
+auto-editor video.mp4 --transition dissolve:0.5sec:2sec
+auto-editor video.mp4 --transition dissolve:0.5sec:0
+```
+
+The transition is linked across the primary video and audio tracks. `opacity`
+and `volume` ramps remain useful when only one section or one media type should
+fade. The minimum-cut duration defaults to one second and affects internal cuts
+only; timeline start/end fades are unchanged.
+
+The animatable effects — `zoom`, `opacity`, `blur`, and `brightness` for video,
+plus `volume` for audio — accept a **ramp** instead of a single value, written
+`from..to`. The value is interpolated across the section, so the effect changes
+over time. (For rotation, use the constant-speed `rotate:deg/rate` form
+described above.)
+
+`pos` and `pixelate` are animatable too: each of their fields (`x`, `y` and
+`scale`; block `w` and `h`) takes its own ramp, so an overlay can slide and
+resize across the section and a mosaic can coarsen as it plays.
+
+```sh
+# Slowly zoom in from 1x to 1.5x across the section (Ken Burns)
+auto-editor video.mp4 -w:1 zoom:1..1.5
+
+# Fade in (opacity 0 to 1)
+auto-editor video.mp4 -w:1 opacity:0..1
+
+# Fade the audio in alongside it
+auto-editor video.mp4 -w:1 volume:0..1
+
+# Slide a logo across the frame while shrinking it
+auto-editor video.mp4 -w:1 add:./logo.png,pos:0..1200:40:1..0.5
+
+# Dissolve the picture into ever-coarser blocks
+auto-editor video.mp4 -w:1 pixelate:1..64
+```
+
+The ramp reaches `to` on the section's last frame.
+
+### Keyframes
+
+A ramp can have more than two points — list them with `..` and the value is
+interpolated piecewise between them, evenly spread across the section:
+
+```sh
+# Zoom in then back out
+auto-editor video.mp4 -w:1 zoom:1..1.5..1
+
+# Fade in, hold, fade out
+auto-editor video.mp4 -w:1 opacity:0..1..1..0
+```
+
+### Easing and duration
+
+By default a ramp is linear and spans the whole section. Attach an easing curve
+with `:ease=`:
+
+```sh
+auto-editor video.mp4 -w:1 zoom:1..1.5:ease=inout
+```
+
+`:ease=curve[:duration]`
+- **curve** — `linear`, `in`, `out`, or `inout`
+- **duration** — optional; e.g. `2sec` or a bare frame count. Once it elapses,
+  the value holds at its end. Omitted, the animation spans the whole section.
+
+```sh
+# Ease in over the first 2 seconds, then hold
+auto-editor video.mp4 -w:1 opacity:0..1:ease=in:2sec
+```
+
+You can also write the curve as a standalone `ease:` token. It applies to every
+animated action that follows it (until another `ease` overrides it), which is
+handy for giving several effects the same curve:
+
+```sh
+# Both zoom and brightness ease out
+auto-editor video.mp4 -w:1 ease:out,zoom:1..1.3,brightness:0..0.3
+```
+
+## Setting Actions for a Time Range
+
+Use `--set-action` to apply an action to a specific time range, overriding the default actions:
+
+```sh
+# Keep a section unchanged from 0 to 5 seconds
+auto-editor video.mp4 --set-action nil,0,5sec
+
+# Apply speed + varispeed from 30 seconds to the end
+auto-editor video.mp4 --set-action speed:1.5,varispeed:1.5,30sec,end
+```
+
+The format is `ACTION,START,END` where `ACTION` can be any action or comma-separated list of actions.
+
+## Common Use Cases
+
+### Fast-Forward Through Silence
+```sh
+auto-editor video.mp4 -w:0 speed:8
+```
+
+### Subtle Speed Variations
+```sh
+# Slightly slow down normal sections for emphasis
+auto-editor video.mp4 -w:1 speed:0.9
+```
+
+### Duck Audio During Silence
+```sh
+# Keep silent sections but reduce volume
+auto-editor video.mp4 -w:0 volume:0.3
+```
+
+### Podcast Editing
+```sh
+# Cut silence, slightly speed up speech
+auto-editor podcast.mp3 -w:0 cut -w:1 speed:1.15
+```
+
+### Music Editing
+```sh
+# Keep everything but boost quiet parts
+auto-editor song.mp3 -w:0 volume:1.8 -w:1 volume:1.0
+```
+
+### Creative Effects
+```sh
+# Nightcore effect: speed up and pitch up
+auto-editor video.mp4 -w:1 varispeed:1.25
+
+# Slow-mo with deep voice
+auto-editor video.mp4 -w:1 varispeed:0.75
+
+# Fast silent sections with reduced volume
+auto-editor video.mp4 -w:0 speed:6,volume:0.4
+
+# Censor a face/plate: pixelate only a rectangular region
+auto-editor video.mp4 -w:1 confine:400:300:200:80,pixelate:24
+
+# Ramp the censor up, easing into a 48px mosaic
+auto-editor video.mp4 -w:1 pixelate:4..48:ease=inout
+```
+
+## See Also
+- [Complete Actions Reference](/ref/actions)
+- [Audio Normalization](./anorm) - Volume normalization options
+
+<a class="next" href="./range-syntax">Next: Range Syntax</a>
