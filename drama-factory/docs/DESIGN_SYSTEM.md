@@ -301,3 +301,24 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 关键点：图标规则必须以 svg 为目标——lucide 运行时把 i 换成 svg 并拷贝属性，i 选择器在渲染后失效（沿用 v2 的 .error-box svg 前例；探针实证图标已换成 svg）。
 - 截图：docs/screenshots/runs-design-v3.png（隔离构建真实服务 + 复制库；向导展开态，图标与计划区计算样式实测，见 CHANGELOG）。
 - 已知保留：display:none 显隐切换、数据驱动项、toast z-index 均不在本轮范围；统计条“总运行数 2”与列表 3 条的既有口径缺口非本层所致，不扩范围。
+
+## 44. 运行详情页设计层 v3（2026-10-26，5.3 路，文档补推）
+- 文件：static/run-detail-design-v3.css（模型稿 2 条规则原文入仓；run-detail.html 在 v2 之后引用 v3；HTML 机械迁移：页头容器删行内 flex:1/min-width:0 改挂 rund-head-main 类、#runMeta 删行内 margin-top:6px 改挂 rund-meta 类；至此 run-detail.html 行内样式清零）。
+- 视觉逻辑：页头主区 flex 1、不收缩；元信息上边距 6px。原值逐字保留。
+- 截图：docs/screenshots/rundetail-design-v3.png（隔离构建真实服务 + 复制库；计算样式实测 flexGrow 1 / minWidth 0 / marginTop 6px，零 console 错误）。
+- 已知保留：本层不改布局。
+## 45. Agent 机队页密钥行设计层 v3（2026-10-26，5.3 路，文档补推）
+- 文件：static/agents-design-v3.css（模型稿 1 条规则原文入仓；agents.html 在 v2 之后引用 v3；供应商密钥行 div 改挂 pv-key-row 类）。
+- 视觉逻辑：密钥行 flex 横排、间距 8px。原值逐字保留。
+- 截图：docs/screenshots/agents-design-v3.png（片段内联：密钥行位于供应商编辑弹窗内，非整弹窗实测；flex/gap 8px 计算样式实测，零 console 错误）。
+- 已知保留：本层不改布局。
+## 46. 账号页设计层 v2（2026-10-26，5.3 路，文档补推）
+- 文件：static/account-design-v2.css（模型稿 1 条规则原文入仓；account.html 在 v1 之后引用 v2；仅语言标题 div 挂 sec-name-lang 类，其他 sec-name span 未动）。
+- 视觉逻辑：语言标题上边距 12px。原值逐字保留。
+- 截图：docs/screenshots/account-design-v2.png（隔离构建真实服务 + 复制库；marginTop 12px 计算样式实测，零 console 错误）。
+- 已知保留：本层不改布局。
+## 47. 提示词库页设计层 v2（2026-10-26，5.3 路，文档补推）
+- 文件：static/prompts-design-v2.css（模型稿 1 条规则原文入仓；prompts.html 在 v1 之后引用 v2；详情 pre 删行内 white-space:pre-wrap 改挂 prompt-detail-pre 类）。
+- 视觉逻辑：提示词详情全文预格式化换行。原值逐字保留。
+- 截图：docs/screenshots/prompts-design-v2.png（隔离构建真实服务 + 复制库；计算样式实测 white-space pre-wrap、行内 style 为空、真实卡片 20 张、零 console 错误）。
+- 已知保留：toast z-index 1080 为各页通用显隐容器，不在本轮范围；同通 runs 2 条规则因 Flash 路同期在途未入仓。

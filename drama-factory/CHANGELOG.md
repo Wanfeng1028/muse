@@ -5,6 +5,23 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：提示词库页设计层 v2）
+- 新增 static/prompts-design-v2.css（模型稿 1 条规则原文入仓，prompts.html 在 v1 之后引用 1 行）：关闭详情 pre 唯一一处行内 white-space:pre-wrap，改挂 prompt-detail-pre 类。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r26_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、ProxyCommand 齐全、未读任何现成调用脚本）产出：同通 3 条规则，runs 2 条因 Flash 路同期在途未入仓；首通响应非 JSON 作废，补 SSE 解析后重发 1 通入仓（API prompt 23949 / completion 775 / total 24724），正文即入仓，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
+- 验收：新增 PromptsDesignV2Test 3/3，设计层合跑 147/147 全绿（隔离构建，HEAD + 本轮 3 文件），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18211 端口，复制 H2 库）实测 prompts.html 与 v2 css 均 200、served 内容与文件对上、旧行内 0 处；详情 pre 计算样式实测 white-space pre-wrap、行内 style 为空、真实卡片 20 张、零 console 错误；视口截图亲眼核对排布正常无错位。截图存 docs/screenshots/prompts-design-v2.png。验收后服务按端口反查的真实 java PID 停服、18211 复查已关、隔离构建与复制库已删。
+### Added（5.3 路 2026-10-26：账号页设计层 v2，文档补推）
+- 新增 static/account-design-v2.css（模型稿 1 条规则原文入仓，account.html 在 v1 之后引用 1 行）：仅语言标题 div 挂 sec-name-lang 类，margin-top:12px，其他 sec-name span 未动。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r25_call.py、令牌经 SSH 现取不落盘）产出：首通 2 规则合一提示词出 0 字正文作废，未原样重发；拆两通小稿各 1 条规则均出正文（account：API prompt 23785 / completion 356 / total 24141；reasoning_tokens 0），只取首条原文、其余编造选择器全部丢弃。
+- 验收：新增 AccountDesignV2Test 3/3，设计层合跑 138/138 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18210 端口，复制 H2 库）实测 account.html 与 v2 css 均 200、served 内容与文件对上；语言标题 marginTop 12px 计算样式实测、零 console 错误；整页截图亲眼核对。截图存 docs/screenshots/account-design-v2.png。服务按端口反查真实 java PID 40266 停服、18210 已关、隔离构建与复制库已删。
+### Added（5.3 路 2026-10-26：Agent 机队页密钥行设计层 v3，文档补推）
+- 新增 static/agents-design-v3.css（模型稿 1 条规则原文入仓，agents.html 在 v2 之后引用 1 行）：供应商密钥行 div 改挂 pv-key-row 类，display:flex/gap:8px。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r25_call.py、令牌经 SSH 现取不落盘）产出：拆通小稿 1 通（API prompt 23788 / completion 387 / total 24175；reasoning_tokens 0），只取首条原文、其余编造选择器全部丢弃。
+- 验收：新增 AgentsDesignV3Test 3/3，设计层合跑 138/138 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18210 端口，复制 H2 库）实测 agents.html 与 v3 css 均 200、served 内容与文件对上；密钥行片段截图亲眼核对（密钥行位于供应商编辑弹窗内，非整弹窗实测）、flex/gap 8px 计算样式实测、零 console 错误。截图存 docs/screenshots/agents-design-v3.png。服务按端口反查真实 java PID 40266 停服、18210 已关、隔离构建与复制库已删。
+### Added（5.3 路 2026-10-26：运行详情页设计层 v3，文档补推）
+- 新增 static/run-detail-design-v3.css（模型稿 2 条规则原文入仓，run-detail.html 在 v2 之后引用 1 行）：页头容器删行内 flex:1/min-width:0 改挂 rund-head-main 类、#runMeta 删行内 margin-top:6px 改挂 rund-meta 类；至此 run-detail.html 行内样式清零。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r25_call.py、令牌经 SSH 现取不落盘）1 通入仓（API prompt 23902 / completion 308 / total 24210；reasoning_tokens 0），零编排修正。
+- 验收：新增 RunDetailDesignV3Test 3/3，设计层合跑 132/132 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18209 端口，复制 H2 库）实测 run-detail.html 与 v3 css 均 200、served 内容与文件逐字一致；计算样式实测 flexGrow 1 / minWidth 0 / marginTop 6px、零 console 错误；视口截图亲眼核对。截图存 docs/screenshots/rundetail-design-v3.png。服务按端口反查真实 java PID 38865 停服、18209 已关、隔离构建与复制库已删。
+
 ### Added（Flash 路 2026-10-26：运行页设计层 v3）
 - 新增 static/runs-design-v3.css（模型稿 2 条规则原文入仓）：关闭运行页向导标题图标行内样式（width:15px;height:15px;vertical-align:-2px）与计划区行内样式（margin-top:16px），分别改由 #wizard .card-title svg 规则与 #planArea 规则接管；runs.html 在 v2 之后引用 v3。图标规则以 svg 为目标（lucide 会把 i 换成 svg 并拷贝属性，i 选择器渲染后失效；探针实证图标已换成 svg）。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/flash_call_n9.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、ProxyCommand 齐全、未读任何现成调用脚本）产出：CSS+测试合一通 max_tokens 8000 出 reasoning-only 空响应作废（completion 8000 触顶，reasoning 约 29848 字符）；拆两通各 max_tokens 8000 后 CSS 1 通（API prompt 23731 / completion 81 / total 23812）、测试 1 通（API prompt 23756 / completion 6717 / total 30473），正文即入仓，零编排修正（CSS 首行注释按仓内惯例去掉，不改规则）。括号 2/2 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
