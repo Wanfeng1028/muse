@@ -163,14 +163,12 @@
       wrap.className = 'd-flex justify-content-end mb-2';
       const bubble = document.createElement('div');
       bubble.className = 'chat-bubble-user p-2';
-      bubble.style.maxWidth = '75%';
       bubble.innerHTML = renderMarkdown(text);
       wrap.appendChild(bubble);
     } else if (role === 'assistant') {
       wrap.className = 'd-flex justify-content-start mb-2';
       const bubble = document.createElement('div');
       bubble.className = 'chat-msg-assistant p-2';
-      bubble.style.maxWidth = '75%';
       bubble.innerHTML = renderMarkdown(text);
       wrap.appendChild(bubble);
     } else {

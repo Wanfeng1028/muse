@@ -322,3 +322,14 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：提示词详情全文预格式化换行。原值逐字保留。
 - 截图：docs/screenshots/prompts-design-v2.png（隔离构建真实服务 + 复制库；计算样式实测 white-space pre-wrap、行内 style 为空、真实卡片 20 张、零 console 错误）。
 - 已知保留：toast z-index 1080 为各页通用显隐容器，不在本轮范围；同通 runs 2 条规则因 Flash 路同期在途未入仓。
+
+## 48. AI 对话页设计层 v3（2026-10-26，5.3 路）
+- 文件：static/chat-design-v3.css（模型稿 1 条规则原文入仓；chat.html 在 v2 之后引用 v3；JS 机械迁移：addMessage 内用户/助手气泡删 maxWidth 75% 赋值，改由规则接管）。
+- 视觉逻辑：两类气泡最大宽度均为容器 75%。原值逐字保留。
+- 截图：docs/screenshots/chat-design-v3.png（隔离构建真实服务 + 复制库；两气泡计算样式实测 max-width 75%，零 console 错误）。
+- 已知保留：本层不改布局；气泡内容渲染逻辑未动。
+## 49. 运行详情页设计层 v4（2026-10-26，5.3 路）
+- 文件：static/run-detail-design-v4.css（模型稿 1 条规则原文入仓；run-detail.html 在 v3 之后引用 v4；JS 机械迁移：加载失败分支 error-box 图标删行内 style，图标元素保留）。
+- 视觉逻辑：加载失败图标 15px、基线 -2px；规则以 svg 为目标（lucide 运行时换标并拷贝属性，i 选择器渲染后失效）。
+- 截图：docs/screenshots/rundetail-design-v4.png（隔离构建真实服务 + 复制库；探针计算样式实测 15px/15px/-2px，零 console 错误；无运行 id 空态）。
+- 已知保留：本层不改布局；入场动画 opacity/transform 为 JS 行为，不宜硬迁。

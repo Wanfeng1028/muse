@@ -1,0 +1,4 @@
+.chat-bubble-user,
+.chat-msg-assistant {
+  max-width: 75%;
+}

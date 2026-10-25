@@ -5,6 +5,15 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：运行详情页设计层 v4）
+- 新增 static/run-detail-design-v4.css（模型稿 1 条规则原文入仓，run-detail.html 在 v3 之后引用 1 行）：加载失败分支注入的 error-box 图标行内样式改由 #detailBody .error-box svg 规则接管（svg 目标：lucide 运行时把 i 换成 svg 并拷贝属性），run-detail.js 删图标行内 style、图标元素保留。
+- 模型稿与对话页同 1 通产出 2 条规则（GLM-5.3，BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r26_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile、显式 -i、ProxyCommand 齐全、未读任何现成调用脚本；API prompt 23971 / completion 208 / total 24179），正文即入仓，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
+- 验收：新增 RunDetailDesignV4Test 3/3，设计层合跑 156/156 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18212 端口，复制 H2 库）实测 run-detail.html 与 v4 css 均 200、served 内容与文件对上；错误图标探针计算样式实测 15px/15px/-2px、零 console 错误；视口截图亲眼核对（无运行 id 空态，排布正常无错位）。截图存 docs/screenshots/rundetail-design-v4.png。验收后服务按端口反查的真实 java PID 停服、18212 复查已关、隔离构建与复制库已删。
+### Added（5.3 路 2026-10-26：AI 对话页设计层 v3）
+- 新增 static/chat-design-v3.css（模型稿 1 条规则原文入仓，chat.html 在 v2 之后引用 1 行）：用户气泡 chat-bubble-user 与助手气泡 chat-msg-assistant 的 JS maxWidth 75% 改由规则接管，chat.js 删 2 处赋值。
+- 模型稿与运行详情页同 1 通产出 2 条规则（GLM-5.3，BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r26_call.py、令牌经 SSH 现取不落盘；API prompt 23971 / completion 208 / total 24179），正文即入仓，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
+- 验收：新增 ChatDesignV3Test 3/3，设计层合跑 156/156 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18212 端口，复制 H2 库）实测 chat.html 与 v3 css 均 200、served 内容与文件对上；两气泡计算样式实测 max-width 均为 75%、零 console 错误；视口截图亲眼核对（真实项目都市奇缘/剧集重逢，排布正常无错位）。截图存 docs/screenshots/chat-design-v3.png。验收后服务按端口反查的真实 java PID 停服、18212 复查已关、隔离构建与复制库已删。
+
 ### Added（5.3 路 2026-10-26：提示词库页设计层 v2）
 - 新增 static/prompts-design-v2.css（模型稿 1 条规则原文入仓，prompts.html 在 v1 之后引用 1 行）：关闭详情 pre 唯一一处行内 white-space:pre-wrap，改挂 prompt-detail-pre 类。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r26_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、ProxyCommand 齐全、未读任何现成调用脚本）产出：同通 3 条规则，runs 2 条因 Flash 路同期在途未入仓；首通响应非 JSON 作废，补 SSE 解析后重发 1 通入仓（API prompt 23949 / completion 775 / total 24724），正文即入仓，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。

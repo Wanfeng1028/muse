@@ -480,7 +480,7 @@
       renderDetail(data);
       return data;
     } catch (e) {
-      $('#detailBody').innerHTML = '<div class="error-box"><i data-lucide="alert-triangle" style="width:15px;height:15px;vertical-align:-2px"></i> ' + esc(_t('rund.loadDetailFailedDetail', '加载运行详情失败：')) + esc(e.message) + '</div>';
+      $('#detailBody').innerHTML = '<div class="error-box"><i data-lucide="alert-triangle"></i> ' + esc(_t('rund.loadDetailFailedDetail', '加载运行详情失败：')) + esc(e.message) + '</div>';
       if (window.lucide) lucide.createIcons();
       toast(_t('rund.loadDetailFailed', '加载运行详情失败'), 'err');
       return null;
