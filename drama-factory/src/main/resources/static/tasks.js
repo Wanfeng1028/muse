@@ -309,49 +309,33 @@
 
     tasks.forEach((task) => {
       const row = document.createElement("div");
-      row.className = "py-3";
-      row.style.borderBottom = "1px solid var(--surface)";
+      row.className = "py-3 task-row";
       row.dataset.status = task.status;
 
       // 第一行：状态 + 任务名 + 进度 + 操作
       const top = document.createElement("div");
-      top.className = "d-flex align-items-center";
-      top.style.gap = "12px";
+      top.className = "d-flex align-items-center task-top";
 
       const left = document.createElement("div");
-      left.className = "d-flex align-items-center";
-      left.style.gap = "8px";
-      left.style.minWidth = "0";
-      left.style.flex = "1 1 auto";
+      left.className = "d-flex align-items-center task-left";
 
       const statusWrap = document.createElement("span");
+      statusWrap.className = "task-status";
       statusWrap.innerHTML = statusDotHtml(task.status);
-      statusWrap.style.fontSize = "12px";
-      statusWrap.style.color = "var(--text-2)";
       left.appendChild(statusWrap);
 
       const name = document.createElement("span");
-      name.style.fontSize = "14px";
-      name.style.color = "var(--text)";
-      name.style.whiteSpace = "nowrap";
-      name.style.overflow = "hidden";
-      name.style.textOverflow = "ellipsis";
+      name.className = "task-name";
       name.textContent = _t('task.taskNoPrefix', '任务 #') + task.id + " · " + findShotLabel(task.shotId);
       left.appendChild(name);
 
       top.appendChild(left);
 
       const progressWrap = document.createElement("div");
-      progressWrap.className = "d-flex align-items-center";
-      progressWrap.style.gap = "8px";
-      progressWrap.style.flex = "0 0 auto";
+      progressWrap.className = "d-flex align-items-center task-progress-wrap";
 
       const progress = document.createElement("div");
-      progress.className = "progress";
-      progress.style.width = "120px";
-      progress.style.height = "4px";
-      progress.style.borderRadius = "2px";
-      progress.style.overflow = "hidden";
+      progress.className = "progress task-progress";
 
       const bar = document.createElement("div");
       bar.className = statusProgressClass(task.status);
@@ -364,11 +348,7 @@
       progressWrap.appendChild(progress);
 
       const pct = document.createElement("span");
-      pct.style.fontSize = "12px";
-      pct.style.fontFamily = "ui-monospace, SFMono-Regular, Menlo, Consolas, monospace";
-      pct.style.color = "var(--text-2)";
-      pct.style.minWidth = "40px";
-      pct.style.textAlign = "right";
+      pct.className = "task-pct";
       pct.textContent = statusProgressPercent(task.status);
       progressWrap.appendChild(pct);
 
@@ -379,21 +359,14 @@
         link.href = "/media/videos/" + task.id;
         link.target = "_blank";
         link.rel = "noopener";
+        link.className = "task-link";
         link.textContent = _t('task.preview', '预览');
-        link.style.fontSize = "13px";
-        link.style.color = "var(--accent)";
-        link.style.textDecoration = "none";
-        link.style.flex = "0 0 auto";
         top.appendChild(link);
       } else if (task.status === "FAILED") {
         const link = document.createElement("a");
         link.href = "javascript:void(0)";
+        link.className = "task-link task-retry";
         link.textContent = _t('task.retry', '重试');
-        link.style.fontSize = "13px";
-        link.style.color = "var(--accent)";
-        link.style.textDecoration = "none";
-        link.style.cursor = "pointer";
-        link.style.flex = "0 0 auto";
         link.addEventListener("click", (e) => {
           e.preventDefault();
           retryTask(task.id);
@@ -405,9 +378,7 @@
 
       // 第二行：辅助信息
       const meta = document.createElement("div");
-      meta.className = "mt-1";
-      meta.style.fontSize = "12px";
-      meta.style.color = "var(--text-3)";
+      meta.className = "mt-1 task-meta";
 
       const providerText = (task.provider || "mock");
       const attemptsText = _t('task.attemptsPrefix', '尝试 ') + (task.attempts != null ? task.attempts : 1) + _t('task.attemptsSuffix', ' 次');
@@ -415,8 +386,7 @@
 
       if (task.errorMessage) {
         const err = document.createElement("span");
-        err.style.color = "var(--danger, #b0453f)";
-        err.style.marginLeft = "6px";
+        err.className = "task-error";
         err.textContent = " · " + task.errorMessage;
         meta.appendChild(err);
       }

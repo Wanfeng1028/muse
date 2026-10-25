@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：任务队列页设计层 v2）
+- 新增 static/tasks-design-v2.css（模型稿 12 条规则原文入仓，分 4 通、每通 3 条规则，tasks.html 在 v1 之后引用 1 行）：关闭 v1 已知保留——任务行底线、任务名与元数据字号颜色、进度条宽高、百分比字号颜色改由 CSS 接管，不再由行内样式写死。JS 机械迁移（编排落仓，非模型稿）：任务行渲染的行内 style 赋值全部改挂 task-row/task-top/task-left/task-status/task-name/task-progress-wrap/task-progress/task-pct/task-link/task-retry/task-meta/task-error 类；动态进度条宽度（数据驱动）与显隐切换仍留行内；v1 已有的进度条底色与圆角不重复写；百分比等宽字体由原字体栈改用 var(--mono) token；错误行颜色 var(--danger, #b0453f) 为原值逐字保留。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r19_20261026_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）4 通产出：API prompt 合计 96250 / completion 合计 476 / total 96726，reasoning_tokens 0，正文即入仓 12 条规则，零编排修正。括号 12/12 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，选择器均以 #taskGrid 开头且真实存在于本页 DOM。
+- 验收：新增 TasksDesignV2Test 3 例 + 设计层合跑 81/81 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18204 端口，复制 H2 库，开放模式）+ 视口截图亲眼核对：项目/剧集/分镜下拉与 /api/projects、/api/episodes、/api/shots 对上（都市奇缘/第 1 集/镜号 1·中景）；任务行 1 条（任务 #1 已完成 100%）与 /api/shots/1/video-tasks 对上；计算样式实证页头 20/700、行底线 1px solid（浅色主题下计算色 rgb(255,255,255)，即 --surface 解析值）、任务名 14px、百分比 12px 等宽（样式表扫描证实唯一生效规则即 v2 的 var(--mono)，浅色主题下解析为 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace）、辅助信息 12px、进度条 120×4px、操作链接 13px 墨色（--accent 浅色值 #111111）、零 console 错误；截图存 docs/screenshots/tasks-design-v2.png。验收后服务按真实 java PID 停干净、18204 端口已关、隔离构建与复制库已删。
+- 插曲（均据实记录）：①首轮合跑 TasksDesignV2Test 1 例失败：编排漏给 statusWrap 加 task-status 类（只删了行内样式），补类后单测与全量合跑均绿；②百分比计算字体栈初看与 --mono 深色默认值不符，经样式表扫描证实唯一生效规则即 v2 的 var(--mono)，浅色主题解析值即所见栈，非回归；③打包/测试撞车时走隔离构建，不要碰仓库 target/。
+- 已知保留：本层不改布局；进度条动态宽度仍由行内 style 写（数据驱动）；本轮未动 canvas、deconstruct、chat、second-brain、docseek、linkshort、botstalk 在跑工人的未提交文件。
+
 ### Fixed（Flash 路 2026-10-26：Agent 机队页副标题计数纠错）
 - 副标题由“管理 5 个专用 Agent 的提示词与模型”改为“管理 7 个专用 Agent 的提示词与模型”，同步改 agents.js 的 i18n 文案（中文同款、英文由 the 5 dedicated Agents 改为 the 7 dedicated Agents）；关闭 DESIGN_SYSTEM §19 已知保留的“页内文案与实际数据不一致”问题。计数实证：后端 AgentType 枚举共 7 项（编剧/分镜/视频生成/剪辑/质检/作词/作曲），与 v1 截图时的 7 条数据一致，5 是旧数。
 - 新增 AgentsSubtitleCountTest 1 例：断言 agents.html 副标题数字等于 AgentType.values().length，且 agents.js 中英文案同数——枚举再增减时测试即报错，不再靠肉眼对数。

@@ -213,6 +213,12 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 截图：docs/screenshots/skills-design-v2.png（隔离构建真实服务 18203 端口 + 复制库真实技能数据：市场 4 卡、已安装 2 行；视口截图）。
 - 已知保留：本层不改布局；详情弹窗模板 pre 的边线仍由 skills.js 另一处行内 !important 写死，不在本轮范围；验收服务按真实 java PID 停干净、18203 端口已关、隔离构建与复制库已删；本轮未动 canvas、deconstruct、chat、second-brain、docseek、linkshort、botstalk 在跑工人的未提交文件。
 
+## 31. 任务队列页设计层 v2（2026-10-26，5.3 路）
+- 文件：static/tasks-design-v2.css（12 条规则，只覆盖，tasks.html 在 v1 之后引用 1 行；JS 机械迁移：任务行渲染的行内 style 赋值全部改挂 task-row/task-top/task-left/task-status/task-name/task-progress-wrap/task-progress/task-pct/task-link/task-retry/task-meta/task-error 类，动态进度条宽度与显隐切换仍留行内；不改 app.css 与布局）。
+- 视觉逻辑：任务台账续篇（任务行是台账明细行：行间 1px solid var(--surface) 底线、任务名 14px 截断、百分比 12px 等宽右对齐、进度条 120×4px、辅助信息 12px 次弱文字、操作链接 13px 墨色）。
+- 截图：docs/screenshots/tasks-design-v2.png（隔离构建真实服务 18204 端口 + 复制库真实任务数据：都市奇缘/第 1 集/镜号 1·中景/任务 #1 已完成 100%；视口截图）。
+- 已知保留：本层不改布局；进度条动态宽度仍由行内 style 写（数据驱动，非样式）；验收服务按真实 java PID 停干净、18204 端口已关、隔离构建与复制库已删；本轮未动 canvas、deconstruct、chat、second-brain、docseek、linkshort、botstalk 在跑工人的未提交文件。
+
 ## 29. 分镜画布页设计层 v1（2026-10-26，Flash 路）
 - 文件：static/canvas-design-v1.css（6 条规则，只覆盖，canvas.html 在内联 style 块之后引用 1 行；不改 app.css、内联 style 块与任何 JS；本页不引 harness.css/auth.css，token 全部取自 app.css）。
 - 视觉逻辑：画布台账外框（只统一尚未统一的外框，内联已覆盖的组件一律不碰；页头 h1 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、卡片内副文案 13px 次文字、页头操作按钮 13px/600 8px 圆角、工具栏下拉框 14px）。

@@ -1,0 +1,66 @@
+#taskGrid .task-row {
+  border-bottom: 1px solid var(--surface);
+}
+
+#taskGrid .task-top {
+  gap: 12px;
+}
+
+#taskGrid .task-left {
+  gap: 8px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+#taskGrid .task-status {
+  font-size: 12px;
+  color: var(--text-2);
+}
+
+#taskGrid .task-name {
+  font-size: 14px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#taskGrid .task-progress-wrap {
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+#taskGrid .task-progress {
+  width: 120px;
+  height: 4px;
+  overflow: hidden;
+}
+
+#taskGrid .task-pct {
+  font-size: 12px;
+  font-family: var(--mono);
+  color: var(--text-2);
+  min-width: 40px;
+  text-align: right;
+}
+
+#taskGrid .task-link {
+  font-size: 13px;
+  color: var(--accent);
+  text-decoration: none;
+  flex: 0 0 auto;
+}
+
+#taskGrid .task-retry {
+  cursor: pointer;
+}
+
+#taskGrid .task-meta {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+#taskGrid .task-error {
+  color: var(--danger, #b0453f);
+  margin-left: 6px;
+}
