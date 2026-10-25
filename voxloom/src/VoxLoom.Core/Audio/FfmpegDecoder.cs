@@ -114,13 +114,172 @@ public static class FfmpegDecoder
                 "也可用环境变量 VOXLOOM_FFMPEG_PATH 指定路径。");
         }
 
+        return Decode(path, ffmpegPath, 0);
+    }
+
+    /// <summary>
+    /// 用 ffmpeg 解码指定音频文件，可选第几条音频轨（从 0 起，默认 0）。
+    /// </summary>
+    /// <param name="path">音频文件路径。</param>
+    /// <param name="ffmpegPath">显式指定的 ffmpeg 路径，可为 null。</param>
+    /// <param name="audioTrackIndex">音频轨顺序号，从 0 起。</param>
+    /// <returns>解码后的 AudioClip。</returns>
+    /// <exception cref="ArgumentNullException">path 为 null 时抛出。</exception>
+    /// <exception cref="AudioFormatException">文件不存在、缺少 ffmpeg、轨号越界、解析或解码失败时抛出。</exception>
+    public static AudioClip Decode(string path, string? ffmpegPath, int audioTrackIndex)
+    {
+        if (path is null)
+        {
+            throw new ArgumentNullException(nameof(path));
+        }
+
+        if (!File.Exists(path))
+        {
+            throw new AudioFormatException($"找不到音频文件：{path}");
+        }
+
+        if (!BitConverter.IsLittleEndian)
+        {
+            throw new AudioFormatException("当前平台不是小端字节序，暂不支持解码此格式。");
+        }
+
+        if (!IsAvailable(ffmpegPath))
+        {
+            throw new AudioFormatException(
+                "解码此格式需要 ffmpeg，但没找到。请安装：Ubuntu/Debian 执行 sudo apt install ffmpeg；" +
+                "macOS 执行 brew install ffmpeg；或到 ffmpeg.org 下载，并确认 ffmpeg 在 PATH 中，" +
+                "也可用环境变量 VOXLOOM_FFMPEG_PATH 指定路径。");
+        }
+
+        if (audioTrackIndex < 0)
+        {
+            throw new AudioFormatException($"音频轨索引非法：{audioTrackIndex}（从 0 起）。");
+        }
+
+        var tracks = ListAudioTracks(path, ffmpegPath);
+        if (audioTrackIndex >= tracks.Count)
+        {
+            throw new AudioFormatException(
+                $"音频轨索引超出范围：{audioTrackIndex}，文件共 {tracks.Count} 条音频轨。");
+        }
+
         var resolvedFfmpeg = ResolveFfmpegPath(ffmpegPath);
         var ffprobePath = DeriveFfprobePath(resolvedFfmpeg);
 
-        var (sampleRate, channels) = ProbeAudioInfo(ffprobePath, path);
+        var (sampleRate, channels) = ProbeAudioInfo(ffprobePath, path, audioTrackIndex);
 
-        var samples = DecodePcm(resolvedFfmpeg, path, sampleRate, channels);
+        var samples = DecodePcm(resolvedFfmpeg, path, sampleRate, channels, audioTrackIndex);
         return new AudioClip(sampleRate, channels, samples);
+    }
+
+    /// <summary>
+    /// 列出文件中的全部音频轨（ffprobe -select_streams a，顺序即 AudioIndex）。
+    /// </summary>
+    /// <param name="path">音频文件路径。</param>
+    /// <param name="ffmpegPath">显式指定的 ffmpeg 路径，可为 null。</param>
+    /// <returns>音频轨列表，顺序即 AudioIndex。</returns>
+    /// <exception cref="ArgumentNullException">path 为 null 时抛出。</exception>
+    /// <exception cref="AudioFormatException">文件不存在、ffprobe 调用失败或无音频轨时抛出。</exception>
+    public static List<AudioTrack> ListAudioTracks(string path, string? ffmpegPath = null)
+    {
+        if (path is null)
+        {
+            throw new ArgumentNullException(nameof(path));
+        }
+
+        if (!File.Exists(path))
+        {
+            throw new AudioFormatException($"找不到音频文件：{path}");
+        }
+
+        var ffprobePath = DeriveFfprobePath(ResolveFfmpegPath(ffmpegPath));
+
+        var psi = new ProcessStartInfo
+        {
+            FileName = ffprobePath,
+            UseShellExecute = false,
+            RedirectStandardOutput = true,
+            RedirectStandardError = true,
+            CreateNoWindow = true
+        };
+        psi.ArgumentList.Add("-v");
+        psi.ArgumentList.Add("error");
+        psi.ArgumentList.Add("-select_streams");
+        psi.ArgumentList.Add("a");
+        psi.ArgumentList.Add("-show_entries");
+        psi.ArgumentList.Add("stream=index,codec_name,sample_rate,channels");
+        psi.ArgumentList.Add("-of");
+        psi.ArgumentList.Add("csv=p=0");
+        psi.ArgumentList.Add(path);
+
+        string stdout;
+        string stderr;
+        int exitCode;
+        try
+        {
+            using var process = Process.Start(psi)
+                ?? throw new AudioFormatException("无法启动 ffprobe 进程。");
+
+            stdout = process.StandardOutput.ReadToEnd();
+            stderr = process.StandardError.ReadToEnd();
+
+            if (!process.WaitForExit(FfprobeTimeoutMs))
+            {
+                try { process.Kill(entireProcessTree: true); } catch { }
+                throw new AudioFormatException("调用 ffprobe 超时（30 秒），已终止进程。");
+            }
+
+            exitCode = process.ExitCode;
+        }
+        catch (AudioFormatException)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            throw new AudioFormatException($"调用 ffprobe 失败：{ex.Message}", ex);
+        }
+
+        if (exitCode != 0)
+        {
+            var tail = Tail(stderr, StderrTailLength);
+            throw new AudioFormatException($"ffprobe 列出音频轨失败（退出码 {exitCode}）：{tail}");
+        }
+
+        var tracks = new List<AudioTrack>();
+        foreach (var rawLine in stdout.Split('\n', '\r'))
+        {
+            var line = rawLine.Trim();
+            if (string.IsNullOrEmpty(line))
+            {
+                continue;
+            }
+
+            // 期望输出形如：0,aac,44100,1（流号,编码,采样率,声道数）
+            var parts = line.Split(',');
+            if (parts.Length < 4
+                || !int.TryParse(parts[0].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var streamIndex)
+                || !int.TryParse(parts[2].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var sampleRate)
+                || !int.TryParse(parts[3].Trim(), NumberStyles.Integer, CultureInfo.InvariantCulture, out var channels))
+            {
+                throw new AudioFormatException($"无法从 ffprobe 输出解析音频轨：{line}");
+            }
+
+            var codec = parts[1].Trim();
+            if (string.IsNullOrEmpty(codec) || sampleRate <= 0 || channels <= 0)
+            {
+                throw new AudioFormatException($"无法从 ffprobe 输出解析音频轨：{line}");
+            }
+
+            tracks.Add(new AudioTrack(tracks.Count, streamIndex, codec, sampleRate, channels));
+        }
+
+        if (tracks.Count == 0)
+        {
+            throw new AudioFormatException($"文件没有音频轨：{path}");
+        }
+
+        return tracks;
     }
 
     private static string DeriveFfprobePath(string ffmpegPath)
@@ -152,7 +311,7 @@ public static class FfmpegDecoder
         return "ffprobe";
     }
 
-    private static (int SampleRate, int Channels) ProbeAudioInfo(string ffprobePath, string inputPath)
+    private static (int SampleRate, int Channels) ProbeAudioInfo(string ffprobePath, string inputPath, int audioTrackIndex)
     {
         var psi = new ProcessStartInfo
         {
@@ -165,7 +324,7 @@ public static class FfmpegDecoder
         psi.ArgumentList.Add("-v");
         psi.ArgumentList.Add("error");
         psi.ArgumentList.Add("-select_streams");
-        psi.ArgumentList.Add("a:0");
+        psi.ArgumentList.Add("a:" + audioTrackIndex.ToString(CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("-show_entries");
         psi.ArgumentList.Add("stream=sample_rate,channels");
         psi.ArgumentList.Add("-of");
@@ -231,7 +390,7 @@ public static class FfmpegDecoder
         return (sampleRate, channels);
     }
 
-    private static float[] DecodePcm(string ffmpegPath, string inputPath, int sampleRate, int channels)
+    private static float[] DecodePcm(string ffmpegPath, string inputPath, int sampleRate, int channels, int audioTrackIndex)
     {
         var psi = new ProcessStartInfo
         {
@@ -246,7 +405,7 @@ public static class FfmpegDecoder
         psi.ArgumentList.Add("-i");
         psi.ArgumentList.Add(inputPath);
         psi.ArgumentList.Add("-map");
-        psi.ArgumentList.Add("0:a:0");
+        psi.ArgumentList.Add("0:a:" + audioTrackIndex.ToString(CultureInfo.InvariantCulture));
         psi.ArgumentList.Add("-f");
         psi.ArgumentList.Add("f32le");
         psi.ArgumentList.Add("-acodec");

@@ -81,19 +81,35 @@ public static class AudioImporter
     /// <param name="ffmpegPath">显式指定的 ffmpeg 路径，可为 null。</param>
     /// <returns>读取到的 AudioClip。</returns>
     public static AudioClip Import(string path, string? ffmpegPath = null)
-        => VoxMetrics.Timed("audio.import", () => ImportCore(path, ffmpegPath));
+        => VoxMetrics.Timed("audio.import", () => ImportCore(path, ffmpegPath, 0));
 
-    private static AudioClip ImportCore(string path, string? ffmpegPath)
+    /// <summary>
+    /// 识别格式并读取为 AudioClip，可选第几条音频轨（从 0 起，默认 0）。
+    /// WAV 只有一条音轨，轨号非 0 时抛 AudioFormatException。
+    /// </summary>
+    /// <param name="path">音频文件路径。</param>
+    /// <param name="ffmpegPath">显式指定的 ffmpeg 路径，可为 null。</param>
+    /// <param name="audioTrackIndex">音频轨顺序号，从 0 起。</param>
+    /// <returns>读取到的 AudioClip。</returns>
+    public static AudioClip Import(string path, string? ffmpegPath, int audioTrackIndex)
+        => VoxMetrics.Timed("audio.import", () => ImportCore(path, ffmpegPath, audioTrackIndex));
+
+    private static AudioClip ImportCore(string path, string? ffmpegPath, int audioTrackIndex)
     {
         var format = DetectFormat(path);
         switch (format)
         {
             case AudioFormat.Wav:
+                if (audioTrackIndex != 0)
+                {
+                    throw new AudioFormatException($"WAV 文件只有一条音频轨，轨号 {audioTrackIndex} 超出范围。");
+                }
+
                 return WavReader.Read(path);
             case AudioFormat.Mp3:
             case AudioFormat.Flac:
             case AudioFormat.M4a:
-                return FfmpegDecoder.Decode(path, ffmpegPath);
+                return FfmpegDecoder.Decode(path, ffmpegPath, audioTrackIndex);
             default:
                 throw new AudioFormatException($"不支持的音频格式：{Path.GetFileName(path)}（仅支持 WAV/MP3/FLAC/M4A）");
         }

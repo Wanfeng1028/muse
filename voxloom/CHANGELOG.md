@@ -4,6 +4,11 @@
 
 ## [Unreleased]
 
+### Added（多轨选轨，偿还 TD-004 Core 层）
+- 多轨音频列出与选轨：`FfmpegDecoder.ListAudioTracks`（ffprobe `-select_streams a`，AudioIndex 按音频流顺序从 0 编号，StreamIndex 为 ffprobe 流号）+ `Decode(path, ffmpegPath, audioTrackIndex)`（探针与解码分别用 `a:{idx}` / `0:a:{idx}`，越界抛 AudioFormatException 并报轨数）；`AudioImporter.Import(path, ffmpegPath, audioTrackIndex)` 透传，WAV 非 0 轨号抛错。旧双参 Decode 语义不变（等价于轨 0）。
+- 测试：AudioTrackSelectionTests 9 例（单轨列出、空/缺失文件、多轨列出、越界、440Hz/880Hz 双轨过零率区分、Importer 透传、WAV 非 0 轨拒绝），fixture dual-tone.m4a（两条 AAC 单声道轨，440Hz/880Hz 各 2 秒）。
+- 已知保留：桌面 UI 选轨未接线（MainViewModel 仍走默认轨 0），属 TD-004 剩余部分，不虚报为全偿还。
+
 ### Added（多轨口误推荐）
 - 多轨口误自动推荐最自然一版：`Editing/TakeRecommender.cs`（TakeInput/TakeScore/Rank/RecommendBest/Explain）；自然度=语气词密度 + 语气词时长占比×50 + 长停顿密度×2（长停顿阈值 1.5 秒），分数越低越自然；并列按名称排序保证确定性；空输入/空白名称/空转写稿均有参数校验
 - 测试：TakeRecommenderDeepTests 14 例（校验 5/打分排序 6/指标解释 3），SmokeRunner 全绿
