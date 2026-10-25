@@ -1,4 +1,19 @@
 
+## [1.16.0] - 2026-10-25
+
+### 修复
+- 关闭 v1.15.0 已知限制里挂账的 `cargo fmt --check` 存量 diff 之一：tests/mig006_expiry_deep.rs:185 的 users 建表调用改成 rustfmt 输出形式（单行 execute + .expect 换行缩进），只改换行与缩进，标识符、SQL 字符串与语义一字未动；rustfmt --check 该文件已干净。
+- 诚实记录：本轮先走 BotsRouter 大写 GLM-5.3（令牌 id=5，单路串行，max_tokens 4000）要格式稿，模型通被推理吃光、正文 0 字未交（作废，不计用量）；格式最终由 rustfmt 工具链机械输出并经 rustfmt --check 核实，非模型手写。twofa_test.rs 的既存 fmt diff（整文件未过 fmt，全量重排达 844 行）本轮刻意不动，仍为已知限制——全量重排会淹没评审，留待后续单独处理。
+- 版本跟进：Cargo.toml 1.15.0 -> 1.16.0，`/api/health` 的 version 随之跟进（`env!("CARGO_PKG_VERSION")`，无硬编码断言）。
+
+### 测试
+- `cargo test --offline --test mig006_expiry_deep` 11/11 全绿；`rustfmt --edition 2021 --check tests/mig006_expiry_deep.rs` 干净。
+- 全量测试本轮未重跑（v1.15.0 已注明 ws_term_lifecycle_r2 套件内挂起问题未变），不谎称全绿。
+
+### 已知限制
+- `cargo fmt --check` 整包仍有 diff：tests/twofa_test.rs 全文件未过 fmt（既存，v1.13.0 已注明），本轮未动。
+- 全量测试未跑完：ws_term_lifecycle_r2 在套件内挂起（v1.15.0 已注明，单跑全绿），留待后续在空闲时重跑全量确认。
+
 ## [1.15.0] - 2026-10-25
 
 ### 修复

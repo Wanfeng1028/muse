@@ -185,11 +185,8 @@ fn open_legacy_005_db() -> Connection {
     .expect("create legacy shares");
     // 008（TOTP）要 ALTER users 表；真实 005 时代库里 003 已建过 users，
     // 手写 fixture 必须补上，否则 008 会报 no such table: users。
-    conn.execute(
-        "CREATE TABLE users (id INTEGER PRIMARY KEY)",
-        [],
-    )
-    .expect("create legacy users");
+    conn.execute("CREATE TABLE users (id INTEGER PRIMARY KEY)", [])
+        .expect("create legacy users");
     conn
 }
 
