@@ -804,7 +804,7 @@ async function drawGraph() {
       const r = isCur ? 10 : isIso ? 13 : 7;
       ctx.beginPath();
       ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-      ctx.fillStyle = isCur ? "#2b7de9" : "#7aa9e0";
+      ctx.fillStyle = isCur ? "#0f766e" : "#7fb8ae";
       ctx.fill();
       ctx.strokeStyle = "#fff";
       ctx.lineWidth = 2;
@@ -1422,9 +1422,9 @@ function drawTrend(trend) {
     const rh = (h - padB - padT) * ((d.reviewed || 0) / maxV);
     const ah = (h - padB - padT) * ((d.added || 0) / maxV);
     // added 浅色柱在左，reviewed 深色柱在右
-    ctx.fillStyle = "#c9d6e8";
+    ctx.fillStyle = "#e2dccf";
     ctx.fillRect(cx - barW - 2, h - padB - ah, barW, ah);
-    ctx.fillStyle = "#2b7de9";
+    ctx.fillStyle = "#0f766e";
     ctx.fillRect(cx + 2, h - padB - rh, barW, rh);
     // 日期标签 MM-DD
     ctx.fillStyle = "#999";
@@ -1439,11 +1439,11 @@ function drawTrend(trend) {
   });
   // 图例
   ctx.textAlign = "left";
-  ctx.fillStyle = "#2b7de9";
+  ctx.fillStyle = "#0f766e";
   ctx.fillRect(padL, 4, 10, 10);
   ctx.fillStyle = "#666";
   ctx.fillText("复习", padL + 14, 13);
-  ctx.fillStyle = "#c9d6e8";
+  ctx.fillStyle = "#e2dccf";
   ctx.fillRect(padL + 60, 4, 10, 10);
   ctx.fillStyle = "#666";
   ctx.fillText("新增", padL + 74, 13);
@@ -1540,9 +1540,9 @@ function renderHeatmap(data) {
 
   const getColor = (reviewed) => {
     if (reviewed === 0) return "#eef1f4";
-    if (reviewed <= 2) return "#bcd6f5";
-    if (reviewed <= 5) return "#7aa9ec";
-    if (reviewed <= 9) return "#2b7de9";
+    if (reviewed <= 2) return "#cce8e2";
+    if (reviewed <= 5) return "#7fb8ae";
+    if (reviewed <= 9) return "#0f766e";
     return "#1558b0";
   };
 

@@ -1,0 +1,227 @@
+/* design-v021.css — 案头三色纸阶覆盖层（在 style.css 之后加载） */
+
+:root {
+  --primary: #0f766e;
+  --primary-hover: #0d655e;
+  --primary-active: #0a534c;
+  --primary-soft: rgba(15, 118, 110, 0.12);
+  --primary-soft-strong: rgba(15, 118, 110, 0.22);
+  --bg: #f6f2ea;
+  --surface: #fffdf8;
+  --surface-2: #fbf8f1;
+  --surface-3: #efe9dc;
+  --border: #e2dccf;
+  --border-strong: #d5ccb8;
+  --sidebar-bg: #e9e2d2;
+  --sidebar-bg-2: #e2dac6;
+  --sidebar-border: #d5ccb8;
+  --sidebar-text: #3d3a32;
+  --sidebar-text-dim: #7a7568;
+  --sidebar-active: #1c1f26;
+  --text: #22241f;
+  --text-2: #4c4a42;
+  --text-3: #8a857a;
+  --success: #0f766e;
+  --warning: #b45309;
+  --danger: #b91c1c;
+}
+
+/* 布局：248px 侧栏 / 320px 列表 / 自适应编辑区 */
+.app {
+  grid-template-columns: 248px 320px minmax(0, 1fr);
+}
+
+/* 侧栏：最深的暖纸 */
+.sidebar {
+  padding: 20px 16px;
+  gap: 20px;
+}
+
+.logo {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.sidebar-section h3 {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--sidebar-text-dim);
+}
+
+.nav-item {
+  font-size: 15px;
+}
+
+/* 标签：纸片式胶囊 */
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag-list button,
+.tag-list .tag-item {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+/* 中列列表：稍浅的纸 */
+.list-header {
+  height: auto;
+  padding: 20px 16px 12px;
+}
+
+.list-header h2 {
+  font-size: 18px;
+}
+
+.note-list .note-item {
+  padding: 14px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+}
+
+.note-list .note-item.is-active {
+  border-left: 3px solid var(--primary);
+  background: #ffffff;
+  box-shadow: var(--shadow-sm);
+}
+
+.note-item-title {
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.note-item-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-3);
+}
+
+/* 右侧编辑区：纯白纸，视线落点（内边距放在内层各段，避免 pane 内边距裁掉底部附件区） */
+.editor-pane {
+  background: #ffffff;
+  text-align: left;
+}
+
+.editor-header {
+  height: 64px;
+  padding: 0 40px;
+}
+
+.editor-meta {
+  padding: 12px 40px;
+}
+
+.editor-tabs {
+  padding: 8px 40px;
+}
+
+.editor-body {
+  padding: 24px 40px;
+}
+
+.wiki-hint,
+.attach-section,
+.backlink-section {
+  padding-left: 40px;
+  padding-right: 40px;
+}
+
+.editor-title {
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.editor-body {
+  font-size: 16px;
+  line-height: 1.8;
+}
+
+.editor-header,
+.editor-meta,
+.editor-tabs,
+.editor-body-wrap,
+.wiki-hint,
+.attach-section,
+.backlink-section {
+  max-width: 780px;
+  margin-left: 0;
+  margin-right: 0;
+  text-align: left;
+}
+
+/* 复习横幅：深青底白字 */
+.review-banner {
+  background: var(--primary);
+  color: #ffffff;
+  border-radius: 12px;
+  padding: 12px 16px;
+}
+
+.review-banner .btn-primary {
+  background: #ffffff;
+  color: var(--primary);
+}
+
+/* 统计视图：白色纸卡 */
+.stats-view {
+  padding: 28px 32px;
+}
+
+.stats-section {
+  background: #ffffff;
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.stats-section h3 {
+  font-size: 17px;
+}
+/* 标签墙实测根因：渲染用 .chip.tag-chip，原样式表里没有这条规则，故裸文字成墙；此处补齐 */
+.tag-list .chip.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: #fffdf8;
+  border: 1px solid #d5ccb8;
+  color: #3d3a32;
+  cursor: pointer;
+}
+
+.tag-list .chip.tag-chip b {
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.tag-list .chip.tag-chip.is-active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.tag-list .chip.tag-chip.is-active b {
+  color: #ffffff;
+}
+
+/* 残留蓝统一为深青：EF 分布条与统计区蓝字 */
+.ef-fill {
+  background: var(--primary);
+}
+
+.forecast-bar {
+  background: var(--primary);
+}
+
+.health-attention-title {
+  color: var(--primary);
+}
