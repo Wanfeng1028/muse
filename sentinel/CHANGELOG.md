@@ -3,6 +3,16 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.3] - 2026-10-26
+### 修复
+- 关闭 v0.20.2 已知限制“/settings 仍无路由”：incidents.html、sms_log.html、deliveries.html 三页导航各删 1 行 `<a href="/settings">设置</a>` 死链；不新建 /settings 路由、不编造页面；三页其余导航与页面内容一字未动（incidents 页仍无监控管理链、deliveries 页仍无短信记录链，那是缺链不是死链，不在本轮扩面）。
+- 另更新 1 处过期测试期望：design_v018_test.go 的 deliveries 自有导航断言原先含 /settings 链（v0.18 时所写），现删去该行并注明 v0.20.3 已删死链；其余断言未动。
+### 测试
+- 新增 internal/web/settings_nav_removed_test.go（3 组：三页均不含 "/settings"，且各自 active 标记仍在）；与 monitors_nav_test.go 及 internal/web 包全量合跑通过；go vet 全洁；gofmt 全洁（新测试文件经 gofmt -w 对齐）。
+- 全量测试：16 个包全部通过、零失败（notify 包 241 秒为既存最慢包）；真实服务冒烟（隔离库 18434）：三页 200 且响应体零 "settings" 出现；其余路由 / 与 /monitors 亦 200；浏览器 DOM 实测 incidents 导航为“总览 事件 投递队列 短信记录”、deliveries 导航为“仪表盘 事件 投递队列”，均无设置项；incidents 页截图亲眼核对导航无设置项（setContent 渲染未内联样式、仅验导航文案，页内“加载失败”为 harness 未代理 /api 所致，非产品回归）。
+### 模型稿
+- 由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写的最小新文件 glm53_r28_call.py，令牌经 SSH 现取不落盘、未读任何现成调用脚本）输出：测试稿 1 通即出可用正文；3 处删链为编排机械执行（每页删 1 行死链），无模型稿；无 429。
+
 ## [0.20.2] - 2026-10-26
 
 ### 修复

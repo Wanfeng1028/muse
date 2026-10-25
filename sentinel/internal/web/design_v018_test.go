@@ -55,11 +55,11 @@ func TestDesignV018_TopbarUnified(t *testing.T) {
 		}
 	}
 	// Deliveries keeps its own nav targets; only the structure is unified.
+	// v0.20.3: /settings has no route, so it is no longer an expected nav target.
 	for _, link := range []string{
 		`<a href="/">仪表盘</a>`,
 		`<a href="/incidents">事件</a>`,
 		`<a href="/deliveries" class="active">投递队列</a>`,
-		`<a href="/settings">设置</a>`,
 	} {
 		if !strings.Contains(d, link) {
 			t.Errorf("deliveries.html: missing own nav link: %s", link)
