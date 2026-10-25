@@ -127,3 +127,21 @@ table tbody td:nth-child(1) {
   border-radius: 8px;
   font-weight: 600;
 }
+
+/* 编排修正（v2.17.1）：模型稿第 1 条只写 white-space: nowrap，flex 容器换行由 flex-wrap 控制，故补 flex-wrap: nowrap，与仪表盘 dashboard.css 已验证的顶栏口径一致；其余逐字保留。 */
+.topbar .nav {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.topbar .nav::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar .nav a {
+  padding: 7px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
