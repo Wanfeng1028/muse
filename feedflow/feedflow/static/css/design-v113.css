@@ -1,0 +1,21 @@
+/* FeedFlow v1.13.0 design layer: 移动端三栏切换栏并入报纸视觉。
+   视觉逻辑：切换栏就是报纸的页眉细线——纸面底、细线分隔、未选中态次要色文字，
+   选中态照搬顶栏导航激活态（墨色字 + 浅柿底 + 2px 柿色下线），不改 mobile.js 逻辑，
+   只覆盖颜色与字号；全部规则包在 768px 媒体查询里，桌面三栏一字不动。 */
+
+@media (max-width: 768px) {
+  .mobile-views {
+    background: #FAFAF7;
+    border-bottom: 1px solid #E7E2D6;
+  }
+  .mobile-view-btn {
+    font-size: 13px;
+    color: #6B655A;
+    border-bottom: 2px solid transparent;
+  }
+  .mobile-view-btn.is-active {
+    color: #1C1A17;
+    background: #FBEDE6;
+    border-bottom-color: #C2410C;
+  }
+}
