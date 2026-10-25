@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：账号页设计层 v1）
+- 新增 static/account-design-v1.css（只覆盖，不改 app.css/auth.css 与任何 JS；account.html 在 auth.css 之后引用 1 行，本页不引用 harness.css）：视觉逻辑“账号台账”——页头 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、资料标签 12px/600 次文字、资料值 13px、输入框 13px 8px 圆角、安全块上下发丝底线分隔、表单标签 12px/600 次文字、字段提示 12px 弱文字、行内错误 13px 红色、会话列表 13px 次文字、单选行 13px、个性化选项组发丝边 8px 圆角；token 全部取自 app.css/auth.css。
+- 模型稿 18 条规则原文入仓，零编排修正：括号 18/18 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid var(--border)/var(--border-soft) 完整形式；无设计层基线对照：本页此前无设计层。
+- 验收：新增 AccountDesignV1Test 3 例 + 旧设计层合跑 44/44 全绿（含 Settings/Index），Maven 离线 BUILD SUCCESS；真实服务（18094 端口，复制 H2 库，开放模式）+ 截图亲眼核对：计算样式实证页头 20/700、卡片白底 10px 圆角 1px 发丝边、资料标签 12/600 #555、安全块发丝底线、个性化选项组 8px 圆角发丝边；截图存 docs/screenshots/account-design-v1.png。验收后服务按 PID 停干净、复制库已删。
+- 已知保留：本层不改布局；沙箱内 auth-service 上游未起，/api/auth/me 返回上游不可用，故截图中昵称/邮箱/角色为占位“—”、会话区显示“账号服务暂时不可用”红字，属真实环境状态、非本层问题；截图 harness 下 2 条 502 console 记录为 auth 相关代理请求失败，与设计层无关；本轮未动 second-brain、mini-os、docseek eval 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：工作台首页设计层 v1）
 - 新增 static/index-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；index.html 在 harness.css 之后引用 1 行）：视觉逻辑“工作台账”——问候语 20px/700、状态条 13px 次文字、上下文栏下拉 13px 8px 圆角、新建链接 13px 次文字、新建面板 surface 底发丝边 10px 圆角零阴影、新建块标题 15px/700、新建表单输入框 13px 8px 圆角、新建表单小按钮 12px/600 8px 圆角、对话区 13px 行高 1.6、快捷 chips 12px/600 8px 圆角、输入框 13px 8px 圆角、发送钮只留尺寸与圆角不改颜色、费用提示 12px 弱文字、最近动态标题 16px/700、空态 13px 次文字、最近动态区上下 16px 发丝底线；token 全部取自 app.css/harness.css。
 - 模型稿 16 条规则原文入仓，零编排修正：括号 16/16 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里；边框写法正确（1px solid var(--hairline)）。
