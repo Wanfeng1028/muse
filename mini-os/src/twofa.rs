@@ -69,6 +69,20 @@ pub fn sweep_expired_challenges_except(
     .map_err(|e| format!("db error: {e}"))
 }
 
+/// 删除超过保留期的已用备用码，返回删除行数。只删 used_at 非空且距今超过保留天数的行；
+/// 未用码（used_at IS NULL）永不删除。用过的码再次提交本来就返回 401，所以删旧行不改变
+/// 任何鉴权行为；刚用过的码 julianday 差值约等于 0，清扫紧跟在备用码登录成功后调用也是安全的。
+pub fn sweep_used_backup_codes(
+    conn: &rusqlite::Connection,
+    retention_days: i64,
+) -> Result<usize, String> {
+    conn.execute(
+        "DELETE FROM tfa_backup_codes WHERE used_at IS NOT NULL AND julianday('now') - julianday(used_at) >= ?1",
+        rusqlite::params![retention_days],
+    )
+    .map_err(|e| format!("db error: {e}"))
+}
+
 pub fn create_tfa_challenge(conn: &rusqlite::Connection, user_id: i64) -> Result<String, String> {
     let _ = sweep_expired_challenges(conn);
     let plain = auth::new_session_token()?;
@@ -493,6 +507,8 @@ pub async fn verify_login(
         if used_backup {
             state.metrics.inc_auth("2fa_backup_used");
         }
+        // 备用码登录是已用码唯一的新增点，在此顺手清扫超期已用码；刚用过的码差值约等于 0，不会被误删。
+        let _ = sweep_used_backup_codes(&conn, state.backup_code_retention_days);
         Ok((
             StatusCode::OK,
             [(axum::http::header::SET_COOKIE, cookie)],

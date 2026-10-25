@@ -35,7 +35,7 @@
 
 - /api/auth/2fa 无独立限流，重登录可拿新 challenge 绕过单 challenge 5 次上限，需核验是否落在登录限流桶内，未覆盖则补独立限流（排期 v1.12）——已偿还（2026-10-24，v1.12.0）：IP 单维度独立桶 + 429 + Retry-After；核验结论：原登录桶只覆盖发挑战，不覆盖验码。
 - 过期 tfa_challenges 无定时清理，只在命中时删除，长期运行会堆积，随会话过期清理一起做（排期 v1.12）——已偿还（2026-10-24，v1.12.0）：sweep_expired_challenges 在发挑战与验码两入口调用（验码入口用排除本次 challenge 的变体，保证过期返回 410 不退化为 401）；未做独立定时任务，改为入口驱动清扫。
-- 已用备用码无归档与清理策略，查询仅取 used_at IS NULL，旧码永久留库（待确认）
+- 已用备用码无归档与清理策略，查询仅取 used_at IS NULL，旧码永久留库（待确认）——已偿还（2026-10-25，v1.13.0）：`sweep_used_backup_codes` + `MINIOS_BACKUP_CODE_RETENTION_DAYS`（默认 90 天），备用码登录成功后入口驱动清扫；未用码不动；删旧已用行不改变鉴权行为（复用本来就 401）；无独立定时任务，见 CHANGELOG 已知限制。
 - .env.example 未收录 MINIOS_TOTP_MASTER_KEY（排期 v1.12）——已偿还（2026-10-24，v1.12.0）：.env.example 已补该项及 MINIOS_2FA_RPS / MINIOS_2FA_BURST。
 - 主密钥轮换无在线迁移，换 key 后旧密文解密失败，用户需重新设置，需出轮换流程文档（待确认）
 

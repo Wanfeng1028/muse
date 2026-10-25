@@ -12,6 +12,8 @@ pub struct Config {
     pub session_ttl_secs: u64,
     /// 会话滑动续期开关（MINIOS_SESSION_SLIDING），默认开启
     pub session_sliding: bool,
+    /// 已用备用码保留期（天），来自 MINIOS_BACKUP_CODE_RETENTION_DAYS，默认 90 天
+    pub backup_code_retention_days: i64,
     /// 登录限流：每秒补充的令牌数（来自 MINIOS_LOGIN_RPS）
     pub login_rps: f64,
     /// 登录限流：桶容量/突发上限（来自 MINIOS_LOGIN_BURST）
@@ -38,6 +40,28 @@ pub fn parse_session_sliding_raw(raw: Option<&str>) -> Result<bool, String> {
                 s
             )),
         },
+    }
+}
+
+/// 解析已用备用码保留期原始值：缺省默认 90 天；解析失败或超出 1 到 3650 范围返回 Err。
+pub fn parse_backup_code_retention_days_raw(raw: Option<&str>) -> Result<i64, String> {
+    match raw {
+        None => Ok(90),
+        Some(s) => {
+            let v: i64 = s.trim().parse().map_err(|_| {
+                format!(
+                    "MINIOS_BACKUP_CODE_RETENTION_DAYS 非法：{:?}，必须是 1 到 3650 之间的整数天数",
+                    s
+                )
+            })?;
+            if !(1..=3650).contains(&v) {
+                return Err(format!(
+                    "MINIOS_BACKUP_CODE_RETENTION_DAYS 非法：{:?}，必须是 1 到 3650 之间的整数天数",
+                    s
+                ));
+            }
+            Ok(v)
+        }
     }
 }
 
@@ -109,6 +133,19 @@ impl Config {
             }
         };
 
+        // 已用备用码保留期：非法值 fail-fast（与限流配置同规格）。
+        let backup_code_retention_days = match parse_backup_code_retention_days_raw(
+            env::var("MINIOS_BACKUP_CODE_RETENTION_DAYS")
+                .ok()
+                .as_deref(),
+        ) {
+            Ok(v) => v,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
+
         Config {
             data_dir,
             port,
@@ -124,6 +161,7 @@ impl Config {
             share_read_burst: share_limit.burst,
             share_ratelimit_enabled: share_limit.enabled,
             term_output_limit,
+            backup_code_retention_days,
         }
     }
 }

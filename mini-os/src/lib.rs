@@ -36,6 +36,8 @@ pub struct AppState {
     pub session_ttl_secs: u64,
     /// 会话滑动续期开关，来自 MINIOS_SESSION_SLIDING，默认开启。
     pub session_sliding: bool,
+    /// 已用备用码保留期（天），来自 MINIOS_BACKUP_CODE_RETENTION_DAYS，默认 90 天。
+    pub backup_code_retention_days: i64,
     pub metrics: Arc<crate::metrics::Metrics>,
     /// 登录限流器（IP + 账号双维度令牌桶）
     pub login_limiter: Arc<crate::ratelimit::RateLimiter>,
@@ -114,6 +116,14 @@ pub fn init_state_with_full(
             std::env::var("MINIOS_SESSION_SLIDING").ok().as_deref(),
         )
         .unwrap_or(true),
+        // 已用备用码保留期：生产路径 init_state 已先经 Config::from_env 做 fail-fast 校验；
+        // 此处供测试直接调 init_state_with_full 时读环境变量、无则默认 90 天（与 session_sliding 同模式）。
+        backup_code_retention_days: crate::config::parse_backup_code_retention_days_raw(
+            std::env::var("MINIOS_BACKUP_CODE_RETENTION_DAYS")
+                .ok()
+                .as_deref(),
+        )
+        .unwrap_or(90),
         metrics: Arc::new(crate::metrics::Metrics::new()),
         login_limiter: Arc::new(crate::ratelimit::RateLimiter::new(&limiter_cfg)),
         twofa_limiter: Arc::new(crate::ratelimit::RateLimiter::new_with(

@@ -1,6 +1,22 @@
 
 # Changelog
 
+## [1.13.0] - 2026-10-25
+
+### 新增
+- 已用备用码归档清理：`twofa::sweep_used_backup_codes` 删除超过保留期的已用备用码行（只删 `used_at` 非空且距今超过保留天数的行，未用码永不删除）；`verify_login` 在备用码登录成功后顺手调用清扫（入口驱动，无独立定时任务）。背景：旧已用码以前永久留库；删旧行不改变鉴权行为（用过的码再次提交本来就返回 401）。
+- 新配置 `MINIOS_BACKUP_CODE_RETENTION_DAYS`（默认 90 天，合法范围 1 到 3650 的整数天数，非法值启动即报错退出 exit 2）；`Config` 与 `AppState` 各加 `backup_code_retention_days` 字段。
+- 版本跟进：Cargo.toml 1.12.0 → 1.13.0，`/api/health` 的 version 随之恢复正确。
+
+### 测试
+- 新增 `tests/twofa_backup_sweep_test.rs` 6 例全绿：直接清扫（只删旧已用、91/89 天边界、空表返回 0）、保留期解析（默认 90、合法边界 1/3650、非法值报错且错误含变量名）、`init_state` 默认保留期 90、备用码登录 E2E（真实 2FA 全流程 + 植入旧已用行，清扫后植入行消失、总数 10、已用行仅刚用掉的 1 行）。
+- 全量 `cargo test --offline --no-fail-fast` 765/765 全绿；本轮文件 `cargo fmt` 全洁。
+- 真实服务冒烟：`/api/health` 报 1.13.0；`MINIOS_BACKUP_CODE_RETENTION_DAYS=abc` 启动即 exit 2 且报错指明变量名与合法范围；保留期 30 可正常启动。
+
+### 已知限制（诚实声明）
+- 清扫是入口驱动：只在备用码登录成功时触发，没有后台定时任务；长期无人用备用码登录时，旧已用行会一直留到下一次备用码登录才被清掉。这不影响鉴权安全（旧已用码复用本来就 401）。
+- 另顺手修了 `tests/api_test.rs` 里硬编码 "1.9.0" 的版本断言，改为 `env!("CARGO_PKG_VERSION")`，以后版本升级不再漂移；`mig006_expiry_deep.rs:185` 与 `twofa_test.rs` 的既存格式 diff 不在本轮改动范围，未动。
+
 ## [1.12.0] - 2026-10-24
 
 ### 新增

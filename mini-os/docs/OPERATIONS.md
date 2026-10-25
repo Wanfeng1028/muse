@@ -92,6 +92,7 @@ journalctl -u mini-os -f
 | `MINIOS_2FA_RPS` | `1` | 两步验证独立限流每秒补充 token 数（IP 单维度，与登录桶解耦）；非法值启动即报错退出（exit 2） |
 | `MINIOS_2FA_BURST` | `5` | 两步验证独立限流桶容量（突发上限）；非法值启动即报错退出（exit 2） |
 | MINIOS_TOTP_MASTER_KEY | 无（必填才可用 2FA） | 64 个十六进制字符（32 字节），用于 AES‑256‑GCM 加密用户 TOTP 密钥；启动时不校验，只有在调用 2FA 接口时检查。 |
+| `MINIOS_BACKUP_CODE_RETENTION_DAYS` | `90` | 已用备用码保留期（天）；超期已用码在备用码登录成功后清扫（入口驱动，无定时任务）；合法范围 1 到 3650，非法值启动即报错退出（exit 2） |
 
 补充说明：
 - `SHUTDOWN_TIMEOUT_SECS` 是 v1.2.0 新增。它只管"排空在途请求"这一段，不限制服务运行时长。v1.1.0 曾把它错误地当成整个服务生命周期超时，v1.2.0 已修复。
