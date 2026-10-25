@@ -1,0 +1,129 @@
+/* transactions.css - ledger 交易页覆盖层，在 style.css 之后加载，仅交易页引用。
+   视觉逻辑：流水台账，承接仪表盘 v2.16.0 的账本式横向阅读。纸面白、墨色文字、
+   细线分隔、左对齐；金额等宽数字右对齐、日期等宽次要色；层级靠字号、字重、
+   线宽三档区分，不靠颜色堆砌。
+   去 AI 味自查：无紫渐变、无 Inter 独占、无一切居中、无三栏特性格、无 emoji 图标、
+   无 Unleash/Empower/Seamless/Next-generation 类文案、无编号段落+衬线大标题 Specimen 风。
+   来源：5 段由 GLM-5.3（BotsRouter）微批输出，每段 3 条规则，编排时只补了 1 处覆盖缺口
+   （见下方编排修正注释），其余逐字保留。 */
+
+/* 编排修正：原 .pagination 自带 align-items:center，模型稿漏写会致按钮纵向拉伸，补回。 */
+
+main h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ink);
+  text-align: left;
+  margin-bottom: 16px;
+}
+
+.card {
+  background: #fff;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+main h2 {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  margin-top: 24px;
+  margin-bottom: 12px;
+}
+
+.filters select,
+.filters input[type="date"],
+.filters input[type="text"] {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.filters select:focus,
+.filters input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+.filters #btn-search {
+  min-height: 44px;
+  padding: 8px 18px;
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+}
+
+table thead th {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--muted);
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid var(--ink);
+}
+table tbody td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+table tbody td:nth-child(5) {
+  text-align: right;
+  font-family: var(--font-num);
+  font-weight: 600;
+}
+
+table tbody td:nth-child(1) {
+  font-family: var(--font-num);
+  color: var(--muted);
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  border-top: 1px solid var(--border);
+  padding-top: 12px;
+}
+
+.pagination button {
+  min-height: 40px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+#tx-form select,
+#tx-form input {
+  min-height: 44px;
+  padding: 8px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: #fff;
+}
+
+#tx-form select:focus,
+#tx-form input:focus {
+  outline: none;
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px var(--ink);
+}
+
+#tx-form button[type="submit"] {
+  background: var(--ink);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+}
