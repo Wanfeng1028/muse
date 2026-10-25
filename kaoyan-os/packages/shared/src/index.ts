@@ -115,6 +115,16 @@ export interface FocusStats {
   totalMinutes: number;
 }
 
+export interface FocusSubjectSummary {
+  subject: SubjectKey;
+  sessions: number;
+  totalMinutes: number;
+}
+
+export interface FocusBySubjectResponse {
+  subjects: FocusSubjectSummary[];
+}
+
 /** 计划完成情况汇总 */
 /** 单条计划的执行进度（计划分钟 vs 实际专注分钟） */
 export interface PlanProgress {

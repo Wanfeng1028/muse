@@ -685,6 +685,33 @@
 | --- | --- | --- |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
+### `GET /api/focus/summary/by-subject`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| GET | /api/focus/summary/by-subject | 需要（登录用户） |
+
+按科目返回专注时长汇总：仅返回有专注记录的科目，按数学、英语、政治、专业课 821 的顺序排列。
+
+**成功响应**
+
+状态码 200
+
+```json
+{
+  "subjects": [
+    { "subject": "math", "sessions": 3, "totalMinutes": 125 },
+    { "subject": "english", "sessions": 2, "totalMinutes": 45 }
+  ]
+}
+```
+
+**错误码**
+
+| 状态码 | 返回体 | 触发条件 |
+| --- | --- | --- |
+| 401 | （未认证响应） | 未登录或认证失败 |
+
 ## 4. 错题本
 
 ### `GET /api/mistakes/summary`

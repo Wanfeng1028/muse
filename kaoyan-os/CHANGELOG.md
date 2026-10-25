@@ -4,6 +4,16 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.6] - 2026-10-25
+
+### Added
+
+- 后端新增 `GET /api/focus/summary/by-subject`，按科目返回专注汇总：sessions（记录条数）/totalMinutes，仅返回有专注记录的科目，按数学、英语、政治、专业课 821 的顺序排列。
+- 共享包新增 `FocusSubjectSummary` 与 `FocusBySubjectResponse` 类型。
+- 前端番茄专注页新增「各科专注累计」卡片（复用现有 card/list/list-item 样式，无新增 CSS），跟随专注落库刷新。
+- 新增 `tests/focus-summary-by-subject.test.ts` 4 例：空库、分科精确值与顺序及零记录科目省略、用户隔离、未登录 401。
+- API 文档新增 `GET /api/focus/summary/by-subject` 一节。
+
 ## [1.12.5] - 2026-10-25
 
 ### Added

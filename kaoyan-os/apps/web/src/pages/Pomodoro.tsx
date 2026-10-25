@@ -5,6 +5,7 @@ import {
   type SubjectKey,
   type Settings,
   type Plan,
+  type FocusBySubjectResponse,
 } from '@kaoyan/shared';
 import { api } from '../api';
 
@@ -50,6 +51,7 @@ export default function Pomodoro() {
   const [running, setRunning] = useState(false);
   const [remaining, setRemaining] = useState(DEFAULT_SETTINGS.pomodoroMinutes * 60);
   const [todayMinutes, setTodayMinutes] = useState(0);
+  const [bySubject, setBySubject] = useState<FocusBySubjectResponse | null>(null);
   const [todayPlans, setTodayPlans] = useState<Plan[]>([]);
   const [planId, setPlanId] = useState<number | ''>('');
 
@@ -90,11 +92,17 @@ export default function Pomodoro() {
     };
   }, []);
 
-  // 刷新今日专注
+  // 刷新今日专注与分科累计
   const refreshToday = useCallback(() => {
     api
       .focusStats(1)
       .then((stats) => setTodayMinutes(stats.todayMinutes))
+      .catch(() => {
+        // 忽略错误
+      });
+    api
+      .focusBySubject()
+      .then((data) => setBySubject(data))
       .catch(() => {
         // 忽略错误
       });
@@ -275,6 +283,22 @@ export default function Pomodoro() {
           </button>
         </div>
       </div>
+
+      {bySubject && bySubject.subjects.length > 0 && (
+        <div className="card">
+          <div className="stat-label">各科专注累计</div>
+          <ul className="list">
+            {bySubject.subjects.map((row) => {
+              const s = SUBJECTS.find((x) => x.key === row.subject);
+              return (
+                <li key={row.subject} className="list-item">
+                  {s ? s.name : row.subject}：共 {row.totalMinutes} 分钟 · {row.sessions} 次
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
 
       <div className="card pomo-stats-card">
         <div className="stat-card pomo-stat-card">

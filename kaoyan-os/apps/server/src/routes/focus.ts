@@ -1,9 +1,12 @@
 import type { FastifyInstance } from 'fastify';
 import type { DatabaseSync } from 'node:sqlite';
 import {
+  SUBJECTS,
   type CreateFocusInput,
+  type FocusBySubjectResponse,
   type FocusSession,
   type FocusStats,
+  type FocusSubjectSummary,
   type SubjectKey,
   isSubjectKey,
 } from '@kaoyan/shared';
@@ -197,5 +200,32 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
       totalMinutes,
     };
     return reply.send(stats);
+  });
+
+  // GET /api/focus/summary/by-subject —— 分科汇总专注时长：仅返回有记录的科目，按 SUBJECTS 顺序排列
+  app.get('/api/focus/summary/by-subject', (req, reply) => {
+    const rows = db
+      .prepare(
+        'SELECT subject, COUNT(*) AS sessions, COALESCE(SUM(minutes), 0) AS totalMinutes ' +
+          'FROM focus_sessions WHERE user_id = ? GROUP BY subject'
+      )
+      .all(req.user!.id) as Array<{ subject: string; sessions: number; totalMinutes: number }>;
+
+    const subjectMap = new Map(rows.map((r) => [r.subject, r]));
+
+    const subjects: FocusSubjectSummary[] = [];
+    for (const s of SUBJECTS) {
+      const row = subjectMap.get(s.key);
+      if (row && row.sessions > 0) {
+        subjects.push({
+          subject: s.key,
+          sessions: Number(row.sessions),
+          totalMinutes: Number(row.totalMinutes),
+        });
+      }
+    }
+
+    const result: FocusBySubjectResponse = { subjects };
+    return reply.send(result);
   });
 }
