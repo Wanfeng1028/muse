@@ -17,6 +17,7 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 	registerReviewHealthRoutes(mux, st)
 	registerReviewStreakRoutes(mux, st)
 	registerReviewForecastRoutes(mux, st)
+	registerReviewOverdueRoutes(mux, st)
 
 	// 获取待复习队列
 	mux.HandleFunc("GET /api/review/queue", func(w http.ResponseWriter, r *http.Request) {

@@ -7,6 +7,20 @@
 
 ## [Unreleased]
 
+## [0.20.0] - 2026-10-25
+### 逾期明细
+### 新增
+- GET /api/review/overdue?limit=（默认 50，<=0 置 50，>200 置 200），按 X-User/?user= 隔离，返回 queue 同形 items 数组（id/title/body/snippet/tags/dueDate/overdueDays/ef/intervalDays/repetitions/hard）；只含 due_date 严格小于今天的记录，今天到期不算；按 due_date ASC 排序（最逾期在前）；空结果返回空数组。
+- POST /api/review/overdue 返回 405（字面量路由，避开 POST /api/review/{id} 通配抢路由）。
+- internal/store/review_overdue.go 新增 ListOverdueReviews 聚合；internal/api/review_overdue.go 新增路由注册；无 schema 变更。
+### 测试
+- Store 层 3 组（空库返回非 nil 空切片 / 过滤排序与用户隔离 / limit 钳制）全部通过。
+- API 层 3 组（空库 / 过滤排序与用户隔离 / limit 钳制与 POST 405）全部通过。
+- go vet 全洁、gofmt 全洁。
+### 已知限制
+- 前端复习统计页暂未接线本端点，留待下轮；后端端点已可用。
+- hard 标记查询失败时降级为全部 false，不阻断返回（与 queue 同款降级）。
+
 ## [0.19.0] - 2026-10-25
 ### 未来到期预测
 ### 新增
