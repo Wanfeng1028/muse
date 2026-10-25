@@ -13728,6 +13728,72 @@
       "source": "Narcooo/inkos",
       "sourceUrl": "https://github.com/Narcooo/inkos",
       "version": "1.0.0"
+    },
+    {
+      "author": "SwotAtmk",
+      "description": "AI视频脚本生成器。根据用户输入的主题/关键词，生成完整的视频脚本，包含分镜描述、画面提示词、配音文案。适用于短视频创作者、AI视频制作者、内容营销人员。触发词：视频脚本、分镜、AI视频、短视频文案、视频策划。",
+      "id": "infinite-creation-ai-video-script",
+      "license": "MIT",
+      "name": "ai-video-script",
+      "rewritten": false,
+      "source": "SwotAtmk/infinite-creation",
+      "sourceUrl": "https://github.com/SwotAtmk/infinite-creation/blob/HEAD/skills/ai-video-script/SKILL.md",
+      "version": "1.0.0"
+    },
+    {
+      "author": "SwotAtmk",
+      "description": "分镜设计专家包：从剧本文本到标准分镜表格转换（镜号/景别/拍摄角度/画面内容/人物/音效）与电影感镜头运动设计（推拉摇移/景别/构图），到 AI 视频提示词与分镜脚本构思（文生视频/图生视频/多模态参考）与 AI 绘画视频提示词参数化构建，再到专业四幕分镜脚本生成与视频脚本分镜描述画面提示词输出的完整分镜设计工作流。覆盖分镜规划、镜头设计、画面提示词、视觉预览全链路。",
+      "id": "infinite-creation-media-storyboard-design",
+      "license": "MIT",
+      "name": "media-storyboard-design",
+      "rewritten": false,
+      "source": "SwotAtmk/infinite-creation",
+      "sourceUrl": "https://github.com/SwotAtmk/infinite-creation/blob/HEAD/skills/media-storyboard-design/SKILL.md",
+      "version": "1.0.0"
+    },
+    {
+      "author": "SwotAtmk",
+      "description": "AI绘画与AI视频制作的提示词生成助手。支持文生图、图生图、文生视频、图生视频、首尾帧视频等多种生成模式的提示词构建。当用户需要生成AI绘画或视频提示词时使用，包括：人物设定、环境场景、发型设计、姿势摆拍、地理位置、镜头运镜、构图视角等参数化提示词生成。支持中式风格、古风、汉服、中国风等传统美学元素。适用于即梦AI、BizyAir、Midjourney、Stable Diffusion等AI绘画/视频工具。",
+      "id": "infinite-creation-prompt-bozo",
+      "license": "MIT",
+      "name": "prompt-bozo",
+      "rewritten": false,
+      "source": "SwotAtmk/infinite-creation",
+      "sourceUrl": "https://github.com/SwotAtmk/infinite-creation/blob/HEAD/skills/prompt-bozo/SKILL.md",
+      "version": "1.0.0"
+    },
+    {
+      "author": "SwotAtmk",
+      "description": "人物/道具站位一致性：为每个场景建立「站位表」（空间锚点+角色默认方位+道具锚点+180度轴线与允许机位），并强制同一场景内所有镜头的 sub_shots / visual / video_prompt 复述并保持人物/道具相对左右方位、朝向、视线一致，消除跨镜左右漂移。当出现人物在左、下一镜位置关系错乱、左右漂移、站位不连贯、越轴等分镜一致性问题时使用。",
+      "id": "infinite-creation-scene-blocking-consistency",
+      "license": "MIT",
+      "name": "scene-blocking-consistency",
+      "rewritten": false,
+      "source": "SwotAtmk/infinite-creation",
+      "sourceUrl": "https://github.com/SwotAtmk/infinite-creation/blob/HEAD/skills/scene-blocking-consistency/SKILL.md",
+      "version": "1.0.0"
+    },
+    {
+      "author": "SwotAtmk",
+      "description": "将完整的剧本、故事大纲或小说片段拆解为细化到单镜的中文分镜脚本，覆盖镜头号、景别、机位运镜、画面描述、台词、音效、时长标注，并为每个镜头附可直接用于图片或视频生成的提示词。支持抖音竖屏短视频与横屏影视微电影两种形态，按剧本气质自动判断或向用户确认。当用户给出剧本/大纲/小说并要求「拆分镜」「做分镜脚本」「出分镜表」「storyboard」时使用。",
+      "id": "infinite-creation-script-to-storyboard",
+      "license": "MIT",
+      "name": "script-to-storyboard",
+      "rewritten": false,
+      "source": "SwotAtmk/infinite-creation",
+      "sourceUrl": "https://github.com/SwotAtmk/infinite-creation/blob/HEAD/skills/script-to-storyboard/SKILL.md",
+      "version": "1.0.0"
+    },
+    {
+      "author": "SwotAtmk",
+      "description": "电影感拍摄与镜头运动技能。当用户提到镜头运动、运镜、拍摄技巧、景别、推拉摇移、电影感构图、或需要为视频创作设计分镜脚本时触发本技能。",
+      "id": "infinite-creation-video-cinematography",
+      "license": "MIT",
+      "name": "video-cinematography",
+      "rewritten": false,
+      "source": "SwotAtmk/infinite-creation",
+      "sourceUrl": "https://github.com/SwotAtmk/infinite-creation/blob/HEAD/skills/video-cinematography/SKILL.md",
+      "version": "1.0.0"
     }
   ]
 }
