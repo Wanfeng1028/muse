@@ -11,6 +11,12 @@
 - 验收：新增 AvatarDesignV1Test 3 例 + 旧设计层合跑 47/47 全绿，Maven 离线 BUILD SUCCESS；真实服务（18095 端口，复制 H2 库，开放模式）初验 + 磁盘内联复验截图亲眼核对：计算样式实证页头 20/700、副标题 13px 次文字、卡片白底 10px 圆角 1px 发丝边、BYOK 空盒 1px 虚线发丝边、生成区顶发丝线、零 console 错误；截图存 docs/screenshots/avatar-design-v1.png。验收后服务按 PID 停干净、复制库已删。
 - 已知保留：本层不改布局；沙箱内未接任何数字人模型，截图中模型下拉为空、BYOK 空盒与“先在通道管理配置 API 后可用”提示为真实空态；本轮未动 images.html 在跑工人的未提交文件。
 
+### Added（5.3 路 2026-10-25：AI 图片页设计层 v1）
+- 新增 static/images-design-v1.css（8 条规则，只覆盖，不改 app.css/harness.css、内联 style 块与任何 JS；images.html 在内联 style 块之后引用 1 行）：视觉逻辑“图片台账”——页头 20px/700、副标题 13px 次文字、卡片标题 16px/700、表单标签 12px/600 次文字、输入框 13px 8px 圆角、生成按钮 13px/600 8px 圆角、生成区上下 16px 发丝底线、提示 13px 次文字；token 全部取自 app.css/harness.css。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000）1 通输出：API prompt 24082 / completion 1706 / total 25788，reasoning_tokens 0，正文 1255 字即入仓的 8 条规则；编排修正 3 处（见 DESIGN_SYSTEM 第 24 节已知保留），其余为模型原文，括号 8/8 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML，全部 token 均在 app.css/harness.css 里。
+- 验收：新增 ImagesDesignV1Test 3 例 + 成片页测试合跑 6/6 全绿，Maven 离线 BUILD SUCCESS；真实服务（18196 端口，复制 H2 库，开放模式）+ 截图亲眼核对：计算样式实证页头 20/700、副标题 13px 次文字、卡片标题 16/700、表单标签 12/600、输入框 8px 圆角 14px、生成按钮 13/600/8px、生成区上下 1px 发丝线、零 console 错误；IMAGE 模型未接入（/api/providers?module=IMAGE 回 []），空模型提示“还没有接入图片模型”与禁用态生成按钮为真实空态，未伪造数据；截图存 docs/screenshots/images-design-v1.png。验收后服务按 PID 停干净、端口已关、复制库已删。
+- 已知保留：本层不改布局；模型下拉、比例/尺寸下拉、参考图预览沿用原样式；本轮未动 second-brain、docseek eval、feedflow（另一路在跑）、avatar 页（另一路在跑）工人的未提交文件。
+
 ### Added（5.3 路 2026-10-25：成片库页设计层 v1）
 - 新增 static/finals-design-v1.css（8 条规则，只覆盖，不改 app.css/harness.css 与任何 JS；finals.html 在 harness.css 之后引用 1 行）：视觉逻辑“成片台账”——页头 20px/700 加 1px 发丝底线、筛选条 surface 底发丝边、下拉 13px、生成按钮 13px/600 8px 圆角、提示 13px 次文字、成片列表纵向排列行距 12px；token 全部取自 app.css/harness.css。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000）1 通输出：API prompt 24033 / completion 1349 / total 25382，reasoning_tokens 0，正文 1055 字即入仓的 8 条规则；编排修正 2 处（见 DESIGN_SYSTEM 第 23 节已知保留），其余为模型原文，括号 8/8 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML，全部 token 均在 app.css/harness.css 里。
