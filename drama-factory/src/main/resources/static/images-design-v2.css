@@ -1,0 +1,21 @@
+.fld select {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.byok-preview {
+  display: block;
+  width: auto;
+  height: auto;
+  max-height: 280px;
+}
+
+#img-ref {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}

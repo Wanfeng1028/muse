@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：AI 图片页设计层 v2）
+- 新增 static/images-design-v2.css（3 条规则，只覆盖，不改 app.css/harness.css、内联 style 块、v1 文件与任何 JS；images.html 在 v1 之后引用 1 行）：关闭 v1 已知保留“模型下拉、比例/尺寸下拉、参考图预览沿用原样式”——下拉框与 textarea 同一套表单控件语言（surface 底、10px 12px 内边距、14px、8px 圆角、1px 发丝边），参考图预览改块级布局并限高 280px 不裁剪（行内基线空隙消除），文件选择框字体与标签口径协调（12px/600 次文字）；token 全部取自 app.css/harness.css。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r17_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通输出：API prompt 24286 / completion 995 / total 25281，reasoning_tokens 0，正文即入仓的 3 条规则，零编排修正。括号 3/3 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML；v2 在内联 style 块与 v1 之后加载，同特异度规则压得住内联下拉规则（.fld select 与内联块同为一类一元特异度，后引用生效）。
+- 验收：新增 ImagesDesignV2Test 3 例 + v1 合跑 6/6 全绿，Maven 离线 BUILD SUCCESS；真实服务（18198 端口，复制 H2 库，开放模式）+ 内联截图亲眼核对：计算样式实证下拉框 surface 底（浅色主题白底）、10px 12px 内边距、14px、8px 圆角，文件选择框 12px/600 次文字色 #555，零 console 错误；参考图预览因未选文件默认隐藏，harness 内取消隐藏并置入 1px 数据图后实测计算样式为块级显示、限高 280px、8px 圆角（截图本身仍为真实空态，未伪造参考图）；IMAGE 模型未接入（/api/providers?module=IMAGE 回 []），空模型提示与禁用态生成按钮为真实空态；截图存 docs/screenshots/images-design-v2.png。验收后服务按 PID 停干净、端口已关、复制库与验收 jar 已删。
+- 已知保留：本层不改布局；文件选择框的浏览器原生按钮外观不动；本轮未动 music、register、ledger、second-brain、docseek eval 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-26：登录页设计层 v1）
 - 新增 static/login-design-v1.css（15 条规则，只覆盖，不改 app.css/auth.css 与任何 JS；login.html 在 auth.css 之后引用 1 行）：视觉逻辑“登录台账”——页头 20px/700、副标题 13px 次文字、分段器 surface-2 底发丝边 8px 圆角、签页 13px/600、录入行 surface 底发丝边 8px 圆角、输入框 13px、主按钮 13px/600 8px 圆角、忘记密码/分隔/协议行 12px 弱文字、第三方钮 13px 8px 圆角、弹窗面板 surface 底发丝边 8px 圆角零阴影、弹窗标题 13px/600；token 全部取自 app.css/auth.css。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器为本轮现写最小新文件 relay-station/flash_call_n2.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24681 / completion 17217 / total 41898，reasoning_tokens 0，正文即入仓的 15 条规则与测试；编排修正 1 类：模型稿选择器未加 .auth-page 前缀，特异度会被 auth.css 同名规则压住，全部规则统一加 .auth-page 前缀（后引用的同特异度规则生效），规则数与测试断言不变。括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid var(--border) 完整形式。
