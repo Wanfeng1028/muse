@@ -1,5 +1,13 @@
 # 更新日志
 
+## v2.17.12 - 2026-10-25
+### 新增
+- 复核页顶栏不换行：新文件 `src/ledger/static/review.css`（仅 review 页引用，review.html 加 extra_css 行，style.css 不动），与月度报告页 v2.17.11 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.11 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭复核页一页，其余页（statement/workbench 等）仍走原 wrap，不谎称全站关闭。模型稿 3 条规则原文未动。复核页路由实测为 `/bills/review`（非 `/review`），测试按实测路由写。途中插曲：第一通撞 502 Bad Gateway，等 90 秒重发成功；截图脚本 sed 换名把 /static/review.css 带偏成错路径，坏脚本已删、重写干净版后重拍，入提交前已核对文件名与版本一致。
+### 测试
+- 新增 `tests/test_review_design_v21712.py` 1 例（复核页引用顺序、顶栏单行规则齐全、括号平衡）；与 v2.17.11/v2.17.10/v2.17.9/v2.17.8/v2.17.7/v2.17.6/v2.17.5/v2.17.4/v2.17.3/v2.17.2/v2.17.1/v2.17.0 设计层合跑 15/15 全绿；ruff 新测文件全洁。
+### 视觉验收
+- 真实服务（8115 端口，demo.db 复制库）复核页截图亲眼核对：1440 宽下顶栏单行、15 链全可见（仪表盘至月度报告），实测顶栏高 60px、导航滚动宽与可见宽均为 953px（无截断、无溢出）、零 console 错误，复核页标题与说明正常渲染；截图存 `docs/screenshots/review-v21712.png`。本截图为 setContent 内联样式 harness 拍摄，仅作顶栏验收。验收后服务已按 PID 停掉、复制库已删。
+
 ## v2.17.11 - 2026-10-25
 ### 新增
 - 月度报告页顶栏不换行：新文件 `src/ledger/static/report.css`（仅 report 页引用，report.html 加 extra_css 行，style.css 不动），与周期账单页 v2.17.10 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.10 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭月度报告页一页，其余页仍走原 wrap，不谎称全站关闭。模型稿 3 条规则原文未动。

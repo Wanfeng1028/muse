@@ -1,0 +1,22 @@
+/*
+ * ledger 复核页覆盖层
+ * 仅 review.html 引用，置于 style.css 之后加载
+ * 承接 v2.17.11 已验证的顶栏单行口径（与 report.css / recurring.css 完全一致）
+ */
+
+.topbar .nav {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.topbar .nav::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar .nav a {
+  padding: 7px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}
