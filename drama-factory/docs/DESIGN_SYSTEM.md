@@ -139,6 +139,7 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：机队台账（页头是台账眉、通道卡是台账案头、供应商区是台账名录、Agent 卡是台账格、元数据行是台账明细、模板全文是台账附录；页头 20px/700、卡片标题 16px/700、徽标 12px/600、元数据键 12px/600、值 13px、卡片 10px 圆角零阴影）。
 - 截图：docs/screenshots/agents-design-v1.png（真实服务 + 真实 Agent 数据）。
 - 已知保留：本层不改布局；页内“管理 5 个专用 Agent”文案与实际 7 条数据不一致属既有文案问题，本层未动。
+- 已关闭（2026-10-26，Flash 路）：副标题 5→7 纠错已落地（agents.html + agents.js 中英文案），AgentsSubtitleCountTest 锁死副标题数字与 AgentType 枚举项数一致。
 
 ## 20. 快捷工具页设计层 v1（2026-10-25，Flash 路）
 - 文件：static/tools-design-v1.css，只覆盖，tools.html 在 harness.css 之后引用（本页无内联 style 块，不改 app.css/harness.css 与任何 JS）。

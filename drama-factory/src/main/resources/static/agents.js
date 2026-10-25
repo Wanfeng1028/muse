@@ -3,7 +3,7 @@
 
   var PAGE_I18N = {
     "agt.title": { "zh-CN": "Agent 机队", "en": "Agent Fleet" },
-    "agt.subtitle": { "zh-CN": "管理 5 个专用 Agent 的提示词与模型", "en": "Manage prompts and models for the 5 dedicated Agents" },
+    "agt.subtitle": { "zh-CN": "管理 7 个专用 Agent 的提示词与模型", "en": "Manage prompts and models for the 7 dedicated Agents" },
     "agt.videoChannel": { "zh-CN": "视频通道", "en": "Video channel" },
     "agt.mediaProviders": { "zh-CN": "媒体供应商", "en": "Media providers" },
     "agt.mediaProvidersHint": { "zh-CN": "每个供应商配一个 API Key，在卡片里管理可用模型", "en": "Each provider holds one API Key; manage available models on its card" },

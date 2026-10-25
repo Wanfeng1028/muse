@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Fixed（Flash 路 2026-10-26：Agent 机队页副标题计数纠错）
+- 副标题由“管理 5 个专用 Agent 的提示词与模型”改为“管理 7 个专用 Agent 的提示词与模型”，同步改 agents.js 的 i18n 文案（中文同款、英文由 the 5 dedicated Agents 改为 the 7 dedicated Agents）；关闭 DESIGN_SYSTEM §19 已知保留的“页内文案与实际数据不一致”问题。计数实证：后端 AgentType 枚举共 7 项（编剧/分镜/视频生成/剪辑/质检/作词/作曲），与 v1 截图时的 7 条数据一致，5 是旧数。
+- 新增 AgentsSubtitleCountTest 1 例：断言 agents.html 副标题数字等于 AgentType.values().length，且 agents.js 中英文案同数——枚举再增减时测试即报错，不再靠肉眼对数。
+- 本轮为 3 行文案机械纠错，未走模型调用（额度消耗只计第 1 轮两通）；验收：新测 1/1 全绿，设计层合跑 91/91 全绿（含他路未提交的 tasks v2 测试 3 例，本轮不提交他路文件），Maven 离线 BUILD SUCCESS；内联截图亲眼核对副标题已是“管理 7 个专用 Agent 的提示词与模型”、零 console 错误，截图存 docs/screenshots/agents-subtitle-count.png（网格加载态是剥离脚本后的静态空态，非本轮问题）。
+- 如实保留：复制库上的真实服务 /api/agents 回 409（未找到 LYRICS 的 Prompt 模板，库内模板仅 5 条），属既有种子缺口，本轮未扩范围补种子；故在线条数未以该接口实测，计数证据为枚举源码 + 单测 + 静态副标题截图三方一致。
+
 ### Added（Flash 路 2026-10-26：设置中心页设计层 v2）
 - 新增 static/settings-design-v2.css（1 条规则，只覆盖 #settings-retry，不改 app.css/harness.css 与 v1 文件；settings.html 在 v1 之后引用 1 行）：关闭 v1 已知保留“重试按钮 #settings-retry 未入本层”——重试钮与保存钮同口径（13px/600、8px 圆角、8px 16px 内边距、1.4 行高），底色 var(--surface)、边框 1px solid var(--border)、文字 var(--text)，与成片质检页通过/打回次按钮同款；hover/focus/active 沿用 app.css 次按钮原样式，本层不碰；布局与定位一字不改。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器为本轮现写最小新文件 relay-station/flash_call_n4.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）产出：首通正文 0 字（API prompt 24086 / completion 1790 / total 25876，推理占大头未出正文，作废，按规不原样重发）；换新提示词（首行改写为 Do not reason、直接输出）第 2 通 1 通可用（API prompt 23862 / completion 1535 / total 25397，reasoning_tokens 0，无 429），正文即 1 条规则；编排修正 1 处（模型稿漏了 padding 与 line-height，按 v1 主按钮口径补 8px 16px 与 1.4，已如实注明）。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制色，边框为 1px solid var(--border) 完整形式。
