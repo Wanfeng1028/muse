@@ -57,6 +57,14 @@ export function canClearOrKick(_roomType: RoomType, isOwner: boolean): boolean {
   return isOwner;
 }
 
+// guest 一律不得做管理操作
+export function canManageRoom(roomType: RoomType, isOwner: boolean, permRole?: string | null): boolean {
+  if (permRole === "guest") {
+    return false;
+  }
+  return canUpdateRoom(roomType, isOwner);
+}
+
 /** 路由策略：workroom 定向，playroom 广播。 */
 export type RouteStrategy = "directed" | "broadcast";
 

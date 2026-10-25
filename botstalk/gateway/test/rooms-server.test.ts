@@ -81,7 +81,7 @@ describe("rooms http api", () => {
     await api("POST", "/api/rooms", { id: "w1", name: "W", owner: "alice" });
     await api("POST", "/api/rooms", { id: "p1", name: "P", type: "playroom", owner: "bob" });
 
-    const renamed = await api("PATCH", "/api/rooms/w1", { name: "W2", topic: "hello" });
+    const renamed = await api("PATCH", "/api/rooms/w1", { name: "W2", topic: "hello", requester: "alice" });
     expect(renamed.status).toBe(200);
     expect(renamed.json.room.name).toBe("W2");
     expect(renamed.json.room.topic).toBe("hello");
@@ -106,7 +106,7 @@ describe("rooms http api", () => {
   });
 
   it("成员增删改查与错误分支", async () => {
-    await api("POST", "/api/rooms", { id: "r1", name: "R" });
+    await api("POST", "/api/rooms", { id: "r1", name: "R", owner: "alice" });
 
     const add = await api("POST", "/api/rooms/r1/members", { adapter_id: "a1", persona_role: "host" });
     expect(add.status).toBe(201);
@@ -125,15 +125,15 @@ describe("rooms http api", () => {
     const adapterIds = list.json.members.map((m: any) => m.adapter_id).sort();
     expect(adapterIds).toEqual(["a1", "a2"]);
 
-    const patched = await api("PATCH", "/api/rooms/r1/members/a1", { persona_role: "moderator" });
+    const patched = await api("PATCH", "/api/rooms/r1/members/a1", { persona_role: "moderator", requester: "alice" });
     expect(patched.status).toBe(200);
     expect(patched.json.member.persona_role).toBe("moderator");
 
-    const del = await api("DELETE", "/api/rooms/r1/members/a2");
+    const del = await api("DELETE", "/api/rooms/r1/members/a2?requester=alice");
     expect(del.status).toBe(200);
     expect(del.json.ok).toBe(true);
 
-    const delMissing = await api("DELETE", "/api/rooms/r1/members/a2");
+    const delMissing = await api("DELETE", "/api/rooms/r1/members/a2?requester=alice");
     expect(delMissing.status).toBe(404);
 
     const listMissing = await api("GET", "/api/rooms/nope/members");

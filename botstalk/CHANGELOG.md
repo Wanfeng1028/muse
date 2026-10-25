@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 7 轮（管理操作矩阵，后端）
+### 新增
+- 管理操作矩阵落地（关闭第 6 轮未做项“guest 管理操作未做权限矩阵”）：协议新增 canManageRoom（guest 一律否决，其余走既有 canUpdateRoom）；网关 DELETE 成员守既有 canClearOrKick（仅房主，身份取 `?requester=`）、PATCH 成员人设与 PATCH 房间名/话题守 canManageRoom（错误 ROOM_MANAGE_FORBIDDEN）、PATCH 房间类型加 guest 否决（错误仍为既有 ROOM_TYPE_FORBIDDEN）；身份解析为房主恒 admin、其余查 perm_role 列。
+- 修复改人设 handler 只判房间存在、未绑定 room 变量的既有隐患（本轮守卫依赖该变量，不修无法编译）。
+### 验收
+- 协议新测 management-matrix 3 例、网关新测 management-matrix-r7 2 例；协议全量 22 文件 198 例、网关全量 70 文件 921 例零回归；网关 tsc 全洁（协议改后须先构建 dist，否则网关报 canManageRoom 未导出）。
+- 已知保留：拉人（POST 成员）尚未守 canInvite；设权限角色无 REST 端点；REST requester 为自报身份、无鉴权；无房主 workroom 将无人能管理；其余四级可见性与 Web 悄悄话 UI 仍未做。详见 docs/OPENAGENTS_ROUND7.md。
+
 ## Unreleased - Web 房间列表全宽台账（设计层 v2）
 ### 新增
 - 新增 `web/src/design-v2.css` 覆盖层（原 `styles.css` 与 `design-v1.css` 不动，`main.tsx` 在 v1 之后引用本层）：关闭 v1 已知保留“房间列表页仍为居中卡片”。列表容器取消居中、面板取消卡片边框与最大宽，房间行只靠 1px 底线分隔，页头用 2px 墨线收束；沿用既有纸色 token，不引入新配色；不用渐变、不用阴影、不用新字体、不用 emoji；不改任何 TSX。
