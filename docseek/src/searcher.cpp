@@ -1458,10 +1458,21 @@ std::vector<Hit> Searcher::searchDetailed(const std::string& query, int limit, s
     if (tokens.size() == 1 && !hits.empty()) {
         std::vector<Hit> extra;
         if (tryCharDecomposedSingle(tokens[0], db_, limit, extra)) {
+            // v0.34.0 补刀分数封顶：补刀命中的 BM25 来自另一条 OR 加单字前缀展开
+            // 的查询，与 AND 查询的 BM25 量级不可比；直接合并会让仅凭虚高分数的
+            // 补刀文档压过精确 AND 文档（v09-t130-q05：补刀文档 22.256 压过精确文档
+            // 16.135）。补刀文档是低置信候选，其 base 分数不得高于精确 AND 文档的
+            // 最低 base 分数；短语、标题、结构加成仍在后续 rerank 中正常竞争，
+            // t007-q08 类连续短语救援不受影响。
+            double minAndScore = hits[0].score;
+            for (const Hit& h : hits) {
+                if (h.score < minAndScore) minAndScore = h.score;
+            }
             std::set<int64_t> seen;
             for (const Hit& h : hits) seen.insert(h.doc_id);
-            for (const Hit& h : extra) {
+            for (Hit& h : extra) {
                 if (seen.insert(h.doc_id).second) {
+                    if (h.score > minAndScore) h.score = minAndScore;
                     hits.push_back(h);
                 }
             }
