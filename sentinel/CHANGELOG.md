@@ -3,6 +3,22 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.2] - 2026-10-26
+
+### 修复
+- 监控管理页导航死链：monitors.html 是全站唯一导航用 .html 路径的一页，其 /index.html、/monitors.html、/alerts.html、/settings.html 均无路由，点开到不了页面；本轮导航改成全站已有的 live 路由：总览 /、监控管理 /monitors（active）、事件 /incidents、投递队列 /deliveries、短信记录 /sms-log。告警与设置没有对应页面，故去掉这两项，不编造路由；JS 与页面其余部分未动。
+
+### 测试
+- 新增 internal/web/monitors_nav_test.go（5 条新链接标记齐全、4 条死链标记均不存在）；与 incidents/sms-log 容器测试合跑全绿，internal/web 包全量通过；go vet 全洁；gofmt 标出的 incidents_detail_test.go 与 web_deep_test.go 为既存漂移，本轮未动。
+- 真实服务冒烟（18231 端口隔离库）：5 条新导航路由全部 200；4 条旧死链路径全部 401（非路由，鉴权中间件先拒，同样不是页面）；截图亲眼核对导航 5 链齐全、监控管理 active 下划线正常、布局无重叠；截图存 docs/screenshots/monitors-nav-v0202.png（空表为隔离库真实空态，本轮只改导航）。
+- 验收后服务按端口反查 PID 停掉、端口已关、隔离库与二进制与临时令牌已删。
+
+### 已知限制
+- /settings 仍无路由：incidents/deliveries/sms-log 三页导航仍链 /settings，点开到不了页面，属全站既存问题，本轮不扩面，排期后续单独处理。
+
+### 模型稿
+- 由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写的 flash_call_n11.py，令牌经 SSH 现取不落盘）输出：导航稿 1 通即出；测试稿首版连空 3 通作废（reasoning-only 空响应），缩小目标（去掉顺序断言）后 1 通成功；无 429。
+
 ## [0.20.1] - 2026-10-26
 
 ### 新增
