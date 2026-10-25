@@ -1,0 +1,16 @@
+.page-head h1 { font-size: 20px; font-weight: 700; color: var(--text); }
+.page-head .text-secondary { font-size: 13px; font-weight: 400; color: var(--text-3); }
+.page .card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; box-shadow: none; }
+.page .card-header .card-title { font-size: 16px; font-weight: 700; color: var(--text); }
+.page .form-label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+.page .form-control { font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border-soft); border-radius: 8px; box-shadow: none; }
+.page .form-select { font-size: 13px; color: var(--text); background: var(--surface); border: 1px solid var(--border-soft); border-radius: 8px; box-shadow: none; }
+#skillTagRow .btn-sm { font-size: 12px; font-weight: 600; border-radius: 8px; }
+#skillGrid .card { background: var(--surface); border: 1px solid var(--border-soft); border-radius: 10px; box-shadow: none; }
+#skillGrid .card-body strong { font-size: 15px; font-weight: 700; color: var(--text); }
+#skillGrid .badge { font-size: 12px; font-weight: 600; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border-soft); }
+#skillGrid .text-secondary.small { font-size: 12px; font-weight: 400; color: var(--text-3); }
+#skillEmpty { font-size: 13px; font-weight: 400; color: var(--text-3); }
+#installedList strong { font-size: 14px; font-weight: 600; color: var(--text); }
+#installedList .text-secondary.small { font-size: 12px; font-weight: 400; color: var(--text-3); }
+#installedEmpty { font-size: 13px; font-weight: 400; color: var(--text-3); }

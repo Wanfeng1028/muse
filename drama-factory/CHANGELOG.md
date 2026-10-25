@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：Skill 市场页设计层 v1）
+- 新增 static/skills-design-v1.css（只覆盖，不改 app.css 与任何 JS；skills.html 在 app.css 之后引用 1 行，本页不引用 harness.css）：视觉逻辑“技能台账”——页头 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、表单标签 12px/600 次文字、输入框 13px 8px 圆角、标签钮 12px/600 8px 圆角、市场卡片名 15px/700、徽标 12px/600、已安装名 14px/600、空态 13px 次文字；token 全部取自 app.css。
+- 模型稿 16 条规则原文入仓，编排修正 1 处：标签钮模型稿写死 surface-2 底与次文字色，会把激活态主按钮也洗成灰色，改回只留字号/字重/圆角，激活态颜色沿用原按钮样式。其余 15 条为模型原文，括号 16/16 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
+- 验收：新增 SkillsDesignV1Test 3 例 + 旧设计层 5 页合跑 18/18 全绿，Maven 离线 BUILD SUCCESS；真实服务（18089 端口，复制 H2 库，开放模式）+ 真实技能数据截图亲眼核对：市场 4 卡（短剧钩子开头/分镜大师/转场设计/爽点节奏）与 /api/skills 对上，已安装 1 条（短剧钩子开头）与 /api/skills/installed 对上；计算样式实证页头 20/700、市场卡 10px 圆角纯白底、卡片名 15/700、零 console 错误；标签激活态（全部标签黑底）未被设计层洗白，编排修正有效；截图存 docs/screenshots/skills-design-v1.png。验收后服务按 PID 停干净、复制库已删。
+- 已知保留：本层不改布局；已安装行底线颜色由 skills.js 行内 !important 写死，本层不硬压；本轮未动 cost-ledger.js、second-brain、docseek eval、botstalk、new-api-src 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：用量统计页设计层 v1）
 - 新增 static/usage-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；usage.html 在内联 style 块之后引用 1 行，因该页内联 style 在样式表链接之后、放最后才能在同特异度下生效）：视觉逻辑“用量台账”——页头 20px/700、筛选下拉与刷新钮 6px 圆角、章节标题 16px/700、KPI 卡 surface 底发丝边 10px 圆角零阴影、KPI 大数字 24px/700 等宽数字、趋势条 surface-2 底 4px 圆角、空态卡 surface 底发丝边 10px 圆角、数据表头 12px/600 次文字、单元格 13px 等宽数字；token 全部取自 app.css/harness.css。
 - 模型稿 19 条规则，编排删 3 条、改 1 类后入仓 16 条：删 .kpi-grid（模型误写成 flex，会破坏内联 4 列网格布局）、删 .section（套卡会与 KPI 卡双重嵌套）、删 .state-box.error（误把错误色写成墨色）；3 处 font-family monospace 改回只用 tabular-nums（数据表文字列不应用等宽字体）。其余 16 条为模型原文，括号 16/16 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。

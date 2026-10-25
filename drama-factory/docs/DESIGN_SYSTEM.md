@@ -127,3 +127,10 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 截图：docs/screenshots/usage-design-v1.png（真实服务 + 真实用量数据）。
 - 已知保留：本层不改布局（KPI 网格、趋势条结构、数据表列维持原样）。
 
+
+## 18. Skill 市场页设计层 v1（2026-10-25，Flash 路）
+- 文件：static/skills-design-v1.css，只覆盖，skills.html 在 app.css 之后引用（本页不引用 harness.css）。
+- 视觉逻辑：技能台账（页头是台账眉、搜索卡是台账案头、市场卡是台账格、徽标是台账戳、已安装行是台账已领单；页头 20px/700、卡片标题 16px/700、市场卡片名 15px/700、表单标签 12px/600、输入框 13px 8px 圆角、卡片 10px 圆角零阴影）。
+- 截图：docs/screenshots/skills-design-v1.png（真实服务 + 真实技能数据）。
+- 已知保留：本层不改布局；已安装行底线颜色由 JS 行内 !important 写死，本层不硬压。
+
