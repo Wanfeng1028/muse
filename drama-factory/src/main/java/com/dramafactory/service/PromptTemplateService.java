@@ -13,10 +13,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.EnumMap;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Prompt 模板服务。
- * 启动时若模板表为空，则写入 5 个默认中文模板；提供按 AgentType 查询与更新能力。
+ * 启动时补种缺失的默认模板，已有模板保持不动；提供按 AgentType 查询与更新能力。
  * 更新后的模板仅对之后新建的 Run 生效（已开始的 Run 在规划阶段即固化模板内容）。
  */
 @Service
@@ -33,21 +34,26 @@ public class PromptTemplateService implements ApplicationRunner {
     @Override
     @Transactional
     public void run(ApplicationArguments args) {
-        long existing = promptTemplateRepository.count();
-        if (existing > 0) {
-            log.info("Prompt 模板已存在 {} 条，跳过默认初始化", existing);
-            return;
-        }
+        int seeded = 0;
         Map<AgentType, String> defaults = defaultTemplates();
         for (Map.Entry<AgentType, String> e : defaults.entrySet()) {
+            Optional<PromptTemplate> existing = promptTemplateRepository.findByAgentType(e.getKey());
+            if (existing.isPresent()) {
+                continue;
+            }
             PromptTemplate t = new PromptTemplate();
             t.setAgentType(e.getKey());
             t.setName(e.getKey().getLabel() + "默认模板");
             t.setContent(e.getValue());
             t.setUpdatedAt(LocalDateTime.now());
             promptTemplateRepository.save(t);
+            seeded++;
         }
-        log.info("已写入 {} 条默认 Prompt 模板", defaults.size());
+        if (seeded > 0) {
+            log.info("已补种 {} 条缺失的默认 Prompt 模板", seeded);
+        } else {
+            log.info("所有默认 Prompt 模板已存在，无需补种");
+        }
     }
 
     /**

@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-26 深耕轮：Prompt 模板缺失补种）
+- 根因：老库只有 5 条模板（LYRICS/COMPOSE 加入前已初始化）；旧 `PromptTemplateService.run()` 表里有行就整体跳过，永远不补新项；`GET /api/agents` 逐项 `getByAgent`，LYRICS 查不到抛 `IllegalStateException`，全局 handler 转 409，整页失败（此前多轮截图里 /api/agents 的 409 即此缺口）。
+- 修法：`run()` 改为逐项 `findByAgentType` 检查，已存在的一字不改（不覆盖用户改过的模板），不存在才新建保存（名称 = 标签 + “默认模板”）；日志记补种条数或无需补种；类级 Javadoc 同步修正（旧文案“表为空则写入 5 个”已错）。无 schema 变更、无版本号变更。
+- 测试：新增 `PromptTemplateServiceBackfillTest` 4 例全绿（旧库补 2 条且已有模板不动、空库补 7 条、齐全库 0 保存、7 项逐项检查）；与既有 `PromptTemplateServiceV229Test` 合跑 12/12 全绿。
+- 真实服务冒烟（隔离构建 jar + 仓库开发库副本，副本事前实测恰为 5 条）：启动日志“已补种 2 条缺失的默认 Prompt 模板”；`GET /api/agents` 返回 7 条，LYRICS“作词默认模板”与 COMPOSE“作曲默认模板”齐全，旧 5 条的 updatedAt 仍为 2026-10-13（未动）。
+
 ### Added（5.3 路 2026-10-26：运行详情页设计层 v4）
 - 新增 static/run-detail-design-v4.css（模型稿 1 条规则原文入仓，run-detail.html 在 v3 之后引用 1 行）：加载失败分支注入的 error-box 图标行内样式改由 #detailBody .error-box svg 规则接管（svg 目标：lucide 运行时把 i 换成 svg 并拷贝属性），run-detail.js 删图标行内 style、图标元素保留。
 - 模型稿与对话页同 1 通产出 2 条规则（GLM-5.3，BotsRouter，大写，令牌 id=5，渠道 20，单路串行，调用器为本轮现写最小新文件 relay-station/glm53_r26_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile、显式 -i、ProxyCommand 齐全、未读任何现成调用脚本；API prompt 23971 / completion 208 / total 24179），正文即入仓，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值逐字保留。
