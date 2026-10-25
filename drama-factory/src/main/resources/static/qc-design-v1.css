@@ -1,0 +1,95 @@
+.page-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#qcEmpty {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+#qcCard {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.card-header {
+  border-bottom: 1px solid var(--hairline);
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+#qcStatusBadge {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+#qcVideo {
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+dl.row dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+dl.row dd {
+  font-size: 13px;
+  color: var(--text);
+}
+
+#qcNoteView {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+#qcNoteText {
+  font-size: 13px;
+  color: var(--text);
+}
+
+#qcForm label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#qcNote {
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+#approveBtn,
+#rejectBtn {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+}
+
+.toast {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: 10px;
+}

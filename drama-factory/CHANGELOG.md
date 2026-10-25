@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：成片质检页设计层 v1）
+- 新增 static/qc-design-v1.css（15 条规则，只覆盖，不改 app.css/harness.css 与任何 JS；qc.html 在 harness.css 之后引用 1 行）：视觉逻辑“质检台账”——页头 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、徽标 12px/600、信息 dt 12px/600 次文字、dd 13px、备注标题与表单标签 12px/600、textarea 13px 8px 圆角、通过/打回按钮 13px/600 8px 圆角、空态 13px 次文字；token 全部取自 app.css/harness.css。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 4000）2 通产出：首通正文 0 字（API prompt 24576 / completion 4000 / total 28576，思考耗尽未出正文，按规缩小目标不重发原提示词）；二通纯 CSS 入仓（API prompt 24095 / completion 2028 / total 26123，正文 1511 字即入仓的 15 条规则，分 3 个围栏、编排机械拼接）；测试文件 QcDesignV1Test 由编排按 Settings 模式机械落仓。括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid var(--hairline) 完整形式。
+- 验收：新增 QcDesignV1Test 3 例全绿，设计层合跑 56/56 全绿，Maven 离线 BUILD SUCCESS；真实服务（18197 端口，复制 H2 库，开放模式）+ 截图亲眼核对：计算样式实证页头 20/700、卡片白底 1px 边 10px 圆角、标题 16/700、徽标 12/600、dt 12/600、dd 13px、textarea 13px 8px 圆角、通过/打回 13/600/8px、零 console 错误；成片 id=1 数据与库内记录对上（第 1 集成片、待质检、00:09、2026-10-13 06:46、剧集 #1）；截图存 docs/screenshots/qc-design-v1.png。验收后服务按 PID 停干净、18197 端口已关、复制库与验收 jar 已删。
+- 已知保留：本层不改布局；视频区只加边框圆角、不碰内联黑底与播放逻辑，截图时播放器为初始 0:00 态（无自动播放，/media/finals/1 实测 200）；18196 端口被另一路 drama 服务占用，本轮改用 18197，验收 jar 复制到验收目录防他路重打包覆盖；截图 harness 经验：setContent 的 url 选项带不过 location.search（首拍空态），后改为 harness 内把 qc.js 的 location.search 读数替换为固定 id 参数并把等待条件收紧为“标题非加载中且时长非 -”才放行，复拍一次通过；本轮未动 images v2、login、second-brain、docseek eval 在跑工人的未提交文件。
+
+
 ### Added（Flash 路 2026-10-25：数字人页设计层 v1）
 - 新增 static/avatar-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；avatar.html 在 head 内联 style 块之后引用 1 行，同特异度下后者生效）：视觉逻辑“数字人台账”——页头 20px/700、副标题 13px 次文字、卡片 surface 底发丝边 10px 圆角零阴影、卡片头 14px/20px 内边距加底发丝线、卡片标题 16px/700、表单标签 13px/600 次文字、输入框/下拉/多行框 13px 8px 圆角、提示 12px 弱文字、BYOK 空盒 surface-2 底 1px 虚线发丝边 8px 圆角、预览图 8px 圆角、文件名 13px 次文字、生成区顶发丝线、生成钮 13px/600 8px 圆角（不改颜色）；token 全部取自 app.css/harness.css。
 - 模型稿 15 条规则，编排修正 2 类：副标题选择器由 .page-sub 加强为 .page-head .page-sub（app.css 同名分组选择器特异度更高，原规则会被压回 12px）；--hairline 全部换成 --border（两主题下值相同，且 --hairline 只在 harness.css 定义，截图内联漏掉自闭合 link 时会失效，换 token 后不再依赖 harness 加载顺序）。括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部边框均写成 1px solid/dashed var(--border) 完整形式。
