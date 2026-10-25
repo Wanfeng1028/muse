@@ -59,3 +59,23 @@
   outline-offset: 2px;
   border-radius: 6px;
 }
+
+/* linkshort v1.17.1 docs page: same table-head weight and spacing as the other pages.
+   The docs page link is placed after its inline style block, so these rules win over it. */
+h1.docs-title {
+  font-size: 28px;
+  font-weight: 600;
+  letter-spacing: normal;
+}
+
+h2.docs-h2 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.docs-wrap .table th {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}

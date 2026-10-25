@@ -5,6 +5,15 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.17.1] - 2026-10-25
+
+### 新增
+- API 文档页并入设计层：`docs.html` 在内联样式块之后引用 `/ui/assets/css/design-v117.css`（此前只引 `style.css`，v1.17.0 已知限制所记缺口至此关闭）；设计层补 3 条文档页规则——文档标题 28px/600、二级标题 16px/600、文档表头 13px/600 且无字距、无大写转换，与其余 6 页表头口径一致。原内联样式与文档正文一字未动。
+
+### 测试
+- 新增 `internal/handler/docs_design_test.go`：文档页引用设计层、设计层在内联样式块之后、设计层在 `style.css` 之后、3 个文档选择器齐全。
+- `go test ./internal/handler/ -run 'TestDocsPageDesignLayer|TestV117'` 全绿（见验收）。
+
 ## [v1.17.0] - 2026-10-25
 
 ### 新增
