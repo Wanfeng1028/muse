@@ -409,28 +409,28 @@
     for (var g = 0; g <= 3; g++) {
       var gv = (maxV * g) / 3;
       var gy = y(gv);
-      svg += '<line x1="' + PAD_L + '" y1="' + gy.toFixed(1) + '" x2="' + (W - PAD_R) + '" y2="' + gy.toFixed(1) + '" stroke="#e6e8eb" stroke-width="1"/>';
-      svg += '<text x="' + (PAD_L - 6) + '" y="' + (gy + 4).toFixed(1) + '" text-anchor="end" font-size="11" fill="#6c7a91">$' + gv.toFixed(gv < 10 ? 2 : 0) + '</text>';
+      svg += '<line x1="' + PAD_L + '" y1="' + gy.toFixed(1) + '" x2="' + (W - PAD_R) + '" y2="' + gy.toFixed(1) + '" stroke-width="1"/>';
+      svg += '<text x="' + (PAD_L - 6) + '" y="' + (gy + 4).toFixed(1) + '" text-anchor="end" font-size="11">$' + gv.toFixed(gv < 10 ? 2 : 0) + '</text>';
     }
     // x 轴日期（最多标 7 个，避免挤）
     var step = Math.max(1, Math.ceil(points.length / 7));
     points.forEach(function (p, i) {
       if (i % step !== 0 && i !== points.length - 1) return;
-      svg += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="middle" font-size="11" fill="#6c7a91">' + esc(fmtDayLabel(p.date)) + '</text>';
+      svg += '<text x="' + (i === points.length - 1 ? (W - PAD_R) : x(i)).toFixed(1) + '" y="' + (H - 8) + '" text-anchor="' + (i === points.length - 1 ? 'end' : 'middle') + '" font-size="11">' + esc(fmtDayLabel(p.date)) + '</text>';
     });
     // estimated 灰虚线
-    svg += '<polyline fill="none" stroke="#a8b0bd" stroke-width="1.5" stroke-dasharray="5 4" points="' + lineOf(function (p) { return num(p.estimatedUsd); }) + '"/>';
+    svg += '<polyline fill="none" stroke-width="1.5" stroke-dasharray="5 4" points="' + lineOf(function (p) { return num(p.estimatedUsd); }) + '"/>';
     // spent 蓝实线 + 数据点（title 做悬停提示）
-    svg += '<polyline fill="none" stroke="#206bc4" stroke-width="2" points="' + lineOf(function (p) { return num(p.spentUsd); }) + '"/>';
+    svg += '<polyline fill="none" stroke-width="2" points="' + lineOf(function (p) { return num(p.spentUsd); }) + '"/>';
     points.forEach(function (p, i) {
-      svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(num(p.spentUsd)).toFixed(1) + '" r="3.5" fill="#206bc4">'
+      svg += '<circle cx="' + x(i).toFixed(1) + '" cy="' + y(num(p.spentUsd)).toFixed(1) + '" r="3.5">'
         + '<title>' + esc(fmtDayLabel(p.date)) + ' 花费 $' + num(p.spentUsd).toFixed(2) + ' / 预估 $' + num(p.estimatedUsd).toFixed(2) + ' / ' + p.entryCount + ' 笔</title></circle>';
     });
     // 图例
-    svg += '<g font-size="12" fill="#495057">'
-      + '<line x1="' + PAD_L + '" y1="18" x2="' + (PAD_L + 22) + '" y2="18" stroke="#206bc4" stroke-width="2"/>'
+    svg += '<g font-size="12">'
+      + '<line x1="' + PAD_L + '" y1="18" x2="' + (PAD_L + 22) + '" y2="18" stroke-width="2"/>'
       + '<text x="' + (PAD_L + 28) + '" y="22">' + esc(_t('cl.legendSpent', '实际花费')) + '</text>'
-      + '<line x1="' + (PAD_L + 110) + '" y1="18" x2="' + (PAD_L + 132) + '" y2="18" stroke="#a8b0bd" stroke-width="1.5" stroke-dasharray="5 4"/>'
+      + '<line x1="' + (PAD_L + 110) + '" y1="18" x2="' + (PAD_L + 132) + '" y2="18" stroke-width="1.5" stroke-dasharray="5 4"/>'
       + '<text x="' + (PAD_L + 138) + '" y="22">' + esc(_t('cl.legendEst', '预估')) + '</text></g>';
     svg += '</svg>';
     box.innerHTML = svg;

@@ -42,11 +42,19 @@
 - 验收：新增 PromptsDesignV1Test 4 例全绿（引用顺序、括号与禁令、关键选择器、开关对齐禁令）；真实服务 + 真实提示词库数据截图亲眼核对（见下）；截图存 docs/screenshots/prompts-design-v1.png。验收后服务已停、复制库与 jar 已删。
 - 已知保留：长描述卡片的操作区在首屏折叠线下，属真实数据长度，不是布局缺陷；本轮未动 sentinel 在跑工人的未提交文件。
 
+### Added（深耕轮 2026-10-25：成本账本趋势图颜色与尺寸收归设计层）
+- cost-ledger.js 的 renderTrend 函数删掉 9 处 16 进制颜色属性（网格线 #e6e8eb、刻度文字 #6c7a91 两处、预估线 #a8b0bd 两处、实际线 #206bc4 两处、数据点 #206bc4、图例底色 #495057），几何属性（stroke-width、stroke-dasharray、font-size、r、points）与 polyline 的 fill="none" 全部保留；颜色现全部由 cost-ledger-design-v1.css 的 #trendChart 选择器接管，JS 不再是颜色来源。
+- 设计层 #trendChart svg 规则补 width: 100% 与 height: auto：此前 harness.css 第 66 行全局 svg{width:15px;height:15px} 规则把趋势图压成 15×15 像素肉眼不可见（视觉验收实测），设计层以 ID 选择器特异性夺回尺寸，实测 SVG 恢复为 1008×308。
+- x 轴最后一个日期标签改 text-anchor="end" 落在轴右端：此前居中标签右半边超出 720 宽 viewBox 被裁成“10-2!”，现完整显示“10-25”。
+- 新增回归测试 CostLedgerTrendColorTest 4 例（无写死颜色、设计层覆盖 7 个颜色角色、几何属性保留、设计层定趋势图尺寸），连同既有 CostLedgerDesignV1Test 4 例共 8/8 全绿。
+- 真实服务冒烟（18521 端口隔离库）：建项目/剧集/分镜后 mock 提交、任务 DONE，trend 接口 2026-10-25 返回预估 0.16/实际 0.16/1 笔；截图 docs/screenshots/cost-ledger-trend-colors.png 亲眼验收通过，计算样式实测实际线 #111111、预估线 #999999、网格线 rgba(0,0,0,0.08)，与设计层 token 一致。
+- 诚实声明两句：①冒烟数据里预估与实际恰好相等（均为 0.16），两条线重合是数据真实情况，不是渲染问题；②harness.css 的全局 svg 尺寸规则未动，其它页面的 SVG 仍受它影响，留待后续轮次处理。
+
 ### Added（Flash 路 2026-10-25 约 19:50-20:20：成本账本页设计层 v1）
 - 新增 static/cost-ledger-design-v1.css（只覆盖，不改 app.css 与任何 JS；cost-ledger.html 在 app.css 之后引用 1 行）：视觉逻辑“账本台账”——预算卡是总账（surface-2 底 + 2px 墨色顶线）、KPI 卡是分户、趋势与供应商是明细账页、最近明细表是流水；层级只靠字重、字号、线宽与留白，全部左对齐，token 全部取自 app.css；KPI 数字 tabular-nums，预算进度条实色填充，明细行 hover 只用淡底色。
 - 模型稿编排修正 2 处（均已写进测试防回归）：删 .card-header.justify-content-between 改 flex-start 的规则（会把趋势卡标题与天数按钮挤到一端，改布局不只改样式）；删 #providerBars .d-flex 改 flex-start 的规则（会把供应商名与金额从两端对齐改成并排）。其余规则逐项核对：括号 59/59 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
 - 验收：新增 CostLedgerDesignV1Test 4 例全绿（引用顺序、括号与禁令、关键选择器、两条布局禁令）；真实服务 + 真实成本账本数据截图亲眼核对（见下）；截图存 docs/screenshots/cost-ledger-design-v1.png。验收后服务已停、演示数据未入提交。
-- 已知保留：趋势 SVG 的折线/圆点/文字/网格线颜色由 cost-ledger.js 内联属性写死，设计层颜色规则会被内联属性压住、暂不生效，设计层只管 SVG 布局（display:block）；后续如需换色须改 JS 内联属性，不属本层范围；本轮未动 skillhub 在跑工人的未提交文件。
+- 已知保留：趋势 SVG 的颜色与尺寸部分已于 2026-10-25 深耕轮关闭（颜色已全部移入设计层、设计层为唯一颜色来源，趋势图尺寸亦由设计层接管），详见本轮 Added（深耕轮 2026-10-25：成本账本趋势图颜色与尺寸收归设计层）条目；本轮未动 skillhub 在跑工人的未提交文件。
 
 ### Added（SkillHub 设计层 v1 + 已安装状态真修复，2026-10-25）
 - 新增 static/skillhub-design-v1.css（只覆盖，不改 app.css；skillhub.html 在 app.css 之后引用 1 行，外层 div 加 skh-page）：视觉逻辑“索引台账”——纯白底、发丝边框、10px 圆角、零阴影；标题 16px/500 墨色、描述 14px 次文字、作者·许可证·版本·来源元数据行 13px 弱文字；卡片底部操作区顶部发丝线、按钮右对齐；同行卡片等高、操作沉底对齐。token 全部取自 app.css，无 linear-gradient、无 backdrop-filter、无阴影、无 Inter、无 emoji、无首字母 logo。

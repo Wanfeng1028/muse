@@ -159,6 +159,8 @@
 
 #trendChart svg {
   display: block;
+  width: 100%;
+  height: auto;
 }
 
 #trendChart line {
