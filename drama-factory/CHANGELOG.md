@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：运行列表页设计层 v1）
+- 新增 static/runs-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；runs.html 在 app.css 与 harness.css 之后引用 1 行）：视觉逻辑“运行台账”——页头 20px/700、页头按钮 8px 圆角、统计条 13px/600 加 12px 下距与发丝底线作总计线、全部运行标题 16px/700、运行行上下 16px、目标 15px/700、状态徽标 12px/600、空态 13px 次文字、向导卡纯白底发丝边 10px 圆角零阴影、向导标题 15px/700、向导标签 12px/600 次文字、目标输入框 13px 8px 圆角、错误框 13px 8px 圆角；token 全部取自 app.css/harness.css。
+- 模型稿即入仓的 13 条规则原文，未做编排修正：括号 13/13 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
+- 验收：新增 RunsDesignV1Test 3 例全绿（引用顺序、括号与禁令、关键选择器）；真实服务 + 真实运行数据截图亲眼核对（见下）；截图存 docs/screenshots/runs-design-v1.png，另补点击“新建运行”后的向导截图 docs/screenshots/runs-design-v1-wizard.png（向导卡纯白底 10px 圆角零阴影、标题 15/700、标签 12/600 次文字、输入框 13px 8px 圆角计算样式全对）。验收后服务已停、复制库与 jar 已删。
+- 已知保留：本层不改布局（行底线、悬停底色、徽标底色与文字色、网格列均维持 harness.css 原样）；本轮未动 cost-ledger.js、second-brain、docseek eval、feedflow v1.14 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：任务队列页设计层 v1）
 - 新增 static/tasks-design-v1.css（只覆盖，不改 app.css 与任何 JS；tasks.html 在 app.css 与 harness.css 之后引用 1 行）：视觉逻辑“任务台账”——页头 20px/700、筛选卡纯白底发丝边 10px 圆角零阴影、筛选标签 12px/600 次文字、下拉与刷新按钮 8px 圆角、计数 13px/600、任务行上下 14px、状态徽标收窄为 12px/600 台账戳、进度条 surface-2 底 2px 圆角、空态 13px 次文字；全部左对齐，token 全部取自 app.css。
 - 模型稿即入仓的 13 条规则原文，未做编排修正：括号 13/13 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。

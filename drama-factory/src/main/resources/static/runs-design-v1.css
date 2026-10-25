@@ -1,0 +1,27 @@
+/* 运行台账 */
+
+.page-head h1 { font-size: 20px; font-weight: 700; letter-spacing: 0; }
+
+.page-head .actions .btn { border-radius: 8px; }
+
+#statsBar.stats-strip { font-size: 13px; font-weight: 600; padding-bottom: 12px; border-bottom: 1px solid var(--hairline); }
+
+.section .section-title { font-size: 16px; font-weight: 700; }
+
+#listArea .run-row { padding: 16px 4px; }
+
+#listArea .run-row .goal { font-size: 15px; font-weight: 700; }
+
+#listArea .run-row .badge { font-size: 12px; font-weight: 600; padding: 3px 10px; }
+
+#listArea .state-empty { padding: 32px 0; font-size: 13px; color: var(--text-2); }
+
+#wizard.card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: none; }
+
+#wizard .card-title { font-size: 15px; font-weight: 700; }
+
+#wizard .form-row label { font-size: 12px; font-weight: 600; color: var(--text-2); }
+
+#wizard #goalInput { font-size: 13px; border-radius: 8px; border-color: var(--border); }
+
+#listArea .error-box { font-size: 13px; border-radius: 8px; }
