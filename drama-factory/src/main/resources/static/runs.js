@@ -203,7 +203,7 @@
       var runs = await req('/api/runs');
       renderRuns(runs);
     } catch (e) {
-      list.innerHTML = '<div class="error-box"><i data-lucide="alert-triangle" style="width:15px;height:15px;vertical-align:-2px"></i> ' + esc(_t('run.loadListFailedDetail', '加载运行列表失败：')) + esc(e.message) + '</div>';
+      list.innerHTML = '<div class="error-box"><i data-lucide="alert-triangle"></i> ' + esc(_t('run.loadListFailedDetail', '加载运行列表失败：')) + esc(e.message) + '</div>';
       if (window.lucide) lucide.createIcons();
       toast(_t('run.loadListFailed', '加载运行列表失败'), 'err');
     }
@@ -250,7 +250,7 @@
       $('#confirmBtn').hidden = false;
       $('#wizardReset').hidden = false;
     } catch (e) {
-      area.innerHTML = '<div class="error-box"><i data-lucide="alert-triangle" style="width:15px;height:15px;vertical-align:-2px"></i> ' + esc(_t('run.genPlanFailedDetail', '生成计划失败：')) + esc(e.message) + '</div>';
+      area.innerHTML = '<div class="error-box"><i data-lucide="alert-triangle"></i> ' + esc(_t('run.genPlanFailedDetail', '生成计划失败：')) + esc(e.message) + '</div>';
       if (window.lucide) lucide.createIcons();
       toast(_t('run.genPlanFailed', '生成计划失败'), 'err');
     } finally {
@@ -266,7 +266,7 @@
     }
     var eps = (plan && plan.episodes) || [];
     if (!eps.length) {
-      html += '<div class="empty" style="padding:24px"><div class="d">' + esc(_t('run.noEpisodes', '未生成分集计划')) + '</div></div>';
+      html += '<div class="empty"><div class="d">' + esc(_t('run.noEpisodes', '未生成分集计划')) + '</div></div>';
     } else {
       eps.forEach(function (ep) {
         html += '<div class="plan-ep">' +

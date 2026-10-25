@@ -1,0 +1,10 @@
+#listArea .error-box svg,
+#planArea .error-box svg {
+  width: 15px;
+  height: 15px;
+  vertical-align: -2px;
+}
+
+#planArea .empty {
+  padding: 24px;
+}

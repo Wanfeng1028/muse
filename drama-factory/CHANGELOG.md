@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：运行页设计层 v2）
+- 新增 static/runs-design-v2.css（模型稿 2 条规则原文入仓，runs.html 在 v1 之后引用 1 行）：关闭运行页 v1 未覆盖的 3 处行内样式——两处错误提示图标尺寸与空态内边距。JS 机械迁移（编排落仓，非模型稿）：直接删 3 处行内 style 属性、不加新类（图标规则以 .error-box svg 为目标，lucide 会把 i 换成 svg；空态规则以 #planArea .empty 为目标、用特异度压住 harness.css 全局 .empty{padding:48px 20px}）；#planArea 容器自身的 margin-top:16px 行内样式与本轮无关，不碰；v1 已有的 .error-box 字号圆角与 .state-empty 不重复写。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r21_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：API prompt 24003 / completion 541 / total 24544，reasoning_tokens 0，正文即入仓 2 条规则，零编排修正。括号 2/2 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制颜色字面量，原值（15px/15px/-2px/24px）逐字保留。
+- 验收：新增 RunsDesignV2Test 4 例全绿，设计层合跑 104/104 全绿（隔离构建；含他路未提交的 skills v3 测试 3 例与 run-detail v2 测试 3 例，本轮不提交他路文件），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18206 端口，复制 H2 库，开放模式）实测：runs.html 与 runs-design-v2.css 均 200、served 内容与文件对上；/api/runs 真实 3 条（AI MV 冒烟测试主题失败、取消测试已取消、验证用短剧失败）与列表对上；计算样式实证：注入节点测得 #planArea .empty padding=24px（压住 harness 全局 48px 20px）、.error-box svg 15px/15px/-2px，注入后即删、截图仍为真实态；视口截图亲眼核对布局撑满、无错位重叠、零 console 错误；另有 1 条 pageerror（setContent 下 document.write SyntaxError，与音乐页同款 harness 环境 artifact，不影响内容与样式）。截图存 docs/screenshots/runs-design-v2.png。验收后服务按真实 java PID 28440 停干净、18206 端口已关、隔离构建与复制库已删。如实保留：截图统计条写总运行数 2、列表却有 3 条，属既有统计口径缺口、非本层所致，本轮不扩范围修统计。
+
 ### Added（5.3 路 2026-10-26：成本账本页设计层 v2）
 - 新增 static/cost-ledger-design-v2.css（模型稿 1 条规则原文入仓，cost-ledger.html 在 v1 之后引用 1 行）：关闭上一位留下的 v2 候选——cost-ledger.js 里 4 处行内 style="font-variant-numeric: tabular-nums;"（供应商明细金额 span、最近明细表时间/预估/实际 3 个 td）改由 CSS 接管。JS 机械迁移（编排落仓，非模型稿）：4 处统一挂 cl-num 类、删行内样式；动态进度条宽度（数据驱动）仍留行内；页内 inline style 块的 .kpi-value 等宽规则与本层无关，不碰。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r21_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：API prompt 23902 / completion 76 / total 23978，reasoning_tokens 0，正文即入仓 1 条规则，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制颜色字面量，选择器 .cl-num 为本轮新增、无冲突。

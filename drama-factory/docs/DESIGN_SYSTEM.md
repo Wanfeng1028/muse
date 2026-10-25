@@ -236,3 +236,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：账本台账续篇——数字列全部等宽对齐，金额与时间在纵向上一眼可比。
 - 截图：docs/screenshots/cost-ledger-design-v2.png（隔离构建真实服务 18205 端口 + 复制库真实数据：最近明细 1 条、供应商今日真实空态；视口截图；td 计算样式实证 tabular-nums）。
 - 已知保留：本层不改布局；页内 inline style 块的 .kpi-value 等宽规则与本层无关，不碰。
+
+## 33. 运行页设计层 v2（2026-10-26，5.3 路）
+- 文件：static/runs-design-v2.css（2 条规则，只覆盖，runs.html 在 v1 之后引用 1 行；JS 机械迁移：直接删 3 处行内 style 属性、不加新类；不改 app.css/harness.css 与布局）。
+- 视觉逻辑：运行台账续篇——错误提示图标统一 15px 对齐、计划区空态内边距 24px（压住 harness 全局 48px 20px，只限 #planArea 内）。
+- 截图：docs/screenshots/runs-design-v2.png（隔离构建真实服务 18206 端口 + 复制库真实数据：3 条运行；视口截图；错误图标与空态计算样式以注入节点实证）。
+- 已知保留：本层不改布局；#planArea 容器自身的 margin-top:16px 行内样式与本轮无关，不碰；错误态与空态均为条件态，计算样式以注入节点实测（注入后即删，截图仍为真实态）。
