@@ -5,6 +5,17 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.23.0] - 2026-10-26
+
+### 新增
+
+- 链接列表支持按到期时间排序：GET /api/links?sort=expires_at 按到期时间倒序（最晚到期在前），永不过期链沉底（SQLite 下 ORDER BY expires_at DESC 会把 NULL 排最前，本轮以 (expires_at IS NULL), expires_at DESC 显式纠正）；非法 sort 值仍回落创建时间排序。排序下拉框新增“按到期时间”选项；API 文档页注明 sort 可选值与非法值回落口径。
+
+### 测试
+
+- 新增 internal/store/list_links_sort_expires_test.go（到期远/近/过去/永不过期四条顺序断言：far、near、past、never；非法 sort 回落且全量返回）与 internal/handler/list_links_sort_expires_test.go（sort=expires_at 返回顺序 s-far、s-near、s-never；非法 sort 返回 200）。全量测试：14 个包全部通过；go vet 全洁；本轮新文件 gofmt 全洁；真实服务冒烟（隔离库 18446）：sort=expires_at 返回顺序 s-far、s-near、s-never，非法 sort 返回 200；浏览器实测链接管理页：排序下拉已选“按到期时间”、三行顺序与冒烟一致，截图亲眼验收通过。
+- 如实记录：本轮实现与两份测试文件均由编排按既有锚点机械改动——模型实现稿 1 通连空 2 次后被外层超时截断（Flash 路本时段 reasoning-only 空响应频发），未再耗通；截图走 setContent 内联+route 代带密钥 harness（Chromium 直连遭 LNA 拦截为已知环境限制）。
+
 ## [v1.22.0] - 2026-10-26
 
 ### 新增

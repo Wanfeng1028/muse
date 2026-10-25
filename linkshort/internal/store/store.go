@@ -281,7 +281,7 @@ func (s *Store) ListLinksFilteredEx2(search string, page, perPage int, orderBy s
 }
 
 func (s *Store) ListLinksFilteredEx3(search string, page, perPage int, orderBy string, enabled *bool, burn *bool, expired *bool, hasPassword *bool) ([]*model.Link, int64, error) {
-	if orderBy != "clicks" && orderBy != "created_at" {
+	if orderBy != "clicks" && orderBy != "created_at" && orderBy != "expires_at" {
 		orderBy = "created_at"
 	}
 	if page < 1 {
@@ -351,8 +351,12 @@ func (s *Store) ListLinksFilteredEx3(search string, page, perPage int, orderBy s
 	}
 
 	offset := (page - 1) * perPage
+	orderClause := orderBy + " DESC, id DESC"
+	if orderBy == "expires_at" {
+		orderClause = "(expires_at IS NULL), expires_at DESC, id DESC"
+	}
 	listSQL := "SELECT " + linkColumns + " FROM links" + cond +
-		" ORDER BY " + orderBy + " DESC, id DESC LIMIT ? OFFSET ?"
+		" ORDER BY " + orderClause + " LIMIT ? OFFSET ?"
 	listArgs := append(append([]any{}, args...), perPage, offset)
 
 	rows, err := s.db.Query(listSQL, listArgs...)

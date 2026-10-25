@@ -627,7 +627,7 @@ func handleListLinks(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		perPage = 200
 	}
 	sort := q.Get("sort")
-	if sort != "clicks" && sort != "created_at" {
+	if sort != "clicks" && sort != "created_at" && sort != "expires_at" {
 		sort = "created_at"
 	}
 
