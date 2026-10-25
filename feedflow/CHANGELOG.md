@@ -1,6 +1,18 @@
 
 # 更新日志
 
+## v1.19.0 — 2026-10-26
+
+### 复核：翻转点 1px 粒度实测，关闭 v1.18.0 断点精度 caveat（不改样式）
+
+- 方法：真实服务两路——18319 带密码门 + curl 登录取会话（已登录 7 链）、18320 不开密码门（未登录 6 链），复制的 feedflow.db 种子库，Chromium setContent 内联 v112–v117 层 + /api 路由回真实服务；扫宽 390/469/470/471/472/473/519/520/521/522/523/768，844 高；24 点零 console 错误、导航全程零横向滚动（scrollWidth == clientWidth）。
+- 结果：未登录 470px 仍两行（顶栏 183px、app-shell 613px）、471px 起单行（121px、675px）；已登录 520px 仍两行、521px 起单行；与 v1.18.0 实测的 471/521 逐像素一致，1–2px 容差 caveat 关闭；390px 两行态不变。
+- 插曲（据实）：首轮未登录路误用带密码门的服务取首页，只拿到 213 字节登录跳转体，该轮未登录行作废；改走 18320 无密码门服务重扫后 24 点全有效。首轮 /api 401 console 错误是 harness 未转发会话 Cookie 所致，二轮转发后归零，属 harness artifact、非回归。
+- 模型稿（只走 BotsRouter，大写 GLM-5.3，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写的最小新文件 glm53_r19_call.py，令牌经 SSH 现取不落盘、未读任何现成调用脚本）：第 1 通正文 0 字作废（API prompt 24327 / completion 520 / total 24847）；缩小目标后第 2 通只问配对测试 1 个函数，正文 663 字但 completion 4000 触顶截断在半句断言（API prompt 24073 / completion 4000 / total 28073），编排按截断处的正则骨架机械补齐尾部 3 行断言，并按 v118 口径另写其余 2 例（本条如实注明哪些行是模型稿、哪些是编排补写）。
+- 测试：新增 tests/test_design_v119_flippoints.py 3 例（v117 在 v116 之后引用且 served；521 只配 is-logged-in、471 只配 not-logged-in 且 521 > 471、calc 恰好 2 次；v117 无 !important/gradient/box-shadow）；v112–v119 设计测试合跑 19/19 全绿。
+- 截图：docs/screenshots/topbar-flip-521-loggedin-v119.png（7 链单行含退出）、topbar-flip-471-loggedout-v119.png（6 链单行无退出），亲眼核对与实测一致。
+- 验收后服务按真实 PID 停干净、端口已关、复制库与服务日志已删；扫宽脚本存 muse-build/shot/ff-v119-sweep.js，扫宽原始输出存 ff-v119-sweep-out.txt。
+
 ## v1.18.0 — 2026-10-25
 
 ### 修复：移动端单行顶栏下 app-shell 高度多扣 62px
