@@ -3,6 +3,30 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.4] - 2026-10-26
+
+### 修复
+
+- 关闭 v0.20.2/v0.20.3 已知限制里挂账的缺链：`incidents.html` 与 `sms_log.html` 导航补监控管理链，`deliveries.html` 导航补监控管理链与短信记录链。
+- 三页 active 标记保持在各自当前页；deliveries 页首页文案仍用该页原有的"仪表盘"。
+- 其余导航与页面内容一字未动；profile/snapshots/index 三页导航集合不同（带快照归档等），不在本轮范围。
+
+### 测试
+
+- 新增 `internal/web/nav_missing_links_test.go`，共 3 组：事件页与短信记录页含监控管理链且顺序为总览在前、事件在后；投递页含监控管理链与短信记录链且顺序为仪表盘、监控管理、事件、投递队列 active、短信记录。
+- 与 `monitors_nav_test.go`、`settings_nav_removed_test.go` 及 `internal/web` 包全量合跑通过；`go vet` 全洁；全量 16 包全部通过、零失败（notify 包约 250 秒为既存最慢包）。
+
+#### 模型稿
+
+模型稿（只走 BotsRouter，大写 GLM-5.3，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，调用器为本轮现写最小新文件 `glm53_r29_call.py`，令牌经 SSH 现取不落盘、未读任何现成调用脚本）：导航稿首通 4 次推理-only 空响应作废，改"无文件访问、原文照抄"口径后 1 通成功；测试稿首通 4 次推理-only 空响应作废，改"无文件访问、按给定断言组装"口径后 1 通成功；无 429。
+
+### 视觉验收
+
+- 真实服务冒烟（隔离库 18435 端口）：三页与监控页均 200。
+- 响应体三页均含新链、零 `/settings`；浏览器 DOM 实测事件页导航为"总览 监控管理 事件 投递队列 短信记录"。
+- 截图存 `docs/screenshots/incidents-nav-v0204.png`，亲眼核对导航 5 链齐全、事件 active 绿下划线正常；截图中"加载失败"为 setContent harness 下相对 `/api` 地址在 about:blank 解析失败的已知假象，非产品回归。
+- 验收后服务按端口反查真实 PID 停掉、端口已关、隔离库与二进制与临时令牌已删。
+
 ## [0.20.3] - 2026-10-26
 ### 修复
 - 关闭 v0.20.2 已知限制“/settings 仍无路由”：incidents.html、sms_log.html、deliveries.html 三页导航各删 1 行 `<a href="/settings">设置</a>` 死链；不新建 /settings 路由、不编造页面；三页其余导航与页面内容一字未动（incidents 页仍无监控管理链、deliveries 页仍无短信记录链，那是缺链不是死链，不在本轮扩面）。
