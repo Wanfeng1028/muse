@@ -1,0 +1,124 @@
+/* login-design-v1.css —— 登录台账 · 设计层 v1，只做覆盖，不动布局与脚本 */
+/* 口径：台账眉 20px/700 · 副题与注脚正文 13px 次文字 · 录入行与主按钮 13px · 圆角 8px · 次文字 12px · 无阴影无渐变 */
+
+/* 台账底纸：整页底色与墨色 */
+.auth-page,
+.auth-page .auth-wrap {
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* 台账眉：页头 20px/700 */
+.auth-page .login-hero h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+/* 台账眉副题与台账注脚正文：13px 次文字 */
+.auth-page .login-hero p,
+.auth-page .modal-text {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+/* 台账签托：分段器底座 */
+.auth-page .seg {
+  background: var(--surface-2);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 3px;
+}
+
+/* 台账签：未选中签页 13px/600，预置同色细边防跳动 */
+.auth-page .seg a {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-3);
+  border: 1px solid var(--surface-2);
+  border-radius: 6px;
+  padding: 5px 10px;
+}
+
+/* 台账签：当前签页描边落墨 */
+.auth-page .seg a.on {
+  background: var(--surface);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+/* 台账本册字迹与录入字迹：13px 正文 */
+.auth-page form.login-form,
+.auth-page .field input {
+  font-size: 13px;
+  color: var(--text);
+  background: transparent;
+  border-radius: 8px;
+}
+
+/* 台账录入行：软界线行框 */
+.auth-page .field {
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+/* 录入行小签（显隐密码钮） */
+.auth-page .field .eye-btn {
+  color: var(--text-3);
+  background: transparent;
+  border: 1px solid var(--border-soft);
+  border-radius: 6px;
+  padding: 2px 8px;
+}
+
+/* 台账批注：错误提示 13px 红 */
+.auth-page .form-error {
+  font-size: 13px;
+  color: var(--red);
+}
+
+/* 台账主落笔：主按钮 13px/600，8px 圆角 */
+.auth-page .btn-primary {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--bg);
+  background: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 9px 14px;
+}
+
+/* 台账边注：忘记密码、其他方式继续、协议行，12px 弱字 */
+.auth-page .forgot-row a,
+.auth-page .divider,
+.auth-page .agree {
+  font-size: 12px;
+  color: var(--text-3);
+}
+
+/* 台账副单：第三方登录钮 */
+.auth-page .btn-oauth {
+  font-size: 13px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+/* 台账注脚：弹窗面板平贴无影 */
+.auth-page .modal-panel {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+/* 台账注脚题名：13px/600 */
+.auth-page .modal-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+}

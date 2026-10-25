@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：登录页设计层 v1）
+- 新增 static/login-design-v1.css（15 条规则，只覆盖，不改 app.css/auth.css 与任何 JS；login.html 在 auth.css 之后引用 1 行）：视觉逻辑“登录台账”——页头 20px/700、副标题 13px 次文字、分段器 surface-2 底发丝边 8px 圆角、签页 13px/600、录入行 surface 底发丝边 8px 圆角、输入框 13px、主按钮 13px/600 8px 圆角、忘记密码/分隔/协议行 12px 弱文字、第三方钮 13px 8px 圆角、弹窗面板 surface 底发丝边 8px 圆角零阴影、弹窗标题 13px/600；token 全部取自 app.css/auth.css。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器为本轮现写最小新文件 relay-station/flash_call_n2.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24681 / completion 17217 / total 41898，reasoning_tokens 0，正文即入仓的 15 条规则与测试；编排修正 1 类：模型稿选择器未加 .auth-page 前缀，特异度会被 auth.css 同名规则压住，全部规则统一加 .auth-page 前缀（后引用的同特异度规则生效），规则数与测试断言不变。括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid var(--border) 完整形式。
+- 验收：新增 LoginDesignV1Test 3 例全绿，设计层合跑 59/59 全绿，Maven 离线 BUILD SUCCESS；真实服务（18096 端口，复制 H2 库）+ 内联截图亲眼核对：计算样式实证页头 20/700、副标题 13px、分段器 8px 圆角、签页 13/600、录入行 8px 圆角 1px 边、输入框 13px、主按钮 13/600/8px、第三方钮 13px 8px 圆角、协议行 12px、零 console 错误；截图存 docs/screenshots/login-design-v1.png（截图内眼形图标为空框是 harness 剥离 lucide 脚本所致，真页有图标，不属设计层缺陷）。验收后本路服务按 PID 停干净、复制库已删；18096 端口现为他路服务在听，本轮未动。
+- 已知保留：本层不改布局；登录页本身无卡片容器，10px 圆角卡片口径本页不适用；密码显隐钮在真页显示 eye 图标，本层只给 6px 圆角细边。
+
 ### Added（5.3 路 2026-10-26：成片质检页设计层 v1）
 - 新增 static/qc-design-v1.css（15 条规则，只覆盖，不改 app.css/harness.css 与任何 JS；qc.html 在 harness.css 之后引用 1 行）：视觉逻辑“质检台账”——页头 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、徽标 12px/600、信息 dt 12px/600 次文字、dd 13px、备注标题与表单标签 12px/600、textarea 13px 8px 圆角、通过/打回按钮 13px/600 8px 圆角、空态 13px 次文字；token 全部取自 app.css/harness.css。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 4000）2 通产出：首通正文 0 字（API prompt 24576 / completion 4000 / total 28576，思考耗尽未出正文，按规缩小目标不重发原提示词）；二通纯 CSS 入仓（API prompt 24095 / completion 2028 / total 26123，正文 1511 字即入仓的 15 条规则，分 3 个围栏、编排机械拼接）；测试文件 QcDesignV1Test 由编排按 Settings 模式机械落仓。括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML，全部边框均写成 1px solid var(--hairline) 完整形式。
