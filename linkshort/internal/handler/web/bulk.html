@@ -58,13 +58,13 @@
       <form id="bulk-form" class="form">
         <div class="field">
           <label for="bulk-input">批量输入 <span class="req">*</span></label>
-          <textarea id="bulk-input" rows="8" class="input mono" placeholder="https://example.com/活动页&#10;https://example.com/手册 自定义短码"></textarea>
-          <div class="hint">每行一条；URL 后面空一格可加自定义短码；最多 100 行</div>
+          <textarea id="bulk-input" rows="8" class="input mono" placeholder="https://example.com/活动页&#10;https://example.com/手册 自定义短码&#10;https://example.com/内部页 自定义短码 逐项密码"></textarea>
+          <div class="hint">每行一条；格式：URL [自定义短码] [逐项密码]；逐项密码优先于统一密码；最多 100 行</div>
         </div>
         <div class="field">
           <label for="bulk-password">统一访问密码（选填）</label>
-          <input class="input" type="password" id="bulk-password" placeholder="留空表示不设密码，填了则应用于本批全部" autocomplete="new-password">
-          <div class="hint">不同条目要不同密码时请走单条新建或直接调 API；批量页只支持统一密码，密码不会回显在结果里</div>
+          <input class="input" type="password" id="bulk-password" placeholder="留空表示不设密码，填了则应用于本批未逐项设密码的条目" autocomplete="new-password">
+          <div class="hint">统一密码只应用于未逐项设密码的条目；逐项密码写在行末第三段；密码不会回显在结果里，只显示已设或横线</div>
         </div>
         <div class="form-actions">
           <button type="submit" class="btn primary" id="bulk-submit">批量生成短链</button>

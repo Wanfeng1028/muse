@@ -14,12 +14,14 @@
 
   var allSuccessLinks = [];
   var rawUrls = [];
+  var sentPw = [];
 
   form.addEventListener("submit", function(e) {
     e.preventDefault();
     errSpan.textContent = "";
     resultPanel.hidden = true;
     allSuccessLinks = [];
+    sentPw = [];
 
     var sharedPassword = passwordEl ? passwordEl.value : "";
     var text = input.value;
@@ -30,13 +32,16 @@
     for (var i = 0; i < lines.length; i++) {
       var line = lines[i].trim();
       if (!line) continue;
-      var match = line.match(/^(\S+)(?:\s+(\S+))?/);
+      var match = line.match(/^(\S+)(?:\s+(\S+))?(?:\s+(\S+))?/);
       if (!match) continue;
       var url = match[1];
       var slug = match[2] || "";
+      var pw = match[3] || "";
       var item = { url: url };
       if (slug) item.slug = slug;
-      if (sharedPassword) item.password = sharedPassword;
+      if (pw) item.password = pw;
+      else if (sharedPassword) item.password = sharedPassword;
+      sentPw.push(!!item.password);
       items.push(item);
       rawUrls.push(url);
     }
@@ -97,7 +102,7 @@
         tr.appendChild(tdLink);
 
         var tdPw = document.createElement("td");
-        tdPw.textContent = (item.ok && sharedPassword) ? "已设" : "—";
+        tdPw.textContent = (item.ok && sentPw[item.index]) ? "已设" : "—";
         tr.appendChild(tdPw);
 
         var tdStatus = document.createElement("td");
