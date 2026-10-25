@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25 约 19:50-20:20：成本账本页设计层 v1）
+- 新增 static/cost-ledger-design-v1.css（只覆盖，不改 app.css 与任何 JS；cost-ledger.html 在 app.css 之后引用 1 行）：视觉逻辑“账本台账”——预算卡是总账（surface-2 底 + 2px 墨色顶线）、KPI 卡是分户、趋势与供应商是明细账页、最近明细表是流水；层级只靠字重、字号、线宽与留白，全部左对齐，token 全部取自 app.css；KPI 数字 tabular-nums，预算进度条实色填充，明细行 hover 只用淡底色。
+- 模型稿编排修正 2 处（均已写进测试防回归）：删 .card-header.justify-content-between 改 flex-start 的规则（会把趋势卡标题与天数按钮挤到一端，改布局不只改样式）；删 #providerBars .d-flex 改 flex-start 的规则（会把供应商名与金额从两端对齐改成并排）。其余规则逐项核对：括号 59/59 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
+- 验收：新增 CostLedgerDesignV1Test 4 例全绿（引用顺序、括号与禁令、关键选择器、两条布局禁令）；真实服务 + 真实成本账本数据截图亲眼核对（见下）；截图存 docs/screenshots/cost-ledger-design-v1.png。验收后服务已停、演示数据未入提交。
+- 已知保留：趋势 SVG 的折线/圆点/文字/网格线颜色由 cost-ledger.js 内联属性写死，设计层颜色规则会被内联属性压住、暂不生效，设计层只管 SVG 布局（display:block）；后续如需换色须改 JS 内联属性，不属本层范围；本轮未动 skillhub 在跑工人的未提交文件。
+
 ### Added（SkillHub 设计层 v1 + 已安装状态真修复，2026-10-25）
 - 新增 static/skillhub-design-v1.css（只覆盖，不改 app.css；skillhub.html 在 app.css 之后引用 1 行，外层 div 加 skh-page）：视觉逻辑“索引台账”——纯白底、发丝边框、10px 圆角、零阴影；标题 16px/500 墨色、描述 14px 次文字、作者·许可证·版本·来源元数据行 13px 弱文字；卡片底部操作区顶部发丝线、按钮右对齐；同行卡片等高、操作沉底对齐。token 全部取自 app.css，无 linear-gradient、无 backdrop-filter、无阴影、无 Inter、无 emoji、无首字母 logo。
 - 真问题修复 1：前端 skillhub.js 此前完全忽略后端 installed/installedVersion，renderActions 恒显示“安装”、doInstall/doUninstall 只弹 toast 不调接口（属假成功态）；现已安装显示淡绿“已安装”徽标（带版本时附版本）+ 卸载幽灵按钮调 DELETE /api/official-skills/installed/{id}，未安装显示安装主按钮调 POST /api/official-skills/install/{id}，成功后才 toast 并重拉列表、失败走 showError；同时修复 buildCard 无 col 包裹致网格失效（现包 col-12 col-md-6 col-lg-4 skh-col）、分页激活按钮加 active 类、api() 支持 options 且空体返回 {}。

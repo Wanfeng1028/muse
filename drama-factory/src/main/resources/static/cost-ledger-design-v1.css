@@ -1,0 +1,334 @@
+/* 视觉逻辑：账本台账——预算卡是总账、KPI 卡是分户、趋势与供应商是明细账页、最近明细表是流水，层级只靠字重、字号、线宽与留白表达，全部左对齐且仅用 app.css 既有 token。 */
+
+.page {
+  text-align: left;
+}
+
+.page .card,
+.page .kpi-card,
+.page .btn,
+.page .progress,
+.page .progress-bar,
+.page .badge,
+.page .alert {
+  box-shadow: none;
+}
+
+.page .page-head {
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.page .page-head h1 {
+  margin: 0 0 6px;
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: .01em;
+}
+
+.page .page-head .text-secondary {
+  margin: 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+.card {
+  margin-bottom: 24px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+}
+
+.card .card-header {
+  padding: 12px 16px;
+  background: none;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.card .card-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card .card-body {
+  padding: 16px;
+}
+
+#budgetCard {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--text);
+}
+
+#budgetCard .card-body {
+  padding: 20px 24px 24px;
+}
+
+#budgetTop {
+  gap: 20px;
+  margin-bottom: 20px;
+}
+
+#budgetTop .kpi-card {
+  padding: 2px 0 2px 16px;
+  background: none;
+  border: 0;
+  border-left: 1px solid var(--border);
+  border-radius: 0;
+}
+
+#budgetTop .kpi-card:first-child {
+  padding-left: 0;
+  border-left: 0;
+}
+
+#budgetTop .kpi-label {
+  margin-bottom: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: .06em;
+  color: var(--text-2);
+}
+
+#budgetTop .kpi-value {
+  font-size: 30px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+#budgetCard .progress {
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+#budgetBar {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+#budgetBar.bg-yellow {
+  background: var(--amber);
+}
+
+#budgetBar.bg-red {
+  background: var(--red);
+}
+
+#budgetMeta {
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: .02em;
+  color: var(--text-3);
+}
+
+#budgetBadge {
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid var(--border-soft);
+  border-radius: 4px;
+}
+
+#kpiRow {
+  margin-bottom: 24px;
+}
+
+#kpiRow .kpi-card {
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius);
+}
+
+#kpiRow .kpi-label {
+  margin-bottom: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+}
+
+#kpiRow .kpi-value {
+  font-size: 22px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+#trendChart svg {
+  display: block;
+}
+
+#trendChart line {
+  stroke: var(--border);
+}
+
+#trendChart g line:first-of-type {
+  stroke: var(--accent);
+}
+
+#trendChart g line:last-of-type {
+  stroke: var(--text-3);
+}
+
+#trendChart polyline:first-of-type {
+  stroke: var(--text-3);
+}
+
+#trendChart polyline:last-of-type {
+  stroke: var(--accent);
+}
+
+#trendChart circle {
+  fill: var(--accent);
+  stroke: var(--surface);
+}
+
+#trendChart text {
+  fill: var(--text-3);
+  font-family: var(--mono);
+}
+
+#trendDays .btn {
+  padding: 2px 10px;
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-3);
+  background: none;
+  border: 1px solid var(--border-soft);
+}
+
+#trendDays .btn-outline-secondary {
+  color: var(--text-3);
+  background: none;
+  border-color: var(--border-soft);
+}
+
+#trendDays .btn.btn-primary {
+  color: var(--bg);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+#trendDays .btn:focus {
+  box-shadow: none;
+}
+
+#trendDays .btn:focus-visible {
+  outline: 1px solid var(--text-3);
+  outline-offset: 1px;
+}
+
+#providerBars .mb-2 {
+  margin-bottom: 14px;
+}
+
+#providerBars .text-truncate {
+  font-size: 13px;
+  color: var(--text-2);
+}
+
+#providerBars .d-flex span:last-child {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+#providerBars .progress {
+  height: 6px;
+  background: var(--bg-elev);
+  border-radius: 3px;
+}
+
+#providerBars .progress-bar {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+.table thead th {
+  padding: 10px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  color: var(--text-3);
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+
+#entryRows td {
+  padding: 10px 12px;
+  font-size: 13px;
+  color: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+#entryRows tr:last-child td {
+  border-bottom: 0;
+}
+
+#entryRows tr:hover td {
+  background: var(--surface-2);
+}
+
+#entryRows td:first-child {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-3);
+  white-space: nowrap;
+}
+
+#entryRows td:nth-child(6),
+#entryRows td:nth-child(7) {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+#entryRows .badge {
+  font-weight: 500;
+  border-radius: 4px;
+}
+
+#trendEmpty,
+#providerEmpty,
+#entryEmpty {
+  padding: 8px 0;
+  font-size: 13px;
+  color: var(--text-3);
+}
+
+#budgetError,
+#trendError,
+#entryError {
+  background: var(--surface-2);
+  border: 1px solid var(--red);
+  border-radius: var(--radius);
+  font-size: 13px;
+  color: var(--red);
+}
+
+#toast {
+  border-radius: var(--radius);
+}
+
+@media (max-width: 720px) {
+  #budgetTop .kpi-card {
+    padding-left: 0;
+    border-left: 0;
+  }
+  #budgetTop .kpi-value {
+    font-size: 24px;
+  }
+  #kpiRow .kpi-value {
+    font-size: 20px;
+  }
+  #budgetCard .card-body {
+    padding: 16px;
+  }
+}
