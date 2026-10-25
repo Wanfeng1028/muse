@@ -1,0 +1,16 @@
+/* 数字人页 · 数字人台账设计层（置于内联块之后生效） */
+.page-head .page-title{font-size:20px;font-weight:700;color:var(--text)}
+.page-head .page-sub{font-size:13px;color:var(--text-2)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:10px;box-shadow:none}
+.card-head{padding:14px 20px;border-bottom:1px solid var(--border)}
+.card-title{font-size:16px;font-weight:700;color:var(--text)}
+.fld>label{font-size:13px;font-weight:600;color:var(--text-2)}
+.fld input[type=text]{font-size:13px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.fld textarea{font-size:13px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.fld select{font-size:13px;color:var(--text);background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:8px 12px}
+.hint{font-size:12px;color:var(--text-3)}
+.byok-empty{background:var(--surface-2);border:1px dashed var(--border);border-radius:8px;padding:16px}
+.byok-preview{border:1px solid var(--border);border-radius:8px}
+.file-name{font-size:13px;color:var(--text-2)}
+.gen-foot{border-top:1px solid var(--border);padding-top:12px}
+.gen-foot .btn{font-size:13px;font-weight:600;border-radius:8px}
