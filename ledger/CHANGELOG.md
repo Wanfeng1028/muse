@@ -1,5 +1,15 @@
 # 更新日志
 
+## v2.17.15 - 2026-10-25
+
+### 新增
+
+- 版本同步：将 `src/ledger/__init__.py` 中的 `__version__`（此前停留在 2.17.1）与 `pyproject.toml` 中 `[project]` 的 `version`（此前停留在 2.17.0）统一同步到 2.17.15，关闭此前多轮注明的版本漂移问题。本节不包含任何功能改动。
+
+### 测试
+
+- 新增版本一致性测试 1 例（`tests/test_version_consistency_v21715.py`）：断言 `src/ledger/__init__.py` 的 `__version__`、`pyproject.toml` 的 `[project] version` 与 `CHANGELOG.md` 首个 `## vX.Y.Z` 标题三处一致且均为 2.17.15；按与既有设计层测试合跑的口径纳入测试套件，不单独声称通过数字。
+
 ## v2.17.14 - 2026-10-25
 ### 新增
 - 对账工作台页顶栏不换行：新文件 `src/ledger/static/workbench.css`（仅 workbench 页引用，workbench.html 加 extra_css 行，style.css 不动），与账单导入向导页 v2.17.13 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.13 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭对账工作台页一页，其余页仍走原 wrap，不谎称全站关闭。模型稿 3 条规则原文未动，测试文件由模型同通生成。对账工作台页路由实测为 `/workbench`，测试按实测路由写。模型 1 通即出可用正文、无 429。
