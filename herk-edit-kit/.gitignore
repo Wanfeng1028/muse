@@ -1,0 +1,44 @@
+# Personal inputs, transcripts, edit decisions, and renders stay local.
+.env
+.env.*
+!.env.example
+*.env
+*.pem
+*.key
+node_modules/
+raw-media/
+video-projects/
+renders/
+**/renders/
+**/assets/
+tmp/
+archives/
+*.mp4
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.m4a
+*.aac
+*.flac
+*.zip
+*.log
+__pycache__/
+*.pyc
+.DS_Store
+Thumbs.db
+.vscode/
+.claude/settings.local.json
+.codex/auth.json
+.codex/sessions/
+.codex/history.jsonl
+
+# Deliberately public synthetic timing data, without media.
+!examples/short-form/assets/
+!examples/short-form/assets/*.json
+
+# Three finished videos explicitly supplied for the public showcase.
+!examples/showcase/curiosity-reel-2.mp4
+!examples/showcase/curiosity-reel-1.mp4
+!examples/showcase/ais-live-ad.mp4
