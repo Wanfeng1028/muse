@@ -1,3 +1,15 @@
+## [1.19.2] - 2026-10-26
+
+### 补齐
+- .env.example 补 6 个已上线但缺失的变量（README 称它是“快速了解可用变量”的入口，此前不全）：MINIOS_DATA_DIR（留空不覆盖，回退 DATABASE_PATH 父目录、再回退 data）、MINIOS_SESSION_SLIDING（默认 true）、MINIOS_SHARE_RPS（默认 5）、MINIOS_SHARE_BURST（默认 30）、MINIOS_SHARE_RATE_LIMIT_ENABLED（默认 true）、MINIOS_TERM_OUTPUT_LIMIT（默认 1048576，即 1MiB）；默认值均从 src/config.rs 与 src/ratelimit.rs 源码核实，未动已有行。
+- 复核旧挂账：TOTP 主密钥缺失一条已作废——MINIOS_TOTP_MASTER_KEY 早在 v1.12.0（1a71d00f）已入 .env.example，本轮核对在册，不重复加。
+- 模型稿由 BotsRouter 大写 GLM-5.3-Flash（令牌 id=5、渠道 20、单路串行，调用器为本轮现写 flash_call_n12.py，令牌经 SSH 现取不落盘，按 data: 行解析 delta.content）产出：.env.example 6 行 1 通即出；测试稿首版提示词连空作废（reasoning-only 空响应，外层 280 秒超时截断第 3 次重试），缩小目标（只留包含/不包含断言）后第 2 通出稿；无 429。
+- 编排修正 1 处：模型稿测试多写了一条 content.lines().count() == 6 断言，.env.example 远不止 6 行，删除该行后落仓；其余断言逐字保留。
+
+### 测试
+- 新增 tests/env_example_test.rs 1 例（6 个新键齐全、旧变量 MINIOS_SHARE_READ_RPM / MINIOS_SHARE_READ_BURST 不出现）：cargo test --offline --test env_example_test 1/1 通过；cargo fmt --all -- --check 干净；src 一字未动。
+- 版本跟进：Cargo.toml 1.19.1 -> 1.19.2，Cargo.lock 同步。
+
 ## [1.19.1] - 2026-10-26
 
 ### 修复
