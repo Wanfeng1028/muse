@@ -1,0 +1,10 @@
+No license declared by the upstream repository.
+
+The upstream repository remotion-dev/skills does not declare a license: it ships
+no LICENSE file and contains no license statement in its README or package.json
+(checked 2026-10-25). This file records that status so the bundled copy carries
+its provenance with it, per project policy.
+
+Inclusion decision: bundle the upstream original as-is for now, per the standing
+copy-first rule; licensing to be revisited before any paid release of the product.
+Source: https://github.com/remotion-dev/skills
