@@ -307,6 +307,20 @@ function validateMessagePayload(payload: unknown): string[] {
     }
   }
 
+  const rc = payload["required_capabilities"];
+  if (rc !== undefined) {
+    if (!isPlainObject(rc)) {
+      errors.push("payload.required_capabilities: expected object");
+    } else {
+      for (const key of ["skills", "tags", "input_modes", "output_modes"] as const) {
+        const v = rc[key];
+        if (v !== undefined && (!Array.isArray(v) || !v.every((s) => typeof s === "string"))) {
+          errors.push(`payload.required_capabilities.${key}: must be a string[]`);
+        }
+      }
+    }
+  }
+
   const tp = payload["task_progress"];
   if (tp !== undefined) {
     if (!isPlainObject(tp)) {
@@ -461,6 +475,12 @@ function validateCapabilityUpdatePayload(payload: unknown): string[] {
     const intents = capabilities["intents"];
     if (!Array.isArray(intents) || !intents.every((i) => INTENTS.includes(i as Intent))) {
       errors.push("payload.capabilities.intents: must be an Intent[]");
+    }
+    for (const key of ["skills", "tags"] as const) {
+      const v = capabilities[key];
+      if (v !== undefined && (!Array.isArray(v) || !v.every((s) => typeof s === "string"))) {
+        errors.push(`payload.capabilities.${key}: must be a string[]`);
+      }
     }
   }
   return errors;

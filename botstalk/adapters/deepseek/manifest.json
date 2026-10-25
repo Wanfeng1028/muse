@@ -1,0 +1,35 @@
+{
+  "mod_name": "deepseek",
+  "version": "0.1.0",
+  "description": "脑力路线走 DeepSeek chat/completions，body 路线走本地 DSH headless，本体执行",
+  "authors": [
+    "BotsTalk"
+  ],
+  "license": "MIT",
+  "capabilities": [
+    "chat",
+    "task"
+  ],
+  "requires_adapter": true,
+  "studio_interface": false,
+  "dependencies": [],
+  "tools": [
+    "chat_completion",
+    "dsh_headless_task"
+  ],
+  "process_events": [
+    "message"
+  ],
+  "generate_events": [
+    "message",
+    "stream",
+    "task_event"
+  ],
+  "metadata": {
+    "modes": [
+      "brain",
+      "body"
+    ],
+    "default_model": "deepseek-chat"
+  }
+}

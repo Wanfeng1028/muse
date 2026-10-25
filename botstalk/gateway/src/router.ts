@@ -5,6 +5,7 @@ import type { Hub } from "./hub.js";
 import type { Db } from "./db.js";
 import { saveMessage, upsertTaskDispatch, updateTaskStatus, getRoomType, getTask, recordTaskProgress, listExpiredTasks, markTaskTimedOut } from "./db.js";
 import { PendingApprovals } from "./approvals.js";
+import { normalizeLocalAdapter, pickBestCandidate } from "./capability.js";
 
 let approvalMode: "off" | "all" = "off";
 const pendingApprovals = new PendingApprovals();
@@ -109,8 +110,29 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
       const allowed = new Set(p.mentions);
       candidates = candidates.filter((id) => allowed.has(id));
     }
-    candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
-    const pick = candidates[0];
+    // 能力打分派单：仅无 @ 指定且任务带 required_capabilities 时，按各 adapter 声明的技能/标签打分挑最高分；
+    // 最高分 <= 0（无一维命中）时 pick 为 undefined，走既有 unsupported 分支；@ 指定时直接取 mentions 过滤后的首个候选，打分不起作用。
+    let pick: string | undefined;
+    const req = p.required_capabilities;
+    const hasReq =
+      req !== undefined &&
+      ((req.skills?.length ?? 0) > 0 || (req.tags?.length ?? 0) > 0 || (req.input_modes?.length ?? 0) > 0 || (req.output_modes?.length ?? 0) > 0);
+    if (hasReq && req !== undefined && p.mentions.length === 0) {
+      const scored = pickBestCandidate(
+        candidates.map((id) => ({
+          id,
+          capability: normalizeLocalAdapter(id, {
+            skills: hub.getConn(id)?.capabilitySkills ?? [],
+            tags: hub.getConn(id)?.capabilityTags ?? [],
+          }),
+        })),
+        req,
+      );
+      pick = scored.pick ?? undefined;
+    } else {
+      candidates.sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
+      pick = candidates[0];
+    }
     const taskId = p.task_id ?? p.msg_id;
     const bareTitle = p.text.replace(/^(?:@\S+\s*)+/, "").trim();
     const title = bareTitle.length > 80 ? bareTitle.slice(0, 80) + "…" : bareTitle;

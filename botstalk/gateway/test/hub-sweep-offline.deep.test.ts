@@ -26,6 +26,8 @@ function makeConn(
     gapLimiter: new GapRateLimiter(),
     capabilities: { intents: ["chat"] },
     capabilityVersion: 1,
+    capabilitySkills: [],
+    capabilityTags: [],
     usageIn: 0,
     usageOut: 0,
     online: true,

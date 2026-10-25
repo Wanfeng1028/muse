@@ -398,10 +398,14 @@ export class AdapterClient {
     return env;
   }
 
-  sendCapability(intents: ("chat" | "task")[]): Envelope<CapabilityUpdatePayload> {
+  sendCapability(intents: ("chat" | "task")[], extra?: { skills?: string[]; tags?: string[] }): Envelope<CapabilityUpdatePayload> {
     const payload: CapabilityUpdatePayload = {
       version: this.capabilityVersion,
-      capabilities: { intents },
+      capabilities: {
+        intents,
+        ...(extra?.skills !== undefined ? { skills: extra.skills } : {}),
+        ...(extra?.tags !== undefined ? { tags: extra.tags } : {}),
+      },
     };
     this.capabilityVersion += 1;
     return this.send<CapabilityUpdatePayload>("capability_update", payload);

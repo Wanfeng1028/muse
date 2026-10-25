@@ -151,6 +151,8 @@ export interface MessagePayload {
   intent?: Intent;
   /** intent=task 时必须提供。 */
   task_id?: string;
+  /** 任务派单的能力要求（可选；仅 intent=task 时有效，网关按此打分挑最合适的 adapter；缺失表示不按能力挑）。 */
+  required_capabilities?: CapabilityRequirement;
   /** task 回执状态。 */
   task_status?: TaskStatus;
   /** 进度上报：assignee→网关，仅 intent=task 时有效。帧顶层 task_id 仍必填（codec 对 intent=task 帧强制要求），须与此处 task_id 一致。 */
@@ -197,11 +199,22 @@ export interface GapPayload {
 }
 
 /** type=capability_update 的 payload（控制帧，热更新不断线）。 */
+export interface CapabilityRequirement {
+  skills?: string[];
+  tags?: string[];
+  input_modes?: string[];
+  output_modes?: string[];
+}
+
 export interface CapabilityUpdatePayload {
   /** 单调递增。 */
   version: number;
   capabilities: {
     intents: Intent[];
+    /** 适配器声明的技能键（可选；缺失表示未声明）。 */
+    skills?: string[];
+    /** 适配器声明的标签（可选；缺失表示未声明）。 */
+    tags?: string[];
   };
 }
 

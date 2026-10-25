@@ -56,6 +56,10 @@ export interface Conn {
   gapLimiter: GapRateLimiter;
   capabilities: { intents: ("chat" | "task")[] };
   capabilityVersion: number;
+  /** capability_update 声明的技能键（缺失声明时为空数组）。 */
+  capabilitySkills: string[];
+  /** capability_update 声明的标签（缺失声明时为空数组）。 */
+  capabilityTags: string[];
   usageIn: number;
   usageOut: number;
   online: boolean;
@@ -195,6 +199,8 @@ export class Hub {
         gapLimiter: new GapRateLimiter(),
         capabilities: { intents: ["chat"] },
         capabilityVersion: 0,
+        capabilitySkills: [],
+        capabilityTags: [],
         usageIn: 0,
         usageOut: 0,
         online: true,
@@ -319,6 +325,8 @@ export class Hub {
         if (c.version > conn.capabilityVersion) {
           conn.capabilities = c.capabilities;
           conn.capabilityVersion = c.version;
+          conn.capabilitySkills = c.capabilities.skills ?? [];
+          conn.capabilityTags = c.capabilities.tags ?? [];
         }
         break;
       }
