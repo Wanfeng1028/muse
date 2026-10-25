@@ -1,0 +1,22 @@
+/* FeedFlow v1.15.0 design layer: 390px 顶栏导航不再整条滚动。
+   视觉逻辑：报纸顶栏的品牌与搜索框钉住不动，只有导航条自己横向滚动——
+   390px 实测内栏内容 829px、视口 350px，旧规则整条滚动会把品牌滚走，
+   聚类 Top 出界、订阅管理/统计/OPML 全在屏外；搜索框由 240px 收窄到 120px
+   给导航条腾视口。只覆盖移动端，桌面顶栏一字不动。 */
+
+@media (max-width: 768px) {
+  .topbar-inner {
+    overflow-x: visible;
+    min-width: 0;
+  }
+
+  .topbar-inner .mainnav {
+    min-width: 0;
+    flex: 1 1 auto;
+    overflow-x: auto;
+  }
+
+  .topbar-inner .searchbox input {
+    width: 120px;
+  }
+}
