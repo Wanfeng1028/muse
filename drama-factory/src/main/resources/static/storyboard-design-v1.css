@@ -1,0 +1,116 @@
+/* 分镜台账 */
+
+.page-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.3;
+  text-align: left;
+  margin: 0;
+}
+
+.card .form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+  letter-spacing: 0.02em;
+  text-align: left;
+}
+
+#projectSelect.form-select {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+#episodeSelect.form-select {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text);
+  text-align: left;
+}
+
+#episodeMeta.text-secondary {
+  font-size: 13px;
+  color: var(--text-2);
+  text-align: left;
+}
+
+.btn.btn-secondary {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--surface-2);
+  color: var(--text);
+  text-align: left;
+}
+
+#slateGrid .shot-row {
+  padding-top: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--hairline);
+  text-align: left;
+}
+
+.shot-no {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-3);
+  text-align: left;
+}
+
+.shot-desc {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.4;
+  text-align: left;
+}
+
+.shot-sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-2);
+  line-height: 1.5;
+  text-align: left;
+}
+
+.shot-meta {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-3);
+  text-align: left;
+}
+
+.shot-actions .btn {
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  color: var(--text-2);
+  text-align: left;
+}
+
+.card-header .card-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text);
+  text-align: left;
+}
+
+#slateGrid .status-pill {
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--hairline);
+  border-radius: 8px;
+  text-align: left;
+}
+
+.text-secondary.small {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-2);
+  text-align: left;
+}

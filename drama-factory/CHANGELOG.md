@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：分镜板页设计层 v1）
+- 新增 static/storyboard-design-v1.css（只覆盖，不改 app.css 与任何 JS；storyboard.html 在 app.css 之后引用 1 行，本页不引用 harness.css）：视觉逻辑“分镜台账”——页头 20px/700、筛选标签 12px/600 次文字、下拉与次按钮 8px 圆角、剧集元数据 13px 次文字、分镜行上下 16px 发丝底线、镜号等宽 12px 弱文字、描述 15px/700、对白 13px 次文字、元数据 12px 弱文字、操作按钮 8px 圆角、表单标题 16px/700、状态戳 12px/600 发丝边 8px 圆角、提示小字 12px 次文字；token 全部取自 app.css。
+- 模型稿即入仓的 15 条规则原文，未做编排修正：括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
+- 验收：新增 StoryboardDesignV1Test 3 例全绿，与 RunDetail/Runs/Tasks 合跑 12/12 全绿，Maven 离线 BUILD SUCCESS；真实服务 + 真实分镜数据截图亲眼核对（见下）；截图存 docs/screenshots/storyboard-design-v1.png。验收后服务已停、复制库与 jar 已删。
+- 验收插曲：首版截图 0 行分镜，根因是 setContent 下 location 为空、页内相对接口 URL 解析失败，且 storyboard.js 用反引号模板写接口、旧 safeJS 只换了引号形式；截图脚本（muse-build/shot/drama-storyboard-shot.js，不入仓）补反引号改写后重拍，仓库代码一字未动；另：本轮曾先做生产看板页设计层，截图实证其统计区与管线表在 app.css 里已有故意的编辑杂志式设计、台账层只能半覆盖而不协调，已全部撤回未提交，改做分镜板页；审核队列页因 6 个项目队列全空、无法作门面验收，亦已放弃。
+- 已知保留：本层不改布局（分镜行 flex 结构、操作按钮排列、表单面板结构维持 app.css 原样）；本轮未动 cost-ledger.js、second-brain、docseek eval、voxloom 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：运行详情页设计层 v1）
 - 新增 static/run-detail-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；run-detail.html 在 app.css 与 harness.css 之后引用 1 行）：视觉逻辑“运行台账”——页头 20px/700、元数据行 12px 次文字、章节标题 16px/700、步骤行距 16px、步骤名 15px/700、步骤 Agent 12px/600、耗时等宽 12px 次文字、步骤标签 12px/600 次文字、摘要框等宽 12px surface-2 底 8px 圆角、工具表头 12px/600 次文字、产物卡 surface 底发丝边 10px 圆角零阴影、产物标题 15px/700、汇总卡 surface 底发丝边 10px 圆角 16px 内边距、抽屉标题 15px/700；token 全部取自 app.css/harness.css。
 - 模型稿即入仓的 15 条规则原文，未做编排修正：括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
