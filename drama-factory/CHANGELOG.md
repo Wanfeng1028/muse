@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：用量统计页设计层 v1）
+- 新增 static/usage-design-v1.css（只覆盖，不改 app.css/harness.css 与任何 JS；usage.html 在内联 style 块之后引用 1 行，因该页内联 style 在样式表链接之后、放最后才能在同特异度下生效）：视觉逻辑“用量台账”——页头 20px/700、筛选下拉与刷新钮 6px 圆角、章节标题 16px/700、KPI 卡 surface 底发丝边 10px 圆角零阴影、KPI 大数字 24px/700 等宽数字、趋势条 surface-2 底 4px 圆角、空态卡 surface 底发丝边 10px 圆角、数据表头 12px/600 次文字、单元格 13px 等宽数字；token 全部取自 app.css/harness.css。
+- 模型稿 19 条规则，编排删 3 条、改 1 类后入仓 16 条：删 .kpi-grid（模型误写成 flex，会破坏内联 4 列网格布局）、删 .section（套卡会与 KPI 卡双重嵌套）、删 .state-box.error（误把错误色写成墨色）；3 处 font-family monospace 改回只用 tabular-nums（数据表文字列不应用等宽字体）。其余 16 条为模型原文，括号 16/16 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css/harness.css 里。
+- 验收：新增 UsageDesignV1Test 3 例 + 旧设计层 4 页合跑 15/15 全绿，Maven 离线 BUILD SUCCESS；真实服务（18089 端口，复制 H2 库，开放模式）+ 真实用量数据截图亲眼核对：/api/usage/summary 实查 tokensTotal 65930、costCentsTotal 1404、requestCount 23，与截图 KPI“¥14.04 / 23 / 65,930”一一对上；计算样式实证页头 20/700、KPI 数字 24/700、KPI 卡 10px 圆角纯白底、表头 12/600、零 console 错误；截图存 docs/screenshots/usage-design-v1.png。验收后服务按 PID 停干净、复制库已删。
+- 已知保留：本层不改布局（KPI 4 列网格与移动端 2 列、趋势条结构、数据表列维持原样）；本轮未动 cost-ledger.js、second-brain、docseek eval、botstalk 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：分镜板页设计层 v1）
 - 新增 static/storyboard-design-v1.css（只覆盖，不改 app.css 与任何 JS；storyboard.html 在 app.css 之后引用 1 行，本页不引用 harness.css）：视觉逻辑“分镜台账”——页头 20px/700、筛选标签 12px/600 次文字、下拉与次按钮 8px 圆角、剧集元数据 13px 次文字、分镜行上下 16px 发丝底线、镜号等宽 12px 弱文字、描述 15px/700、对白 13px 次文字、元数据 12px 弱文字、操作按钮 8px 圆角、表单标题 16px/700、状态戳 12px/600 发丝边 8px 圆角、提示小字 12px 次文字；token 全部取自 app.css。
 - 模型稿即入仓的 15 条规则原文，未做编排修正：括号 15/15 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体、无十六进制颜色字面量，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
