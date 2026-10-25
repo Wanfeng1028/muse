@@ -1,0 +1,26 @@
+/* rules.css - ledger 规则页覆盖层，在 style.css 之后加载，仅规则页引用。
+   视觉逻辑：承接交易页 v2.17.1 已验证的顶栏单行口径——15 个导航链接在 1440 宽下
+   单行呈现、可横向滚动、隐藏滚动条，不改原 style.css 的 .nav wrap 规则。
+   来源：1 段由 GLM-5.3（BotsRouter）微批输出，编排时按仓库实测修正 2 处（见下方
+   编排修正注释），其余逐字保留。 */
+
+/* 编排修正（v2.17.2）：模型稿选择器 .topbar-nav 在 base.html 里根本不存在，
+   真实结构是 header.topbar 下的 nav.nav，改回 .topbar .nav；模型稿第 1 条漏写
+   flex-wrap: nowrap（v2.17.1 已实证：flex 容器换行由 flex-wrap 控制，只写
+   white-space 不够），补回。 */
+.topbar .nav {
+  flex-wrap: nowrap;
+  white-space: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.topbar .nav::-webkit-scrollbar {
+  display: none;
+}
+
+.topbar .nav a {
+  padding: 7px 8px;
+  font-size: 13px;
+  white-space: nowrap;
+}

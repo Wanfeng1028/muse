@@ -1,5 +1,14 @@
 # 更新日志
 
+## v2.17.2 - 2026-10-25
+### 新增
+- 规则页顶栏不换行：新文件 `src/ledger/static/rules.css`（仅规则页引用，rules.html 加 extra_css 行，style.css 不动），与交易页 v2.17.1 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.1 所记“其他未做设计层的页不受影响”缺口在本轮只关闭规则页一页，其余页仍走原 `.nav` wrap，不谎称全站关闭。
+- 编排修正 2 处（模型稿按仓库实测核对后改动，如实记录）：模型稿选择器 `.topbar-nav` 在 base.html 里根本不存在，真实结构是 header.topbar 下的 nav.nav，改回 `.topbar .nav`；模型稿第 1 条漏写 `flex-wrap: nowrap`（v2.17.1 已实证 flex 容器换行由 flex-wrap 控制），补回。
+### 测试
+- 新增 `tests/test_rules_design_v2172.py` 1 例（规则页引用顺序、顶栏单行规则齐全、括号平衡）；与 v2.17.1/v2.17.0 设计层 4 例合跑 5/5 全绿；ruff 新测文件全洁。
+### 视觉验收
+- 真实服务（8105 端口，demo.db 复制库）规则页截图亲眼核对：1440 宽下顶栏单行、15 链全可见（仪表盘至月度报告），实测顶栏高 60px、导航滚动宽与可见宽均为 953px（无截断、无溢出）、零 console 错误；截图存 `docs/screenshots/rules-v2172.png`。本截图规则表为空是 setContent 截图 harness 下相对地址 /api/match-rules 拉取失败所致（真实服务 /rules 本身 200），仅作顶栏验收，不作门面。
+
 ## v2.17.1 - 2026-10-25
 ### 新增
 - 交易页顶栏不换行：`transactions.css` 补顶栏 3 条规则（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行），与仪表盘 v2.16.0 已验证的顶栏口径一致；此前 v2.17.0 已知限制所记“顶栏换行是原样式老问题”至此在交易页关闭（style.css 原 `.nav` 仍为 wrap，其他未做设计层的页不受影响）。编排修正 1 处：模型稿第 1 条只写 `white-space: nowrap`，flex 容器换行由 `flex-wrap` 控制，故补 `flex-wrap: nowrap`。
