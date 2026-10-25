@@ -293,13 +293,13 @@ async def test_wlfl_t13_match_best(session):
     assert result["reason"] == "无匹配"
 
 async def test_wlfl_t14_match_by_history(session):
-    # 精确2票 -> 70
+    # 精确2票 -> 80
     history = [
         {"counterparty": "星巴克", "category_id": 1, "direction": "out"},
         {"counterparty": "星巴克", "category_id": 1, "direction": "out"},
     ]
     result = match_by_history("星巴克", "", "out", history)
-    assert result == (1, 70)
+    assert result == (1, 80)
     # 仅1票精确 -> None
     history = [
         {"counterparty": "星巴克", "category_id": 1, "direction": "out"},
@@ -314,6 +314,7 @@ async def test_wlfl_t14_match_by_history(session):
     result = match_by_history("星巴克", "", "out", history)
     assert result == (1, 65)
 
+
 async def test_wlfl_t15_detect_transfer_pair(session):
     account_names = {1: "招行", 2: "支付宝"}
     # 一出一入金对上且一方对上账户名
@@ -323,13 +324,20 @@ async def test_wlfl_t15_detect_transfer_pair(session):
     ]
     pairs = detect_transfer_pair(items, account_names)
     assert pairs == [(1, 2)]
-    # 金额差超容差（默认100分）不配对
+    # 金额差同时超绝对容差 100 分与相对容差 1% 才不配对
+    items = [
+        {"id": 1, "occurred_on": "2024-01-01", "amount_cents": 50000, "direction": "out", "counterparty": "招行"},
+        {"id": 2, "occurred_on": "2024-01-01", "amount_cents": 51000, "direction": "in", "counterparty": "某人"},
+    ]
+    pairs = detect_transfer_pair(items, account_names)
+    assert pairs == []
+    # 绝对超 100 分但相对在 1% 内：相对容差通过即配对
     items = [
         {"id": 1, "occurred_on": "2024-01-01", "amount_cents": 50000, "direction": "out", "counterparty": "招行"},
         {"id": 2, "occurred_on": "2024-01-01", "amount_cents": 50101, "direction": "in", "counterparty": "某人"},
     ]
     pairs = detect_transfer_pair(items, account_names)
-    assert pairs == []
+    assert pairs == [(1, 2)]
     # 双方都对不上账户名 -> 不配对
     items = [
         {"id": 1, "occurred_on": "2024-01-01", "amount_cents": 50000, "direction": "out", "counterparty": "未知"},
