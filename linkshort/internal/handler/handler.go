@@ -679,7 +679,23 @@ func handleListLinks(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		return
 	}
 
-	links, total, err := st.ListLinksFilteredEx2(search, page, perPage, sort, enabledPtr, burnPtr, expiredPtr)
+	var hasPasswordPtr *bool
+	hasPasswordStr := q.Get("has_password")
+	switch hasPasswordStr {
+	case "":
+		hasPasswordPtr = nil
+	case "true":
+		v := true
+		hasPasswordPtr = &v
+	case "false":
+		v := false
+		hasPasswordPtr = &v
+	default:
+		writeError(w, http.StatusBadRequest, "has_password 非法")
+		return
+	}
+
+	links, total, err := st.ListLinksFilteredEx3(search, page, perPage, sort, enabledPtr, burnPtr, expiredPtr, hasPasswordPtr)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

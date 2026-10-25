@@ -277,6 +277,10 @@ func (s *Store) ListLinksFilteredEx(search string, page, perPage int, orderBy st
 }
 
 func (s *Store) ListLinksFilteredEx2(search string, page, perPage int, orderBy string, enabled *bool, burn *bool, expired *bool) ([]*model.Link, int64, error) {
+	return s.ListLinksFilteredEx3(search, page, perPage, orderBy, enabled, burn, expired, nil)
+}
+
+func (s *Store) ListLinksFilteredEx3(search string, page, perPage int, orderBy string, enabled *bool, burn *bool, expired *bool, hasPassword *bool) ([]*model.Link, int64, error) {
 	if orderBy != "clicks" && orderBy != "created_at" {
 		orderBy = "created_at"
 	}
@@ -322,6 +326,13 @@ func (s *Store) ListLinksFilteredEx2(search string, page, perPage int, orderBy s
 			conds = append(conds, "(expires_at IS NULL OR expires_at >= ?)")
 		}
 		args = append(args, now)
+	}
+	if hasPassword != nil {
+		if *hasPassword {
+			conds = append(conds, "password_hash IS NOT NULL AND password_hash != ''")
+		} else {
+			conds = append(conds, "(password_hash IS NULL OR password_hash = '')")
+		}
 	}
 
 	cond := ""

@@ -10,6 +10,7 @@
     enabled: "",
     burn: "",
     expired: "",
+    hasPassword: "",
     page: 1,
     per: 20
   };
@@ -20,6 +21,7 @@
   var enabledEl = document.getElementById("enabled-filter");
   var burnEl = document.getElementById("burn-filter");
   var expiredEl = document.getElementById("expired-filter");
+  var hasPasswordEl = document.getElementById("has-password-filter");
   var table = document.getElementById("links-table");
   var tbody = table ? table.querySelector("tbody") : null;
   var pageInfo = document.getElementById("page-info");
@@ -39,6 +41,7 @@
     if (state.enabled) params.push("enabled=" + encodeURIComponent(state.enabled));
     if (state.burn) params.push("burn=" + encodeURIComponent(state.burn));
     if (state.expired) params.push("expired=" + encodeURIComponent(state.expired));
+    if (state.hasPassword) params.push("has_password=" + encodeURIComponent(state.hasPassword));
     var url = "/api/links?" + params.join("&");
 
     api(url).then(function (data) {
@@ -249,6 +252,13 @@
   if (expiredEl) {
     expiredEl.addEventListener("change", function () {
       state.expired = expiredEl.value;
+      state.page = 1;
+      load();
+    });
+  }
+  if (hasPasswordEl) {
+    hasPasswordEl.addEventListener("change", function () {
+      state.hasPassword = hasPasswordEl.value;
       state.page = 1;
       load();
     });

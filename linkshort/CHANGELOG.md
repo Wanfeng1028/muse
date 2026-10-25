@@ -5,6 +5,17 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.22.0] - 2026-10-26
+
+### 新增
+
+- 链接列表支持密码筛选：GET /api/links?has_password=true 只返回已设密码链、has_password=false 只返回无密码链，不带参数返回全部；非法值返回 400（has_password 非法）；密码判定为 password_hash 非空（已设）与空或 NULL（无密码）；筛选与启用状态筛选、阅后即焚筛选、过期筛选、搜索、排序、分页组合使用时 total 与分页一致。store 新增 ListLinksFilteredEx3（enabled、burn、expired、hasPassword 四个可选指针，hasPassword=nil 时行为与旧 ListLinksFilteredEx2 一致，旧函数改为委托调用，签名不变）；列表页工具栏新增“全部密码 / 已设密码 / 无密码”下拉框，切换后回到第 1 页重载。API 文档页 GET /api/links 说明同步更新密码筛选口径。
+
+### 测试
+
+- 新增 internal/store/list_links_has_password_test.go（6 组断言：不过滤/仅已设密码/仅无密码/与启用筛选组合/与搜索组合/分页 total 一致且两页无交集）与 internal/handler/list_links_has_password_test.go（5 个子测试：已设密码筛选/无密码筛选/非法值 400 且体含 has_password/与启用组合/不带参数返回全部）。全量测试：14 个包全部通过；go vet 全洁；本轮新文件 gofmt 全洁（既存 gofmt 漂移文件未动）；links.js 经 node --check 通过。真实服务冒烟（隔离库 18445）：建已设密码链、已设密码已停用链、无密码链各 1 条外加无密码链 1 条共 4 条，has_password=true 只返已设密码链 total=2、has_password=false 只返无密码链 total=2、has_password=true 与 enabled=false 组合只返已设密码已停用链 total=1、非法值 400（has_password 非法）、不带参数返全部 total=4；浏览器实测链接管理页：默认 4 行、选“已设密码”后剩 2 行（pw2/pw1，均标密码保护），两张真实截图亲眼验收通过（下拉框位置正确、行数据与冒烟一致）。
+- 如实记录：实现稿（store+handler）由 BotsRouter 大写 GLM-5.3-Flash 一通出稿，落仓时纠正 1 处与原文不符的错误包装文案（scan links 改回 iterate links）；前端下拉框与文档行由编排按既有锚点机械改动；两份测试文件由编排照过期筛选测试骨架机械写成——模型测试稿 3 通均未成交（第 1 通只交元文本、第 2 通 reasoning-only 空响应后第 2 次重试亦空、第 3 通被外层 280 秒超时截断），未再耗通；截图走 setContent 内联+route 代带密钥 harness（Chromium 152 直连 127.0.0.1/localhost 均遭 LNA 拦截，属已知环境限制）。
+
 ## [v1.21.0] - 2026-10-26
 
 ### 新增
