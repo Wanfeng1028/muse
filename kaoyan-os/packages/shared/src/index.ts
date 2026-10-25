@@ -144,6 +144,19 @@ export interface PlanSummary {
   plans: PlanProgress[];
 }
 
+export interface PlanSubjectSummary {
+  subject: SubjectKey;
+  total: number;
+  done: number;
+  completionRate: number;
+  plannedMinutes: number;
+  actualMinutes: number;
+}
+
+export interface PlansBySubjectResponse {
+  subjects: PlanSubjectSummary[];
+}
+
 export interface OverduePlansResponse {
   date: string;
   count: number;

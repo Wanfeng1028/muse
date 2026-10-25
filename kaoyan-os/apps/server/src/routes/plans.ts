@@ -6,6 +6,8 @@ import {
   type UpdatePlanInput,
   type PlanSummary,
   type PlanProgress,
+  type PlanSubjectSummary,
+  type PlansBySubjectResponse,
   type AutoScheduleItem,
   type SubjectKey,
   isSubjectKey,
@@ -222,6 +224,48 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     );
 
     return reply.send(summary);
+  });
+
+  // 计划分科汇总：仅返回有计划的科目，按 SUBJECTS 顺序排列
+  app.get('/api/plans/summary/by-subject', async (req, reply) => {
+    const planRows = db
+      .prepare(
+        'SELECT subject, COUNT(*) AS total, COALESCE(SUM(done), 0) AS done, ' +
+          'COALESCE(SUM(planned_minutes), 0) AS planned_minutes ' +
+          'FROM plans WHERE user_id = ? GROUP BY subject',
+      )
+      .all(req.user!.id) as unknown as Array<{
+      subject: string;
+      total: number;
+      done: number;
+      planned_minutes: number;
+    }>;
+    const focusRows = db
+      .prepare(
+        'SELECT p.subject AS subject, COALESCE(SUM(f.minutes), 0) AS actual_minutes ' +
+          'FROM plans p LEFT JOIN focus_sessions f ON f.plan_id = p.id AND f.user_id = p.user_id ' +
+          'WHERE p.user_id = ? GROUP BY p.subject',
+      )
+      .all(req.user!.id) as unknown as Array<{ subject: string; actual_minutes: number }>;
+    const planMap = new Map(planRows.map((r) => [r.subject, r]));
+    const focusMap = new Map(focusRows.map((r) => [r.subject, Number(r.actual_minutes)]));
+    const subjects: PlanSubjectSummary[] = [];
+    for (const s of SUBJECTS) {
+      const row = planMap.get(s.key);
+      if (!row || Number(row.total) === 0) continue;
+      const total = Number(row.total);
+      const done = Number(row.done);
+      subjects.push({
+        subject: s.key,
+        total,
+        done,
+        completionRate: total === 0 ? 0 : Number((done / total).toFixed(4)),
+        plannedMinutes: Number(row.planned_minutes),
+        actualMinutes: focusMap.get(s.key) ?? 0,
+      });
+    }
+    const result: PlansBySubjectResponse = { subjects };
+    return reply.send(result);
   });
 
   // 逾期未完成计划：date 小于今天且未完成，按 date 升序、id 升序

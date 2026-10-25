@@ -41,6 +41,7 @@ describe('api route parity deep5', () => {
     'GET /api/plans/overload',
     'GET /api/plans/range',
     'GET /api/plans/summary',
+    'GET /api/plans/summary/by-subject',
     'GET /api/settings',
     'GET /api/stats/heatmap',
     'GET /api/stats/weekly',
@@ -95,8 +96,8 @@ describe('api route parity deep5', () => {
     await app.close();
   });
 
-  it('解析出 53 个前端 api 调用（数量快照）', () => {
-    expect(pairs.length).toBe(53);
+  it('解析出 54 个前端 api 调用（数量快照）', () => {
+    expect(pairs.length).toBe(54);
   });
 
   it('解析结果与 EXPECTED 快照完全一致', () => {

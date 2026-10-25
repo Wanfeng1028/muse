@@ -8,6 +8,7 @@ import type {
   FocusBySubjectResponse,
   PlanSummary,
   OverduePlansResponse,
+  PlansBySubjectResponse,
   AutoScheduleInput,
   AutoScheduleItem,
   AutoScheduleResult,
@@ -163,6 +164,8 @@ export const api = {
     request<PlanSummary>(`/plans/summary${qs({ date })}`),
   overduePlans: () =>
     request<OverduePlansResponse>('/plans/overdue'),
+  plansBySubject: () =>
+    request<PlansBySubjectResponse>('/plans/summary/by-subject'),
   createPlan: (input: CreatePlanInput) =>
     request<Plan>('/plans', { method: 'POST', body: JSON.stringify(input) }),
   updatePlan: (id: number, patch: UpdatePlanInput) =>

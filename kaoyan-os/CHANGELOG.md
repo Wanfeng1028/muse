@@ -4,6 +4,22 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.9] - 2026-10-26
+
+### Added
+
+- 后端新增 `GET /api/plans/summary/by-subject`，按科目返回计划分科汇总：条数/已完成/完成率（保留四位小数）/计划分钟之和/关联专注分钟之和，仅返回有计划的科目，按 math、english、politics、major 顺序排列，全量不按日期过滤。
+- 共享包新增 `PlanSubjectSummary` 与 `PlansBySubjectResponse` 类型。
+- 前端计划页新增「各科汇总」卡片（复用既有 card/list/badge 样式，无新增 CSS），跟随计划增删改刷新。
+- 新增 `tests/plans-summary-by-subject.test.ts` 5 例：空库/精确值与顺序及多专注会话不重复计数/零记录科目省略/用户隔离/未登录 401。
+- 前后端对照快照（api-route-parity）同步：调用数 53→54，计入本轮新路由。
+- 截图：docs/screenshots/plans-bysubject.png（真实服务 + 演示数据，卡片四科数值与冒烟 JSON 一致，已亲眼验收，console 零错误）。
+
+### Notes
+
+- 实现说明：分科汇总用计划聚合与专注分钟聚合两路分开查询再合并，避免单条 JOIN 后 COUNT(*) 把多专注会话的计划重复计数（该用例由新测试第 2 例锁定）。
+- 编排修正（非模型稿）：模型首版路由用单 JOIN 聚合（条数会被扇出放大），已改两路聚合；测试文件首版编造了 4 个 import 路径与错误 URL，已按既有文件修正；前端首版把 api.ts 的 import 行误加 type 前缀，已还原。
+
 ## [1.12.8] - 2026-10-25
 
 ### Changed

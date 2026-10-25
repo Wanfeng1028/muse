@@ -219,6 +219,45 @@
 
 ---
 
+### `GET /api/plans/summary/by-subject`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| GET | /api/plans/summary/by-subject | 需登录 |
+
+返回当前用户的计划分科汇总（全量，不按日期过滤）。
+
+- 仅返回有计划的科目。
+- 按 SUBJECTS 顺序排列：math、english、politics、major。
+- 若无任何计划（空库），返回 `{ "subjects": [] }`。
+- 每科字段：subject、total（计划条数）、done（已完成条数）、completionRate（done/total，保留四位小数）、plannedMinutes（计划分钟之和）、actualMinutes（关联专注分钟之和）。
+- 实现用两路聚合（计划聚合与专注分钟聚合分开查再按科目合并），避免 JOIN 扇出导致条数与计划分钟被重复计算。
+
+**成功响应示例：**
+
+```json
+{
+  "subjects": [
+    {
+      "subject": "math",
+      "total": 2,
+      "done": 1,
+      "completionRate": 0.5,
+      "plannedMinutes": 150,
+      "actualMinutes": 40
+    },
+    {
+      "subject": "english",
+      "total": 1,
+      "done": 1,
+      "completionRate": 1,
+      "plannedMinutes": 30,
+      "actualMinutes": 10
+    }
+  ]
+}
+```
+
 ### `GET /api/plans/overdue`
 
 | GET | /api/plans/overdue | 需登录 |

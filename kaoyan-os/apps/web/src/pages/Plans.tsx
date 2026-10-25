@@ -6,6 +6,7 @@ import {
   type Plan,
   type PlanSummary,
   type OverduePlansResponse,
+  type PlansBySubjectResponse,
   type PlanProgress,
   type AutoScheduleInput,
   type AutoScheduleItem,
@@ -37,6 +38,7 @@ export default function Plans() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [summary, setSummary] = useState<PlanSummary | null>(null);
   const [overdue, setOverdue] = useState<OverduePlansResponse | null>(null);
+  const [bySubject, setBySubject] = useState<PlansBySubjectResponse | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -116,14 +118,16 @@ export default function Plans() {
     try {
       const params: { date: string; subject?: SubjectKey } = { date };
       if (subjectFilter) params.subject = subjectFilter;
-      const [list, sum, ov] = await Promise.all([
+      const [list, sum, ov, bySub] = await Promise.all([
         api.listPlans(params),
         api.planSummary(date),
         api.overduePlans(),
+        api.plansBySubject(),
       ]);
       setPlans(list);
       setSummary(sum);
       setOverdue(ov);
+      setBySubject(bySub);
     } catch (e) {
       setError(e instanceof Error ? e.message : '加载失败');
     } finally {
@@ -287,6 +291,24 @@ export default function Plans() {
                 >
                   标为完成
                 </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {bySubject && bySubject.subjects.length > 0 && (
+        <div className="card plans-bysubject-card">
+          <h2>各科汇总</h2>
+          <ul className="list plans-bysubject-list">
+            {bySubject.subjects.map((s) => (
+              <li className="list-item plans-bysubject-item" key={s.subject}>
+                <span className={`badge badge-${s.subject}`}>
+                  {subjectMap[s.subject]?.name ?? s.subject}
+                </span>
+                <span>{`共 ${s.total} 条，已完成 ${s.done} 条`}</span>
+                <span>{`完成率 ${Math.round(s.completionRate * 100)}%`}</span>
+                <span>{`计划 ${s.plannedMinutes} 分钟，已专注 ${s.actualMinutes} 分钟`}</span>
               </li>
             ))}
           </ul>
