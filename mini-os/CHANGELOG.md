@@ -1,4 +1,41 @@
 
+## [1.18.0] - 2026-10-26
+
+### 修复
+- 关闭 v1.17.0 已知限制里挂账的全量套件卡死：`ws_term_lifecycle_r2` 在全量/并行运行时
+  间歇挂在 `ws_sigint_kills_sleep_keeps_shell`，此前两次全量均卡于此、单跑全绿。
+  根因已定位（非握手）：该测试开完会话后从不关闭就直接返回；测试返回触发
+  tokio current-thread runtime 析构，析构在 blocking 池上无限等待 pump 线程退出，
+  而 pump 正阻塞在仍活着的 shell 的 PTY 读上，析构便永远等下去。关键证据：临时
+  插桩（已还原）两次复现均为“output ok 已打印、测试自身断言全过、随后卡死”，
+  挂起点在收尾而非测试逻辑；两两组合（sigint+close、sigint+blackhole）均过、
+  三测并行时才间歇复现，符合“析构时序竞态”而非固定死锁。
+  修法（仅 `tests/ws_term_lifecycle_r2.rs`）：sigint 测试末尾显式发 `term_close`，
+  并等 pump 的 `term_exited` 再返回——以泵退出回执代替任意时长 sleep，收尾确定性
+  化；生产侧断连清理路径未动（生产服务常驻、清理任务能被正常调度，不受此竞态影响）。
+- 同文件另一处无界等待一并收口：`connect_ws` 的逐字节读头循环此前无界，
+  服务端迟迟不回 101 时测试会永远挂住。新增 `connect_ws_timeout(addr, cookie, dur)`，
+  连接＋写请求＋读头整个包在 `timeout(dur, …)` 里，超时直接 panic；旧 `connect_ws`
+  改为 30 秒薄壳，既有两测试一字不改；新增回归测试
+  `ws_upgrade_handshake_timeout_blackhole`（只接受连接、永不回字节的黑洞 listener，
+  2 秒触发超时 panic，`#[should_panic]`）。
+- 诚实记录：握手超时部分由 BotsRouter 大写 GLM-5.3（令牌 id=5，单路串行）生成
+  （首通 4000 token 触顶截断作废；拆两通小稿后 A 通辅助函数、B 通回归测试均原文入仓，
+  另补一处编排空行）；sigint 收尾修复为编排直接改动（约 12 行、锚定精确，无模型稿）。
+  诊断插桩已全部还原，不进提交。
+- 版本跟进：Cargo.toml 1.17.0 -> 1.18.0，Cargo.lock 同步，`/api/health` 的 version
+  随之跟进（`env!("CARGO_PKG_VERSION")`，无硬编码断言）。
+
+### 测试
+- `cargo test --offline --test ws_term_lifecycle_r2`：修复前连跑 3 次 1 过 2 挂（挂起均在
+  output ok 之后）；修复后连跑 5 次 5/5 全绿（3.15–4.29 秒），另单次直接跑 5.24 秒全绿。
+- `cargo fmt --all -- --check` 干净。
+- 全量测试：`cargo test --offline` 全绿通过（90 个 test result 段、772 通过、0 失败、0 忽略，exit 0；此前卡死的 `ws_term_lifecycle_r2` 在全量内 3/3 通过，5.35 秒；另含 doc-tests 0 项）。
+
+### 已知限制
+- 同款无界 `connect_ws` 拷贝仍在 `tests/ws_term_conn_r2.rs`、`ws_term_io_r2.rs`、
+  `tests/ws_term_open_r2.rs`（deep3 没有），记为后续跟进项，本轮不无声扩大范围。
+
 ## [1.17.0] - 2026-10-26
 
 ### 修复

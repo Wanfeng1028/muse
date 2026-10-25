@@ -51,32 +51,40 @@ async fn spawn_server(app: axum::Router) -> std::net::SocketAddr {
     addr
 }
 
+async fn connect_ws_timeout(addr: std::net::SocketAddr, cookie: &str, dur: Duration) -> TcpStream {
+    timeout(dur, async {
+        let mut stream = TcpStream::connect(addr).await.unwrap();
+        let req = format!(
+            "GET /ws HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nCookie: {}\r\n\r\n",
+            addr.port(), cookie,
+        );
+        stream.write_all(req.as_bytes()).await.unwrap();
+        let mut buf = Vec::new();
+        let mut byte = [0u8; 1];
+        loop {
+            let n = stream.read(&mut byte).await.unwrap();
+            if n == 0 {
+                break;
+            }
+            buf.push(byte[0]);
+            if buf.len() >= 4 && &buf[buf.len() - 4..] == b"\r\n\r\n" {
+                break;
+            }
+        }
+        let status = String::from_utf8_lossy(&buf);
+        assert!(
+            status.starts_with("HTTP/1.1 101"),
+            "upgrade failed: {}",
+            status.lines().next().unwrap_or("")
+        );
+        stream
+    })
+    .await
+    .expect("ws upgrade handshake timeout")
+}
+
 async fn connect_ws(addr: std::net::SocketAddr, cookie: &str) -> TcpStream {
-    let mut stream = TcpStream::connect(addr).await.unwrap();
-    let req = format!(
-        "GET /ws HTTP/1.1\r\nHost: 127.0.0.1:{}\r\nConnection: Upgrade\r\nUpgrade: websocket\r\nSec-WebSocket-Version: 13\r\nSec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==\r\nCookie: {}\r\n\r\n",
-        addr.port(), cookie,
-    );
-    stream.write_all(req.as_bytes()).await.unwrap();
-    let mut buf = Vec::new();
-    let mut byte = [0u8; 1];
-    loop {
-        let n = stream.read(&mut byte).await.unwrap();
-        if n == 0 {
-            break;
-        }
-        buf.push(byte[0]);
-        if buf.len() >= 4 && &buf[buf.len() - 4..] == b"\r\n\r\n" {
-            break;
-        }
-    }
-    let status = String::from_utf8_lossy(&buf);
-    assert!(
-        status.starts_with("HTTP/1.1 101"),
-        "upgrade failed: {}",
-        status.lines().next().unwrap_or("")
-    );
-    stream
+    connect_ws_timeout(addr, cookie, Duration::from_secs(30)).await
 }
 
 fn client_frame(opcode: u8, payload: &[u8]) -> Vec<u8> {
@@ -274,6 +282,23 @@ async fn ws_sigint_kills_sleep_keeps_shell() {
         "term_output data must contain echoed marker, got {:?}",
         data
     );
+    // 收尾：显式关闭会话并等 pump 的 term_exited 再返回。测试若直接返回，
+    // tokio current-thread runtime 析构会在 blocking 池上等 pump 线程退出，
+    // 而 pump 正阻塞在仍活着的 shell 的 PTY 读上，析构便永远等下去
+    // （此前全量套件内间歇卡死即源于此，测试自身断言其实已全部通过）。
+    send_text(
+        &mut ws,
+        &serde_json::json!({
+            "type": "term_close",
+            "session_id": sid
+        }),
+    )
+    .await;
+    let exited = recv_until(&mut ws, "term_exited", "").await;
+    assert_eq!(
+        exited.get("session_id").and_then(|v| v.as_str()),
+        Some(sid.as_str())
+    );
 }
 
 #[tokio::test]
@@ -329,4 +354,18 @@ async fn ws_close_then_input_not_found() {
         err.get("message").and_then(|v| v.as_str()),
         Some("会话不存在")
     );
+}
+
+#[tokio::test]
+#[should_panic(expected = "ws upgrade handshake timeout")]
+async fn ws_upgrade_handshake_timeout_blackhole() {
+    let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+    let addr = listener.local_addr().unwrap();
+    tokio::spawn(async move {
+        loop {
+            let (_socket, _peer) = listener.accept().await.unwrap();
+            std::future::pending::<()>().await;
+        }
+    });
+    connect_ws_timeout(addr, "x=1", Duration::from_secs(2)).await;
 }
