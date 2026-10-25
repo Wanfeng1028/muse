@@ -21,6 +21,7 @@ import ModelManagement from './pages/aiStudio/models/ModelManagement'
 import { ChapterShotsPage } from './pages/aiStudio/shots/ChapterShotsPage'
 import { ChapterShotEditPage } from './pages/aiStudio/shots/ChapterShotEditPage'
 import './App.css'
+import './design-v1.css'
 
 const App: React.FC = () => {
   return (

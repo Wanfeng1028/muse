@@ -1,0 +1,17 @@
+/* Jellyfish 前端外壳设计层 v1：生产台账。
+ * 视觉逻辑：纸面暖白 #fafaf7、墨色文字 #1e293b、单主色赭石 #c2410c 只作信号（选中、焦点、左缘），
+ * 分隔一律 1px 细线 #e5e7eb，全部左对齐，系统无衬线字体，不引入外来字体，不用渐变、不加阴影。
+ * 本层只覆盖，不改原样式表与任何 JS；原 App.css 里紫渐变 .app-header 是死代码（全项目无组件使用），
+ * 本层把它压成平色，万一将来有人用也不会再出紫渐变。
+ * 注意：MainLayout.tsx 的 Content 内联样式（padding 5、背景 token）本层不覆盖，属既存结构，留待后续轮处理。
+ * 9 条规则全部为 GLM-5.3 收窄三段输出原文拼接（每段 3 条、总行数不超过 30 行），未改动规则本身。
+ */
+.ant-layout-sider { background: #fafaf7; border-right: 1px solid #e5e7eb; }
+.ant-layout-sider .ant-menu-item-selected { background: #fff7ed; border-left: 3px solid #c2410c; color: #c2410c; font-weight: 600; }
+.ant-layout-header { background: #fafaf7; border-bottom: 1px solid #e5e7eb; }
+.ant-layout-sider .ant-menu { background: transparent; color: #1e293b; font-size: 14px; }
+.ant-breadcrumb { color: #64748b; font-size: 13px; }
+.ant-breadcrumb li:last-child { color: #1e293b; font-weight: 600; }
+.app-header { background: #fafaf7; color: #1e293b; }
+.ant-card { background: #ffffff; border: 1px solid #e5e7eb; }
+a:focus-visible, button:focus-visible { outline: 2px solid #c2410c; outline-offset: 2px; }

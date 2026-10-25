@@ -161,8 +161,8 @@ const MainLayout: React.FC = () => {
         width={220}
         style={{
           flexShrink: 0,
-          background: token.colorBgContainer,
-          borderRight: `1px solid ${token.colorBorderSecondary}`,
+          background: '#fafaf7',
+          borderRight: '1px solid #e5e7eb',
           overflow: 'auto',
         }}
       >
@@ -203,8 +203,8 @@ const MainLayout: React.FC = () => {
           className="flex items-center justify-between px-4"
           style={{
             flexShrink: 0,
-            background: token.colorBgContainer,
-            borderBottom: `1px solid ${token.colorBorderSecondary}`,
+            background: '#fafaf7',
+            borderBottom: '1px solid #e5e7eb',
           }}
         >
           <Space size="middle" className="flex-1 min-w-0">
