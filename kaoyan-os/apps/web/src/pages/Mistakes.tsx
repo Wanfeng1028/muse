@@ -4,6 +4,7 @@ import {
   SUBJECTS,
   type Mistake,
   type MistakeSummary,
+  type MistakesBySubjectResponse,
   type SubjectKey,
   type CreateMistakeInput,
   type ExamRecord,
@@ -49,6 +50,8 @@ export default function Mistakes() {
 
   // 掌握率汇总（跟随科目筛选）
   const [summary, setSummary] = useState<MistakeSummary | null>(null)
+  // 分科掌握率，不跟随科目筛选，是全量分科
+  const [bySubject, setBySubject] = useState<MistakesBySubjectResponse | null>(null)
 
 
   // 当前展开查看详情的错题 id
@@ -109,6 +112,14 @@ export default function Mistakes() {
       })
       .catch(() => {
         if (!cancelled) setSummary(null)
+      })
+    api
+      .mistakeBySubject()
+      .then((r) => {
+        if (!cancelled) setBySubject(r)
+      })
+      .catch(() => {
+        if (!cancelled) setBySubject(null)
       })
     return () => {
       cancelled = true
@@ -197,6 +208,19 @@ export default function Mistakes() {
               </div>
             </div>
           </div>
+        </div>
+      )}
+
+      {bySubject != null && bySubject.subjects.length > 0 && (
+        <div className="card">
+          <h2>各科掌握情况</h2>
+          <ul className="list">
+            {bySubject.subjects.map((item) => (
+              <li className="list-item" key={item.subject}>
+                {subjectName(item.subject)}：共 {item.total} 道，已掌握 {item.mastered} 道，掌握率 {(item.masteredRate * 100).toFixed(1)}%
+              </li>
+            ))}
+          </ul>
         </div>
       )}
 

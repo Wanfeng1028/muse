@@ -2,10 +2,13 @@ import type { FastifyInstance } from 'fastify';
 import type { DatabaseSync } from 'node:sqlite';
 import {
   isSubjectKey,
+  SUBJECTS,
   type Mistake,
   type CreateMistakeInput,
   type UpdateMistakeInput,
   type MistakeSummary,
+  type MistakeSubjectSummary,
+  type MistakesBySubjectResponse,
   type ExamRecord,
   type QuizItem,
   type QuizGradeResult,
@@ -83,6 +86,31 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
       unmastered,
       masteredRate,
     };
+    return reply.send(result);
+  });
+
+  // 错题分科掌握率：仅返回有错题的科目，按 SUBJECTS 顺序排列
+  app.get('/api/mistakes/summary/by-subject', async (request, reply) => {
+    const rows = db
+      .prepare(
+        'SELECT subject, COUNT(*) AS total, COALESCE(SUM(mastered), 0) AS mastered FROM mistakes WHERE user_id = ? GROUP BY subject',
+      )
+      .all(request.user!.id) as Array<{ subject: string; total: number; mastered: number }>;
+
+    const subjectMap = new Map(rows.map((r) => [r.subject, r]));
+
+    const subjects: MistakeSubjectSummary[] = [];
+    for (const s of SUBJECTS) {
+      const row = subjectMap.get(s.key);
+      if (row && row.total > 0) {
+        const { total, mastered } = row;
+        const unmastered = total - mastered;
+        const masteredRate = total === 0 ? 0 : Math.round((mastered / total) * 10000) / 10000;
+        subjects.push({ subject: s.key, total, mastered, unmastered, masteredRate });
+      }
+    }
+
+    const result: MistakesBySubjectResponse = { subjects };
     return reply.send(result);
   });
 

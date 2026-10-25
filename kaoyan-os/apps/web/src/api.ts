@@ -13,6 +13,7 @@ import type {
   OverloadResponse,
   Mistake,
   MistakeSummary,
+  MistakesBySubjectResponse,
   CreateMistakeInput,
   UpdateMistakeInput,
   QuizItem,
@@ -198,6 +199,8 @@ export const api = {
   // 错题掌握率汇总
   mistakeSummary: (subject?: string) =>
     request<MistakeSummary>(`/mistakes/summary${qs({ subject })}`),
+  mistakeBySubject: () =>
+    request<MistakesBySubjectResponse>('/mistakes/summary/by-subject'),
   mistakeSourceExams: (id: number, windowDays?: number) =>
     request<ExamRecord[]>(`/mistakes/${id}/source-exams${qs({ windowDays })}`),
   generateQuiz: (input: QuizGenerateInput) =>

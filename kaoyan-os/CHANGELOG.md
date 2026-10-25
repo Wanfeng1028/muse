@@ -4,6 +4,15 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.4] - 2026-10-25
+
+### Added
+
+- 后端新增 `GET /api/mistakes/summary/by-subject`，按科目返回错题掌握率汇总：仅返回有错题的科目，按数学、英语、政治、专业课 821 的顺序排列，掌握率与单科汇总同一舍入口径（4 位小数）。
+- 共享包新增 `MistakeSubjectSummary` 与 `MistakesBySubjectResponse` 类型。
+- 前端错题页新增「各科掌握情况」卡片（复用现有 card/list/list-item 样式，无新增 CSS），跟随汇总卡片展示，不跟随科目筛选。
+- 新增 `tests/mistakes-summary-by-subject.test.ts` 4 例：空库、科目顺序与零错题科目省略、用户隔离、未登录 401。
+
 ## [1.12.3] - 2026-10-25
 
 ### Added

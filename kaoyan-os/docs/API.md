@@ -722,6 +722,47 @@
 | 400 | `{ "error": "无效的 subject 参数" }` | subject 提供但不是合法学科 key |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
+### `GET /api/mistakes/summary/by-subject`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| GET | /api/mistakes/summary/by-subject | 需要（登录用户） |
+
+按科目返回错题掌握率汇总：仅返回有错题的科目，按数学、英语、政治、专业课 821 的顺序排列；掌握率与单科汇总用同一舍入口径（4 位小数）。
+
+本接口无请求参数。
+
+**成功响应**
+
+状态码 200
+
+```json
+{
+  "subjects": [
+    {
+      "subject": "math",
+      "total": 3,
+      "mastered": 1,
+      "unmastered": 2,
+      "masteredRate": 0.3333
+    },
+    {
+      "subject": "english",
+      "total": 2,
+      "mastered": 2,
+      "unmastered": 0,
+      "masteredRate": 1
+    }
+  ]
+}
+```
+
+**错误码**
+
+| 状态码 | 返回体 | 触发条件 |
+| --- | --- | --- |
+| 401 | （未认证响应） | 未登录或认证失败 |
+
 ### `GET /api/mistakes`
 
 | 方法 | 路径 | 认证 |

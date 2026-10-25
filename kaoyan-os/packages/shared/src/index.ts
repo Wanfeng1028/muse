@@ -333,6 +333,16 @@ mastered: number;
 unmastered: number;
 masteredRate: number;
 }
+export interface MistakeSubjectSummary {
+  subject: SubjectKey;
+  total: number;
+  mastered: number;
+  unmastered: number;
+  masteredRate: number;
+}
+export interface MistakesBySubjectResponse {
+  subjects: MistakeSubjectSummary[];
+}
 
 /** 账号体系：用户 */
 export interface User { id: number; username: string; createdAt: string;}
