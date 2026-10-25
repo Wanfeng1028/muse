@@ -1,6 +1,18 @@
 
 # 更新日志
 
+## v1.17.0 — 2026-10-25
+
+### 已登录态顶栏复核（关闭 v1.16.0 已知限制，不改样式）
+
+- 关闭 v1.16.0 已知限制“已登录时导航多一条‘退出’，换行行数可能再变、app-shell 重算值届时需复核”：实测结论是**无需改样式**——已登录态（密码门开启、会话登录后）390px 下顶栏仍 183px、导航仍两行（第一行阅读器/今日必读/聚类 Top/订阅管理，第二行统计/OPML/退出）、导航 scrollWidth 与 clientWidth 均为 326px（零横向滚动）、app-shell 仍 613px（= 844 - 183 - 48），v116 的 183px 口径继续成立。复核方法：复制演示库 + 一次性测试密码门（FEEDFLOW_AUTH_PASSWORD_HASH 与 FEEDFLOW_SECRET_KEY 均为测试串，复核后删除），curl 登录取会话，Chromium 390x844 截图实测；截图存 `docs/screenshots/topbar-loggedin-390-v117.png`（第一行品牌加搜索框、导航两行全部可见、零 console 错误）。
+- 模型稿（只走 BotsRouter，大写 GLM-5.3，令牌 id=5，渠道 20，单路串行，SSE 按 data: 行拼 content，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写的最小新文件、令牌经 SSH 现取不落盘）：1 通出正文但混入思考过程与多围栏迭代（API prompt 24378（含上游缓存 23744）/ completion 4000 触顶 / total 28378），编排只抽最后一围栏完整文件落仓，思考段与中间围栏一字未入仓。编排修正 2 处：其一，模型稿测试 2 复用带密码门的 fixture 会 302 到登录页（登录页无导航），改用不带 auth 配置的应用测未登录 6 链；其二，模型稿部分配置缺 host/port/fetch_interval/user_agent 致配置校验失败，按 tests/conftest.py 的 app fixture 口径补齐。
+- 测试：新增 `tests/test_design_v117_loggedin_topbar.py` 2 例（已登录 7 链含退出 + v116 层仍 served 且含 183px 算式；未登录 6 链无退出）；v112–v117 设计测试同跑，全量 13/13 通过。
+
+### 本轮已知限制（诚实保留，不谎称闭环）
+
+- 本轮只复核了 390px 宽度下已登录态；更大移动端宽度（如 768px 临界点）下 7 链换行行数未实测，app-shell 值在该宽度下仍以 v116 的 183px 口径为准，届时需复核。
+
 ## v1.16.0 — 2026-10-25
 
 ### 前端美化（设计层，不改功能与后端）
