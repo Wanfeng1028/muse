@@ -1,4 +1,18 @@
 
+## [1.17.0] - 2026-10-26
+
+### 修复
+- 关闭 v1.16.0 已知限制里挂账的 `cargo fmt --check` 存量 diff 最后一处：tests/twofa_test.rs 全文件 rustfmt 重排（844 行，693 增 / 151 删），只改换行、缩进与多行调用的尾逗号，标识符、字符串字面量与断言语义一字未动；`cargo fmt --all --check` 现已全包干净。
+- 诚实记录：本轮为 v1.16.0 明确“留待后续单独处理”的专项重排，整轮 diff 只有这一个测试文件，评审即“纯 rustfmt 输出”本身；格式由 rustfmt 工具链机械输出，无模型手写内容（本轮未走模型调用——格式稿不需要模型，硬凑模型通才是灌水）。另记一笔：cargo fmt 传 --edition 2021 时 --check 会静默 0 输出（原因未深究），本轮改走不带 --edition 的 cargo fmt --all（Cargo.toml 已声明 edition 2021），复核时以此为准。
+- 版本跟进：Cargo.toml 1.16.0 -> 1.17.0，Cargo.lock 同步，`/api/health` 的 version 随之跟进（`env!("CARGO_PKG_VERSION")`，无硬编码断言）。
+
+### 测试
+- `cargo test --offline --test twofa_test --test twofa_backup_sweep_test --test twofa_v112_test`：11 + 6 + 3 = 20/20 全绿（twofa_test 套件本身耗时 399 秒，系 TOTP 窗口等待，非挂起）。
+- 全量测试本轮未重跑（v1.15.0 已注明 ws_term_lifecycle_r2 套件内挂起问题未变），不谎称全绿。
+
+### 已知限制
+- 全量测试未跑完：ws_term_lifecycle_r2 在套件内挂起（v1.15.0 已注明，单跑全绿），留待后续在空闲时重跑全量确认。
+
 ## [1.16.0] - 2026-10-25
 
 ### 修复
