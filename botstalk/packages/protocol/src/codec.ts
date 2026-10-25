@@ -284,6 +284,14 @@ function validateMessagePayload(payload: unknown): string[] {
     errors.push("payload.mentions: must be a string[]");
   }
 
+  const replyTo = payload["reply_to"];
+  if (replyTo !== undefined) {
+    if (!isNonEmptyString(replyTo) || (replyTo as string).length > 128) errors.push("payload.reply_to: must be a non-empty string of at most 128 chars");
+    else if (replyTo === payload["msg_id"]) errors.push("payload.reply_to: must not equal msg_id");
+  }
+  const threadId = payload["thread_id"];
+  if (threadId !== undefined && (!isNonEmptyString(threadId) || (threadId as string).length > 128)) errors.push("payload.thread_id: must be a non-empty string of at most 128 chars");
+
   const intent = payload["intent"];
   if (intent !== undefined) {
     if (typeof intent !== "string" || !INTENTS.includes(intent as Intent)) {

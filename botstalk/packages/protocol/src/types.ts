@@ -153,6 +153,10 @@ export interface MessagePayload {
   task_id?: string;
   /** 任务派单的能力要求（可选；仅 intent=task 时有效，网关按此打分挑最合适的 adapter；缺失表示不按能力挑）。 */
   required_capabilities?: CapabilityRequirement;
+  /** 引用回复：被引用消息的 msg_id（可选）。网关派生 thread_id，客户端可省略 thread_id。 */
+  reply_to?: string;
+  /** 一层 thread 的根消息 msg_id（可选，网关派生并覆盖客户端传入值）。无 reply_to 时等于自身 msg_id。 */
+  thread_id?: string;
   /** task 回执状态。 */
   task_status?: TaskStatus;
   /** 进度上报：assignee→网关，仅 intent=task 时有效。帧顶层 task_id 仍必填（codec 对 intent=task 帧强制要求），须与此处 task_id 一致。 */

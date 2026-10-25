@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 5 轮（reply_to + 一层 thread）
+### 新增
+- 协议 MessagePayload 新增可选 reply_to / thread_id（v1.3 兼容，老客户端不受影响）；网关派生 thread_id，回复的回复扁平化到根。
+- 网关找不到被引用消息时回 REPLY_TARGET_NOT_FOUND 且不落库不广播。
+- Web：根消息下折叠显示同 thread 回复（默认折叠），引用行显示发送者 + 前 80 字，消息行增加“回复”按钮，待回复态发出的消息带 reply_to。
+- 测试：协议 codec-thread 5 例、网关 thread 5 例、网关 thread-hub 真实 WS 2 例；网关全量 68 文件 915 例、协议全量 20 文件 185 例全绿；Web tsc + vite build 通过。
+- 文档：docs/OPENAGENTS_ROUND5.md。
+
+
 ## Unreleased
 ### 新增
 - OpenAgents 移植第 4 轮（抄清单 8 + 7）：清单规范先行 + 能力匹配派单结构化打分版（LLM 兜底后置）。协议 v1.3 兼容新增可选字段：capability_update.capabilities 加 skills/tags、message 加 required_capabilities；网关 capability.ts（归一化 + ALL 布尔匹配 + 权重打分 skills 0.5/tags 0.25/input_modes 0.125/output_modes 0.125、在场维度重归一化、最高分胜出/并列字典序/零分走 unsupported）与 manifest.ts（清单校验 + 文件/目录加载）+ adapters/deepseek/manifest.json 示例；hub 存储 adapter 声明的技能/标签，router 无 @ 时按 required_capabilities 打分派单、@ 指定压过打分；base client sendCapability 可声明 skills/tags；capability-llm.ts 只移植原版 prompt 构建与响应解析、不调用 LLM。测试：capability 24 例、manifest 11 例、协议 codec 7 例、路由 5 例；网关全量 66 文件 908 例、协议 180 例、base 37 例零回归；真实网关冒烟 smoke-capability-matching.mjs 全过。验收抓出 1 个真 bug 已修：@ 指定后仍走打分致零分被提及者走 unsupported，改为 mentions 非空时跳过打分。移植规格见 docs/OPENAGENTS_ROUND4.md。

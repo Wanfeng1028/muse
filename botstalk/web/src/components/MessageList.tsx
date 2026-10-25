@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { Bot, Loader2, User } from 'lucide-react';
 
 export interface ChatItem {
@@ -9,6 +9,8 @@ export interface ChatItem {
   ts: number;
   text: string;
   mentions: string[];
+  replyTo?: string;
+  threadId?: string;
   kind: 'message' | 'task';
   taskId?: string;
   taskStatus?: string;
@@ -20,6 +22,7 @@ interface Props {
   onTopReached: () => void;
   loadingOlder: boolean;
   hasMore: boolean;
+  onReply?: (item: ChatItem) => void;
 }
 
 const TOP_THRESHOLD = 48;
@@ -30,6 +33,7 @@ export default function MessageList({
   onTopReached,
   loadingOlder,
   hasMore,
+  onReply,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -84,20 +88,62 @@ export default function MessageList({
       {items.length === 0 ? (
         <div className="msgs-empty">还没有消息，说点什么吧</div>
       ) : (
-        items.map((item) =>
-          item.kind === 'task' ? (
-            <TaskRow key={item.key} item={item} />
-          ) : (
-            <MessageRow key={item.key} item={item} selfNick={selfNick} />
-          ),
-        )
+        groupChatItems(items).map((group) => (
+          <ThreadGroup key={group.root.key} root={group.root} replies={group.replies} items={items} selfNick={selfNick} onReply={onReply} />
+        ))
       )}
       <div ref={bottomRef} />
     </div>
   );
 }
 
-function MessageRow({ item, selfNick }: { item: ChatItem; selfNick: string }) {
+function groupChatItems(items: ChatItem[]): { root: ChatItem; replies: ChatItem[] }[] {
+  const byId = new Map<string, ChatItem>();
+  for (const item of items) byId.set(item.msgId, item);
+  const groups: { root: ChatItem; replies: ChatItem[] }[] = [];
+  const grouped = new Set<string>();
+  for (const item of items) {
+    if (item.kind === 'task') { groups.push({ root: item, replies: [] }); grouped.add(item.key); continue; }
+    const threadId = item.threadId ?? item.msgId;
+    if (threadId !== item.msgId) continue;
+    const replies = items.filter((x) => x.kind !== 'task' && x.threadId === item.msgId && x.msgId !== item.msgId).sort((a, b) => a.ts - b.ts || a.seq - b.seq);
+    for (const r of replies) grouped.add(r.key);
+    groups.push({ root: item, replies });
+    grouped.add(item.key);
+  }
+  for (const item of items) {
+    if (!grouped.has(item.key)) groups.push({ root: item, replies: [] });
+  }
+  return groups;
+}
+
+function ThreadGroup({ root, replies, items, selfNick, onReply }: { root: ChatItem; replies: ChatItem[]; items: ChatItem[]; selfNick: string; onReply?: (item: ChatItem) => void }) {
+  const [open, setOpen] = React.useState(false);
+  const byId = new Map(items.map((x) => [x.msgId, x]));
+  if (root.kind === 'task') return <TaskRow item={root} />;
+  return (
+    <div className="thread-group">
+      <MessageRow item={root} selfNick={selfNick} onReply={onReply} />
+      {replies.length > 0 && (
+        <>
+          <button className="thread-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
+            {open ? '收起回复' : `展开 ${replies.length} 条回复`}
+          </button>
+          {open && replies.map((r) => (
+            <div key={r.key} className="thread-reply">
+              <div className="thread-quote">
+                {r.replyTo && byId.get(r.replyTo) ? `引用 ${byId.get(r.replyTo)!.sender}：${byId.get(r.replyTo)!.text.slice(0, 80)}` : '引用消息已删除'}
+              </div>
+              <MessageRow item={r} selfNick={selfNick} onReply={onReply} />
+            </div>
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
+function MessageRow({ item, selfNick, onReply }: { item: ChatItem; selfNick: string; onReply?: (item: ChatItem) => void }) {
   const isSelf = item.sender === selfNick;
   const mentionsMe = item.mentions.includes(selfNick);
   const highlightClass = [
@@ -117,6 +163,7 @@ function MessageRow({ item, selfNick }: { item: ChatItem; selfNick: string }) {
         <div className="msg-head">
           <span className="msg-sender">{item.sender}</span>
           <span className="msg-time">{formatTime(item.ts)}</span>
+          {onReply && <button className="msg-reply-btn" type="button" onClick={() => onReply(item)}>回复</button>}
         </div>
         <div className="msg-text">{renderText(item.text, item.mentions)}</div>
       </div>

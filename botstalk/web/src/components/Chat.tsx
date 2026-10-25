@@ -39,6 +39,7 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [showApprovals, setShowApprovals] = useState(false);
   const [showWorkflows, setShowWorkflows] = useState(false);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const [pendingReply, setPendingReply] = useState<{ msgId: string; sender: string; text: string } | null>(null);
   const [showGame, setShowGame] = useState(false);
   const [showDoudizhuLobby, setShowDoudizhuLobby] = useState(false);
   const [doudizhuErr, setDoudizhuErr] = useState<string | null>(null);
@@ -234,8 +235,9 @@ export default function Chat({ nick, room, onLeave }: Props) {
   }, [hasMore, ingestHistory]);
 
   const handleSend = useCallback((text: string, mentions: string[]) => {
-    socketRef.current?.sendMessage(text, mentions);
-  }, []);
+    socketRef.current?.sendMessage(text, mentions, pendingReply?.msgId);
+    setPendingReply(null);
+  }, [pendingReply]);
 
   const handleSendTask = useCallback((text: string, mentions: string[]) => {
     socketRef.current?.sendTask(text, mentions);
@@ -320,7 +322,14 @@ export default function Chat({ nick, room, onLeave }: Props) {
             onTopReached={loadOlder}
             loadingOlder={loadingOlder}
             hasMore={hasMore}
+            onReply={(item) => setPendingReply({ msgId: item.msgId, sender: item.sender, text: item.text })}
           />
+          {pendingReply && (
+            <div className="reply-bar">
+              回复 {pendingReply.sender}：{pendingReply.text.slice(0, 80)}
+              <button type="button" onClick={() => setPendingReply(null)}>取消</button>
+            </div>
+          )}
           {showTasks && unreadCount > 0 && (
             <button className="unread-pill" type="button" onClick={markReadAndCloseTasks}>
               有 {unreadCount} 条新消息，点击查看
@@ -495,6 +504,8 @@ function toChatItem(row: HistoryMessage): ChatItem {
     text: String(row.payload.text ?? ''),
     mentions: Array.isArray(row.payload.mentions) ? row.payload.mentions : [],
     kind: isTask ? 'task' : 'message',
+    replyTo: typeof row.payload.reply_to === 'string' ? row.payload.reply_to : undefined,
+    threadId: typeof row.payload.thread_id === 'string' ? row.payload.thread_id : undefined,
     taskId: row.payload.task_id,
     taskStatus: isTask ? (taskStatus as string) : undefined,
   };

@@ -31,6 +31,7 @@ import type {
   ApprovalDecisionPayload,
 } from "@botstalk/protocol";
 import * as store from "./db.js";
+import { deriveThreadId, findReplyTarget, targetThreadId } from "./thread.js";
 import type { Db } from "./db.js";
 import { randomUUID, createHash } from "node:crypto";
 
@@ -332,6 +333,25 @@ export class Hub {
       }
       case "message": {
         const m = env.payload as MessagePayload;
+        if (m.reply_to) {
+          const history = store.getRoomHistory(this.db, env.room, 1000);
+          const target = findReplyTarget(history, m.reply_to);
+          if (!target) {
+            const reply = makeEnvelope<MessagePayload>(
+              "message",
+              "gateway",
+              env.room,
+              this.nextSeq(),
+              0,
+              { msg_id: randomUUID(), text: "REPLY_TARGET_NOT_FOUND: reply_to message not found in this room", mentions: [], intent: "chat" },
+            );
+            this.sendTo(conn.adapterId, reply);
+            break;
+          }
+          m.thread_id = deriveThreadId(m.msg_id, m.reply_to, targetThreadId(target));
+        } else {
+          m.thread_id = deriveThreadId(m.msg_id);
+        }
         store.saveMessage(this.db, { room: env.room, sender: env.sender, seq: env.seq, type: "message", payload: JSON.stringify(m), ts: env.ts });
         if (this.onMessage) {
           this.onMessage(env as Envelope<MessagePayload>);

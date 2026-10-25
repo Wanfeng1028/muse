@@ -63,13 +63,14 @@ export class ChatSocket {
     this.events.onStatus('closed');
   }
 
-  sendMessage(text: string, mentions: string[]): void {
+  sendMessage(text: string, mentions: string[], replyTo?: string): void {
     const msg_id = makeUuid();
     this.send('message', {
       msg_id,
       text,
       mentions,
       intent: 'chat',
+      ...(replyTo ? { reply_to: replyTo } : {}),
     });
   }
 

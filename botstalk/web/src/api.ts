@@ -11,6 +11,8 @@ export interface HistoryMessage {
     intent?: string;
     task_id?: string;
     task_status?: string;
+    reply_to?: string;
+    thread_id?: string;
   };
   ts: number;
 }
