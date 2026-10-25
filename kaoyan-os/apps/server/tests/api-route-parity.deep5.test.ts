@@ -25,9 +25,11 @@ describe('api route parity deep5', () => {
     'GET /api/exams/:p/related-mistakes',
     'GET /api/exams/export',
     'GET /api/exams/summary',
+    'GET /api/exams/summary/by-subject',
     'GET /api/exams/trend',
     'GET /api/focus',
     'GET /api/focus/stats',
+    'GET /api/focus/summary/by-subject',
     'GET /api/health',
     'GET /api/mistakes',
     'GET /api/mistakes/:p/source-exams',
@@ -44,6 +46,7 @@ describe('api route parity deep5', () => {
     'GET /api/stats/weekly',
     'GET /api/words',
     'GET /api/words/due',
+    'GET /api/words/summary/by-source',
     'GET /api/words/vocab-status',
     'PATCH /api/mistakes/:p',
     'PATCH /api/plans/:p',
@@ -92,8 +95,8 @@ describe('api route parity deep5', () => {
     await app.close();
   });
 
-  it('解析出 50 个前端 api 调用（数量快照）', () => {
-    expect(pairs.length).toBe(50);
+  it('解析出 53 个前端 api 调用（数量快照）', () => {
+    expect(pairs.length).toBe(53);
   });
 
   it('解析结果与 EXPECTED 快照完全一致', () => {

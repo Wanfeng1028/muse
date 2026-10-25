@@ -18,6 +18,20 @@
 - 视觉验收：真实服务 + 播种专注数据截图亲眼核对，截图存 docs/screenshots/pomodoro-v1128.png（1440x900 视口）与 pomodoro-v1128-full.png（整页），验收后服务与演示库已停/已删；播种数与截图精确对上：分科数学 105 / 英语 55 / 政治 85 / 专业课 95 分钟各 2 次，今日专注 125 分钟。
 - 编排第二轮修正（首张截图亲眼核对后发现的问题，非模型稿）：第一版计时仍显“25 : 00”发飘，根因是等宽字体下冒号自带左右空位、只改 letter-spacing 不够，改成计时器拆三段（分、冒号、秒），冒号单独定宽 0.45em 居中；计时 72px 改 64px、计时卡内边距与分科行距收紧后，整页在 900px 视口内完整露出底部统计条，截断问题消除。
 
+## [1.12.8] - 2026-10-25
+
+### Added
+
+- 后端新增 `GET /api/exams/summary/by-subject`，按科目返回真题汇总：场次/平均分/平均得分率/最高分/最近一场/最早一场/进步幅度，仅返回有记录的科目，按数学、英语、政治、专业课 821 的顺序排列。
+- 共享包新增 `ExamSubjectSummary` 与 `ExamsBySubjectResponse` 类型。
+- 前端真题页新增「各科汇总」卡片（复用现有 card/list 样式，无新增 CSS），跟随新增/删除记录刷新。
+- 新增 `tests/exams-summary-by-subject.test.ts` 5 例：空库/分科精确值与顺序及零记录科目省略/用户隔离 2 例/未登录 401。
+- API 文档新增 `GET /api/exams/summary/by-subject` 一节。
+
+### Fixed
+
+- 前端调用与后端路由对照快照（api-route-parity）同步：补 1.12.5–1.12.7 轮遗漏的 `GET /api/focus/summary/by-subject` 与 `GET /api/words/summary/by-source` 两条，并计入本轮新路由 `GET /api/exams/summary/by-subject`，数量快照 50→53。
+
 ## [1.12.7] - 2026-10-25
 
 ### Added

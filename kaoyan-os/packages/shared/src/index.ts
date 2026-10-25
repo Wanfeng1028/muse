@@ -277,6 +277,24 @@ firstTakenAt: string;
 improvement: number;
 }
 
+/** 真题分科汇总 */
+export interface ExamSubjectSummary {
+  subject: SubjectKey;
+  count: number;
+  avgScore: number;
+  avgRate: number;
+  bestScore: number;
+  bestTakenAt: string;
+  latestScore: number;
+  latestTakenAt: string;
+  firstScore: number;
+  firstTakenAt: string;
+  improvement: number;
+}
+export interface ExamsBySubjectResponse {
+  subjects: ExamSubjectSummary[];
+}
+
 /** 主题模式 */
 export type ThemeMode = 'light' | 'dark';
 

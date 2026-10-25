@@ -3,6 +3,7 @@ import type {
   ExamRecord,
   ExamTrendPoint,
   ExamSummary,
+  ExamsBySubjectResponse,
   SubjectKey,
   CreateExamInput,
   Mistake,
@@ -115,6 +116,9 @@ export default function Exams() {
   const [summary, setSummary] = useState<ExamSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(false);
   const [summaryError, setSummaryError] = useState<string | null>(null);
+  const [bySubject, setBySubject] = useState<ExamsBySubjectResponse | null>(null);
+  const [bySubjectLoading, setBySubjectLoading] = useState(false);
+  const [bySubjectError, setBySubjectError] = useState<string | null>(null);
 
   // 加载汇总数据
   const loadSummary = useCallback(async () => {
@@ -130,6 +134,20 @@ export default function Exams() {
     }
   }, [trendSubject]);
 
+  // 加载分科汇总数据
+  const loadBySubject = useCallback(async () => {
+    setBySubjectLoading(true);
+    setBySubjectError(null);
+    try {
+      const data = await api.examSummaryBySubject();
+      setBySubject(data);
+    } catch (e) {
+      setBySubjectError(e instanceof Error ? e.message : '加载失败');
+    } finally {
+      setBySubjectLoading(false);
+    }
+  }, []);
+
 
   // 依赖变化时重新加载
   useEffect(() => {
@@ -143,6 +161,10 @@ export default function Exams() {
   useEffect(() => {
     loadSummary();
   }, [loadSummary]);
+
+  useEffect(() => {
+    loadBySubject();
+  }, [loadBySubject]);
 
 
   // 提交新增表单
@@ -184,6 +206,7 @@ export default function Exams() {
       await loadRecords();
       await loadTrend();
       await loadSummary();
+      await loadBySubject();
     } catch (e) {
       setFormError(e instanceof Error ? e.message : '提交失败');
 
@@ -199,6 +222,7 @@ export default function Exams() {
       await loadRecords();
       await loadTrend();
       await loadSummary();
+      await loadBySubject();
     } catch (e) {
       setRecordsError(e instanceof Error ? e.message : '删除失败');
     }
@@ -415,6 +439,26 @@ export default function Exams() {
               </div>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* 各科汇总 */}
+      <div className="card">
+        <h2>各科汇总</h2>
+        {bySubjectLoading ? (
+          <div className="loading">加载中…</div>
+        ) : bySubjectError ? (
+          <div className="error-box">{bySubjectError}</div>
+        ) : !bySubject || bySubject.subjects.length === 0 ? (
+          <div className="empty">还没有分科模考记录</div>
+        ) : (
+          <ul className="list">
+            {bySubject.subjects.map((item) => (
+              <li className="list-item" key={item.subject}>
+                {SUBJECT_NAME[item.subject]}：共 {item.count} 场，平均分 {item.avgScore}，平均得分率 {(item.avgRate * 100).toFixed(1)}%，最高分 {item.bestScore}，进步 {item.count < 2 ? '—' : item.improvement > 0 ? `+${item.improvement} 分` : item.improvement < 0 ? `${item.improvement} 分` : '持平'}
+              </li>
+            ))}
+          </ul>
         )}
       </div>
 

@@ -1579,6 +1579,58 @@
 | 400 | `{ "error": "无效的 subject 参数" }` | 提供了 `subject` 但不是合法科目键 |
 | 401 | `{ "error": "Unauthorized" }` | 未登录（由全局认证钩子返回） |
 
+### `GET /api/exams/summary/by-subject`
+
+| 方法 | 路径 | 认证 |
+|------|------|------|
+| GET | /api/exams/summary/by-subject | 需要登录用户 |
+
+返回当前用户的真题分科汇总。
+
+- 仅返回有记录的科目。
+- 按 SUBJECTS 顺序排列：math、english、politics、major。
+- 若无任何记录（空库），返回 `{ "subjects": [] }`。
+- 计算口径与 `GET /api/exams/summary` 同款：avgScore 保留一位小数；avgRate 为总分之和 / 满分之和保留四位小数；best 并列取最早；first 取 taken_at 最早（并列 id 最小）；latest 取 taken_at 最晚（并列 id 最大）；improvement 在场次小于 2 时为 0，否则为 latest.score - first.score。
+
+**成功响应示例：**
+
+```json
+{
+  "subjects": [
+    {
+      "subject": "math",
+      "count": 3,
+      "avgScore": 88.3,
+      "avgRate": 0.5889,
+      "bestScore": 95,
+      "bestTakenAt": "2026-02-01T00:00:00Z",
+      "latestScore": 90,
+      "latestTakenAt": "2026-03-01T00:00:00Z",
+      "firstScore": 80,
+      "firstTakenAt": "2026-01-01T00:00:00Z",
+      "improvement": 10
+    },
+    {
+      "subject": "english",
+      "count": 1,
+      "avgScore": 70,
+      "avgRate": 0.7,
+      "bestScore": 70,
+      "bestTakenAt": "2026-04-01T00:00:00Z",
+      "latestScore": 70,
+      "latestTakenAt": "2026-04-01T00:00:00Z",
+      "firstScore": 70,
+      "firstTakenAt": "2026-04-01T00:00:00Z",
+      "improvement": 0
+    }
+  ]
+}
+```
+
+**错误码：**
+
+- `401`：未登录。
+
 ### `GET /api/exams/export`
 
 | 方法 | 路径 | 认证 |

@@ -7,6 +7,8 @@ import {
   type ExamRecord,
   type ExamTrendPoint,
   type ExamSummary,
+  type ExamSubjectSummary,
+  type ExamsBySubjectResponse,
   type Mistake,
 } from '@kaoyan/shared';
 
@@ -175,6 +177,61 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     };
 
     return summary;
+  });
+
+
+  // GET /api/exams/summary/by-subject - 真题分科汇总：仅返回有记录的科目，按 SUBJECTS 顺序排列
+  app.get('/api/exams/summary/by-subject', async (req, reply) => {
+    const rows = db.prepare('SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ? ORDER BY taken_at ASC, id ASC').all(req.user!.id) as unknown as ExamRow[];
+
+    const grouped = new Map<string, ExamRow[]>();
+    for (const row of rows) {
+      const arr = grouped.get(row.subject);
+      if (arr) {
+        arr.push(row);
+      } else {
+        grouped.set(row.subject, [row]);
+      }
+    }
+
+    const subjects: ExamSubjectSummary[] = [];
+    for (const s of SUBJECTS) {
+      const group = grouped.get(s.key);
+      if (!group) continue;
+
+      const count = group.length;
+      const scoreSum = group.reduce((sum, r) => sum + r.score, 0);
+      const totalScoreSum = group.reduce((sum, r) => sum + r.total_score, 0);
+      const avgScore = Math.round((scoreSum / count) * 10) / 10;
+      const avgRate = totalScoreSum > 0 ? Math.round((scoreSum / totalScoreSum) * 10000) / 10000 : 0;
+
+      const first = group[0];
+      const latest = group[count - 1];
+      let best = group[0];
+      for (let i = 1; i < count; i++) {
+        if (group[i].score > best.score) {
+          best = group[i];
+        }
+      }
+
+      const improvement = count < 2 ? 0 : latest.score - first.score;
+
+      subjects.push({
+        subject: s.key,
+        count,
+        avgScore,
+        avgRate,
+        bestScore: best.score,
+        bestTakenAt: best.taken_at,
+        latestScore: latest.score,
+        latestTakenAt: latest.taken_at,
+        firstScore: first.score,
+        firstTakenAt: first.taken_at,
+        improvement,
+      });
+    }
+
+    return reply.send({ subjects });
   });
 
   // GET /api/exams/export - 导出考试记录为 CSV

@@ -31,6 +31,7 @@ import type {
   CreateExamInput,
   ExamTrendPoint,
   ExamSummary,
+  ExamsBySubjectResponse,
   HeatmapResponse,
   Settings,
   WeeklyStats,
@@ -237,6 +238,8 @@ export const api = {
     request<ExamTrendPoint[]>(`/exams/trend${qs({ subject })}`),
   examSummary: (subject?: string) =>
     request<ExamSummary>(`/exams/summary${qs({ subject })}`),
+  examSummaryBySubject: () =>
+    request<ExamsBySubjectResponse>('/exams/summary/by-subject'),
   createExam: (input: CreateExamInput) =>
     request<ExamRecord>('/exams', { method: 'POST', body: JSON.stringify(input) }),
   deleteExam: (id: number) =>
