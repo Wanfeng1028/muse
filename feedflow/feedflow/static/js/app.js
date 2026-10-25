@@ -91,7 +91,7 @@ function initReader() {
         const cls = "article-item" + (state.selectedId === a.id ? " active" : "") + (a.is_read ? "" : " unread");
 
         let h = `<div class="${cls}" data-id="${a.id}">`;
-        h += `<div class="title">${escapeHtml(a.title || "(无标题)")}${a.is_starred ? '<span class="star">★</span>' : ""}</div>`;
+        h += `<div class="title">${escapeHtml(a.title || "(无标题)")}${a.is_starred ? '<span class="star"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6 4.2 13.6l.7-4.3-3.1-3 4.3-.6z" fill="currentColor"/></svg></span>' : ""}</div>`;
         h += `<div class="meta">${escapeHtml(a.feed_title || "")} · ${fmtTime(a.published_at || a.fetched_at)}</div>`;
         h += `</div>`;
 
@@ -159,6 +159,7 @@ function initReader() {
     let a;
     try { a = await api("/api/articles/" + id); } catch (e) { return; }
     state.selectedId = id;
+    elList.querySelectorAll(".article-item").forEach(n => n.classList.toggle("active", parseInt(n.dataset.id, 10) === id));
     renderReader(a);
     loadScoreCard(id);
     requestAnimationFrame(() => {
