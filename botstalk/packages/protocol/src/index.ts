@@ -8,3 +8,4 @@ export * from "./gap.js";
 export * from "./queue.js";
 export * from "./constants.js";
 export * from "./rooms-types.js";
+export * from "./visibility.js";

@@ -1,4 +1,5 @@
-import { makeEnvelope, APPROVAL_TTL_MS } from "@botstalk/protocol";
+import { makeEnvelope, APPROVAL_TTL_MS, visibleRecipients } from "@botstalk/protocol";
+import { getPermRole, getRoom } from "./db.js";
 import type { ApprovalDecisionPayload, ApprovalRequestPayload, Envelope, MessagePayload, StreamPayload, TaskEventPayload, TaskStatus } from "@botstalk/protocol";
 import { randomUUID } from "node:crypto";
 import type { Hub } from "./hub.js";
@@ -30,6 +31,34 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
   const roomType = getRoomType(db, env.room);
   const p = env.payload;
   const intent = p.intent ?? "chat";
+  const recipients = visibleRecipients(env.sender, env.visibility, env.visible_to);
+
+  // 角色组（最小集）：guest 发任务（非回执、非进度）直接拒绝，按 playroom 禁止任务的既有模式回网关消息。
+  if (intent === "task" && p.task_status === undefined && p.task_progress === undefined) {
+    const room = getRoom(db, env.room);
+    const perm = room !== undefined && room.owner === env.sender ? "admin" : getPermRole(db, env.room, env.sender);
+    if (perm === "guest") {
+      if (hub.getConn(env.sender)) {
+        const reply = makeEnvelope<MessagePayload>(
+          "message",
+          "gateway",
+          env.room,
+          hub.nextSeq(),
+          0,
+          {
+            msg_id: randomUUID(),
+            text: "PERMISSION_DENIED: guest cannot send task intent",
+            mentions: [],
+            intent: "task",
+            task_id: p.task_id,
+            task_status: "unsupported",
+          },
+        );
+        hub.sendTo(env.sender, reply);
+      }
+      return;
+    }
+  }
 
   // 娱乐厅禁止新任务：playroom 里 intent=task（非回执）直接拒绝，不路由。
   // 回执（task_status 已设置）放行——可能是房间改类型前派发的任务完成上报。
@@ -62,6 +91,9 @@ export function routeMessage(hub: Hub, env: Envelope<MessagePayload>, db: Db): v
       // sender 的副本统一交给下方 sender 分支处理。
       const sent = new Set<string>();
       for (const adapterId of p.mentions) {
+        if (recipients !== null && !recipients.has(adapterId)) {
+          continue;
+        }
         if (adapterId === env.sender) {
           continue;
         }

@@ -31,6 +31,7 @@ import type {
   ApprovalDecisionPayload,
 } from "@botstalk/protocol";
 import * as store from "./db.js";
+import { visibleRecipients } from "@botstalk/protocol";
 import { deriveThreadId, findReplyTarget, targetThreadId } from "./thread.js";
 import type { Db } from "./db.js";
 import { randomUUID, createHash } from "node:crypto";
@@ -333,6 +334,7 @@ export class Hub {
       }
       case "message": {
         const m = env.payload as MessagePayload;
+        const isRestrictedFrame = env.visibility === "direct" || env.visibility === "restricted";
         if (m.reply_to) {
           const history = store.getRoomHistory(this.db, env.room, 1000);
           const target = findReplyTarget(history, m.reply_to);
@@ -352,7 +354,11 @@ export class Hub {
         } else {
           m.thread_id = deriveThreadId(m.msg_id);
         }
-        store.saveMessage(this.db, { room: env.room, sender: env.sender, seq: env.seq, type: "message", payload: JSON.stringify(m), ts: env.ts });
+        if (!isRestrictedFrame) {
+          // 安全铁律：direct/restricted 消息只发在线、不落共享历史——
+          // GET /api/rooms/:room/history 无请求者身份，落库即向全房间泄漏。
+          store.saveMessage(this.db, { room: env.room, sender: env.sender, seq: env.seq, type: "message", payload: JSON.stringify(m), ts: env.ts });
+        }
         if (this.onMessage) {
           this.onMessage(env as Envelope<MessagePayload>);
         }
@@ -436,9 +442,11 @@ export class Hub {
   }
 
   broadcast(room: string, env: Envelope, excludeAdapterId?: string): void {
+    const recipients = visibleRecipients(env.sender, env.visibility, env.visible_to);
     for (const [id, r] of this.adapterRooms) {
       if (r !== room) continue;
       if (excludeAdapterId && id === excludeAdapterId) continue;
+      if (recipients !== null && !recipients.has(id)) continue;
       this.sendTo(id, env);
     }
   }

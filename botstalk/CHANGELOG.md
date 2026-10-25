@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 6 轮（帧级可见性 + 房间角色组）
+### 新增
+- 信封新增可选 visibility（direct/restricted）与 visible_to（v1.3 兼容，缺省行为不变）；makeEnvelope 加 extra 参数；validateEnvelope 入口校验（direct 恰好 1 项、restricted 至少 1 项、单项 ≤64 字符、重复报错）。
+- 网关 broadcast 与 workroom 定向分支按可见集合过滤；direct/restricted 消息只发在线、不落共享历史（history 接口无请求者身份，落库即泄漏）。
+- room_members 加 perm_role 列（新库建表 + 老库 ALTER 迁移）；setPermRole/getPermRole（非法值按 member 计）；房间 owner 恒为 admin；guest 发任务被拒绝（PERMISSION_DENIED，task_status=unsupported），聊天不受影响。
+- 测试：协议 visibility 10 例、网关 visibility-hub 真实 WS 4 例；网关全量 69 文件 919 例、协议全量 21 文件 195 例全绿。
+- 文档：docs/OPENAGENTS_ROUND6.md（含未做清单：其余四级可见性、管理操作矩阵、Web 发送 UI 均未做）。
+
 ## Unreleased - OpenAgents 第 5 轮（reply_to + 一层 thread）
 ### 新增
 - 协议 MessagePayload 新增可选 reply_to / thread_id（v1.3 兼容，老客户端不受影响）；网关派生 thread_id，回复的回复扁平化到根。

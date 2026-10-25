@@ -139,6 +139,10 @@ export interface Envelope<T = unknown> {
   ts: number;
   /** 网关全局序列号：网关发往客户端的所有帧都携带，从 1 单调递增；客户端发往网关的帧不带，网关忽略入站帧的 gseq。 */
   gseq?: number;
+  /** 帧级可见性（可选，缺省 = 原房间路由行为，v1.3 兼容）。direct/restricted 时只发给 sender 与 visible_to；网关系统帧不带。 */
+  visibility?: "direct" | "restricted";
+  /** 可见性白名单（visibility 为 direct/restricted 时必填）。 */
+  visible_to?: string[];
   payload: T;
 }
 

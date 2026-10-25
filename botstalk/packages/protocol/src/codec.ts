@@ -19,6 +19,7 @@ import type {
 } from "./types.js";
 import { validateTaskProgress, TASK_PROGRESS_MESSAGE_MAX } from "./types.js";
 import { PROTOCOL_VERSION } from "./constants.js";
+import { validateVisibility } from "./visibility.js";
 
 const FRAME_TYPES: readonly FrameType[] = [
   "message",
@@ -63,6 +64,7 @@ export function makeEnvelope<T>(
   ack: number,
   payload: T,
   ts?: number,
+  extra?: { visibility?: "direct" | "restricted"; visible_to?: string[] },
 ): Envelope<T> {
   return {
     v: PROTOCOL_VERSION,
@@ -73,6 +75,8 @@ export function makeEnvelope<T>(
     room,
     ts: ts ?? Date.now(),
     payload,
+    ...(extra?.visibility !== undefined ? { visibility: extra.visibility } : {}),
+    ...(extra?.visible_to !== undefined ? { visible_to: extra.visible_to } : {}),
   };
 }
 
@@ -189,6 +193,8 @@ export function validateEnvelope(env: Envelope): string[] {
   if (!isFiniteInteger(env.ts)) {
     errors.push("ts: must be an integer");
   }
+
+  errors.push(...validateVisibility(env.visibility, env.visible_to));
 
   const payload: unknown = env.payload;
 

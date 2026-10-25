@@ -113,6 +113,12 @@ export function openDb(dataDir: string): DatabaseSync {
       PRIMARY KEY (room_id, adapter_id)
     );
   `);
+  {
+    const cols = db.prepare("PRAGMA table_info(room_members)").all() as unknown as Array<{ name: string }>;
+    if (!cols.some((c) => c.name === "perm_role")) {
+      db.exec("ALTER TABLE room_members ADD COLUMN perm_role TEXT");
+    }
+  }
   db.exec(`
     CREATE TABLE IF NOT EXISTS game_sessions (
       id TEXT PRIMARY KEY,
@@ -504,6 +510,7 @@ export interface RoomMemberRow {
   room_id: string;
   adapter_id: string;
   persona_role: string | null;
+  perm_role: string | null;
   joined_at_ms: number;
 }
 
@@ -530,7 +537,7 @@ export function removeRoomMember(db: Db, room_id: string, adapter_id: string): b
 
 export function listRoomMembers(db: Db, room_id: string): RoomMemberRow[] {
   const stmt = db.prepare(
-    "SELECT room_id, adapter_id, persona_role, joined_at_ms FROM room_members WHERE room_id = ? ORDER BY joined_at_ms ASC",
+    "SELECT room_id, adapter_id, persona_role, perm_role, joined_at_ms FROM room_members WHERE room_id = ? ORDER BY joined_at_ms ASC",
   );
   return stmt.all(room_id) as unknown as RoomMemberRow[];
 }
@@ -556,6 +563,30 @@ export function getPersonaRole(
   );
   const row = stmt.get(room_id, adapter_id) as unknown as { persona_role: string | null } | undefined;
   return row === undefined ? undefined : row.persona_role;
+}
+
+/** 房间权限角色（与 persona_role 人设互不相干）。owner 恒为 admin，不依赖列值。 */
+export type PermRole = "admin" | "member" | "guest";
+
+export function isPermRole(v: unknown): v is PermRole {
+  return v === "admin" || v === "member" || v === "guest";
+}
+
+/** 设权限角色；成员不存在则先添加（upsert 语义，与 setPersonaRole 对齐）。非法值按 member 计。 */
+export function setPermRole(db: Db, room_id: string, adapter_id: string, role: PermRole): void {
+  const stmt = db.prepare(
+    `INSERT INTO room_members (room_id, adapter_id, persona_role, joined_at_ms, perm_role)
+     VALUES (?, ?, NULL, ?, ?)
+     ON CONFLICT(room_id, adapter_id) DO UPDATE SET perm_role = excluded.perm_role`,
+  );
+  stmt.run(room_id, adapter_id, Date.now(), role);
+}
+
+/** 取权限角色；非成员返回 undefined；列值非法或为空按 member 计。 */
+export function getPermRole(db: Db, room_id: string, adapter_id: string): PermRole | undefined {
+  const row = db.prepare("SELECT perm_role FROM room_members WHERE room_id = ? AND adapter_id = ?").get(room_id, adapter_id) as unknown as { perm_role: string | null } | undefined;
+  if (row === undefined) return undefined;
+  return isPermRole(row.perm_role) ? row.perm_role : "member";
 }
 
 export function countRoomMembers(db: Db, room_id: string): number {
