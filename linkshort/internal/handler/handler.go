@@ -631,7 +631,23 @@ func handleListLinks(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		sort = "created_at"
 	}
 
-	links, total, err := st.ListLinks(search, page, perPage, sort)
+	var enabledPtr *bool
+	enabledStr := q.Get("enabled")
+	switch enabledStr {
+	case "":
+		enabledPtr = nil
+	case "true":
+		v := true
+		enabledPtr = &v
+	case "false":
+		v := false
+		enabledPtr = &v
+	default:
+		writeError(w, http.StatusBadRequest, "enabled 非法")
+		return
+	}
+
+	links, total, err := st.ListLinksFiltered(search, page, perPage, sort, enabledPtr)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

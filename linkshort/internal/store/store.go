@@ -265,6 +265,10 @@ func (s *Store) GetLinkBySlug(slug string) (*model.Link, error) {
 // orderBy 仅允许 "clicks" 或 "created_at"，其它值回落为 "created_at"。
 // search 非空时匹配 slug/url/title（LIKE）。
 func (s *Store) ListLinks(search string, page, perPage int, orderBy string) ([]*model.Link, int64, error) {
+	return s.ListLinksFiltered(search, page, perPage, orderBy, nil)
+}
+
+func (s *Store) ListLinksFiltered(search string, page, perPage int, orderBy string, enabled *bool) ([]*model.Link, int64, error) {
 	if orderBy != "clicks" && orderBy != "created_at" {
 		orderBy = "created_at"
 	}
@@ -282,8 +286,20 @@ func (s *Store) ListLinks(search string, page, perPage int, orderBy string) ([]*
 	args := []any{}
 	if search != "" {
 		like := "%" + search + "%"
-		where = " WHERE slug LIKE ? OR url LIKE ? OR title LIKE ?"
+		where = " WHERE (slug LIKE ? OR url LIKE ? OR title LIKE ?)"
 		args = append(args, like, like, like)
+	}
+	if enabled != nil {
+		enVal := 0
+		if *enabled {
+			enVal = 1
+		}
+		if search != "" {
+			where += " AND enabled = ?"
+		} else {
+			where = " WHERE enabled = ?"
+		}
+		args = append(args, enVal)
 	}
 
 	// 总数

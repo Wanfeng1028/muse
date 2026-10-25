@@ -5,6 +5,16 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.19.0] - 2026-10-26
+
+### 新增
+- 链接列表支持启用状态筛选：`GET /api/links?enabled=true` 只返回启用链、`enabled=false` 只返回停用链，不带参数返回全部；非法值返回 400（`enabled 非法`）；筛选与搜索、排序、分页组合使用时 total 与分页一致。store 新增 `ListLinksFiltered`（enabled=nil 时行为与旧 `ListLinks` 一致，旧函数改为委托调用，签名不变）；列表页工具栏新增"全部状态 / 启用中 / 已停用"下拉框，切换后回到第 1 页重载。
+- API 文档页 `GET /api/links` 说明同步更新启用筛选口径。
+
+### 测试
+- 新增 `internal/store/list_links_enabled_test.go`（5 例：不过滤/仅启用/仅停用/与搜索组合/分页 total 一致无交集）与 `internal/handler/list_links_enabled_test.go`（4 例：启用筛选/停用筛选/非法值 400/不带参数返回全部）。
+- 全量测试：14 个包全部通过（handler 包 108 秒、store 包 12 秒，其余包均通过）；新增测试：store 1 个测试函数含 5 组断言、handler 1 个测试函数含 4 个子测试，全部通过。真实服务冒烟（18419 端口隔离库）：建启用链与停用链各 1 条，enabled=true 只返启用链 total=1、enabled=false 只返停用链 total=1、不带参数返全部 total=2、非法值 400（enabled 非法）、enabled=false 与 search 组合只返停用链；链接管理页截图亲眼验收通过（下拉框位置正确、2 行真实数据、启用勾选状态与冒烟一致）。
+
 ## [v1.18.0] - 2026-10-25
 
 ### 新增
