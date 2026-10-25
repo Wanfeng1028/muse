@@ -1,0 +1,16 @@
+/*
+ * Sentinel v0.16.0 设计层：把 monitors.html 与 deliveries.html 并入值班日志本
+ * 加载顺序：在各页内联 <style> 块之后以 <link> 引用，只覆盖，不改原内联样式与任何 JS。
+ * 视觉逻辑与 v0.15.0 同款：纸面浅灰、墨色文字；表格改台账行（纯白表头、取消大写、
+ * 行间只靠 1px 底边分隔）；卡片去阴影只留 1px 细边；页头 20px 加粗 + 下方 1px 细线。
+ * 不用渐变、不用新字体、不用 emoji。
+ * 范围说明：本层只统一表格、卡片与页头；两页顶栏导航仍各用各的样式，
+ * 其中 deliveries 激活项是行内 style，样式表层无法覆盖，留待后续改 HTML 时统一，
+ * 本轮不改导航结构，也不靠强制优先级写法硬压。
+ */
+#monitor-table thead th { background: #ffffff; text-transform: none; font-size: 13px; font-weight: 600; color: #1f2937; }
+#monitor-table tbody td { border-bottom: 1px solid #e5e7eb; }
+.card { background: #ffffff; border: 1px solid #e5e7eb; box-shadow: none; }
+.page-header { padding-bottom: 14px; border-bottom: 1px solid #e5e7eb; }
+.page-header h1 { font-size: 20px; font-weight: 700; }
+.table-wrapper table thead th { background: #ffffff; text-transform: none; letter-spacing: 0; font-size: 13px; font-weight: 600; color: #1f2937; }
