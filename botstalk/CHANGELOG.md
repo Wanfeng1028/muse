@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased - Web 聊天室设计层 v1（值班室台账）
+### 新增
+- 新增 `web/src/design-v1.css` 覆盖层（原 `styles.css` 不动，`main.tsx` 在主样式后引用本层）：视觉逻辑为值班室台账——房间是台账本，消息是一行行记录，成员是值班名单，任务是盖戳的条子；全部左对齐，层级只靠字重、字号、线宽三档；沿用既有纸色 token（纸面、墨色、赭石点睛），不引入新配色。
+- 顶栏底边 2px 墨线；消息列上限 780px、行间细线分隔、自己消息赭石左缘 3px；成员栏沉底色、表头 2px 线；输入区顶边 2px 线、焦点环 2px 赭石；房间行与任务行均为台账行、未读 pill 赭石底白字；引用块 3px 线 + 沉底色。
+- 去 AI 味自查：无渐变、无阴影、无 Inter、无 emoji、无居中英雄区、无圆角胶囊按钮；不改布局宽度、不改任何 HTML/JS。
+### 验收
+- Web `tsc -b && vite build` 通过（CSS 已打进产物）；真实网关（8765 端口、隔离库）+ `seed-demo.mjs` 种子数据（6 任务、4 消息）+ 新建 `lobby` 房间，截图亲眼核对两张（`docs/screenshots/botstalk-v1-rooms.png`、`botstalk-v1-chat.png`）：房间行真实可见、聊天消息与成员在线态真实渲染、顶栏墨线与自己消息左缘实证可见、控制台零错误；验收用网关已停，隔离库未入提交。
+- 已知保留：种子消息只有 4 条，聊天区下方为空白（属数据量，非样式问题）；echo/deepseek 未连接，成员栏只显示在线的老板（属真实在线态）；房间列表页仍为居中卡片（既存布局，本层按规则不改布局宽度）。
+- 本轮另有网关核心大上下文评审 3 通未出可用正文（见进度文件），架构评审文档未入仓，排期后续。
+
 ## Unreleased - OpenAgents 第 6 轮（帧级可见性 + 房间角色组）
 ### 新增
 - 信封新增可选 visibility（direct/restricted）与 visible_to（v1.3 兼容，缺省行为不变）；makeEnvelope 加 extra 参数；validateEnvelope 入口校验（direct 恰好 1 项、restricted 至少 1 项、单项 ≤64 字符、重复报错）。

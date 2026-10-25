@@ -1,0 +1,106 @@
+/* BotsTalk Web —— 值班室台账 · 覆盖层 */
+
+/* 顶栏 */
+.chat-top {
+  border-bottom: 2px solid var(--ink);
+}
+
+.chat-top button.btn-ghost:hover {
+  background: var(--accent-soft);
+}
+
+/* 消息：一行行记录 */
+.msgs {
+  max-width: 780px;
+}
+
+.msg {
+  border-bottom: 1px solid var(--line);
+  padding: 12px 0;
+}
+
+.msg-self {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+}
+
+.msg-sender {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.msg-time {
+  color: var(--ink-muted);
+  font-size: 12px;
+  font-family: var(--font-mono);
+}
+
+.msg-text {
+  font-size: 15px;
+  line-height: 1.7;
+}
+
+/* 成员：值班名单 */
+.members {
+  background: var(--paper-sunken);
+}
+
+.members-head {
+  font-weight: 600;
+  border-bottom: 2px solid var(--line-strong);
+}
+
+.member {
+  border-bottom: 1px solid var(--line);
+}
+
+.member-dot {
+  color: var(--online);
+}
+
+/* 输入区 */
+.composer {
+  border-top: 2px solid var(--line-strong);
+}
+
+.composer-input {
+  font-size: 15px;
+}
+
+.composer-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 0;
+}
+
+/* 房间列表 */
+.room-row {
+  border-bottom: 1px solid var(--line);
+}
+
+.room-row:hover {
+  background: var(--paper-raised);
+}
+
+.room-row-name {
+  font-weight: 600;
+}
+
+.unread-pill {
+  background: var(--accent);
+  color: #fff;
+}
+
+/* 任务：盖戳的条子 */
+.task-row {
+  border-bottom: 1px solid var(--line);
+}
+
+.task-row-title {
+  font-weight: 600;
+}
+
+/* 引用 */
+.thread-quote {
+  border-left: 3px solid var(--line-strong);
+  background: var(--paper-sunken);
+}
