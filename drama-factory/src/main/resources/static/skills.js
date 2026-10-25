@@ -495,7 +495,7 @@
         const skill = it.skill || {};
         const install = it.install || {};
         return `
-        <div class="d-flex align-items-center justify-content-between border-bottom py-2" style="border-color: var(--border-soft) !important;">
+        <div class="d-flex align-items-center justify-content-between py-2 installed-row">
           <div>
             <div class="d-flex align-items-center gap-2">
               <i data-lucide="${esc(skill.icon || 'puzzle')}"></i>

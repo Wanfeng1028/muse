@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：Skill 市场页设计层 v2）
+- 新增 static/skills-design-v2.css（模型稿 2 条规则原文入仓，skills.html 在 v1 之后引用 1 行）：关闭 v1 已知保留——已安装行底线由行内 !important 改由 CSS 接管；行间 1px solid var(--border-soft)、末行去底线。JS 机械迁移（编排落仓，非模型稿）：已安装行类名加 installed-row、删行内 style；实测发现 tabler 的 .border-bottom utility 自带 !important 会压住层规则（首拍末行仍有 1px 实线），故行类名同时去掉 border-bottom utility（py-2 与 flex 布局类保留），边线改由 v2 CSS 全权接管。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r19_20261026_call.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 24056 / completion 97 / total 24153，reasoning_tokens 0，正文即入仓 2 条规则，零编排修正。括号 2/2 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无十六进制颜色字面量，选择器均真实存在于本页 DOM。
+- 验收：新增 SkillsDesignV2Test 3 例 + 设计层合跑 78/78 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18203 端口，复制 H2 库，开放模式）+ 视口截图亲眼核对：市场 4 卡（短剧钩子开头/分镜大师/转场设计/爽点节奏）与 /api/skills 对上；已安装 2 行（验收库内现装分镜大师后复测）与 /api/skills/installed 对上；计算样式实证页头 20/700、市场卡 10px 圆角、首行底线 1px solid（浅色主题下计算色 rgba(0,0,0,0.06)，即 --border-soft 解析值）、末行 0px none、零 console 错误；截图存 docs/screenshots/skills-design-v2.png。验收后服务按真实 java PID 停干净、18203 端口已关、隔离构建与复制库已删。
+- 插曲（均据实记录）：①18202 端口已被他路 canvas 服务占用（实测为他路 java 进程在听，未动），改用 18203；②首轮测试合跑进程中途消失（日志停在 testCompile，疑似 VM 争用），重跑后全绿；③SSH 令牌抓取首通因出口代理瞬时抖动报连接错，直接 SSH 复测即通，调用器已加令牌抓取 3 次重试。
+- 已知保留：本层不改布局；详情弹窗模板 pre 的边线仍由 skills.js 另一处行内 !important 写死（与已安装行不同源），不在本轮范围；本轮未动 canvas、deconstruct、chat、second-brain、docseek、linkshort、botstalk 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-26：分镜画布页设计层 v1）
 - 新增 static/canvas-design-v1.css（6 条规则，只覆盖，不改 app.css、内联 style 块与任何 JS；canvas.html 在内联 style 块之后引用 1 行）：本层只覆盖尚未统一口径的页面外框——页头 h1 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、卡片内副文案 13px 次文字、页头操作按钮 13px/600 8px 圆角（不改颜色）、工具栏下拉框 14px（不改内联已定的最小/最大宽度与布局）；时间轴、镜头卡片、弹窗、提示条等内联已覆盖的组件本层一字不碰；token 全部取自 app.css，全部边框均写成 1px solid var(--border) 完整形式。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，新提示词，调用器沿用本轮现写最小新文件 relay-station/flash_call_n3.py、令牌经 SSH 现取不落盘、未读任何现成调用脚本）1 通产出：API prompt 26544 / completion 2033 / total 28577，reasoning_tokens 0，无 429，正文即入仓的 6 条规则，零编排修正。括号 6/6 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，全部选择器均真实存在于本页 HTML，禁区选择器（时间轴/镜头卡片/弹窗/提示条等）一条未犯。

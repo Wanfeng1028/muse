@@ -1,0 +1,7 @@
+#installedList .installed-row {
+  border-bottom: 1px solid var(--border-soft);
+}
+
+#installedList .installed-row:last-child {
+  border-bottom: none;
+}

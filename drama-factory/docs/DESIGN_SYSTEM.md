@@ -206,6 +206,12 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 截图：docs/screenshots/deconstruct-design-v1.png（隔离构建真实服务 18199 端口 + 复制库真实项目数据：都市奇缘/第 1 集/无视频素材，本项目拆解为空态是真实空态，未伪造数据；视口截图）。
 - 已知保留：本层不改布局；主按钮（.btn-primary）沿用 app.css 胶囊形（999px/500），本层不改产品按钮语言，非主按钮实测 13px/600/8px；逐镜帧与元数据在空态下无真实 DOM，计算样式为 harness 注入测量（注入后即删，截图本身仍为真实空态）；模型稿 1 处编排修正：提示词块字体由通用 monospace 改为 var(--mono) token；眉标选择器由 .dc-kicker 提为 .page-head .dc-kicker——app.css 的 .page-head p（0,1,1）会压住单类选择器，提后实测 11px/600/次文字色；截图 harness 说明：deconstruct.js 的 api() 会给相对路径补 /api/projects/ 前缀，通用 /api/ 绝对化改写会把绝对路径调用拼成双段 URL（已改 harness 为只改写 api() 的 URL 构造行）；setContent 下 about:blank 无 localStorage，页内主题脚本读 localStorage 抛 SecurityError 一条，属 harness 环境 artifact、真实源站不受影响；验收服务按真实 java PID 停干净、18199 端口已关、隔离构建与复制库已删；本轮未动 canvas、chat、finals、second-brain、docseek、linkshort 在跑工人的未提交文件。
 
+## 30. Skill 市场页设计层 v2（2026-10-26，5.3 路）
+- 文件：static/skills-design-v2.css（2 条规则，只覆盖，skills.html 在 v1 之后引用 1 行；JS 机械迁移：已安装行类名加 installed-row、去掉行内 style 与 tabler border-bottom utility，边线改由本层全权接管；不改 app.css 与布局）。
+- 视觉逻辑：技能台账续篇（已安装行是台账明细行：行间 1px solid var(--border-soft) 发丝底线、末行不留尾线）。
+- 截图：docs/screenshots/skills-design-v2.png（隔离构建真实服务 18203 端口 + 复制库真实技能数据：市场 4 卡、已安装 2 行；视口截图）。
+- 已知保留：本层不改布局；详情弹窗模板 pre 的边线仍由 skills.js 另一处行内 !important 写死，不在本轮范围；验收服务按真实 java PID 停干净、18203 端口已关、隔离构建与复制库已删；本轮未动 canvas、deconstruct、chat、second-brain、docseek、linkshort、botstalk 在跑工人的未提交文件。
+
 ## 29. 分镜画布页设计层 v1（2026-10-26，Flash 路）
 - 文件：static/canvas-design-v1.css（6 条规则，只覆盖，canvas.html 在内联 style 块之后引用 1 行；不改 app.css、内联 style 块与任何 JS；本页不引 harness.css/auth.css，token 全部取自 app.css）。
 - 视觉逻辑：画布台账外框（只统一尚未统一的外框，内联已覆盖的组件一律不碰；页头 h1 20px/700、卡片 surface 底发丝边 10px 圆角零阴影、卡片标题 16px/700、卡片内副文案 13px 次文字、页头操作按钮 13px/600 8px 圆角、工具栏下拉框 14px）。
