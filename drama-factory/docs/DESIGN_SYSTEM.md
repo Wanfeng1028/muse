@@ -242,3 +242,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：运行台账续篇——错误提示图标统一 15px 对齐、计划区空态内边距 24px（压住 harness 全局 48px 20px，只限 #planArea 内）。
 - 截图：docs/screenshots/runs-design-v2.png（隔离构建真实服务 18206 端口 + 复制库真实数据：3 条运行；视口截图；错误图标与空态计算样式以注入节点实证）。
 - 已知保留：本层不改布局；#planArea 容器自身的 margin-top:16px 行内样式与本轮无关，不碰；错误态与空态均为条件态，计算样式以注入节点实测（注入后即删，截图仍为真实态）。
+
+## 36. 分镜板页设计层 v2（2026-10-26，5.3 路）
+- 文件：static/storyboard-design-v2.css（3 条规则，只覆盖，storyboard.html 在 v1 之后引用 1 行；JS/HTML 机械迁移：对白 div 由行内 white-space:pre-wrap 改挂 sb-dialogue 类、技能下拉删行内 max-width:200px 改由 #skillSelect 规则接管、提示容器删行内 z-index:1080 改挂 sb-toast-wrap 类；不改 app.css 与布局）。
+- 视觉逻辑：分镜台账续篇——对白换行保留、技能下拉宽度 200px、提示层级 1080 压住页面内容。
+- 截图：docs/screenshots/storyboard-design-v2.png（隔离构建真实服务 18207 端口 + 复制库真实数据：项目 3“验证用短剧”第 1 集 4 场、4 场全带对白；探针：对白 white-space=pre-wrap、skillSelect maxWidth=200px、toast zIndex=1080、console 0 错误；另有 1 条 pageerror，setContent 下 document.write SyntaxError，与音乐页、成本账本页同款 harness 环境 artifact，不影响内容与样式）。
+- 已知保留：本层不改布局；§34/§35 为 Flash 路预留（skills v3、run-detail v2 的文档补推归 Flash 路，本路不代写）；验收服务已停、18207 端口复查无监听、隔离构建与复制库已删。

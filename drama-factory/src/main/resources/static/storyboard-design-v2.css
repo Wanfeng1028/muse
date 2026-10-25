@@ -1,0 +1,13 @@
+/* 分镜台账续篇 */
+
+.sb-dialogue {
+  white-space: pre-wrap;
+}
+
+#skillSelect {
+  max-width: 200px;
+}
+
+.sb-toast-wrap {
+  z-index: 1080;
+}

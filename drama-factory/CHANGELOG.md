@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（5.3 路 2026-10-26：分镜板页设计层 v2）
+- 新增 static/storyboard-design-v2.css（模型稿 3 条规则原文入仓，storyboard.html 在 v1 之后引用 1 行）：关闭上一位留下的 v2 候选——对白 white-space:pre-wrap、技能下拉 max-width:200px、提示容器 z-index:1080 三处行内样式改由 CSS 接管。JS/HTML 机械迁移（编排落仓，非模型稿）：对白 div 挂 sb-dialogue 类、技能下拉与提示容器分别删行内样式改由 #skillSelect/.sb-toast-wrap 规则接管；不改 app.css 与布局。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r22_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：API prompt 24116 / completion 223 / total 24339，usage 未返回 reasoning 字段，正文即入仓 3 条规则，零编排修正。括号 3/3 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制颜色字面量，原值（pre-wrap/200px/1080）逐字保留。
+- 验收：新增 StoryboardDesignV2Test 3 例全绿，设计层合跑 107/107 全绿（隔离构建，本轮收尾重跑复核一致），Maven 离线测试 BUILD SUCCESS；隔离构建真实服务（18207 端口，复制 H2 库，开放模式，启动约 90 秒）实测：storyboard.html 与 storyboard-design-v2.css 均 200、served 内容与文件对上；served storyboard.js 含 sb-dialogue 1 处、行内 white-space:pre-wrap 0 处；真实数据：项目 3“验证用短剧”第 1 集（episode 4）4 场、4 场全带对白；探针：首条对白“林小雨（低声自语）：『三年了……这封信，我到底该不该寄出去？』”、whiteSpace pre-wrap、skillSelect maxWidth 200px、toast zIndex 1080、scriptMeta“共 4 场”、console 0 错误；另有 1 条 pageerror（setContent 下 document.write SyntaxError，与音乐页、成本账本页同款 harness 环境 artifact，不影响内容与样式）；视口截图亲眼核对弹窗“本集剧本 / 共 4 场”、4 场画面与对白齐全、对白换行保留、布局无错位重叠。截图存 docs/screenshots/storyboard-design-v2.png。验收后服务已停、18207 端口复查无监听、隔离构建与复制库已删。
+
 ### Added（5.3 路 2026-10-26：运行页设计层 v2）
 - 新增 static/runs-design-v2.css（模型稿 2 条规则原文入仓，runs.html 在 v1 之后引用 1 行）：关闭运行页 v1 未覆盖的 3 处行内样式——两处错误提示图标尺寸与空态内边距。JS 机械迁移（编排落仓，非模型稿）：直接删 3 处行内 style 属性、不加新类（图标规则以 .error-box svg 为目标，lucide 会把 i 换成 svg；空态规则以 #planArea .empty 为目标、用特异度压住 harness.css 全局 .empty{padding:48px 20px}）；#planArea 容器自身的 margin-top:16px 行内样式与本轮无关，不碰；v1 已有的 .error-box 字号圆角与 .state-empty 不重复写。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r21_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：API prompt 24003 / completion 541 / total 24544，reasoning_tokens 0，正文即入仓 2 条规则，零编排修正。括号 2/2 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制颜色字面量，原值（15px/15px/-2px/24px）逐字保留。

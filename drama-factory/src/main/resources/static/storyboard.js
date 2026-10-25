@@ -272,7 +272,7 @@
           '<div class="mb-3"><div class="fw-bold">' + escapeHtml(_t('sb.sceneNoPrefix', '第 ')) + s.sceneNo + escapeHtml(_t('sb.sceneNoSuffix', ' 场')) + ' · '
           + escapeHtml(s.location || '') + ' · ' + escapeHtml(s.timeOfDay || '') + '</div>'
           + '<div class="text-secondary small">' + escapeHtml(_t('sb.sceneVisualPrefix', '画面：')) + escapeHtml(s.description || '') + '</div>'
-          + (s.dialogue ? '<div class="small" style="white-space:pre-wrap;">' + escapeHtml(s.dialogue) + '</div>' : '')
+          + (s.dialogue ? '<div class="small sb-dialogue">' + escapeHtml(s.dialogue) + '</div>' : '')
           + '</div>'
         ).join('');
       }

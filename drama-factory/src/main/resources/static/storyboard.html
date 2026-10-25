@@ -10,6 +10,7 @@
 <link rel="stylesheet" href="/theme.css">
   <link rel="stylesheet" href="/app.css">
 <link rel="stylesheet" href="/storyboard-design-v1.css">
+<link rel="stylesheet" href="/storyboard-design-v2.css">
 </head>
 <body>
 <div class="page">
@@ -40,7 +41,7 @@
           <button id="addBtn" class="btn btn-secondary" data-i18n="sb.addShot">添加分镜</button>
           <button id="fromScriptBtn" class="btn btn-secondary" data-i18n="sb.fromScript">从剧本生成分镜</button>
           <button id="aiScriptBtn" class="btn btn-primary" data-i18n="sb.aiScript">AI 生成剧本</button>
-          <select id="skillSelect" class="form-select" style="max-width:200px" title="选用已安装的 Skill 增强剧本生成" data-i18n-title="sb.skillSelectTitle">
+          <select id="skillSelect" class="form-select" title="选用已安装的 Skill 增强剧本生成" data-i18n-title="sb.skillSelectTitle">
             <option value="" data-i18n="sb.noSkill">不使用 Skill</option>
           </select>
           <button id="tplScriptBtn" class="btn btn-secondary" data-i18n="sb.tplScript">模板生成</button>
@@ -124,7 +125,7 @@
         </div>
 </div>
 
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+<div class="position-fixed bottom-0 end-0 p-3 sb-toast-wrap">
   <div id="toast" class="alert alert-info" role="alert" hidden></div>
 </div>
 <script src="/i18n.js"></script>
