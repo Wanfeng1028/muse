@@ -1,0 +1,48 @@
+/*
+ * Sentinel v0.15.0 设计层：值班日志本
+ * 加载顺序：在 style.css 之后引用，只覆盖，不改原样式表与任何 HTML/JS。
+ * 视觉逻辑：纸面浅灰、墨色文字；状态色只作信号（绿正常、红故障、琥珀进行中）；
+ * 分隔一律 1px 细线；不用渐变、不用新字体、不用 emoji、不用居中英雄区。
+ * 适用范围：仅引用 style.css 的页面（总览、事件、短信记录、快照、状态、个人资料）；
+ * monitors.html 与 deliveries.html 用内联样式，本层不覆盖，那是下一轮要统一的缺口。
+ */
+.topbar .nav a.active {
+  border-bottom: 3px solid #10b981;
+}
+.page-header {
+  padding-bottom: 14px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.page-header h1 {
+  font-size: 20px;
+  font-weight: 700;
+}
+.page-header .subtitle {
+  font-size: 13px;
+  color: #6b7280;
+}
+.table thead th {
+  background: #ffffff;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1f2937;
+}
+.table tbody tr:nth-child(even) {
+  background: #ffffff;
+}
+.table tbody tr:hover {
+  background: #f9fafb;
+}
+.incident-detail td {
+  background: #f9fafb;
+  border-left: 3px solid #f59e0b;
+  padding: 16px;
+  line-height: 1.7;
+}
+.stat-card .stat-value {
+  font-size: 28px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}

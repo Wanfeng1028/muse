@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.15.0] - 2026-10-25
+
+### 新增
+- 前端美化设计层 internal/web/static/design-v015.css（值班日志本）：在 style.css 之后引用，只覆盖、不改原样式表与任何 JS；页头 20px 加粗 + 下方 1px 细线分隔；表格改台账行（表头取消大写转换、纯白底、取消斑马纹、行间只靠 1px 底边分隔）；事件详情行底色 #f9fafb、左缘 3px 琥珀实线、内边距 16px；导航激活项下边框加粗到 3px 绿色信号；统计数字 28px 加粗等宽数字。引用 style.css 的 6 页（总览/事件/个人资料/短信记录/快照/状态）均在 style.css 之后引用本层。
+- 事件页与短信记录页的 bare <nav> 补 class="nav"，与总览/个人资料/快照页一致，使共享顶栏规则与激活态真正落到这两页（此前两页导航链接未走 .nav 样式，呈默认蓝色）。
+
+### 测试
+- 新增 internal/web/design_v015_test.go 1 例（设计层标记与禁令、6 页引用顺序、两页 nav class）；go vet 全洁；真服务冒烟（18271 端口隔离库）：死链检查失败开事件 1 条，事件页真实数据 1 行，点击展开详情 9 行齐全（恢复检查“未恢复，无恢复检查”、通知记录“暂无通知记录”属实）；截图 docs/screenshots/sentinel-v015-incidents.png 与 sentinel-v015-incidents-expanded.png 亲眼核对：导航绿下划线、台账表头、详情琥珀左缘均实证可见。
+
+### 已知限制
+- style.css 尾部 .alert 规则缺右括号（既存截断，本轮未动原文件）：在真实部署里设计层是独立样式表，不受影响；但把两表拼进同一个 <style> 块的截图脚本会把设计规则吞掉，截图 harness 已改成分开的两个 <style> 块，属实记录。
+- monitors.html 与 deliveries.html 用内联样式，本层不覆盖，仍与设计层页面风格不一致，排期后续统一；事件页无 .container/.page 包裹，内容贴视口边缘、筛选框拉满宽，属既存结构，本轮未改。
+
 ## [0.14.0] - 2026-10-25
 
 ### 新增
