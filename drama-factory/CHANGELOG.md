@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-25：任务队列页设计层 v1）
+- 新增 static/tasks-design-v1.css（只覆盖，不改 app.css 与任何 JS；tasks.html 在 app.css 与 harness.css 之后引用 1 行）：视觉逻辑“任务台账”——页头 20px/700、筛选卡纯白底发丝边 10px 圆角零阴影、筛选标签 12px/600 次文字、下拉与刷新按钮 8px 圆角、计数 13px/600、任务行上下 14px、状态徽标收窄为 12px/600 台账戳、进度条 surface-2 底 2px 圆角、空态 13px 次文字；全部左对齐，token 全部取自 app.css。
+- 模型稿即入仓的 13 条规则原文，未做编排修正：括号 13/13 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。
+- 验收：新增 TasksDesignV1Test 3 例全绿（引用顺序、括号与禁令、关键选择器）；真实服务 + 真实任务数据截图亲眼核对（见下）；截图存 docs/screenshots/tasks-design-v1.png。验收后服务已停、复制库与 jar 已删。
+- 已知保留：任务行底线、任务名与元数据字号颜色、进度条宽高、百分比字号颜色均由 tasks.js 行内样式写死，设计层不硬压，本层只管行距、徽标、进度条底色与圆角；本轮未动 cost-ledger.js、second-brain、docseek eval 在跑工人的未提交文件。
+
 ### Added（Flash 路 2026-10-25：提示词库页设计层 v1）
 - 新增 static/prompts-design-v1.css（只覆盖，不改 app.css 与任何 JS；prompts.html 在 app.css 之后引用 1 行）：视觉逻辑“提示词档案柜”——页头 kicker 是柜签、搜索与标签芯片是索引抽屉、卡片是同行等高的档案袋（标题、摘要、来源元数据行、底部借阅条沉底对齐）、详情卡是抽出展开的档案全文（等宽字体换行）；全部左对齐，层级只靠字重、字号、线宽与留白，token 全部取自 app.css。
 - 模型稿编排修正 1 处（已写进测试防回归）：删 .page .form-check.form-switch 的 margin-right: auto 规则（会把右对齐的只看收藏开关顶到左端，改布局不只改样式）；其余规则逐项核对：括号 47/47 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS 渲染的 DOM，全部 token 均在 app.css 里。

@@ -96,3 +96,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 文件：static/prompts-design-v1.css，只覆盖，app.css 之后引用。
 - 视觉逻辑：提示词档案柜（柜签 kicker、索引抽屉搜索与标签芯片、同行等高档案袋卡片、底部借阅条沉底对齐、详情卡为展开的档案全文，等宽字体换行）。
 - 截图：docs/screenshots/prompts-design-v1.png（真实服务 + 真实提示词库数据）。
+
+## 13. 任务队列页设计层 v1（2026-10-25，Flash 路）
+- 文件：static/tasks-design-v1.css，只覆盖，app.css 与 harness.css 之后引用。
+- 视觉逻辑：任务台账（筛选卡是台账眉、任务行是台账行、状态徽标是台账戳、进度条是细线尺、计数是台账行数；页头 20px/700、卡片 10px 圆角零阴影、行距 14px、徽标 12px/600）。
+- 截图：docs/screenshots/tasks-design-v1.png（真实服务 + 真实任务数据）。
+- 已知保留：行内样式已定的行底线、任务名与元数据字号颜色、进度条宽高、百分比字号颜色不在本层改动范围。

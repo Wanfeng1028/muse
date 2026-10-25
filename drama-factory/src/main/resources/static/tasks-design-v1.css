@@ -1,0 +1,75 @@
+/* 任务台账 */
+
+.page-head h1 {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.page .card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+.page .card .card-body {
+  padding: 16px;
+}
+
+.page .card .form-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+.page .card .form-select-sm {
+  font-size: 13px;
+  border-radius: 8px;
+  border-color: var(--border);
+}
+
+.page .card .btn-secondary {
+  background: var(--surface-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+#hint.alert {
+  font-size: 13px;
+  border-radius: 8px;
+}
+
+#taskCount {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-2);
+}
+
+#taskGrid .py-3 {
+  padding-top: 14px;
+  padding-bottom: 14px;
+}
+
+#taskGrid .status-pill {
+  padding: 3px 10px;
+  min-width: 56px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+#taskGrid .progress {
+  background: var(--surface-2);
+  border-radius: 2px;
+}
+
+#taskGrid .progress-bar {
+  border-radius: 2px;
+}
+
+#taskGrid .state-empty {
+  padding: 32px 0;
+  font-size: 13px;
+  color: var(--text-2);
+}
