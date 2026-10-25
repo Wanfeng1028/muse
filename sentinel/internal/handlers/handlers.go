@@ -397,7 +397,16 @@ func (s *Server) handleSMSLogAPI(w http.ResponseWriter, r *http.Request) {
 			offset = n
 		}
 	}
-	rows, total, err := s.store.ListSMSLog(phone, status, limit, offset)
+	var monitorPtr *int64
+	if v := q.Get("monitor_id"); v != "" {
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, "无效的监控 ID")
+			return
+		}
+		monitorPtr = &n
+	}
+	rows, total, err := s.store.ListSMSLogFiltered(phone, status, monitorPtr, limit, offset)
 	if err != nil {
 		writeJSON(w, http.StatusInternalServerError, map[string]string{"error": "读取短信记录失败"})
 		return

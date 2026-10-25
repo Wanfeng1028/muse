@@ -234,6 +234,13 @@ updated_at TEXT NOT NULL
 			`ALTER TABLE status_pages ADD COLUMN snapshot_schedule TEXT NOT NULL DEFAULT 'off'`,
 		},
 	},
+	{
+		version: 14,
+		stmts: []string{
+			`ALTER TABLE sms_log ADD COLUMN monitor_id INTEGER NOT NULL DEFAULT 0`,
+			`CREATE INDEX IF NOT EXISTS idx_sms_log_monitor ON sms_log(monitor_id)`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

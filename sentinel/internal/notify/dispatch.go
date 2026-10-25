@@ -125,7 +125,7 @@ func (n Notifier) Notify(t Target, event, name, target, at, errMsg string) []err
 					if p, ok := n.SMSSender.(interface{ Provider() string }); ok {
 						provider = p.Provider()
 					}
-					if err := n.SMSLogger.RecordSMSLog(ph, msg, provider, status, errMsg); err != nil {
+					if err := n.SMSLogger.RecordSMSLogForMonitor(ph, msg, provider, status, errMsg, t.MonitorID); err != nil {
 						errs = append(errs, fmt.Errorf("短信记录失败: %w", err))
 					}
 				}

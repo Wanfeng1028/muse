@@ -13,22 +13,29 @@ type SMSLog struct {
 	Provider  string `json:"provider"`
 	Status    string `json:"status"`
 	Error     string `json:"error"`
+	MonitorID int64  `json:"monitor_id"`
 	CreatedAt string `json:"created_at"`
 }
 
-// RecordSMSLog 记录一条短信发送记录。
-func (s *Store) RecordSMSLog(phone, message, provider, status, errMsg string) error {
+// RecordSMSLogForMonitor 记录一条短信发送记录并关联监控。
+func (s *Store) RecordSMSLogForMonitor(phone, message, provider, status, errMsg string, monitorID int64) error {
 	_, err := s.db.Exec(
-		`INSERT INTO sms_log (phone, message, provider, status, error, created_at)
-		 VALUES (?,?,?,?,?,?)`,
+		`INSERT INTO sms_log (phone, message, provider, status, error, monitor_id, created_at)
+		 VALUES (?,?,?,?,?,?,?)`,
 		phone, message, provider, status, errMsg,
+		monitorID,
 		time.Now().UTC().Format(time.RFC3339),
 	)
 	return err
 }
 
-// ListSMSLog 按条件分页查询短信记录（id 倒序），返回记录列表与总数。
-func (s *Store) ListSMSLog(phone, status string, limit, offset int) ([]SMSLog, int, error) {
+// RecordSMSLog 记录一条短信发送记录。
+func (s *Store) RecordSMSLog(phone, message, provider, status, errMsg string) error {
+	return s.RecordSMSLogForMonitor(phone, message, provider, status, errMsg, 0)
+}
+
+// ListSMSLogFiltered 按条件分页查询短信记录（id 倒序），monitorID 非 nil 时按监控过滤，返回记录列表与总数。
+func (s *Store) ListSMSLogFiltered(phone, status string, monitorID *int64, limit, offset int) ([]SMSLog, int, error) {
 	if limit <= 0 {
 		limit = 100
 	}
@@ -49,6 +56,10 @@ func (s *Store) ListSMSLog(phone, status string, limit, offset int) ([]SMSLog, i
 		conds = append(conds, "status = ?")
 		args = append(args, status)
 	}
+	if monitorID != nil {
+		conds = append(conds, "monitor_id = ?")
+		args = append(args, *monitorID)
+	}
 	where := ""
 	if len(conds) > 0 {
 		where = "WHERE " + strings.Join(conds, " AND ")
@@ -60,7 +71,7 @@ func (s *Store) ListSMSLog(phone, status string, limit, offset int) ([]SMSLog, i
 		return nil, 0, err
 	}
 
-	q := `SELECT id, phone, message, provider, status, error, created_at
+	q := `SELECT id, phone, message, provider, status, error, monitor_id, created_at
 	      FROM sms_log ` + where + ` ORDER BY id DESC LIMIT ? OFFSET ?`
 	args = append(args, limit, offset)
 	rows, err := s.db.Query(q, args...)
@@ -72,7 +83,7 @@ func (s *Store) ListSMSLog(phone, status string, limit, offset int) ([]SMSLog, i
 	var out []SMSLog
 	for rows.Next() {
 		var e SMSLog
-		if err := rows.Scan(&e.ID, &e.Phone, &e.Message, &e.Provider, &e.Status, &e.Error, &e.CreatedAt); err != nil {
+		if err := rows.Scan(&e.ID, &e.Phone, &e.Message, &e.Provider, &e.Status, &e.Error, &e.MonitorID, &e.CreatedAt); err != nil {
 			return nil, 0, err
 		}
 		out = append(out, e)
@@ -84,4 +95,9 @@ func (s *Store) ListSMSLog(phone, status string, limit, offset int) ([]SMSLog, i
 		out = []SMSLog{}
 	}
 	return out, total, nil
+}
+
+// ListSMSLog 按条件分页查询短信记录（id 倒序），返回记录列表与总数。
+func (s *Store) ListSMSLog(phone, status string, limit, offset int) ([]SMSLog, int, error) {
+	return s.ListSMSLogFiltered(phone, status, nil, limit, offset)
 }

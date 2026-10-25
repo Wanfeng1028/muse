@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.0] - 2026-10-26
+
+### 新增
+- 短信记录关联监控，关闭 v0.14.0 已知限制“短信记录无法按事件关联，sms_log 无 monitor_id”。
+- 后端：sms_log 新增 monitor_id 列（v14 迁移，历史行默认 0）；新增 RecordSMSLogForMonitor，旧 RecordSMSLog 委托传 0，旧函数签名不变；分发时用 Target.MonitorID；接口 /api/sms/log 支持 monitor_id 参数，非法值返回 400“无效的监控 ID”，不带参数返回全部。
+- 页面：筛选区加监控 ID 输入框，表格状态列后加监控列，无关联行显示破折号。
+- 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 4000）输出：多通，含 4 通正文 0 字作废（按口径缩小目标、改片段格式重发，无 429）。
+
+### 测试
+- 新增 store、handlers、web 三处监控筛选测试（store：监控 7 两条、9 一条、nil 查 3 条、指针 7 查 2 条、指针 9 查 1 条、旧行指针 0 查 1 条；handlers：monitor_id=5 返 1 条、abc 返 400、不带参数返 2 条；web：筛选输入、监控列头、参数拼接、渲染取值）；db_deep2 版本期望同步到 14。
+- go vet 全洁；db、store、notify、handlers、web 五包合跑全绿。
+- 真实服务冒烟（18220 端口隔离库）：种子 3 条；未过滤 total 3、monitor_id=5 total 1、abc 400；截图亲眼核对筛选框与监控列、旧行破折号、过滤后仅剩监控 5 一行；验收后服务按 PID 停掉、端口已关、隔离库与二进制与临时令牌已删。
+
 ## [0.19.1] - 2026-10-25
 
 ### 新增

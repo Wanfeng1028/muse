@@ -26,6 +26,7 @@ type Notifier struct {
 // SMSLogger 短信发送记录接口。
 type SMSLogger interface {
 	RecordSMSLog(phone, message, provider, status, errMsg string) error
+	RecordSMSLogForMonitor(phone, message, provider, status, errMsg string, monitorID int64) error
 }
 
 // payload 是发送到 Webhook 的 JSON 结构。

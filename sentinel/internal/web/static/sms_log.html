@@ -34,6 +34,8 @@
     <option value="sent">sent</option>
     <option value="failed">failed</option>
   </select>
+  <label for="filter-monitor">监控</label>
+  <input id="filter-monitor" placeholder="输入监控 ID">
   <button type="button" id="btn-query">查询</button>
 </div>
 
@@ -44,6 +46,7 @@
       <th>号码</th>
       <th>渠道</th>
       <th>状态</th>
+      <th>监控</th>
       <th>短信内容</th>
       <th>错误</th>
     </tr>
@@ -113,7 +116,13 @@
       tdStatus.textContent = r.status || "";
       tr.appendChild(tdStatus);
 
+      var tdMonitor = document.createElement("td");
+      tdMonitor.textContent = (r.monitor_id && r.monitor_id > 0) ? String(r.monitor_id) : "—";
+      tr.appendChild(tdMonitor);
+
       var tdContent = document.createElement("td");
+
+
       tdContent.textContent = truncate(r.message, 60);
       tdContent.title = r.message || "";
       tr.appendChild(tdContent);
@@ -138,11 +147,13 @@
   function load() {
     var phone = document.getElementById("filter-phone").value;
     var status = document.getElementById("filter-status").value;
+    var monitor = document.getElementById("filter-monitor").value;
     var params = [];
     params.push("limit=" + LIMIT);
     params.push("offset=" + offset);
     if (phone) params.push("phone=" + encodeURIComponent(phone));
     if (status) params.push("status=" + encodeURIComponent(status));
+    if (monitor) params.push("monitor_id=" + encodeURIComponent(monitor));
     var url = "/api/sms/log?" + params.join("&");
 
     var headers = {};

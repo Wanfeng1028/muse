@@ -6,11 +6,12 @@ import (
 )
 
 type record struct {
-	phone    string
-	message  string
-	provider string
-	status   string
-	errMsg   string
+	phone     string
+	message   string
+	provider  string
+	status    string
+	errMsg    string
+	monitorID int64
 }
 
 type fakeRecorder struct {
@@ -18,12 +19,17 @@ type fakeRecorder struct {
 }
 
 func (r *fakeRecorder) RecordSMSLog(phone, message, provider, status, errMsg string) error {
+	return r.RecordSMSLogForMonitor(phone, message, provider, status, errMsg, 0)
+}
+
+func (r *fakeRecorder) RecordSMSLogForMonitor(phone, message, provider, status, errMsg string, monitorID int64) error {
 	r.records = append(r.records, record{
-		phone:    phone,
-		message:  message,
-		provider: provider,
-		status:   status,
-		errMsg:   errMsg,
+		phone:     phone,
+		message:   message,
+		provider:  provider,
+		status:    status,
+		errMsg:    errMsg,
+		monitorID: monitorID,
 	})
 	return nil
 }
