@@ -647,7 +647,23 @@ func handleListLinks(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		return
 	}
 
-	links, total, err := st.ListLinksFiltered(search, page, perPage, sort, enabledPtr)
+	var burnPtr *bool
+	burnStr := q.Get("burn")
+	switch burnStr {
+	case "":
+		burnPtr = nil
+	case "true":
+		v := true
+		burnPtr = &v
+	case "false":
+		v := false
+		burnPtr = &v
+	default:
+		writeError(w, http.StatusBadRequest, "burn 非法")
+		return
+	}
+
+	links, total, err := st.ListLinksFilteredEx(search, page, perPage, sort, enabledPtr, burnPtr)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return

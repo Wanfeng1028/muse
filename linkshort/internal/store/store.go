@@ -269,6 +269,10 @@ func (s *Store) ListLinks(search string, page, perPage int, orderBy string) ([]*
 }
 
 func (s *Store) ListLinksFiltered(search string, page, perPage int, orderBy string, enabled *bool) ([]*model.Link, int64, error) {
+	return s.ListLinksFilteredEx(search, page, perPage, orderBy, enabled, nil)
+}
+
+func (s *Store) ListLinksFilteredEx(search string, page, perPage int, orderBy string, enabled *bool, burn *bool) ([]*model.Link, int64, error) {
 	if orderBy != "clicks" && orderBy != "created_at" {
 		orderBy = "created_at"
 	}
@@ -300,6 +304,18 @@ func (s *Store) ListLinksFiltered(search string, page, perPage int, orderBy stri
 			where = " WHERE enabled = ?"
 		}
 		args = append(args, enVal)
+	}
+	if burn != nil {
+		burnVal := 0
+		if *burn {
+			burnVal = 1
+		}
+		if where != "" {
+			where += " AND burn = ?"
+		} else {
+			where = " WHERE burn = ?"
+		}
+		args = append(args, burnVal)
 	}
 
 	// 总数

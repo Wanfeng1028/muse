@@ -5,6 +5,16 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.20.0] - 2026-10-26
+
+### 新增
+- 链接列表支持阅后即焚筛选：`GET /api/links?burn=true` 只返回阅后即焚链、`burn=false` 只返回普通链，不带参数返回全部；非法值返回 400（`burn 非法`）；筛选与启用状态筛选、搜索、排序、分页组合使用时 total 与分页一致。store 新增 `ListLinksFilteredEx`（enabled 与 burn 两个可选指针，burn=nil 时行为与旧 `ListLinksFiltered` 一致，旧函数改为委托调用，签名不变）；列表页工具栏新增"全部类型 / 阅后即焚 / 普通链接"下拉框，切换后回到第 1 页重载。
+- API 文档页 `GET /api/links` 说明同步更新阅后即焚筛选口径。
+
+### 测试
+- 新增 `internal/store/list_links_burn_test.go`（7 组断言：不过滤/仅阅后即焚/仅普通/与启用筛选两组合/与搜索组合/分页 total 一致且两页无交集）与 `internal/handler/list_links_burn_test.go`（5 个子测试：阅后即焚筛选/普通筛选/非法值 400/与启用组合/不带参数返回全部）。
+- 全量测试：14 个包全部通过（handler 包 36 秒、store 包 5 秒，其余包均通过）；`go vet`/`gofmt` 全洁；`links.js` 经 `node --check` 通过。真实服务冒烟（18431/18432 隔离库）：建阅后即焚链、普通链、已停用阅后即焚链各 1 条，burn=true 只返阅后即焚链 total=2、burn=false 只返普通链 total=1、burn=true 与 enabled=false 组合只返已停用阅后即焚链 total=1、非法值 400（burn 非法）、不带参数返全部 total=3；浏览器实测链接管理页：默认 3 行、选"阅后即焚"后剩 2 行（burndis、burn1），两张真实截图亲眼验收通过（下拉框位置正确、行数据与冒烟一致）。
+
 ## [v1.19.0] - 2026-10-26
 
 ### 新增
