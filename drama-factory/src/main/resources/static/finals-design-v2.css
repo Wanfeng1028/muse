@@ -1,0 +1,93 @@
+#finalsList article {
+  max-width: 880px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  padding: 20px 0;
+}
+
+#finalsList article + article {
+  border-top: 1px solid var(--surface);
+}
+
+#finalsList article:last-child {
+  border-bottom: 1px solid var(--surface);
+}
+
+#finalsList .final-poster {
+  flex: 0 0 400px;
+  max-width: 100%;
+  width: 400px;
+  aspect-ratio: 16/9;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  background: #211d1b;
+}
+
+#finalsList .final-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+#finalsList .final-body {
+  flex: 1 1 320px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+#finalsList .final-title {
+  font-size: 18px;
+  font-weight: 600;
+  margin: 0 0 8px;
+  color: var(--text);
+}
+
+#finalsList .final-meta {
+  font-size: 13px;
+  color: var(--text-2);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+#finalsList .final-sep {
+  color: var(--text-3);
+}
+
+#finalsList .final-note {
+  font-size: 13px;
+  color: var(--text-2);
+  margin: 0 0 8px;
+}
+
+#finalsList .final-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 12px;
+}
+
+#finalsList .btn-quiet {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: var(--text);
+  font-size: 15px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#finalsList .final-poster video {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: #000;
+}

@@ -255,21 +255,15 @@
       const status = fc.status || "PENDING";
 
       const item = document.createElement("article");
-      item.style.cssText =
-        "max-width:880px;display:flex;flex-wrap:wrap;gap:20px;padding:20px 0;" +
-        (idx === 0 ? "" : "border-top:1px solid var(--surface);") +
-        (idx === state.finals.length - 1 ? "border-bottom:1px solid var(--surface);" : "");
 
       const poster = document.createElement("div");
-      poster.style.cssText =
-        "flex:0 0 400px;max-width:100%;width:400px;aspect-ratio:16/9;" +
-        "border-radius:10px;overflow:hidden;position:relative;background:#211d1b;";
+      poster.className = "final-poster";
 
       const img = document.createElement("img");
       img.src = "/media/finals/" + fc.id + "/poster.jpg";
       img.alt = _t('fin.posterAlt', '成片海报');
       img.loading = "lazy";
-      img.style.cssText = "width:100%;height:100%;object-fit:cover;display:block;";
+
       img.addEventListener("error", () => {
         img.style.display = "none";
       });
@@ -278,23 +272,22 @@
       item.appendChild(poster);
 
       const body = document.createElement("div");
-      body.style.cssText = "flex:1 1 320px;min-width:0;display:flex;flex-direction:column;";
+      body.className = "final-body";
 
       const title = document.createElement("h3");
-      title.style.cssText = "font-size:18px;font-weight:600;margin:0 0 8px;color:var(--text);";
+      title.className = "final-title";
       title.textContent = fc.title || (_t('fin.titlePrefix', '成片 ') + fc.id);
       body.appendChild(title);
 
       const meta = document.createElement("div");
-      meta.style.cssText =
-        "font-size:13px;color:var(--text-2);display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:8px;";
+      meta.className = "final-meta";
 
       const dur = document.createElement("span");
       dur.textContent = _t('fin.durationPrefix', '时长 ') + formatDuration(fc.durationSeconds);
       meta.appendChild(dur);
 
       const sep1 = document.createElement("span");
-      sep1.style.color = "var(--text-3)";
+      sep1.className = "final-sep";
       sep1.textContent = "·";
       meta.appendChild(sep1);
 
@@ -303,7 +296,7 @@
       meta.appendChild(created);
 
       const sep2 = document.createElement("span");
-      sep2.style.color = "var(--text-3)";
+      sep2.className = "final-sep";
       sep2.textContent = "·";
       meta.appendChild(sep2);
 
@@ -313,7 +306,7 @@
 
       if (status === "READY") {
         const sep3 = document.createElement("span");
-        sep3.style.color = "var(--text-3)";
+        sep3.className = "final-sep";
         sep3.textContent = "·";
         meta.appendChild(sep3);
 
@@ -327,28 +320,26 @@
       const note = statusNote(status);
       if (note) {
         const p = document.createElement("p");
-        p.style.cssText = "font-size:13px;color:var(--text-2);margin:0 0 8px;";
+        p.className = "final-note";
         p.textContent = note;
         body.appendChild(p);
       }
 
       const actions = document.createElement("div");
-      actions.style.cssText =
-        "display:flex;flex-wrap:wrap;gap:16px;align-items:center;margin-top:auto;padding-top:12px;";
+      actions.className = "final-actions";
 
       if (status === "READY") {
         const playLink = document.createElement("button");
         playLink.type = "button";
         playLink.className = "btn-quiet";
-        playLink.style.cssText =
-          "background:none;border:0;padding:0;color:var(--text);font-size:15px;cursor:pointer;";
+
         playLink.textContent = _t('fin.play', '播放');
         playLink.addEventListener("click", () => {
           const video = document.createElement("video");
           video.controls = true;
           video.autoplay = true;
           video.src = "/media/finals/" + fc.id;
-          video.style.cssText = "width:100%;height:100%;display:block;background:#000;";
+
           poster.innerHTML = "";
           poster.appendChild(video);
         });
@@ -356,8 +347,7 @@
 
         const dl = document.createElement("a");
         dl.className = "btn-quiet";
-        dl.style.cssText =
-          "background:none;border:0;padding:0;color:var(--text);font-size:15px;text-decoration:none;cursor:pointer;";
+
         dl.href = "/media/finals/" + fc.id;
         dl.setAttribute("download", "");
         dl.textContent = _t('fin.downloadMp4', '下载 MP4');
@@ -365,8 +355,7 @@
 
         const qcLink = document.createElement("a");
         qcLink.className = "btn-quiet";
-        qcLink.style.cssText =
-          "background:none;border:0;padding:0;color:var(--text);font-size:15px;text-decoration:none;cursor:pointer;";
+
         qcLink.href = "/qc.html?id=" + fc.id;
         qcLink.textContent = fc.qcStatus === "PENDING" ? _t('fin.toQc', '去质检') : _t('fin.viewQc', '查看质检');
         actions.appendChild(qcLink);
