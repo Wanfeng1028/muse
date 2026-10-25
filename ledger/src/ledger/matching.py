@@ -696,6 +696,9 @@ def match_best(
                 "source": "rule_fuzzy",
                 "rule_id": int(winner.get("id") or 0),
                 "reason": "模糊规则「" + str(winner.get("keyword") or "") + "」命中",
+                "detail": fuzzy_match_detail(
+                    normalize(str(winner.get("keyword") or "")), haystack
+                ),
             }
         if winner_source == "rule_regex":
             return {

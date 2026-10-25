@@ -1,5 +1,10 @@
 # 更新日志
 
+## v2.15.0 - 2026-10-25
+### 新增
+- match_best 模糊分支返回结果追加 detail 字段（复用 fuzzy_match_detail，与 v2.14 预览链条 detail 同口径：matched / distance / window / threshold）；其他分支键不变，_pick_best_fuzzy 返回形状不变。预览接口的 hit 即带 detail，无需另改路由。
+- 新增 tests/test_match_best_fuzzy_detail_v215.py（3 例：子串命中 detail、1 字之差 detail、非模糊分支不带 detail）。
+
 ## v2.14.0 - 2026-10-25
 ### 新增
 - matching.py 新增 fuzzy_match_detail(pattern, haystack)，返回 matched / distance / window / threshold 四键解释（子串命中 distance 0；否则滑动窗口最小编辑距离与首次最小窗口；threshold 按词长取 1 或 2）。
