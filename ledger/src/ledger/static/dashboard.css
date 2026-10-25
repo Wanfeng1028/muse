@@ -1,0 +1,147 @@
+/* dashboard.css — ledger 仪表盘覆盖层，在 style.css 之后加载，仅仪表盘页引用。
+   视觉逻辑：账本式横向阅读。纸面暖白、墨色文字、细线分隔；左对齐，不做居中英雄区；
+   金额等宽数字、表格数字对齐；层级靠字号、字重、线宽三档区分，不靠颜色堆砌。
+   去 AI 味自查：无紫渐变、无 Inter 独占、无一切居中、无三栏特性格、无 emoji 图标、
+   无 Unleash/Empower/Seamless/Next-generation 类文案、无编号段落+衬线大标题 Specimen 风。
+   总览条是财务报表行（收入/支出/结余同一账目条），不是特性介绍格。
+   来源：顶栏+页眉、总览条、图表+快捷入口三段由 GLM-5.3（BotsRouter）微批输出，
+   编排时只补了两处覆盖缺口（见下方“编排修正”注释），其余逐字保留。 */
+
+/* 编排修正：仪表盘页纸面底色（仅本页加载本文件，不影响其他页）。 */
+body { background: #faf9f5; min-height: 100vh; display: flex; flex-direction: column; }
+main { flex: 1 1 auto; }
+
+.topbar { background: #211f1b; }
+.topbar .container {
+  display: flex; align-items: center;
+  gap: 28px; height: 60px;
+}
+.topbar .brand {
+  white-space: nowrap; color: #f7f6f2;
+  font-size: 18px; font-weight: 700;
+  text-decoration: none;
+}
+.topbar .nav {
+  display: flex; flex: 1; min-width: 0;
+  flex-wrap: nowrap;
+  overflow-x: auto; white-space: nowrap;
+  scrollbar-width: none;
+}
+.topbar .nav::-webkit-scrollbar { display: none; }
+.topbar .nav a {
+  color: #b3afa5; padding: 7px 8px;
+  font-size: 13px;
+  white-space: nowrap; text-decoration: none;
+  border-bottom: 2px solid transparent;
+}
+.topbar .nav a.active,
+.topbar .nav a[aria-current="page"] {
+  color: #f7f6f2;
+  border-bottom-color: #f7f6f2;
+}
+.page-header {
+  display: flex; align-items: center;
+  margin: 0 0 16px;
+}
+.page-header h1 {
+  font-size: 24px; font-weight: 650;
+  color: #211e19;
+}
+.month-picker { margin-left: auto; }
+.month-picker input[type="month"] {
+  border: 1px solid #d9d5c9; box-shadow: none;
+  padding: 8px 10px; background: #fff;
+}
+
+/* 编排修正：原 .card + .card 的 margin-top: 16px 会让账目条三列错位，此处清零。 */
+.summary-cards .card { margin-top: 0; }
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  background: #faf9f5;
+  border-top: 2px solid #211e19;
+  border-bottom: 1px solid #d9d5c9;
+  border-radius: 0;
+  box-shadow: none;
+  text-align: left;
+}
+.summary-cards .card {
+  background: transparent;
+  border: none;
+  border-left: 1px solid #d9d5c9;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px 20px;
+  text-align: left;
+}
+.summary-cards .card:first-child { border-left: none; }
+.summary-cards .card-label {
+  font-size: 12px;
+  color: #6f6a5e;
+}
+.summary-cards .card-value {
+  font-size: 30px;
+  font-weight: 700;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+}
+.summary-cards .card-income .card-value { color: #1f7a44; }
+.summary-cards .card-expense .card-value { color: #b23b32; }
+.summary-cards .card-net .card-value { color: #211e19; }
+.summary-cards .card-sub {
+  font-size: 12px;
+  color: #8a8478;
+}
+@media (max-width: 900px) {
+  .summary-cards { grid-template-columns: 1fr; }
+  .summary-cards .card {
+    border-left: none;
+    border-top: 1px solid #d9d5c9;
+  }
+  .summary-cards .card:first-child { border-top: none; }
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.chart-panel {
+  background: #fff;
+  border: 1px solid #e7e3d9;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 16px;
+}
+.chart-panel h2 {
+  font-size: 15px;
+  font-weight: 650;
+  border-bottom: 1px solid #e7e3d9;
+  padding-bottom: 12px;
+  margin: 0 0 12px;
+}
+.quick-links h2 { font-size: 15px; font-weight: 650; margin: 0 0 12px; }
+.quick-link-grid {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 0;
+}
+.quick-link {
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  color: #211e19;
+  padding: 4px 16px;
+  min-height: 0;
+  text-decoration: none;
+}
+.quick-link + .quick-link { border-left: 1px solid #e7e3d9; }
+.quick-link:hover { text-decoration: underline; }
+@media (max-width: 900px) {
+  .charts { grid-template-columns: 1fr; }
+  .quick-link-grid { flex-wrap: wrap; }
+}
