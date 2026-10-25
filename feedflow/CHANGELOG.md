@@ -1,6 +1,20 @@
 
 # 更新日志
 
+## v1.18.0 — 2026-10-25
+
+### 修复：移动端单行顶栏下 app-shell 高度多扣 62px
+
+- 根因：v116 层把移动端 app-shell 高度写死为 calc(100vh - 183px - 48px)，对应顶栏两行时的 183px；但导航变单行后顶栏只有 121px，阅读区因此白白矮 62px。实测翻转点（Chromium 真实服务 + 会话登录，逐宽度实测）：已登录 7 链在 521px 起单行（520px 仍两行），未登录 6 链在 471px 起单行（470px 仍两行）；768px 已登录态实测顶栏 121px、导航单行、修复前 app-shell 613px。
+- 改动：新增 `feedflow/static/css/design-v117.css`（base.html 在 v116 之后引用，原样式表与 v112–v116 层、JS 不动），两条平铺媒体查询——(max-width: 768px) and (min-width: 521px) 下 body.is-logged-in .app-shell 改 calc(100vh - 121px - 48px)；(max-width: 768px) and (min-width: 471px) 下 body:not(.is-logged-in) .app-shell 同款；base.html 的 <body> 改成按 session.get('feedflow_authed') 条件加 is-logged-in 类（仅此 1 行模板改动，不改导航语义与任何 JS）。
+- 模型稿（只走 BotsRouter，大写 GLM-5.3，令牌 id=5，渠道 20，单路串行，SSE 按 data: 行拼 content，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写的最小新文件、令牌经 SSH 现取不落盘）：1 通即出可用正文、无 429、无思考泄露（API prompt 24651（含上游缓存 23744）/ completion 3823 / total 28474），CSS 两规则与数值逐字落仓。编排修正 1 处：模型稿 fixture 漏传 db_path（create_app 会直接 KeyError），按 tests/conftest.py 口径补 tmp_path 隔离库，绝不碰仓库 data 库。
+- 视觉验收：修复后重起已登录服务实测——768px 下 app-shell 675px（= 844 - 121 - 48，与预期一致）、390px 下仍 613px（两行口径不受影响）、零 console 错误；截图存 `docs/screenshots/topbar-loggedin-768-v118.png`（单行 7 链齐全、阅读器三栏正常渲染）。
+- 测试：新增 `tests/test_design_v118_appshell.py` 3 例（v117 层在 v116 之后引用且 served、两条媒体查询与两处 121px 算式；已登录 body 带 is-logged-in 类；未登录 body 无该类）；v112–v118 设计测试同跑，全量 16/16 通过。
+
+### 本轮已知限制（诚实保留，不谎称闭环）
+
+- 翻转点 521px/471px 是按当前导航文案与默认字体实测的；若导航文案增减或字体渲染差异超过 1px，临界宽度附近 1–2px 内可能错行，届时以实测为准重定断点。
+
 ## v1.17.0 — 2026-10-25
 
 ### 已登录态顶栏复核（关闭 v1.16.0 已知限制，不改样式）

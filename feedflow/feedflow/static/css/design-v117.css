@@ -1,0 +1,22 @@
+/*
+ * feedflow static/css/design-v117.css
+ * v1.18.0 设计层：只覆盖移动端（<=768px），不动桌面样式。
+ * 修正 v116 对 app-shell 高度的错误假设：v116 按 183px 双行顶栏计算，
+ * 实测导航变单行后顶栏只有 121px，不修正会让阅读区白白矮 62px。
+ * 实测翻转点（视口宽度）：
+ *   已登录（7 链，含退出）：521px 起单行，520px 仍两行；
+ *   未登录（6 链）：471px 起单行，470px 仍两行。
+ * 顶栏单行高度 121px，下方 48px 沿用 v116 原有底部留白。
+ */
+
+@media (max-width: 768px) and (min-width: 521px) {
+  body.is-logged-in .app-shell {
+    height: calc(100vh - 121px - 48px);
+  }
+}
+
+@media (max-width: 768px) and (min-width: 471px) {
+  body:not(.is-logged-in) .app-shell {
+    height: calc(100vh - 121px - 48px);
+  }
+}

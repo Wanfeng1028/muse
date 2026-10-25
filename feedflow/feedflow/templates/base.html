@@ -10,8 +10,9 @@
 <link rel="stylesheet" href="{{ url_for('static', filename='css/design-v114.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/design-v115.css') }}">
 <link rel="stylesheet" href="{{ url_for('static', filename='css/design-v116.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/design-v117.css') }}">
 </head>
-<body>
+<body{% if session.get('feedflow_authed') %} class="is-logged-in"{% endif %}>
 <header class="topbar">
   <div class="topbar-inner">
     <a class="brand" href="{{ url_for('web.index') }}">信流 FeedFlow</a>
