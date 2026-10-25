@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 8 轮（拉人守卫 + 设权限角色端点，后端）
+### 新增
+- 拉人守卫：POST 成员接 canManageRoom（guest 否决、workroom 仅房主、playroom 非 guest 成员放行，错误 ROOM_MANAGE_FORBIDDEN；先鉴权后校验）。
+- 设权限角色端点：PATCH /api/rooms/:room/members/:adapter_id/perm（仅房主可设、房主本人不可改、非法角色 400 INVALID_PERM_ROLE、非成员 404、不借此端点拉人，成功回成员对象）。
+### 验收
+- 网关新测 management-matrix-r8 2 例；网关全量 71 文件 923 例零回归（此前为 70 / 921，增量恰为本轮 1 文件 2 例）；网关 tsc 全洁；协议本轮未改。
+- 已知保留：REST requester 仍为自报身份、无鉴权；无房主房间无人可设权限；其余四级可见性与 Web 悄悄话 UI 仍未做。详见 docs/OPENAGENTS_ROUND8.md。
+
 ## Unreleased - OpenAgents 第 7 轮（管理操作矩阵，后端）
 ### 新增
 - 管理操作矩阵落地（关闭第 6 轮未做项“guest 管理操作未做权限矩阵”）：协议新增 canManageRoom（guest 一律否决，其余走既有 canUpdateRoom）；网关 DELETE 成员守既有 canClearOrKick（仅房主，身份取 `?requester=`）、PATCH 成员人设与 PATCH 房间名/话题守 canManageRoom（错误 ROOM_MANAGE_FORBIDDEN）、PATCH 房间类型加 guest 否决（错误仍为既有 ROOM_TYPE_FORBIDDEN）；身份解析为房主恒 admin、其余查 perm_role 列。

@@ -41,8 +41,8 @@ describe("management matrix r7", () => {
 
   it("workroom：无身份改名 403、房主改名 200、非房主改人设 403、房主改人设 200、非房主踢人 403、房主踢人 200", async () => {
     await api("POST", "/api/rooms", { id: "w1", name: "W", owner: "alice" });
-    await api("POST", "/api/rooms/w1/members", { adapter_id: "a1" });
-    await api("POST", "/api/rooms/w1/members", { adapter_id: "a2" });
+    await api("POST", "/api/rooms/w1/members", { adapter_id: "a1", requester: "alice" });
+    await api("POST", "/api/rooms/w1/members", { adapter_id: "a2", requester: "alice" });
 
     const noId = await api("PATCH", "/api/rooms/w1", { name: "W2" });
     expect(noId.status).toBe(403);
@@ -74,8 +74,8 @@ describe("management matrix r7", () => {
 
   it("playroom：guest 改名与改类型 403、普通成员改名 200、普通成员踢人仍 403（踢人只限房主）、房主踢人 200", async () => {
     await api("POST", "/api/rooms", { id: "p1", name: "P", type: "playroom", owner: "bob" });
-    await api("POST", "/api/rooms/p1/members", { adapter_id: "g1" });
-    await api("POST", "/api/rooms/p1/members", { adapter_id: "m1" });
+    await api("POST", "/api/rooms/p1/members", { adapter_id: "g1", requester: "bob" });
+    await api("POST", "/api/rooms/p1/members", { adapter_id: "m1", requester: "bob" });
     setPermRole(db, "p1", "g1", "guest");
 
     const guestRename = await api("PATCH", "/api/rooms/p1", { name: "P2", requester: "g1" });

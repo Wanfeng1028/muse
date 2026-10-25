@@ -5,7 +5,7 @@ import type { ServerResponse } from "node:http";
 import { WebSocketServer } from "ws";
 import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom, canClearOrKick, canManageRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
-import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, getPermRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
+import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, getPermRole, setPermRole, isPermRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession } from "./db.js";
 
 // 房主恒为 admin，其余情况查成员权限列
 function managePerm(db: Db, roomOwner: string | null, roomId: string, requester: string): string | undefined {
@@ -833,7 +833,7 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       return;
     }
 
-    // POST /api/rooms/:room/members  body: { adapter_id, persona_role? }
+    // POST /api/rooms/:room/members  body: { adapter_id, persona_role?, requester? }
     const membersAddMatch = url.match(/^\/api\/rooms\/([^/?]+)\/members(?:\?|$)/);
     if (membersAddMatch && method === "POST") {
       res.setHeader("access-control-allow-origin", "*");
@@ -844,7 +844,14 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
         res.end(JSON.stringify({ error: "room not found" }));
         return;
       }
-      const body = (await readJsonBody(req)) as { adapter_id?: unknown; persona_role?: unknown } | undefined;
+      const body = (await readJsonBody(req)) as { adapter_id?: unknown; persona_role?: unknown; requester?: unknown } | undefined;
+      const requester = typeof body?.requester === "string" ? body.requester : "";
+      const isOwner = requester !== "" && requester === room.owner;
+      if (!canManageRoom(room.type, isOwner, managePerm(db, room.owner, roomId, requester))) {
+        res.writeHead(403, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+        return;
+      }
       const adapterId = typeof body?.adapter_id === "string" ? body.adapter_id : "";
       if (!adapterId) {
         res.writeHead(400, { "content-type": "application/json" });
@@ -891,6 +898,49 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       }
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ ok: true }));
+      return;
+    }
+
+    // PATCH /api/rooms/:room/members/:adapter_id/perm  body: { perm_role, requester? }
+    // 仅房主可设；房主本人的权限固定不可改；目标须已是成员（不借此端点拉人）。
+    const membersPermMatch = url.match(/^\/api\/rooms\/([^/?]+)\/members\/([^/?]+)\/perm(?:\?|$)/);
+    if (membersPermMatch && method === "PATCH") {
+      res.setHeader("access-control-allow-origin", "*");
+      const roomId = decodeURIComponent(membersPermMatch[1]);
+      const adapterId = decodeURIComponent(membersPermMatch[2]);
+      const room = getRoom(db, roomId);
+      if (!room) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "room not found" }));
+        return;
+      }
+      const body = (await readJsonBody(req)) as { perm_role?: unknown; requester?: unknown } | undefined;
+      const requester = typeof body?.requester === "string" ? body.requester : "";
+      if (!requester || requester !== room.owner) {
+        res.writeHead(403, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+        return;
+      }
+      if (adapterId === room.owner) {
+        res.writeHead(403, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+        return;
+      }
+      const permRole = body?.perm_role;
+      if (!isPermRole(permRole)) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "INVALID_PERM_ROLE" }));
+        return;
+      }
+      if (!listRoomMembers(db, roomId).some((m) => m.adapter_id === adapterId)) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "member not found" }));
+        return;
+      }
+      setPermRole(db, roomId, adapterId, permRole);
+      const member = listRoomMembers(db, roomId).find((m) => m.adapter_id === adapterId);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ member }));
       return;
     }
 

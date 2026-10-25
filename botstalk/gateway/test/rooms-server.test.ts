@@ -108,16 +108,16 @@ describe("rooms http api", () => {
   it("成员增删改查与错误分支", async () => {
     await api("POST", "/api/rooms", { id: "r1", name: "R", owner: "alice" });
 
-    const add = await api("POST", "/api/rooms/r1/members", { adapter_id: "a1", persona_role: "host" });
+    const add = await api("POST", "/api/rooms/r1/members", { adapter_id: "a1", persona_role: "host", requester: "alice" });
     expect(add.status).toBe(201);
     expect(add.json.member.adapter_id).toBe("a1");
     expect(add.json.member.persona_role).toBe("host");
 
-    const addNoRole = await api("POST", "/api/rooms/r1/members", { adapter_id: "a2" });
+    const addNoRole = await api("POST", "/api/rooms/r1/members", { adapter_id: "a2", requester: "alice" });
     expect(addNoRole.status).toBe(201);
     expect(addNoRole.json.member.adapter_id).toBe("a2");
 
-    const missingAdapter = await api("POST", "/api/rooms/r1/members", { persona_role: "x" });
+    const missingAdapter = await api("POST", "/api/rooms/r1/members", { persona_role: "x", requester: "alice" });
     expect(missingAdapter.status).toBe(400);
 
     const list = await api("GET", "/api/rooms/r1/members");
