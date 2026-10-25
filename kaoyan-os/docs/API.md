@@ -1091,6 +1091,16 @@
 | --- | --- | --- |
 | 401 | `{ "error": "Unauthorized" }` | 未登录（由全局认证钩子返回） |
 
+### `GET /api/words/summary/by-source`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| GET | /api/words/summary/by-source | 需要（登录用户） |
+
+按来源返回单词汇总：每项含 source、total（该来源单词总数）、due（有 SRS 状态且 due_date <= 今天的单词数）、notStarted（无 SRS 状态的单词数）；仅返回有单词的来源，按内置、核心500词库、手动录入、CSV导入的顺序排列。
+
+本接口无请求参数。
+
 ### `GET /api/words/due`
 
 | 方法 | 路径 | 认证 |

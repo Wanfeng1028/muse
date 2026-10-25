@@ -207,6 +207,18 @@ export interface SrsState {
 /** 带记忆状态的单词 */
 export type WordWithState = Word & { state: SrsState };
 
+/** 按来源的单词汇总 */
+export interface WordSourceSummary {
+  source: WordSource;
+  total: number;
+  due: number;
+  notStarted: number;
+}
+
+export interface WordsBySourceResponse {
+  sources: WordSourceSummary[];
+}
+
 /** 复习评分（0=忘记，1=模糊，2=熟悉） */
 export type ReviewGrade = 0 | 1 | 2;
 

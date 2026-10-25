@@ -4,6 +4,16 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.5] - 2026-10-25
+
+### Added
+
+- 后端新增 `GET /api/words/summary/by-source`，按来源返回单词汇总：total/due（有 SRS 且 due_date <= 今天）/notStarted（无 SRS 状态），仅返回有单词的来源，按内置、核心500词库、手动录入、CSV导入的顺序排列。
+- 共享包新增 `WordSourceSummary` 与 `WordsBySourceResponse` 类型。
+- 前端词库页新增「按来源汇总」卡片（复用现有 card/list/list-item 样式，无新增 CSS），跟随导入/复习操作刷新。
+- 新增 `tests/words-summary-by-source.test.ts` 4 例：空库、分来源统计精确值与顺序及零词来源省略、用户隔离、未登录 401。
+- API 文档新增 `GET /api/words/summary/by-source` 一节。
+
 ## [1.12.4] - 2026-10-25
 
 ### Added

@@ -6,6 +6,8 @@ import type {
   SrsState,
   Word,
   WordSource,
+  WordSourceSummary,
+  WordsBySourceResponse,
   WordWithState,
 } from '@kaoyan/shared';
 import { WORD_SOURCES } from '@kaoyan/shared';
@@ -280,6 +282,34 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
       )
       .all(userId, today) as unknown as WordWithStateRow[];
     return rows.map(toWordWithState);
+  });
+
+  // GET /api/words/summary/by-source：按来源汇总（总数/到期/未开始），仅返回有单词的来源，按 WORD_SOURCES 顺序排列
+  app.get('/api/words/summary/by-source', async (request) => {
+    const userId = request.user!.id;
+    const today = todayStr();
+    const rows = db
+      .prepare(
+        `SELECT w.source,
+                COUNT(*) AS total,
+                SUM(CASE WHEN s.word_id IS NOT NULL AND s.due_date <= ? THEN 1 ELSE 0 END) AS due,
+                SUM(CASE WHEN s.word_id IS NULL THEN 1 ELSE 0 END) AS notStarted
+         FROM words w
+         LEFT JOIN srs_state s ON s.word_id = w.id
+         WHERE w.user_id = ?
+         GROUP BY w.source`,
+      )
+      .all(today, userId) as Array<{ source: string; total: number; due: number; notStarted: number }>;
+    const rowMap = new Map(rows.map((r) => [r.source, r]));
+    const sources: WordSourceSummary[] = [];
+    for (const source of Object.keys(WORD_SOURCES) as WordSource[]) {
+      const row = rowMap.get(source);
+      if (row && row.total > 0) {
+        sources.push({ source, total: row.total, due: row.due, notStarted: row.notStarted });
+      }
+    }
+    const result: WordsBySourceResponse = { sources };
+    return result;
   });
 
   // POST /api/words：创建单词并初始化 SRS 状态

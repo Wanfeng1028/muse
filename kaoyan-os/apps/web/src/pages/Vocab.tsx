@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import type { WordSource } from '@kaoyan/shared';
+import type { WordSource, WordsBySourceResponse } from '@kaoyan/shared';
+import { WORD_SOURCES } from '@kaoyan/shared';
 import { api, type VocabStatus, type WordImportItem } from '../api';
 import type { WordWithState } from '@kaoyan/shared';
 
@@ -15,6 +16,7 @@ function isMastered(w: WordWithState): boolean {
 export default function Vocab() {
   const [words, setWords] = useState<WordWithState[]>([]);
   const [status, setStatus] = useState<VocabStatus | null>(null);
+  const [bySource, setBySource] = useState<WordsBySourceResponse | null>(null);
   const [loadingWords, setLoadingWords] = useState(false);
   const [wordsError, setWordsError] = useState<string | null>(null);
   const [seeding, setSeeding] = useState(false);
@@ -52,9 +54,19 @@ export default function Vocab() {
     }
   };
 
+  const loadBySource = async () => {
+    try {
+      const data = await api.wordsBySource();
+      setBySource(data);
+    } catch (err) {
+      setWordsError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
   useEffect(() => {
     void loadWords();
     void loadStatus();
+    void loadBySource();
   }, []);
 
   const coreWords = useMemo(
@@ -93,7 +105,7 @@ export default function Vocab() {
     try {
       const result = await api.seedVocab();
       setSeedMsg(`导入 ${result.imported} 个，已有 ${result.skippedExisting} 个跳过`);
-      await Promise.all([loadWords(), loadStatus()]);
+      await Promise.all([loadWords(), loadStatus(), loadBySource()]);
     } catch (err) {
       setSeedError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -135,6 +147,7 @@ export default function Vocab() {
       const updated = await api.reviewWord(id, 2);
       setWords((prev) => prev.map((w) => (w.id === id ? updated : w)));
       await loadStatus();
+      await loadBySource();
     } catch (err) {
       setWordsError(err instanceof Error ? err.message : String(err));
     }
@@ -171,6 +184,19 @@ export default function Vocab() {
         {jsonMsg && <div className="text-muted">{jsonMsg}</div>}
         {jsonErrors.length > 0 && <ul>{jsonErrors.map((e, index) => <li key={index}>第 {e.index + 1} 个：{e.message}</li>)}</ul>}
       </div>
+
+      {bySource && bySource.sources.length > 0 && (
+        <div className="card">
+          <div className="stat-label">按来源汇总</div>
+          <ul className="list">
+            {bySource.sources.map((row) => (
+              <li key={row.source} className="list-item">
+                {WORD_SOURCES[row.source]}：共 {row.total} 词 · 到期 {row.due} · 未开始 {row.notStarted}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="card">
         <div className="stat-label">词库状态</div>

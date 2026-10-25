@@ -14,6 +14,7 @@ import type {
   Mistake,
   MistakeSummary,
   MistakesBySubjectResponse,
+  WordsBySourceResponse,
   CreateMistakeInput,
   UpdateMistakeInput,
   QuizItem,
@@ -223,6 +224,7 @@ export const api = {
     request<void>(`/words/${id}`, { method: 'DELETE' }),
   seedVocab: () => request<VocabSeedResult>('/words/seed-vocab', { method: 'POST' }),
   vocabStatus: () => request<VocabStatus>('/words/vocab-status'),
+  wordsBySource: () => request<WordsBySourceResponse>('/words/summary/by-source'),
   importWordsJson: (words: WordImportItem[]) =>
     request<WordImportResult>('/words/import', { method: 'POST', body: JSON.stringify({ words }) }),
 
