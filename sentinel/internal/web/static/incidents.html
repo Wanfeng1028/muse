@@ -177,7 +177,7 @@
       }
       detailTr.appendChild(detailTd);
       bodyEl.appendChild(detailTr);
-      (function (rowTr, detailRowTr) {
+      (function (rowTr, detailRowTr, detailCell) {
         function toggleDetail() {
           if (expandedRow && expandedRow !== rowTr) {
             expandedRow.setAttribute("aria-expanded", "false");
@@ -193,6 +193,38 @@
             detailRowTr.style.display = "";
             expandedRow = rowTr;
             expandedDetail = detailRowTr;
+            if (!detailRowTr.getAttribute("data-loaded")) {
+              detailRowTr.setAttribute("data-loaded", "1");
+              fetch("/api/incidents/" + it.id)
+                .then(function (resp) { if (!resp.ok) { throw new Error("detail failed"); } return resp.json(); })
+                .then(function (data) {
+                  var rcLine = document.createElement("div");
+                  var rcLabel = document.createElement("strong");
+                  rcLabel.textContent = "恢复检查：";
+                  rcLine.appendChild(rcLabel);
+                  var rcValue = document.createElement("span");
+                  if (data.recovery_check) {
+                    rcValue.textContent = (data.recovery_check.checked_at || "") + "，延迟 " + data.recovery_check.latency_ms + " 毫秒，状态码 " + (data.recovery_check.status_code === null || data.recovery_check.status_code === undefined ? "-" : data.recovery_check.status_code);
+                  } else {
+                    rcValue.textContent = "未恢复，无恢复检查";
+                  }
+                  rcLine.appendChild(rcValue);
+                  detailCell.appendChild(rcLine);
+                  var dlLine = document.createElement("div");
+                  var dlLabel = document.createElement("strong");
+                  dlLabel.textContent = "通知记录：";
+                  dlLine.appendChild(dlLabel);
+                  var dlValue = document.createElement("span");
+                  if (!data.deliveries || data.deliveries.length === 0) {
+                    dlValue.textContent = "暂无通知记录";
+                  } else {
+                    dlValue.textContent = data.deliveries.map(function (d) { return d.event + " · " + d.status + " · " + d.created_at; }).join("；");
+                  }
+                  dlLine.appendChild(dlValue);
+                  detailCell.appendChild(dlLine);
+                })
+                .catch(function () { /* 失败静默，保留原有 7 字段 */ });
+            }
           }
         }
         rowTr.addEventListener("click", toggleDetail);
@@ -202,7 +234,7 @@
             toggleDetail();
           }
         });
-      })(tr, detailTr);
+      })(tr, detailTr, detailTd);
     }
   }
   function updatePager() {

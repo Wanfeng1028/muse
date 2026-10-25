@@ -2,6 +2,19 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+
+## [0.14.0] - 2026-10-25
+
+### 新增
+- 事件详情端点 GET /api/incidents/{id}（需鉴权，与列表端点同款）：返回 incident（id、监控、开始/恢复时间、持续、触发原因）+ recovery_check（事件开始后最早的一次成功检查：checked_at、ok、status_code、latency_ms、error；未恢复时为 null）+ deliveries（事件窗口内 monitor_id 相同、event 为 down/recovered 的 webhook 投递记录，按 id 升序、上限 200，空时为空数组；不返回 payload 全文）。无数据库迁移，只用已存在的 checks 与 webhook_deliveries 表；恢复检查的口径是“开始之后最早成功检查”，通知记录的窗口是 started_at 至 ended_at（未关闭事件以上限为空）。
+- 事件页展开详情时按需拉取该端点，追加“恢复检查”与“通知记录”两行（全部用 textContent；未恢复显示“未恢复，无恢复检查”，无记录显示“暂无通知记录”；拉取失败静默保留原有 7 字段，不打断展开）。
+
+### 测试
+- 新增 internal/store/incident_detail_test.go 2 例（已关闭事件恢复检查与窗口内投递过滤、未关闭事件恢复为 null 且投递为空数组、不存在事件为 sql.ErrNoRows）与 internal/handlers/incident_detail_test.go 1 例（200 且 recovery_check 字段齐全、不存在 404、非法 id 400）与 internal/web 静态标记测试 1 例；go vet 全洁；真服务冒烟（18261 端口隔离库）：死链检查失败开事件 1 条，改健康目标再检查后事件关闭、详情返回 recovery_check 状态码 200、延迟 6 毫秒，deliveries 为空（冒烟未配 webhook，属实）。
+
+### 已知限制
+- 短信记录（sms_log 表）没有 monitor_id 字段，无法按事件窗口关联，故本轮通知记录只含 webhook 投递，不含短信；如需短信关联须先给 sms_log 加 monitor_id 迁移，排期后续。
+
 ## [0.13.0] - 2026-10-25
 
 ### 新增

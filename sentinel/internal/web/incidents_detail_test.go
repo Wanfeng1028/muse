@@ -96,3 +96,18 @@ func TestIncidentsDetail_SubtitleHint(t *testing.T) {
 		t.Errorf("missing marker: %s", hint)
 	}
 }
+// TestIncidentsDetail_V014Markers asserts v0.14.0 detail additions are present:
+// the detail fetch and the two new field labels. Static markers only;
+// browser-side fetch behavior is covered by the real-service smoke test.
+func TestIncidentsDetail_V014Markers(t *testing.T) {
+	data, err := fs.ReadFile(FS, "static/incidents.html")
+	if err != nil {
+		t.Fatalf("read incidents.html: %v", err)
+	}
+	s := string(data)
+	for _, m := range []string{"fetch(\"/api/incidents/\"", "恢复检查", "通知记录", "暂无通知记录"} {
+		if !strings.Contains(s, m) {
+			t.Errorf("missing marker: %s", m)
+		}
+	}
+}

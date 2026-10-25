@@ -64,6 +64,7 @@ func (s *Server) Routes() http.Handler {
 
 	// 事件与概览
 	mux.HandleFunc("GET /api/incidents", s.handleListIncidents)
+	mux.HandleFunc("GET /api/incidents/{id}", s.handleGetIncident)
 	mux.HandleFunc("GET /api/overview", s.handleOverview)
 	mux.HandleFunc("GET /api/alerts/deliveries", s.handleListDeliveries)
 	mux.HandleFunc("GET /api/sms/log", s.handleSMSLogAPI)
