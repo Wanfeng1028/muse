@@ -173,7 +173,10 @@ public class SkillHubController {
         if (installedVersion == null) {
             installedVersion = "";
         }
-        boolean installed = !installedVersion.isEmpty();
+        // 已安装以注册表里有记录为准，不以版本号非空为准：版本号本身为空
+        // 的 skill（如 02ui-video-copy）装完后 installedVersion 仍为空串，
+        // 旧写法会误报未安装，与 OfficialSkillController 的 inst != null 口径不一致。
+        boolean installed = installedMap.containsKey(id);
 
         return new SkillHubItem(
                 id,

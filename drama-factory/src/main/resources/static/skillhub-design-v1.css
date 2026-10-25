@@ -1,0 +1,154 @@
+/* ==========================================================================
+   SkillHub 设计层（独立 CSS，作用于 .skh-page）
+   视觉逻辑：索引台账 —— 中性底色（--bg）承托整页，卡片为实色面（--surface）
+   配 1px 发丝边框（--border）分层，无阴影、无渐变、无毛玻璃；
+   版面一律左对齐；每张卡片内信息按「标题 → 描述 → 元数据 → 操作」
+   四档自上而下排列，操作行沉底、卡片等高，形成台账式的整齐秩序。
+   仅使用既有色彩 token，不引入新色值。
+   ========================================================================== */
+
+/* 页面基底：中性底、左对齐 */
+.skh-page {
+  background: var(--bg);
+  color: var(--text);
+  text-align: left;
+}
+
+/* 页头：20px 加粗标题，下缘 1px 发丝线分隔 */
+.skh-page .page-head {
+  margin: 0 0 20px;
+  padding: 0 0 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+.skh-page .page-head h1,
+.skh-page .page-head h2,
+.skh-page .page-head .page-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text);
+}
+
+/* 卡片：实色面 + 发丝边框，无阴影 */
+.skh-page .card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+/* 卡片列：等高保证（列拉满高，卡片填满列） */
+.skh-page #skhGrid {
+  align-items: stretch;
+}
+
+.skh-page #skhGrid .skh-col {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.skh-page #skhGrid .skh-col .card {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+/* 第一档：标题 */
+.skh-page #skhGrid .card-title {
+  margin: 0 0 4px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  color: var(--text);
+  text-align: left;
+}
+
+/* 第二档：描述 */
+.skh-page #skhGrid .card-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-2);
+}
+
+/* 第三档：元数据，上缘发丝软线分隔 */
+.skh-page .skh-meta {
+  margin-top: 12px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border-soft);
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+}
+
+/* 已安装徽标 */
+.skh-page .skh-badge-installed {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--green);
+  font-size: 12px;
+  font-weight: 550;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+/* 第四档：操作行，沉底、按钮间距 8px */
+.skh-page .skh-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+/* 分页：透明底按钮，间距 8px，当前页实底 */
+.skh-page #skhPagination {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}
+
+.skh-page #skhPagination .btn {
+  margin-left: 8px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-2);
+}
+
+.skh-page #skhPagination .btn:first-child {
+  margin-left: 0;
+}
+
+.skh-page #skhPagination .btn:hover {
+  color: var(--text);
+  border-color: var(--text-3);
+}
+
+.skh-page #skhPagination .btn.active,
+.skh-page #skhPagination .btn[aria-current="page"] {
+  background: var(--surface-2);
+  border-color: var(--border);
+  color: var(--text);
+}
+
+/* 焦点可见性：2px 实线描边 */
+.skh-page :focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 2px;
+}
+
+/* 卡片体：纵向排布，操作行沉底 */
+.skh-page #skhGrid .card-body {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+}

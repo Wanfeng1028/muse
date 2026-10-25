@@ -38,10 +38,10 @@
     return fallback;
   }
 
-  function api(url) {
-    return fetch(url).then(function (r) {
+  function api(url, options) {
+    return fetch(url, options).then(function (r) {
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
+      return r.json().catch(function () { return {}; });
     });
   }
 
@@ -84,27 +84,61 @@
   }
 
   function buildCard(skill) {
+    var col = el('div', 'col-12 col-md-6 col-lg-4 skh-col');
     var card = el('div', 'card h-100');
     var body = el('div', 'card-body');
     body.appendChild(el('h5', 'card-title', skill.name || skill.id));
     body.appendChild(el('p', 'card-text', skill.description || skill.desc || ''));
-    renderActions(body, skill);
+    var metaParts = [];
+    if (skill.author) metaParts.push(skill.author);
+    if (skill.license) metaParts.push(skill.license);
+    if (skill.version) metaParts.push('v' + skill.version);
+    if (skill.source) metaParts.push(skill.source);
+    if (metaParts.length > 0) body.appendChild(el('div', 'skh-meta', metaParts.join(' · ')));
+    var actions = el('div', 'skh-actions');
+    renderActions(actions, skill);
+    body.appendChild(actions);
     card.appendChild(body);
-    return card;
+    col.appendChild(card);
+    return col;
   }
 
   function renderActions(container, skill) {
+    if (skill.installed) {
+      var badge = el('span', 'skh-badge-installed',
+        _t('skh.installed', '已安装') + (skill.installedVersion ? ' ' + skill.installedVersion : ''));
+      container.appendChild(badge);
+      var unBtn = el('button', 'btn btn-sm btn-ghost-secondary', _t('skh.uninstall', '卸载'));
+      unBtn.setAttribute('type', 'button');
+      unBtn.addEventListener('click', function () { doUninstall(skill); });
+      container.appendChild(unBtn);
+      return;
+    }
     var btn = el('button', 'btn btn-sm btn-primary', _t('skh.install', '安装'));
+    btn.setAttribute('type', 'button');
     btn.addEventListener('click', function () { doInstall(skill); });
     container.appendChild(btn);
   }
 
   function doInstall(skill) {
-    toast('Installing ' + skill.name);
+    var id = skill.id || skill.name;
+    api('/api/official-skills/install/' + encodeURIComponent(id), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}'
+    }).then(function () {
+      toast(_t('skh.installed', '已安装'));
+      load();
+    }).catch(function (err) { showError(err); });
   }
 
   function doUninstall(skill) {
-    toast('Uninstalling ' + skill.name);
+    var id = skill.id || skill.name;
+    api('/api/official-skills/installed/' + encodeURIComponent(id), {
+      method: 'DELETE'
+    }).then(function () {
+      load();
+    }).catch(function (err) { showError(err); });
   }
 
   var state = { skills: [], filterText: '', filterSource: '', page: 0, size: 48, total: 0, totalPages: 0 };
@@ -139,7 +173,7 @@
     bar.style.display = '';
     var cur = state.page, totalP = state.totalPages;
     function pageBtn(label, p, disabled, active) {
-      var b = el('button', 'btn btn-sm ' + (active ? 'btn-primary' : 'btn-ghost-secondary'), label);
+      var b = el('button', 'btn btn-sm ' + (active ? 'btn-primary active' : 'btn-ghost-secondary'), label);
       b.setAttribute('type', 'button');
       if (disabled) b.disabled = true;
       b.addEventListener('click', function () { state.page = p; load(); window.scrollTo(0, 0); });

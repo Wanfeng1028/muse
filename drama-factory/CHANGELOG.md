@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（SkillHub 设计层 v1 + 已安装状态真修复，2026-10-25）
+- 新增 static/skillhub-design-v1.css（只覆盖，不改 app.css；skillhub.html 在 app.css 之后引用 1 行，外层 div 加 skh-page）：视觉逻辑“索引台账”——纯白底、发丝边框、10px 圆角、零阴影；标题 16px/500 墨色、描述 14px 次文字、作者·许可证·版本·来源元数据行 13px 弱文字；卡片底部操作区顶部发丝线、按钮右对齐；同行卡片等高、操作沉底对齐。token 全部取自 app.css，无 linear-gradient、无 backdrop-filter、无阴影、无 Inter、无 emoji、无首字母 logo。
+- 真问题修复 1：前端 skillhub.js 此前完全忽略后端 installed/installedVersion，renderActions 恒显示“安装”、doInstall/doUninstall 只弹 toast 不调接口（属假成功态）；现已安装显示淡绿“已安装”徽标（带版本时附版本）+ 卸载幽灵按钮调 DELETE /api/official-skills/installed/{id}，未安装显示安装主按钮调 POST /api/official-skills/install/{id}，成功后才 toast 并重拉列表、失败走 showError；同时修复 buildCard 无 col 包裹致网格失效（现包 col-12 col-md-6 col-lg-4 skh-col）、分页激活按钮加 active 类、api() 支持 options 且空体返回 {}。
+- 真问题修复 2：SkillHubController.toItem 曾以 installedVersion 非空判断已安装，版本号本身为空的 skill（如 02ui-video-copy）装完后仍误报未安装；现以注册表 containsKey 为准，与 OfficialSkillController 的 inst != null 口径一致。新增 SkillHubIndexControllerTest.installedFlagFlipsAfterInstallForEmptyVersionSkill 回归用例。
+- 验收：SkillHubIndex/InstallFlow/Pagination/QueryFilter 四类共 33 例全绿（含新增 1 例）；真实服务（18081 端口，隔离 H2 库，DRAMA_SKILLS_DIR 指仓库 data/skills）+ 真实索引数据（1373 条）截图亲眼核对：首屏 48 卡三列网格、计数“第 1/29 页，共 1373 个”、计算样式实证卡片纯白底、发丝边、标题 16px/500、前三列/卡片同高 715px；真实安装 02ui-video-copy 后复拍确认首卡“已安装”徽标 + “卸载”按钮、其余卡仍为“安装”，随后真实卸载还原（installed 列表已空）；截图存 docs/screenshots/skillhub-design-v1.png 与 skillhub-design-v1-installed.png。验收后服务已停、演示安装已卸载还原。已知保留：未登录烟雾环境下 /api/auth/me 回 502（账号服务不可用，真实服务原样行为，与设计层无关）；长描述卡片的操作区在首屏折叠线下，属真实数据长度，不是布局缺陷。
+
 ### Added（Flash 路 2026-10-25 约 19:18-19:46：官方 Skill 库页设计层 v1）
 - 新增 static/official-skills-design-v1.css（只覆盖，不改 app.css 与任何 JS；official-skills.html 在 app.css 之后引用 1 行）：视觉逻辑“目录卡台账”——纯白底、发丝边框、10px 圆角、零阴影；标题 16px/600 墨色、描述 14px 次文字、作者/许可/版本行 13px 弱文字；卡片底部操作区顶部发丝线、按钮右对齐；搜索框 8px 圆角、聚焦墨色边框；已安装徽章淡绿底、字重 550。
 - 模型稿编排修正 1 处：标题色由 var(--ink)（按钮底色）改 var(--text)，更合设计体系语义；其余规则逐项核对：括号 17/17 平衡，无 linear-gradient、无 backdrop-filter、无 emoji、无外来字体，全部选择器均真实存在于本页 HTML/JS，全部 token 均在 app.css 里。
