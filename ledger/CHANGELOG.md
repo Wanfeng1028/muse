@@ -1,5 +1,14 @@
 # 更新日志
 
+## v2.17.7 - 2026-10-25
+### 新增
+- 汇率页顶栏不换行：新文件 `src/ledger/static/currencies.css`（仅 currencies 页引用，currencies.html 加 extra_css 行，style.css 不动），与分类页 v2.17.6 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.6 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭汇率页一页，其余页仍走原 wrap，不谎称全站关闭。模型稿 3 条规则原文未动（仅去围栏、补文件头注释）。
+### 测试
+- 新增 `tests/test_currencies_design_v2177.py` 1 例（汇率页引用顺序、顶栏单行规则齐全、括号平衡）；与 v2.17.6/v2.17.5/v2.17.4/v2.17.3/v2.17.2/v2.17.1/v2.17.0 设计层合跑 10/10 全绿；ruff 新测文件全洁。
+### 视觉验收
+- 真实服务（8110 端口，demo.db 复制库）汇率页截图亲眼核对：1440 宽下顶栏单行、15 链全可见（仪表盘至月度报告），实测顶栏高 60px、导航滚动宽与可见宽均为 953px（无截断、无溢出）、零 console 错误；汇率真实数据亦正常渲染（本位币 CNY 汇率 1）；截图存 `docs/screenshots/currencies-v2177.png`。本截图为路由代理 harness 拍摄，仅作顶栏与页面静态渲染验收。
+
+
 ## v2.17.6 - 2026-10-25
 ### 新增
 - 分类页顶栏不换行：新文件 `src/ledger/static/categories.css`（仅 categories 页引用，categories.html 加 extra_css 行，style.css 不动），与预算页 v2.17.5 已验证的顶栏口径一致（导航 `flex-wrap: nowrap` + 横向滚动 + 隐藏滚动条、链接 7px 8px/13px 不换行）；由此 v2.17.5 所记“其余页仍走原 `.nav` wrap”缺口在本轮只关闭分类页一页，其余页仍走原 wrap，不谎称全站关闭。编排修正 1 处：模型稿头注释误写“仅 budgets 页引用”，落盘时改回 categories，3 条规则原文未动。
