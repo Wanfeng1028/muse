@@ -98,6 +98,7 @@ services:
 | `LINKSHORT_RATE_LIMIT_RPS` | `20` | 限流令牌桶每秒补充速率（v1.2 新增） |
 | `LINKSHORT_RATE_LIMIT_BURST` | `40` | 限流令牌桶容量，允许的瞬时突发量（v1.2 新增） |
 | `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否开启限流（v1.2 新增），`true`/`false` |
+| `LINKSHORT_EXPORT_RATE_LIMIT_PER_MINUTE` | `10` | CSV 导出额外限流：两处导出端点共用的慢速令牌桶每分钟限额（v1.15 新增）；`<=0`=关闭导出额外限流（全局限流仍在），仅全局限流开启时生效 |
 | `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
 | `LINKSHORT_PURGE_INTERVAL` | `24h` | 定时清理间隔（v1.5 新增），duration 格式如 `24h`/`90m`，解析失败回 `24h` |
 | `LINKSHORT_PURGE_RETENTION_DAYS` | `7` | 已销毁 burn 链保留天数（v1.5 新增），`<0` 回 `7` |
@@ -469,6 +470,7 @@ linkshort_backup_health_status == 0
 - `LINKSHORT_RATE_LIMIT_BURST`：桶容量，决定能扛多大的瞬时突发，默认 `40`。
 
 限流按 IP + API Key 两个维度分别算，任一个超了就 429。`/metrics`、`/api/health`、`/api/readyz` 不参与限流。
+导出额外限流（v1.15 新增）：`GET /api/export.csv` 与 `GET /api/stats/geo.csv` 是全表导出、单次成本高，除全局限流外再走一个独立慢速桶（`LINKSHORT_EXPORT_RATE_LIMIT_PER_MINUTE`，默认 10/分钟、桶容量同值）；超限同样返回 429 + `Retry-After`（秒数 = 60 / 限额，最小 1），拒绝计入 `linkshort_rate_limit_rejected_total`。正常在界面点一次导出不受影响；脚本高频拉导出被挡时先看是不是撞了这个桶，再决定调大限额。
 
 什么时候调大：
 

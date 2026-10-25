@@ -19,9 +19,10 @@ type Config struct {
 	AdminKey string // 管理接口密钥；为空时自动生成
 	BaseURL  string // 短链公共前缀；为空时使用请求 Host
 
-	RateLimitRPS     float64 // 限流速率，每秒 token 数
-	RateLimitBurst   int     // 令牌桶容量
-	RateLimitEnabled bool    // 是否启用限流
+	RateLimitRPS             float64 // 限流速率，每秒 token 数
+	RateLimitBurst           int     // 令牌桶容量
+	RateLimitEnabled         bool    // 是否启用限流
+	ExportRateLimitPerMinute int     // CSV 导出限流，每分钟 token 数；<=0 表示关闭导出额外限流
 
 	BurnPurgeAfterDestroy bool // burn 销毁后是否彻底删除行（默认 false）
 
@@ -46,9 +47,10 @@ const (
 	envAdminKey = "LINKSHORT_ADMIN_KEY"
 	envBaseURL  = "LINKSHORT_BASE_URL"
 
-	envRateLimitRPS     = "LINKSHORT_RATE_LIMIT_RPS"
-	envRateLimitBurst   = "LINKSHORT_RATE_LIMIT_BURST"
-	envRateLimitEnabled = "LINKSHORT_RATE_LIMIT_ENABLED"
+	envRateLimitRPS             = "LINKSHORT_RATE_LIMIT_RPS"
+	envRateLimitBurst           = "LINKSHORT_RATE_LIMIT_BURST"
+	envRateLimitEnabled         = "LINKSHORT_RATE_LIMIT_ENABLED"
+	envExportRateLimitPerMinute = "LINKSHORT_EXPORT_RATE_LIMIT_PER_MINUTE"
 
 	envBurnPurgeAfterDestroy = "LINKSHORT_BURN_PURGE_AFTER_DESTROY"
 
@@ -192,9 +194,10 @@ func FromEnv() *Config {
 		AdminKey: os.Getenv(envAdminKey),
 		BaseURL:  os.Getenv(envBaseURL),
 
-		RateLimitRPS:     getenvFloatDefault(envRateLimitRPS, 20),
-		RateLimitBurst:   getenvIntDefault(envRateLimitBurst, 40),
-		RateLimitEnabled: getenvBoolDefault(envRateLimitEnabled, true),
+		RateLimitRPS:             getenvFloatDefault(envRateLimitRPS, 20),
+		RateLimitBurst:           getenvIntDefault(envRateLimitBurst, 40),
+		RateLimitEnabled:         getenvBoolDefault(envRateLimitEnabled, true),
+		ExportRateLimitPerMinute: getenvIntDefault(envExportRateLimitPerMinute, 10),
 
 		BurnPurgeAfterDestroy: getenvBoolDefault(envBurnPurgeAfterDestroy, false),
 

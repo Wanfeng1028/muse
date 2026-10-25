@@ -65,6 +65,29 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 	rl.IPFunc = func(r *http.Request) string { return clientIP(r, cfg) }
 	r.Use(rl.Middleware)
 
+	exportLimiter := ratelimit.New(float64(cfg.ExportRateLimitPerMinute)/60.0, cfg.ExportRateLimitPerMinute, cfg.RateLimitEnabled && cfg.ExportRateLimitPerMinute > 0)
+	exportLimiter.IPFunc = func(r *http.Request) string { return clientIP(r, cfg) }
+	exportLimit := func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if !exportLimiter.AllowRequest(r) {
+				metrics.Default.IncRateLimitRejected()
+				retryAfter := 1
+				if cfg.ExportRateLimitPerMinute > 0 {
+					retryAfter = 60 / cfg.ExportRateLimitPerMinute
+					if retryAfter < 1 {
+						retryAfter = 1
+					}
+				}
+				w.Header().Set("Retry-After", strconv.Itoa(retryAfter))
+				w.Header().Set("Content-Type", "application/json")
+				w.WriteHeader(http.StatusTooManyRequests)
+				_ = json.NewEncoder(w).Encode(map[string]string{"error": "rate limit exceeded"})
+				return
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+
 	// 根路径跳转到 UI。
 	r.Get("/", func(w http.ResponseWriter, req *http.Request) {
 		http.Redirect(w, req, "/ui/", http.StatusFound)
@@ -92,10 +115,11 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		api.Get("/readyz", func(w http.ResponseWriter, req *http.Request) { handleReadyz(w, req, st) })
 		api.Get("/meta", func(w http.ResponseWriter, req *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]any{
-				"base_url":                 shortBaseURL(req, cfg),
-				"burn_purge_after_destroy": cfg.BurnPurgeAfterDestroy,
-				"purge_interval":           cfg.PurgeInterval.String(),
-				"purge_retention_days":     cfg.PurgeRetentionDays,
+				"base_url":                     shortBaseURL(req, cfg),
+				"burn_purge_after_destroy":     cfg.BurnPurgeAfterDestroy,
+				"purge_interval":               cfg.PurgeInterval.String(),
+				"purge_retention_days":         cfg.PurgeRetentionDays,
+				"export_rate_limit_per_minute": cfg.ExportRateLimitPerMinute,
 			})
 		})
 		api.Get("/backup/health", func(w http.ResponseWriter, req *http.Request) { handleBackupHealth(w, req, cfg) })
@@ -121,8 +145,11 @@ func NewRouter(st *store.Store, cfg *config.Config) http.Handler {
 		api.Get("/stats/hourly", func(w http.ResponseWriter, req *http.Request) { handleStatsHourly(w, req, st) })
 
 		api.Post("/import", func(w http.ResponseWriter, req *http.Request) { handleImport(w, req, st) })
-		api.Get("/export.csv", func(w http.ResponseWriter, req *http.Request) { handleExport(w, req, st) })
-		api.Get("/stats/geo.csv", func(w http.ResponseWriter, req *http.Request) { handleExportGeoCSV(w, req, st) })
+		api.Group(func(g chi.Router) {
+			g.Use(exportLimit)
+			g.Get("/export.csv", func(w http.ResponseWriter, req *http.Request) { handleExport(w, req, st) })
+			g.Get("/stats/geo.csv", func(w http.ResponseWriter, req *http.Request) { handleExportGeoCSV(w, req, st) })
+		})
 	})
 
 	// API 文档页：公开，无需鉴权。

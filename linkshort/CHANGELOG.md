@@ -5,6 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.15.0] - 2026-10-25
+
+### 新增
+
+- CSV 导出额外限流：`GET /api/export.csv` 与 `GET /api/stats/geo.csv` 共用一个独立的慢速令牌桶（默认 `LINKSHORT_EXPORT_RATE_LIMIT_PER_MINUTE=10`，即每分钟 10 次、桶容量 10，按 IP + API Key 分桶），叠加在全局限流之上；超限返回 429 JSON `{"error": "rate limit exceeded"}` + `Retry-After`（秒数 = 60 / 每分钟限额，最小 1），拒绝计入既有指标 `linkshort_rate_limit_rejected_total`。仅当全局限流开启且该值 > 0 时生效；设为 `<=0` 即关闭导出额外限流（全局限流仍在）。
+- `GET /api/meta` 新增 `export_rate_limit_per_minute` 字段，暴露当前导出限额。
+- 关闭 v1.9 已知缺口“CSV 导出除 API 鉴权外无额外限流”。
+
+### 测试
+
+- 新增 `internal/handler/handler_export_ratelimit_test.go`（6 例）：每分钟 2 次时第 3 次导出 429 且 `Retry-After: 30`；地域 CSV 与全量导出共用同一桶；限额为 0 时不限流；全局限流关闭时导出不限流；导出限流不影响 `/api/links` 与 `/api/meta`；meta 字段值与配置一致。6/6 全绿。
+
 ## [v1.14.0] - 2026-10-25
 
 ### 新增
@@ -113,7 +125,7 @@
 
 - 内置 IP 段表无城市数据，city 精度依赖 MMDB；未配置 MMDB 时城市一律 unknown。
 - 世界地图为手写简化示意，非精确国界。
-- CSV 导出除 API 鉴权外无额外限流。
+- ~~CSV 导出除 API 鉴权外无额外限流。~~（v1.15.0 已关闭：两处 CSV 导出共用独立慢速令牌桶，默认每分钟 10 次）
 
 ## [v1.8.0] - 2026-10-17
 

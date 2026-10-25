@@ -71,6 +71,16 @@ func (l *Limiter) Middleware(next http.Handler) http.Handler {
 	})
 }
 
+// AllowRequest reports whether one token is available for this request.
+// It returns true when the limiter is disabled. Callers that reject must
+// write the 429 response themselves (same shape as Middleware).
+func (l *Limiter) AllowRequest(r *http.Request) bool {
+	if !l.enabled {
+		return true
+	}
+	return l.allow(l.clientKey(r))
+}
+
 // clientKey 组装限流 key：clientIP + "|" + apiKey。
 // 当未配置 AdminKey（本地开发模式）时，仅使用 clientIP。
 func (l *Limiter) clientKey(r *http.Request) string {
