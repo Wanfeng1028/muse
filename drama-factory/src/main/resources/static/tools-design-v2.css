@@ -1,0 +1,21 @@
+#tag-asset-list {
+  max-height: 260px;
+  overflow: auto;
+}
+
+#rename-list {
+  max-height: 320px;
+  overflow: auto;
+}
+
+.tool-asset-name {
+  max-width: 180px;
+  overflow: hidden;
+}
+
+.tool-log-cell {
+  max-width: 220px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

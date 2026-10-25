@@ -272,3 +272,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：供应商卡片行——模型行 flex、gap 10px、上下 8px、顶线 1px solid；模型名 13px/600、模型 id 12px 次文字色；元数据 12px、gap 12px、上边距 8px；操作区 margin-left:auto 右对齐；预设行 flex、gap 8px、上边距 4px。
 - 截图：docs/screenshots/agents-providers-v2.png（隔离构建真实服务 18207 端口 + 复制库；库内 providers 为空，注入 1 供应商 + 1 模型经真实 API 实测后即删，截图仍为真实态；计算样式与之一致；唯一 console 错误为 /api/agents 的 409，属既有 LYRICS 模板种子缺口，与本层无关）。
 - 已知保留：本层不改布局；数据驱动 badge 保留行内；§37 为 5.3 路对话页 v2 预留，本节顺延为 §38。
+
+## 39. 快捷工具页设计层 v2（2026-10-26，Flash 路）
+- 文件：static/tools-design-v2.css（模型稿 4 条规则原文入仓，tools.html 在 v1 之后引用 1 行；JS/HTML 机械迁移：两处滚动容器删行内 style 改由 #tag-asset-list/#rename-list 规则接管、资产名 label 改挂 tool-asset-name 类、日志表 td4/td5 改挂 tool-log-cell 类、删 10 处 JS 行内赋值）。
+- 视觉逻辑：滚动容器 260px/320px 上限 + 自动滚动；资产名 180px 截断隐藏；日志参数与结果格 220px 省略号截断不换行。
+- 截图：docs/screenshots/tools-design-v2.png（隔离构建真实服务 18207 端口 + 复制库；库内资产与操作日志均为空，页面为空态实测；两滚动容器计算样式直接取自真实元素，截断类以探针节点实测后即删，截图仍为真实态；零 console 错误）。
+- 已知保留：本层不改布局；label 规则刻意不补 text-overflow/white-space（原值只有 max-width 与 overflow，逐字保留）；§37 仍为 5.3 路对话页 v2 预留，本节顺延为 §39。

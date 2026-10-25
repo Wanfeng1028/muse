@@ -11,6 +11,7 @@
 <link rel="stylesheet" href="/app.css">
 <link rel="stylesheet" href="/harness.css">
 <link rel="stylesheet" href="/tools-design-v1.css">
+    <link rel="stylesheet" href="/tools-design-v2.css">
 </head>
 <body>
 <div class="page">
@@ -36,7 +37,7 @@
               <option value="VIDEO" data-i18n="tool.typeVideo">视频</option>
             </select>
           </div>
-          <div id="tag-asset-list" class="mb-3" style="max-height:260px;overflow:auto;"></div>
+          <div id="tag-asset-list" class="mb-3"></div>
           <div class="mb-2">
             <input type="text" class="form-control form-control-sm" id="tag-input" data-i18n-ph="tool.tagPlaceholder" placeholder="标签，逗号分隔">
           </div>
@@ -56,7 +57,7 @@
       <div class="card">
         <div class="card-body">
           <h3 class="card-title"><i data-lucide="pencil"></i> <span data-i18n="tool.batchRenameTitle">资产批量重命名</span></h3>
-          <div id="rename-list" class="mb-3" style="max-height:320px;overflow:auto;">
+          <div id="rename-list" class="mb-3">
             <div class="text-secondary small" data-i18n="tool.pickAssetsFirst">请先在上方选择资产</div>
           </div>
           <button class="btn btn-primary btn-sm" id="rename-btn" data-i18n="tool.batchRenameBtn">批量重命名</button>

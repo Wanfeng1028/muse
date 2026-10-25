@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：快捷工具页设计层 v2）
+- 新增 static/tools-design-v2.css（模型稿 4 条规则原文入仓，tools.html 在 v1 之后引用 1 行）：关闭 v1 未覆盖的工具页行内样式——两处滚动容器（max-height 260px/320px + overflow auto）、资产名 label（max-width 180px + overflow hidden）、日志表参数与结果格（max-width 220px + overflow hidden + text-overflow ellipsis + white-space nowrap）。JS/HTML 机械迁移（编排落仓）：滚动容器删行内 style、label 改挂 tool-asset-name 类、td4/td5 改挂 tool-log-cell 类、删 10 处 JS 行内赋值；label 规则刻意不补 text-overflow/white-space（原值只有两项，逐字保留）。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，调用器为本轮现写最小新文件 relay-station/flash_call_n7.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：正文即入仓 4 条规则，零编排修正（括号 4/4 平衡，无 !important、无 linear-gradient、无 backdrop-filter，值逐字照抄原值；调用统计未捕获，如实记录，不补数字）。
+- 验收：新增 ToolsDesignV2Test 3/3，设计层合跑 118/118 全绿（隔离构建；含他路未提交的对话页 v2 测试 3 例，本轮不提交他路文件），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18207 端口，复制 H2 库，开放模式）实测 tools.html 与 v2 css 均 200、served 内容与文件对上；库内资产与操作日志均为空，页面为空态实测；计算样式实证：#tag-asset-list maxHeight 260px/overflow auto、#rename-list maxHeight 320px/overflow auto（真实元素）、.tool-asset-name maxWidth 180px/overflow hidden、.tool-log-cell maxWidth 220px/overflow hidden/textOverflow ellipsis/whiteSpace nowrap（探针节点实测后即删）；视口截图亲眼核对打标/重命名/转码/提音频四卡片布局正常、无错位重叠、零 console 错误；截图存 docs/screenshots/tools-design-v2.png。验收插曲：setsid 回显 PID 与 JVM 真实 PID 不一致，按端口查到真实 java PID 14713 停服、18207 复查已关（与分镜板页同款老问题）。验收后隔离构建与复制库待删（见进度文件）。
+
 ### Added（5.3 路 2026-10-26：AI 对话页设计层 v2）
 - 新增 static/chat-design-v2.css（模型稿 2 条规则原文入仓，chat.html 在 v1 之后引用 1 行）：关闭 v1 未覆盖的 3 处静态行内样式——筛选区两个字段外层 div 的 min-width:200px 改挂 chat-field 类、对话记录容器 #chatLog 的 min-height:320px/max-height:52vh/overflow-y:auto 改由规则接管。HTML 机械迁移（编排落仓，非模型稿）；不改 app.css 与布局。
 - 模型稿由 GLM-5.3（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写最小新文件 relay-station/glm53_r24_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、未读任何现成调用脚本）1 通产出：API prompt 23964 / completion 357 / total 24321，reasoning_tokens 0，正文即入仓 2 条规则，零编排修正。括号 2/2 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter、无十六进制颜色字面量，原值（200px/320px/52vh/auto）逐字保留。插曲：上一轮留下的 r23 调用器在本会话缺 ProxyCommand（出口代理 3128 掐断）且缺 -i 密钥（root 默认密钥不对）两次取令牌失败，已弃用并改写 r24（补 ProxyCommand 与 -i /home/hatch/.ssh/id_ed25519）后 1 通成功。
