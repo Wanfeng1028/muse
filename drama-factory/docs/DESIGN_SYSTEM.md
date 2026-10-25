@@ -284,3 +284,9 @@ CSS 变量定义在 `static/app.css`（`:root` = 暗色默认，`[data-bs-theme=
 - 视觉逻辑：项目 / 剧集 / 分镜三个筛选字段容器最小宽度 160px 不换行挤压，下拉框在窄视口仍可读。
 - 截图：docs/screenshots/tasks-design-v3.png（隔离构建真实服务 + 复制库；筛选区三字段计算样式实测 min-width 160px，零 console 错误）。
 - 已知保留：hint 提示框的 display:none 是 JS 显隐切换，保留行内，不在本层范围；本层不改布局。
+
+## 41. BYOK 三页生成卡片体设计层（2026-10-26，Flash 路）
+- 文件：static/music-design-v2.css、static/images-design-v3.css、static/avatar-design-v2.css（模型稿各 1 条规则原文入仓；音乐页在 v1 之后引用 v2，图片页在 v2 之后引用 v3，数字人页在 v1 之后引用 v2；HTML 机械迁移：三页生成卡片体 div 删行内 style 分别改挂 mus-gen-body / img-gen-body / ava-gen-body 类）。
+- 视觉逻辑：生成卡片体上下 16px、左右 20px 内边距，三页同口径。
+- 截图：docs/screenshots/byok-genbody-v2.png（隔离构建真实服务 + 复制库；音乐页生成卡片体计算样式实测 padding 16px 20px，零 console 错误）。
+- 已知保留：音乐页纯音乐 label 的 margin:0 行内样式与本轮无关，不碰；本层不改布局。

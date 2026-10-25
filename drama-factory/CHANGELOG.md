@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26：BYOK 三页生成卡片体设计层）
+- 新增 static/music-design-v2.css、static/images-design-v3.css、static/avatar-design-v2.css（模型稿各 1 条规则原文入仓）：关闭音乐 / 图片 / 数字人三页生成卡片体唯一一处行内 padding:16px 20px，分别改挂 mus-gen-body / img-gen-body / ava-gen-body 类；音乐页纯音乐 label 的 margin:0 与本轮无关，不碰。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，调用器为本轮现写最小新文件 relay-station/flash_call_n8.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、未读任何现成调用脚本）产出：三页合一首通 reasoning-only 空响应作废；拆两通后音乐页 1 通（API prompt 23719 / completion 457 / total 24176）、图片+数字人 1 通（API prompt 23797 / completion 1123 / total 24920），正文即入仓 3 条规则，零编排修正。括号各 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值 16px 20px 逐字保留。
+- 验收：新增 MusicDesignV2Test / ImagesDesignV3Test / AvatarDesignV2Test 各 3/3，设计层合跑 129/129 全绿（隔离构建），Maven 离线 BUILD SUCCESS；隔离构建真实服务（18210 端口，复制 H2 库）实测三页 html 与新 css 均 200、served 内容与文件对上、served 音乐页旧行内 padding 0 处；音乐页生成卡片体计算样式实测 padding 16px 20px 16px 20px、行内 style 为空；视口截图亲眼核对生成卡片布局正常、无错位重叠；另有 1 条 document.write pageerror（setContent 下 harness 环境 artifact，与音乐页、成本账本页同款，不影响内容与样式）。截图存 docs/screenshots/byok-genbody-v2.png。验收后服务按真实 java PID 37547 停服、18210 复查已关、隔离构建与复制库已删。
+
 ### Added（Flash 路 2026-10-26：任务队列页设计层 v3）
 - 新增 static/tasks-design-v3.css（模型稿 1 条规则原文入仓，tasks.html 在 v2 之后引用 1 行）：关闭 v2 未覆盖的 3 处筛选字段行内样式——项目 / 剧集 / 分镜三个筛选字段容器 div 的 min-width:160px 改挂 task-filter-field 类；hint 提示框的 display:none 是 JS 显隐切换，保留行内，不在本轮范围。
 - 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，渠道 20，单路串行，max_tokens 32000，调用器为本轮现写最小新文件 relay-station/flash_call_n8.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile=/home/hatch/.ssh/known_hosts、显式 -i /home/hatch/.ssh/id_ed25519、未读任何现成调用脚本）1 通产出：API prompt 23806 / completion 98 / total 23904，含上游缓存 23552，正文即入仓 1 条规则，零编排修正。括号 1/1 平衡，无 linear-gradient、无 backdrop-filter、无 !important、无 Inter，原值 160px 逐字保留。
