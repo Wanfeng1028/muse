@@ -5,6 +5,14 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.28.0] - 2026-10-27
+
+### 新增
+- `GET /api/links/{id}/referers` 的 `n` 参数校验收紧：非数字值返回 400，错误体为 `{"error": "n 非法"}`；此前非数字值经默认值回落静默按 8 条统计。缺参或空串仍默认 8；合法数字小于等于 0 或大于 100 时仍回落为 8（既有口径不变，既有 TestAnalyticsParamClamp 覆盖 n=0 与 n=200 返回 200）；docs.html 无 referers 行，本轮不动；其余统计端点（stats/daily、top-links、top-referers、geo、hourly）一字未动。
+
+### 测试
+- 新增 internal/handler/link_referers_n_validation_test.go 6 例全绿（n=abc/1.5/1x 返回 400 且体含“n 非法”、不带 n 返回 200、n=0 返回 200、n=8 返回 200）；既有 TestAnalyticsParamClamp 与 daily 校验测同跑通过；go vet 全洁；本轮改动文件 gofmt 全洁。
+
 ## [v1.27.0] - 2026-10-27
 
 ### 新增

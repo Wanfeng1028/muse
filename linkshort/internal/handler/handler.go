@@ -969,7 +969,16 @@ func handleLinkReferers(w http.ResponseWriter, r *http.Request, st *store.Store)
 		writeError(w, http.StatusBadRequest, "id 非法")
 		return
 	}
-	n := parseIntDefault(r.URL.Query().Get("n"), 8)
+	nStr := r.URL.Query().Get("n")
+	n := 8
+	if nStr != "" {
+		var err error
+		n, err = strconv.Atoi(nStr)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "n 非法")
+			return
+		}
+	}
 	if n <= 0 || n > 100 {
 		n = 8
 	}
