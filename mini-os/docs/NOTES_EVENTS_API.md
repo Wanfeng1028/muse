@@ -60,6 +60,7 @@
 - `title`：trim 后为空返回 400，消息 `"标题不能为空"`；超过 200 字符返回 400。
 - `startsAt` / `endsAt`：格式非法返回 400。接受 `YYYY-MM-DD` 或 `YYYY-MM-DDTHH:MM`，存储时统一规范化为 `YYYY-MM-DDTHH:MM:SS`。
 - `endsAt` 早于 `startsAt` 返回 400。
+- GET /api/events 的 `from` 晚于 `to` 返回 400，消息“开始时间不能晚于结束时间”；`from` 等于 `to` 时仍返回 200 空数组（`to` 为开区间）。
 
 ## 5. 时间格式说明
 

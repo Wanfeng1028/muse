@@ -341,6 +341,10 @@ pub async fn list_events(
     let from = validate_dt(&from_raw).map_err(|m| err(StatusCode::BAD_REQUEST, &m))?;
     let to = validate_dt(&to_raw).map_err(|m| err(StatusCode::BAD_REQUEST, &m))?;
 
+    if from > to {
+        return Err(err(StatusCode::BAD_REQUEST, "开始时间不能晚于结束时间"));
+    }
+
     let conn = state
         .db
         .lock()
