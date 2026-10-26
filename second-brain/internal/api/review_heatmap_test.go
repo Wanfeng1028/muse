@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -60,10 +61,15 @@ func TestReviewHeatmapAPI_Clamp(t *testing.T) {
 	resp2 := doReviewJSON(t, http.MethodGet, srv.URL+"/api/review/heatmap?days=abc", nil)
 	defer resp2.Body.Close()
 
-	var v2 heatmapResp
+	if resp2.StatusCode != http.StatusBadRequest {
+		t.Errorf("expected 400 for days=abc, got %d", resp2.StatusCode)
+	}
+	var v2 struct {
+		Error string `json:"error"`
+	}
 	decodeReviewJSON(t, resp2, &v2)
-	if v2.Days != 365 {
-		t.Errorf("expected Days 365, got %d", v2.Days)
+	if !strings.Contains(v2.Error, "days 参数非法") {
+		t.Errorf("expected error containing %q, got %q", "days 参数非法", v2.Error)
 	}
 }
 
