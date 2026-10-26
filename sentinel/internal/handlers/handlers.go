@@ -788,9 +788,12 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 	var monitorID int64
 	if v := r.URL.Query().Get("monitor_id"); v != "" {
-		if n, err := strconv.ParseInt(v, 10, 64); err == nil {
-			monitorID = n
+		n, err := strconv.ParseInt(v, 10, 64)
+		if err != nil || n < 0 {
+			writeErr(w, http.StatusBadRequest, "monitor_id 参数非法")
+			return
 		}
+		monitorID = n
 	}
 
 	status := r.URL.Query().Get("status")

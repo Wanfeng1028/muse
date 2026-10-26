@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.8] - 2026-10-26
+
+### 修复
+
+- `GET /api/incidents`(`internal/handlers/handlers.go` 的 `handleListIncidents`)新增 `monitor_id` 校验:`monitor_id` 存在但不是整数、或为负数时返回 400,文案为“monitor_id 参数非法”,与投递列表、短信记录接口的 `monitor_id` 校验口径一致。
+- 合同变更声明:此前 `monitor_id` 非法时静默回退为 0(即查询全部事件),本版起改为返回 400;事件列表的 `limit`/`page`/`page_size` 钳制行为不变。
+
+### 测试
+
+- 新增 `internal/handlers/incidents_monitor_validation_test.go` 中的 `TestHandleListIncidentsMonitorIDValidationDeep3`:`notanumber` 与 `-1` 均期望 400,合法监控 id 期望 200 且响应包含 items 数组。
+- 既有 `TestHandleListIncidentsMonitorIDNonNumericDeep3` 已同步改为断言 400;事件 limit 钳制测试同跑通过。
+
+
 ## [0.20.7] - 2026-10-26
 
 ### 修复

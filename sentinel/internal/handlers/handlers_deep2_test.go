@@ -376,20 +376,13 @@ func TestHandleListIncidentsLimitClampDeep3(t *testing.T) {
 	}
 }
 
-// TestHandleListIncidentsMonitorIDNonNumericDeep3 覆盖 monitor_id 非法时回退为 0。
+// TestHandleListIncidentsMonitorIDNonNumericDeep3 覆盖 monitor_id 非法时返回 400（v0.20.8 合同变更：此前回退为 0 返回 200）。
 func TestHandleListIncidentsMonitorIDNonNumericDeep3(t *testing.T) {
 	srv, _ := newTestServer(t)
 	h := srv.Routes()
-	rec, m := deep3DoJSON(t, h, http.MethodGet, "/api/incidents?monitor_id=notanumber", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%s", rec.Code, rec.Body.String())
-	}
-	items, ok := m["items"].([]any)
-	if !ok {
-		t.Fatalf("items wrong type: %v", m["items"])
-	}
-	if len(items) != 0 {
-		t.Fatalf("expected empty items, got %v", items)
+	rec, _ := deep3DoJSON(t, h, http.MethodGet, "/api/incidents?monitor_id=notanumber", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%s", rec.Code, rec.Body.String())
 	}
 }
 
