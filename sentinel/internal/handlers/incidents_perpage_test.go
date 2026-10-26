@@ -88,12 +88,8 @@ func TestHandleListIncidents_PerPageInvalid(t *testing.T) {
 	seedIncidents(t, st, 45)
 
 	rec, body := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?per_page=abc", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("期望状态码 200，实际为 %d", rec.Code)
-	}
-
-	if got := body["page_size"].(float64); got != 20 {
-		t.Fatalf("期望 page_size 为默认值 20，实际为 %v", got)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("期望状态码 400，实际为 %d，body=%v", rec.Code, body)
 	}
 }
 

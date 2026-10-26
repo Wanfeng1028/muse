@@ -121,14 +121,8 @@ func TestHandleListIncidents_InvalidPage(t *testing.T) {
 	seedIncidents(t, st, 45)
 
 	rec, body := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?page=abc&page_size=xyz", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("status = %d, want 200", rec.Code)
-	}
-	if body["page"] != float64(1) {
-		t.Fatalf("page = %v, want 1", body["page"])
-	}
-	if body["page_size"] != float64(20) {
-		t.Fatalf("page_size = %v, want 20", body["page_size"])
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("status = %d, want 400, body=%v", rec.Code, body)
 	}
 }
 

@@ -807,9 +807,12 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 
 	page := 1
 	if v := r.URL.Query().Get("page"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			page = n
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, "page 参数非法")
+			return
 		}
+		page = n
 	}
 	if page < 1 {
 		page = 1
@@ -818,25 +821,34 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 	pageSize := 20
 	pageSizeSet := false
 	if v := r.URL.Query().Get("per_page"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, "per_page 参数非法")
+			return
+		}
+		pageSize = n
+		pageSizeSet = true
+	}
+	if !pageSizeSet {
+		if v := r.URL.Query().Get("page_size"); v != "" {
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				writeErr(w, http.StatusBadRequest, "page_size 参数非法")
+				return
+			}
 			pageSize = n
 			pageSizeSet = true
 		}
 	}
 	if !pageSizeSet {
-		if v := r.URL.Query().Get("page_size"); v != "" {
-			if n, err := strconv.Atoi(v); err == nil {
-				pageSize = n
-				pageSizeSet = true
-			}
-		}
-	}
-	if !pageSizeSet {
 		if v := r.URL.Query().Get("limit"); v != "" {
-			if n, err := strconv.Atoi(v); err == nil {
-				pageSize = n
-				page = 1
+			n, err := strconv.Atoi(v)
+			if err != nil {
+				writeErr(w, http.StatusBadRequest, "limit 参数非法")
+				return
 			}
+			pageSize = n
+			page = 1
 		}
 	}
 	if pageSize < 1 {

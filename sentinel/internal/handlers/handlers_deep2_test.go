@@ -361,11 +361,11 @@ func TestHandleCheckNowInvalidIDDeep3(t *testing.T) {
 	}
 }
 
-// TestHandleListIncidentsLimitClampDeep3 覆盖事件列表 limit 钳制。
+// TestHandleListIncidentsLimitClampDeep3 覆盖事件列表 limit 钳制（v0.20.10 合同变更：limit 非整数返回 400，不再回退）。
 func TestHandleListIncidentsLimitClampDeep3(t *testing.T) {
 	srv, _ := newTestServer(t)
 	h := srv.Routes()
-	for _, q := range []string{"?limit=0", "?limit=-9", "?limit=5000", "?limit=bad"} {
+	for _, q := range []string{"?limit=0", "?limit=-9", "?limit=5000"} {
 		rec, m := deep3DoJSON(t, h, http.MethodGet, "/api/incidents"+q, "")
 		if rec.Code != http.StatusOK {
 			t.Fatalf("limit=%q expected 200, got %d body=%s", q, rec.Code, rec.Body.String())
@@ -373,6 +373,10 @@ func TestHandleListIncidentsLimitClampDeep3(t *testing.T) {
 		if _, ok := m["items"].([]any); !ok {
 			t.Fatalf("limit=%q items wrong type: %v", q, m["items"])
 		}
+	}
+	rec, _ := deep3DoJSON(t, h, http.MethodGet, "/api/incidents?limit=bad", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("limit=?limit=bad expected 400, got %d body=%s", rec.Code, rec.Body.String())
 	}
 }
 

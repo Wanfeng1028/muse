@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.10] - 2026-10-26
+
+### 修复
+
+- `GET /api/incidents`(`internal/handlers/handlers.go` 的 `handleListIncidents`)新增分页参数校验:`page`、`per_page`、`page_size`、`limit` 存在但不是整数时返回 400,文案分别为“page 参数非法”、“per_page 参数非法”、“page_size 参数非法”、“limit 参数非法”,与检查记录、事件 monitor_id、短信记录接口的校验口径一致。
+- 合同变更声明:此前分页参数非法时静默回退(页码回退为 1、每页大小沿降级链回退为缺省 20),本版起改为返回 400;数值钳制行为不变(page<1 钳制为 1、pageSize 钳制 1~100、limit 有效时 page=1)。
+
+### 测试
+
+- 新增 `internal/handlers/incidents_pagination_validation_test.go` 中的 `TestHandleListIncidentsPaginationValidationDeep3`:page=abc、per_page=abc、page_size=xyz、limit=zzz 均期望 400,合法分页期望 200 且响应包含 items 数组。
+- 既有锁死回退行为的测试已同步改为断言 400:`incidents_deep_r2_test.go` 的 3 个降级链测试与 page 钳制测试(去掉 page=abc 用例)、`incidents_pagination_test.go` 的 InvalidPage、`incidents_perpage_test.go` 的 PerPageInvalid、`handlers_deep2_test.go` 的 LimitClampDeep3(去掉 limit=bad 的 200 用例、另加 400 断言)。
+
+
 ## [0.20.9] - 2026-10-26
 
 ### 修复

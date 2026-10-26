@@ -121,14 +121,8 @@ func TestHandleListIncidentsR2InvalidPerPageFallsToPageSize(t *testing.T) {
 
 	rec, body := doJSON(t, srv.Routes(), "GET",
 		"/api/incidents?per_page=abc&page_size=9", "")
-	if rec.Code != 200 {
-		t.Fatalf("期望状态码 200，实际 %d", rec.Code)
-	}
-	if got := getFloat(t, body, "page_size"); got != 9 {
-		t.Fatalf("期望 page_size 9（per_page 非法降级 page_size），实际 %v", got)
-	}
-	if got := len(itemsOf(t, body)); got != 9 {
-		t.Fatalf("期望 items 长度 9，实际 %d", got)
+	if rec.Code != 400 {
+		t.Fatalf("期望状态码 400（v0.20.10 分页参数非法返回 400），实际 %d，body=%v", rec.Code, body)
 	}
 }
 
@@ -138,14 +132,8 @@ func TestHandleListIncidentsR2InvalidPerPageAndPageSizeFallsToLimit(t *testing.T
 
 	rec, body := doJSON(t, srv.Routes(), "GET",
 		"/api/incidents?per_page=abc&page_size=xyz&limit=6", "")
-	if rec.Code != 200 {
-		t.Fatalf("期望状态码 200，实际 %d", rec.Code)
-	}
-	if got := getFloat(t, body, "page_size"); got != 6 {
-		t.Fatalf("期望 page_size 6（降级到 limit），实际 %v", got)
-	}
-	if got := len(itemsOf(t, body)); got != 6 {
-		t.Fatalf("期望 items 长度 6，实际 %d", got)
+	if rec.Code != 400 {
+		t.Fatalf("期望状态码 400（v0.20.10 分页参数非法返回 400），实际 %d，body=%v", rec.Code, body)
 	}
 }
 
@@ -155,14 +143,8 @@ func TestHandleListIncidentsR2AllInvalidFallsToDefault(t *testing.T) {
 
 	rec, body := doJSON(t, srv.Routes(), "GET",
 		"/api/incidents?per_page=abc&page_size=xyz&limit=zzz", "")
-	if rec.Code != 200 {
-		t.Fatalf("期望状态码 200，实际 %d", rec.Code)
-	}
-	if got := getFloat(t, body, "page_size"); got != 20 {
-		t.Fatalf("期望 page_size 20（全非法缺省），实际 %v", got)
-	}
-	if got := len(itemsOf(t, body)); got != 20 {
-		t.Fatalf("期望 items 长度 20，实际 %d", got)
+	if rec.Code != 400 {
+		t.Fatalf("期望状态码 400（v0.20.10 分页参数非法返回 400），实际 %d，body=%v", rec.Code, body)
 	}
 }
 
@@ -222,7 +204,7 @@ func TestHandleListIncidentsR2PageClampInvalid(t *testing.T) {
 	srv, st := newTestServer(t)
 	seedIncidents(t, st, 30)
 
-	cases := []string{"page=0", "page=-2", "page=abc"}
+	cases := []string{"page=0", "page=-2"}
 	for _, q := range cases {
 		rec, body := doJSON(t, srv.Routes(), "GET", "/api/incidents?"+q, "")
 		if rec.Code != 200 {
