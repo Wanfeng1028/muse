@@ -3,6 +3,29 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.25.0] - 2026-10-27
+
+### 新增
+
+- 分组 SLA 月报：Store 层 GroupMonthlySLA（分组不存在报错、非法月份报错；成员取 ListGroupMonitors、逐监控复用 MonthlySLA；可用性按检查数加权、零检查监控不计入加权分母、全部零检查时为 100；最差监控取组内最低可用性；故障归因合计与占比与全站口径一致；空组返回监控数 0、可用性 100、达标）；API（均需鉴权）GET /api/groups/{id}/sla?month=YYYY-MM（缺省当月、非法月份 400、不存在的分组 404）、GET /api/groups/{id}/sla.html（中文 HTML 导出：分组卡片、组内监控表、故障归因）；控制台页 /group-sla（分组下拉、月份选择、总览卡片、组内监控表、导出 HTML 链接），11 个既有控制台页导航末尾加分组SLA链，/group-sla 加进鉴权精确名单。
+- 语义界定：分组 SLA 只统计组内监控，不在组内的监控不计入；分组本身不影响检查调度与告警（沿用 v0.24.0 界定）。
+
+### 测试
+
+- 新增 internal/store/group_sla_test.go（空组与不存在分组与非法月份、加权 90/100 对 100/100 得 95 与最差监控为组内 90 分监控、组外全失败监控不计入）、internal/handlers/group_sla_test.go（JSON 的 group_id/group_name/month/monitor_count 与不存在分组 404 与非法月份 400、HTML 的 200 与“分组 SLA 月报/组名/本组暂无监控”字样与不存在分组 404）、internal/web/group_sla_test.go（分组SLA页 13 个标记、失败路径定义顺序、11 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（notify 包为既存最慢包）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18495 端口，SENTINEL_TICK_SEC=60；隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建分组 1 号“核心业务”返回 201；新建组内 UP 监控 3 号（本地 200 服务）与组内 DOWN 监控 4 号（127.0.0.1:9 拒绝）加入分组，另建组外 DOWN 监控 5 号不加入；各 CheckNow 2 次后 GET /api/groups/1/sla?month=2026-10 返回可用性 50、检查总数 4（组外监控未计入）、监控数 2、最差为组内DOWN、归因 connection 100%、未达标；不存在的分组返回 404、非法月份返回 400；sla.html 含“分组 SLA 月报 核心业务 2026-10”与卡片；/group-sla 页 200 且无鉴权 401；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 视觉验收：截图 docs/screenshots/group-sla-v025.png 亲眼核对——导航 11 链齐全且分组SLA active、分组下拉选中核心业务、月份 October 2026、查看与导出 HTML 版齐全、五张卡片（分组可用性 50.00%、检查总数 4、宕机时长、事件总数 1、是否达标未达标）与真实组内行（组内UP 100.00% 达标、组内DOWN 0.00% 未达标）均与 API 返回一致、无“加载失败”。宕机时长在截图时已从 10 秒涨到 1 分 46 秒，系 MonthlySLA 对未恢复事件的既有开放估算口径，非本轮新口径。
+- 截图 harness 说明：Playwright setContent 下相对 /api 解析失败，截图脚本按 shoot2.js 模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 在截图环境内桩化为冒烟 stub token、页面脚本的 /api/groups 改写为绝对地址并经 route 代理回真实服务，该改写仅限截图环境，产品代码未动。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 night5_sentinel_call.py（令牌经 SSH 现取不落盘、未读任何现成调用脚本；中途因 sudo 下 ~ 解析到 root 家目录致库路径错一次，改走 /home/azureuser 绝对路径后取通，属取令牌路径问题、无 API 调用产生）；Go 代码、测试、页面均为微片段逐字输出口径；编排侧机械工作：片段拼接与 gofmt、结构体稿去重 package 行、测试鉴权头补齐、11 页导航链机械追加、路由与鉴权名单接线、README/CHANGELOG 事实性文字；另有平台层现象：首通 4 次 reasoning-only 空响应（改小稿加“最高指令禁思考过程”后出正文）、一通 HTTP 500 与两通 reasoning-only 后第 4 次成功、一稿因 4000 token 上限截断在半行（贴断点原文只向 API 要续尾补全）。
+- 调用统计（batch 目录 usage.log 全量记录，含重试与空响应；成功计 token 与空响应分开标明）：成功调用 17 次，prompt 合计 407367、completion 合计 20940、合计 428307；空响应 6 次（首通 4 次、加权测试稿 2 次，均为 reasoning-only），其上报口径 prompt 合计 143764、completion 合计 13325；错误行 1 条（HTTP 500，不计用量；本轮无 429）；全量计 token 行 23 条，prompt 合计 551131、completion 合计 34265、合计 585396。另有一稿因 4000 token 上限截断在半行（计入成功合计），经贴断点原文向 API 要续尾补全后通过测试。
+
 ## [0.24.0] - 2026-10-27
 
 ### 新增

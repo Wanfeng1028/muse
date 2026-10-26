@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>分组SLA · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body onload="initGroupSLA()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">总览</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/sms-log">短信记录</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend">SLA趋势</a>
+<a href="/maintenance">维护窗口</a>
+<a href="/groups">监控分组</a>
+<a href="/group-sla" class="active">分组SLA</a>
+</nav>
+</header>
+<main class="container">
+<h1>分组 SLA 月报</h1>
+<p>按分组聚合当月可用性：可用性按检查数加权，目标 99.9%，只统计组内监控。</p>
+<div class="ctrl-row">
+<select id="group-sla-select"></select>
+<input type="month" id="group-sla-month-input">
+<button id="group-sla-load-btn">查看</button>
+<a id="group-sla-export-link" href="#">导出 HTML 版</a>
+</div>
+<p id="group-sla-status"></p>
+<div id="group-sla-cards"></div>
+<table class="snap-table">
+<thead><tr><th>监控</th><th>目标</th><th>可用性</th><th>检查数</th><th>事件数</th><th>宕机时长</th><th>达标</th></tr></thead>
+<tbody id="group-sla-rows"></tbody>
+</table>
+</main>
+<script>
+function fmtDur(sec) {
+  if (!sec) return '0 秒';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const parts = [];
+  if (d) parts.push(d + ' 天');
+  if (h) parts.push(h + ' 小时');
+  if (m) parts.push(m + ' 分');
+  if (d === 0 && h === 0) parts.push(s + ' 秒');
+  return parts.join(' ');
+}
+
+async function loadGroupSLA() {
+  const cards = document.getElementById('group-sla-cards');
+  const status = document.getElementById('group-sla-status');
+  const rows = document.getElementById('group-sla-rows');
+  const select = document.getElementById('group-sla-select');
+  const monthInput = document.getElementById('group-sla-month-input');
+  const exportLink = document.getElementById('group-sla-export-link');
+  const gid = select.value;
+  const month = monthInput.value;
+  if (!gid) {
+    status.textContent = '请先选择分组';
+    return;
+  }
+  exportLink.href = '/api/groups/' + gid + '/sla.html?month=' + month;
+  try {
+    const rep = await api('/api/groups/' + gid + '/sla?month=' + month);
+    cards.innerHTML = [
+      ['分组可用性', rep.uptime_pct.toFixed(2) + '%'],
+      ['检查总数', rep.total_checks],
+      ['宕机时长', fmtDur(rep.total_downtime_sec)],
+      ['事件总数', rep.down_incidents],
+      ['是否达标', rep.met ? '达标' : '未达标']
+    ].map(item => '<div class="card"><span class="card-label">' + esc(item[0]) + '</span><strong class="card-value">' + esc(item[1]) + '</strong></div>').join('');
+    renderGroupSLARows(rep);
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = '加载失败';
+  }
+}
+function renderGroupSLARows(rep) {
+  const rowsEl = document.getElementById("group-sla-rows");
+  const statusEl = document.getElementById("group-sla-status");
+  if (!rep.monitors || rep.monitors.length === 0) { statusEl.textContent = "本组暂无监控"; rowsEl.innerHTML = ""; return; }
+  let html = "";
+  rep.monitors.forEach(function (m) {
+    html += "<tr><td>" + esc(m.name) + "</td><td>" + esc(m.target) + "</td><td>" + m.uptime_pct.toFixed(2) + "%</td><td>" + m.total_checks + "</td><td>" + m.down_incidents + "</td><td>" + fmtDur(m.total_downtime_sec) + "</td><td>" + (m.met ? "达标" : "未达标") + "</td></tr>";
+  });
+  rowsEl.innerHTML = html;
+}
+async function loadGroupSLAOptions() {
+  const select = document.getElementById('group-sla-select');
+  const status = document.getElementById('group-sla-status');
+  try {
+    const data = await api('/api/groups');
+    const items = data && Array.isArray(data.items) ? data.items : [];
+    select.textContent = '';
+    items.forEach(function (item) {
+      const opt = document.createElement('option');
+      opt.value = item.id; opt.textContent = item.name; select.appendChild(opt);
+    });
+    if (items.length > 0) {
+      await loadGroupSLA();
+    } else { status.textContent = '暂无分组，请先在监控分组页新建分组'; }
+  } catch (err) { status.textContent = '加载失败'; }
+}
+let groupSLAInited = false;
+function initGroupSLA() {
+  if (groupSLAInited) return;
+  groupSLAInited = true;
+  const now = new Date();
+  document.getElementById("group-sla-month-input").value = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  document.getElementById("group-sla-load-btn").addEventListener("click", function () { loadGroupSLA(); });
+  document.getElementById("group-sla-select").addEventListener("change", function () { loadGroupSLA(); });
+  loadGroupSLAOptions();
+}
+initGroupSLA();
+</script>
+</body>
+</html>
