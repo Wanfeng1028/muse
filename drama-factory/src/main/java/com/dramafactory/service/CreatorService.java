@@ -253,6 +253,31 @@ public class CreatorService {
                 .orElse(false);
     }
 
+@Transactional(readOnly = true)
+public List<CreatorFeedItem> feed(int limit) {
+  if (limit < 1 || limit > 50) throw new IllegalArgumentException("limit 参数非法");
+  String followerId = currentUser.currentUserId();
+  Map<Long, Skill> skillsById = new LinkedHashMap<>();
+  Map<Long, CreatorProfile> creatorBySkillId = new LinkedHashMap<>();
+  for (CreatorFollow follow : followRepository.findByFollowerId(followerId)) {
+    CreatorProfile profile = profileRepository.findById(follow.getCreatorId()).orElse(null);
+    if (profile == null) continue;
+    List<Skill> found = new ArrayList<>(skillRepository.findByAuthor(profile.getHandle()));
+    if (profile.getDisplayName() != null) found.addAll(skillRepository.findByAuthor(profile.getDisplayName()));
+    for (Skill skill : found) {
+      skillsById.putIfAbsent(skill.getId(), skill);
+      creatorBySkillId.putIfAbsent(skill.getId(), profile);
+    }
+  }
+  List<CreatorFeedItem> items = new ArrayList<>();
+  for (Skill skill : skillsById.values()) {
+    CreatorProfile profile = creatorBySkillId.get(skill.getId());
+    items.add(new CreatorFeedItem(profile.getHandle(), profile.getDisplayName(), skill.getId(), skill.getName(), skill.getSlug(), skill.getDescription(), skill.getCategory(), skill.getInstallCount(), skill.getAvgRating(), skill.getCreatedAt()));
+  }
+  items.sort(Comparator.comparing(CreatorFeedItem::createdAt, Comparator.nullsLast(Comparator.reverseOrder())));
+  return items.size() > limit ? items.subList(0, limit) : items;
+}
+
     /**
      * 基于去重后的技能列表与关注数计算创作者统计。
      *
@@ -334,4 +359,10 @@ public class CreatorService {
      */
     public static record CreatorDetail(CreatorProfile profile, CreatorStats stats, List<Skill> skills, boolean followedByMe) {
     }
+
+/**
+ * 关注动态条目：一条为某位已关注创作者名下发布的一个 Skill，createdAt 为该 Skill 的发布时间。
+ */
+public static record CreatorFeedItem(String handle, String displayName, Long skillId, String skillName, String skillSlug, String skillDescription, String category, Long installCount, Double avgRating, LocalDateTime createdAt) {
+}
 }

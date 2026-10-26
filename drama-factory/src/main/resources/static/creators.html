@@ -18,6 +18,18 @@
   </div>
 
 <div class="card">
+  <div class="card-header">
+    <h3 class="card-title" data-i18n="cr.feedTitle">关注动态</h3>
+  </div>
+  <div class="card-body">
+    <div class="row g-3" id="creatorFeed"></div>
+    <div class="text-secondary text-center py-4" id="creatorFeedEmpty" hidden data-i18n="cr.feedEmpty">还没有关注动态：先关注创作者，或关注的创作者暂未发布新 Skill</div>
+    <div class="mt-3">
+      <button type="button" id="creatorFeedRefresh" class="btn" data-i18n="cr.feedRefresh">刷新动态</button>
+    </div>
+  </div>
+</div>
+<div class="card">
   <div class="card-body">
     <div class="row g-3 align-items-end">
       <div class="col-md-6">

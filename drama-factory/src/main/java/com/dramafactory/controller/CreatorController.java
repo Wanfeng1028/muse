@@ -70,6 +70,16 @@ public class CreatorController {
      * @param handle 创作者唯一标识
      * @return 创作者主页详情
      */
+/**
+ * 查询当前用户关注的创作者新发布的 Skill 动态，按发布时间倒序，limit 默认 20，非法时服务层抛 IllegalArgumentException。
+ */
+@GetMapping("/feed")
+public List<CreatorFeedItemDto> feed(@RequestParam(defaultValue = "20") int limit) {
+    return creatorService.feed(limit).stream()
+            .map(item -> new CreatorFeedItemDto(item.handle(), item.displayName(), item.skillId(), item.skillName(), item.skillSlug(), item.skillDescription(), item.category(), item.installCount(), item.avgRating(), item.createdAt()))
+            .toList();
+}
+
     @GetMapping("/{handle}")
     public CreatorDetailDto detail(@PathVariable String handle) {
         return toDetailDto(creatorService.detail(handle));
@@ -281,4 +291,10 @@ private CreatorDetailDto toDetailDto(CreatorService.CreatorDetail detail) {
             LocalDateTime createdAt,
             LocalDateTime updatedAt) {
     }
+
+/**
+ * 关注动态条目 DTO。
+ */
+public record CreatorFeedItemDto(String handle, String displayName, Long skillId, String skillName, String skillSlug, String skillDescription, String category, Long installCount, Double avgRating, LocalDateTime createdAt) {
+}
 }

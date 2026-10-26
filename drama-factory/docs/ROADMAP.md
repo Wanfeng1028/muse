@@ -45,6 +45,7 @@
    - [x] 2026-10-15 视觉验收返工：上一轮截图是**空数据状态**（"暂无资产/暂无视频资产/暂无项目"，不符合门面截图必须带真实数据的铁律），且截图未入仓。本轮造演示数据（图片+视频资产各 1、《霓虹夜行》项目+第 1 集）重拍深浅主题，已入 `docs/screenshots/tools-{light,dark}.png` 并同步 README。重拍时抓出并修复 1 个真实功能 bug：`tools.js` 的 `loadProjects()` 请求了带尾斜杠的 `/api/projects/`（Spring Boot 3 默认不匹配尾斜杠 → 404 → 下拉永远"暂无项目"，分镜表导出工具 UI 上不可用）→ 去掉尾斜杠。另修复 shell.js 顶栏标题缺失：`pageTitle` 映射漏了 `mv/tools/account` 三个 id（AI MV/快捷工具/账号三页顶栏错误显示"AI 短剧工坊"）→ 已补齐。
 8. **创作者计划**：创作者主页、分成/激励（需商业方案先行，技术后置）。
    - [x] 2026-10-27 落地主页 v1：`CreatorProfile`/`CreatorFollow` 实体 + V25 迁移；`/api/creators` 列表（搜索/最新/关注最多/Skill 最多排序）/详情（真实 Skill 统计 + 技能列表）/创建（201）/编辑（仅所有者，否则 403）/关注与取消关注（幂等）；`creators.html` + `creators.js`（侧边栏运行分组注册，中英双语）；文档见 docs/creator-program.md。分成/激励仍待商业方案，v1 不含任何收益数字（页面仅诚实提示规则待公布）。
+   - [x] 2026-10-27 落地关注动态 v2（非收益后续）：`GET /api/creators/feed`（limit 1–50 默认 20，已关注创作者的 Skill 按发布时间倒序、按 id 去重）；`creators.html` 关注动态卡片 + `creators.js` 的 `loadFeed()`（加载与关注切换后自动刷新 + 手动刷新，诚实空态，中英双语）；无 schema 变更、无收益数字。文档见 docs/creator-program.md 第 5 节。
 
 ## 差异化（超越 pix6 的点，本项目独有）
 

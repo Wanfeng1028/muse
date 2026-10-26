@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-27 夜烧第三波：创作者计划 v2，关注动态）
+
+- 创作者关注动态 v1（ROADMAP P2 第 8 项「创作者计划」的后续非收益部分；仍不含任何收益/分成数字）：`CreatorService.feed(limit)`（limit 1–50，非法抛 IllegalArgumentException；取当前用户全部关注关系，逐个按 handle 与 displayName 匹配 Skill.author、按 Skill id 去重、按 Skill 发布时间倒序、空时间排最后、截断至 limit；缺失档案跳过）+ 嵌套记录 `CreatorFeedItem`；`CreatorController` 新增 `GET /api/creators/feed`（limit 默认 20）与 `CreatorFeedItemDto`（创作者 handle/displayName + Skill id/名称/slug/描述/分类/安装数/均分/发布时间）。无 schema 变更（复用 V25 的 creator_follows 与 Skill 表），无收益字段。
+- 前端：`creators.html` 页头下方新增「关注动态」卡片（`#creatorFeed` 列表 + `#creatorFeedEmpty` 诚实空态 + `#creatorFeedRefresh` 刷新按钮）；`creators.js` 新增 `loadFeed()`（复用既有 `api`/`esc`/`fmtDateTime`/`_t` 与 Tabler `.card` 样式，无新 CSS 类），页面加载与关注/取消关注成功后自动刷新动态；中英双语键 `cr.feedTitle`/`cr.feedEmpty`/`cr.feedRefresh`。文档见 docs/creator-program.md 第 5 节，ROADMAP 第 8 项补记 v2。
+- 测试：新增 `CreatorControllerFeedTest` 4 例全绿（无关注时空动态、仅关注者技能且按时间倒序、limit 截断与 0/51 非法、handle 等于 displayName 时同一 Skill 不重复）；隔离构建单跑与全量中本轮 4 例均全绿，`CreatorControllerDeepTest` 9/9 未动。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，调用器为本轮现写最小新文件 batches-drama-20261026-night3/night3_flash_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile、显式 -i、ProxyCommand 齐全、未读任何现成调用脚本）产出：10 通，API prompt 合计 239388 / completion 合计 8488 / total 247876；其中成功 7 通（prompt 167689 / completion 3142 / total 170831），空响应 3 通（纯思考过程，内容作废、已逐条记入 usage.log，token 计入全量）；首通中文描述式稿与记录稿、测试首稿连空，改英文禁思考首行 + 片段口述稿后产出；远端取令牌两次走偏（sudo 下 `~` 展开到 /root 致库打不开、sqlite3 CLI 远端不存在），改绝对路径 python 只读 SELECT 后取通；控制器/服务/JS/HTML/测试的组装接线（插入位置、DTO 落位、刷新按钮绑定、关注后刷新）为编排接线，已如实注明。
+- 基线对照：HEAD 干净拷贝（python copytree 复制后以 `git show HEAD:` 还原本轮 5 个代码文件并删新测试）全量重跑 `mvn -o test`：4125 例、43 失败、86 错误、8 跳过，失败类 26 个与带改动轮（4129 例 = 4125 + 本轮 4 例，同样 43 失败、86 错误、8 跳过）逐类完全一致，故 26 类为既有失败、零回归；本轮 4 例在两轮中均全绿，`CreatorControllerDeepTest` 9/9 未动。
+- 隔离服务 HTTP 冒烟（隔离包 + 隔离库副本，端口 18221，-Xmx384m，约 77 秒启动）：`GET /api/creators/feed` 空关注时 `[]` 200；limit=0/51 均 400「limit 参数非法」；创建创作者 201、关注 200 后动态仍 `[]`（该创作者暂无 Skill，诚实）；冒烟附带发现（非本轮改动，不修）：开发库种子 Skill 占 id 1–4、H2 自增未跟进，`POST /api/skills` 撞主键 400，与夜烧上一波记录一致；故 Skill 行以 H2 SQL 夹具写入隔离库副本（仅隔离库，id 201/202 两行，不动产品代码与仓库库），重起服务后关注再查动态：新 Skill（安装 5、均分 4.5、2026-10-26）在前、旧 Skill（安装 3、无评分 null、2026-10-20）在后，limit=1 只回新的一条；首轮取消关注后动态亦为 `[]`（彼时创作者尚无 Skill，不作区分性证据；截图时为重新关注后的已关注态）。
+- 视觉验收（Playwright harness 内联渲染，真实服务数据，亲眼看过）：docs/screenshots/creators-feed-v1.png（关注动态 2 条真实数据新在前、评分与暂无评分诚实、列表卡片 Skill 2·关注 1）；首轮截图为空态且 i18n 原文，查实为编排组装漏逗号致 creators.js 整文件解析失败（`cr.viewDetail` 行后缺逗号），补 1 个逗号后 `node --check` 通过并重拍通过；harness 未内联 lucide 故顶栏图标为空框（已知 harness artifact，非产品问题）。冒烟后服务已按真实 java PID 停服、18221 复查已关、隔离构建与复制库已删。
+
 ### Added（Flash 路 2026-10-27 夜烧：创作者计划 v1，主页部分）
 
 - 创作者主页 v1（ROADMAP P2 第 8 项「创作者计划」的主页部分；分成/激励仍待商业方案，v1 不含任何收益数字，页面仅诚实提示规则待公布）：`CreatorProfile`/`CreatorFollow` 实体 + Flyway V25（`creator_profiles`/`creator_follows` 两表，handle 唯一、(creator_id, follower_id) 唯一）；`CreatorService`（创建/编辑/详情/列表/关注/取消关注；编辑仅所有者，否则 403；列表支持搜索与 newest/followers/skills 排序）；`CreatorController`（`GET /api/creators`、`GET /api/creators/{handle}`、`POST /api/creators` 201、`PUT /api/creators/{handle}`、`POST/DELETE /api/creators/{handle}/follow` 幂等，返回 followed 与 followerCount）；统计口径诚实：技能统计按 `Skill.author` 等于 handle 或 displayName 匹配去重（author 本就是自由展示串），粉丝数为真实 follow 行数；`SkillRepository` 增 `findByAuthor` 一行。

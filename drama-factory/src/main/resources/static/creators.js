@@ -34,7 +34,10 @@
     'cr.saveFailed': { 'zh-CN': '保存失败', 'en': 'Save failed' },
     'cr.detailFailed': { 'zh-CN': '加载详情失败', 'en': 'Failed to load details' },
     'cr.back': { 'zh-CN': '返回列表', 'en': 'Back to list' },
-    'cr.viewDetail': { 'zh-CN': '查看主页', 'en': 'View page' }
+    'cr.viewDetail': { 'zh-CN': '查看主页', 'en': 'View page' },
+    'cr.feedTitle': { 'zh-CN': '关注动态', 'en': 'Following feed' },
+    'cr.feedEmpty': { 'zh-CN': '还没有关注动态：先关注创作者，或关注的创作者暂未发布新 Skill', 'en': 'No following feed yet: follow creators first, or followed creators have not published new Skills' },
+    'cr.feedRefresh': { 'zh-CN': '刷新动态', 'en': 'Refresh feed' },
   };
 
   if (window.DFI18N && typeof window.DFI18N.register === 'function') { window.DFI18N.register(PAGE_I18N); }
@@ -170,6 +173,7 @@ async function toggleFollow() {
     document.getElementById('creatorFollowBtn').textContent = currentFollowed ? _t('cr.unfollow', '取消关注') : _t('cr.follow', '关注');
     if (res.followerCount != null) document.getElementById('creatorStatFollowers').textContent = res.followerCount;
     showToast(method === 'POST' ? _t('cr.followed', '已关注') : _t('cr.unfollowed', '已取消关注'));
+    loadFeed();
   } catch (err) {
     showToast(_t('cr.saveFailed', '保存失败'));
   }
@@ -201,6 +205,26 @@ async function submitForm(e) {
   }
 }
 
+async function loadFeed() {
+  const grid = document.getElementById('creatorFeed');
+  if (!grid) return;
+  const empty = document.getElementById('creatorFeedEmpty');
+  try {
+    const list = await api('/api/creators/feed');
+    const items = Array.isArray(list) ? list : [];
+    grid.innerHTML = items.map((f) => (
+      '<div class="col-12"><div class="card"><div class="card-body">'
+      + '<div>' + esc((f.displayName || '') + ' @' + (f.handle || '')) + '</div>'
+      + '<div>' + esc(f.skillName || '') + ' · 安装 ' + (f.installCount || 0) + ' · ' + (f.avgRating == null ? _t('cr.ratingNone', '暂无评分') : Number(f.avgRating).toFixed(1)) + '</div>'
+      + '<div class="text-secondary">' + esc(f.skillDescription || '') + ' · ' + fmtDateTime(f.createdAt) + '</div>'
+      + '</div></div></div>'
+    )).join('');
+    if (empty) empty.hidden = items.length > 0;
+  } catch (err) {
+    showToast(_t('cr.loadFailed', '加载失败'));
+  }
+}
+
 // 初始化：应用 i18n，绑定搜索防抖/排序/详情/关注/返回/表单事件，并首次加载列表
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof DFI18N !== 'undefined' && DFI18N) DFI18N.applyI18n(document);
@@ -219,6 +243,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('creatorDetailCard').hidden = true;
   });
   document.getElementById('creatorForm').addEventListener('submit', submitForm);
+  document.getElementById('creatorFeedRefresh').addEventListener('click', loadFeed);
   loadCreators();
+  loadFeed();
 });
 })();

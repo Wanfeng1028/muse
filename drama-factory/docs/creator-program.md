@@ -17,12 +17,20 @@
 | PUT | `/api/creators/{handle}` | 编辑自己的创作者资料 |
 | POST | `/api/creators/{handle}/follow` | 关注该创作者 |
 | DELETE | `/api/creators/{handle}/follow` | 取消关注该创作者 |
+| GET | `/api/creators/feed?limit=20` | 关注动态：当前用户关注的创作者新发布的 Skill，按发布时间倒序 |
 
 ## 3. 统计口径
 
 - **技能统计**：以 `Skill.author` 字段匹配创作者，handle 或 displayName 命中均计入
 - **粉丝数**：取真实关注关系(follow 表)的行数，不做去重估算
 - **收益数据**：v1 不提供任何收益、分成数字，商业化激励规则仍在评审中，待定后再补充
+
+## 5. 关注动态（v2）
+
+- **接口**：`GET /api/creators/feed?limit=20`，limit 取值 1–50，超出抛 400（`limit 参数非法`）。
+- **口径**：只含当前用户已关注的创作者名下 Skill；匹配规则与详情统计一致（Skill.author 等于 handle 或 displayName，同一 Skill 按 id 去重）；按 Skill 发布时间倒序，发布时间为空排最后；关注关系指向的档案已删除时跳过该关系。
+- **前端**：创作者页「关注动态」卡片展示动态列表（创作者 + Skill 名 + 安装数 + 评分 + 描述 + 发布时间），无动态时显示诚实空态（未关注，或关注的创作者暂未发布新 Skill）；页面加载与关注/取消关注成功后自动刷新，另有刷新按钮可手动刷新。
+- **收益数据**：v2 同样不提供任何收益、分成数字。
 
 ## 4. 校验规则
 
