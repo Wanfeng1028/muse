@@ -5,6 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.25.0] - 2026-10-26
+
+### 新增
+- `GET /api/links`（`internal/handler/handler.go`）的 `sort` 为空时默认为 `created_at`；`sort` 为非法值（非 `clicks`/`created_at`/`expires_at`）时返回 400，错误体为 `{"error": "sort 非法"}`。此前 v1.23.0 记录的非法 `sort` 静默回落至创建时间排序改为返回 400；store 层原有回落保留作后置防线。
+- `page`/`per_page`/`enabled`/`burn`/`expired`/`has_password` 口径未动。
+- 文档 `internal/handler/web/docs.html` 的 `/api/links` 说明中 `sort` 口径由“非法值回落创建时间”更新为“缺省 `created_at`，非法值 400”。
+
+### 测试
+- `internal/handler/list_links_sort_expires_test.go` 的 `bogus` 断言由 200 改为 400，且响应体含 “sort 非法”。
+- 新增 `internal/handler/list_links_sort_validation_test.go`，含 5 个子测试：`sort_bogus`、`sort_empty`、`sort_clicks`、`sort_created_at`、`sort_expires_at`。
+- 全量测试：`go test ./... -race -count=1`，14 包全部通过；`go vet` 全洁；本轮改动文件 `gofmt` 全洁；真实服务冒烟（18455 隔离库）：建链 2 条，sort=bogus 400 且体含“sort 非法”，缺省 sort 与 sort=clicks 均 200，docs 页含新 sort 口径短语。
+
 ## [v1.24.0] - 2026-10-26
 
 ### 新增

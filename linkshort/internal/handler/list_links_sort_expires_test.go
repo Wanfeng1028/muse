@@ -3,6 +3,7 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"strings"
 	"testing"
 	"time"
 
@@ -50,7 +51,10 @@ func TestListLinksSortByExpiresAtHTTP(t *testing.T) {
 	}
 
 	rec = doDeep3(t, h, http.MethodGet, "/api/links?sort=bogus", nil, "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("bogus sort: expected status %d, got %d", http.StatusOK, rec.Code)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("bogus sort: expected status %d, got %d", http.StatusBadRequest, rec.Code)
+	}
+	if !strings.Contains(rec.Body.String(), "sort 非法") {
+		t.Fatalf("bogus sort: expected body to contain sort 非法, got %q", rec.Body.String())
 	}
 }

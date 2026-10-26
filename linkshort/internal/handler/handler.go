@@ -634,8 +634,11 @@ func handleListLinks(w http.ResponseWriter, r *http.Request, st *store.Store, cf
 		perPage = v
 	}
 	sort := q.Get("sort")
-	if sort != "clicks" && sort != "created_at" && sort != "expires_at" {
+	if sort == "" {
 		sort = "created_at"
+	} else if sort != "clicks" && sort != "created_at" && sort != "expires_at" {
+		writeError(w, http.StatusBadRequest, "sort 非法")
+		return
 	}
 
 	var enabledPtr *bool
