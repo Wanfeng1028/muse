@@ -1,6 +1,24 @@
 
 # 更新日志
 
+## v1.21.0 — 2026-10-26
+
+### 改动
+- `GET /api/articles` 的 `limit` / `offset` 解析收紧：
+  - `limit` 缺参或空串仍默认 50；非整数（如 `abc`、`1.5`、`1x`）或小于 1 返回 400，文案「limit 参数非法」；大于 200 仍钳制为 200。
+  - `offset` 缺参或空串仍默认 0；非整数或小于 0 返回 400，文案「offset 参数非法」。
+- `scope`、`feed_id`、`folder_id` 语义一字未动；前端只发 `limit=100`，不受影响。
+
+### 测试
+- 新增 `tests/test_articles_pagination_validation.py`，9 例。
+- 旧测试同步 4 处（`test_api_deep3_paging_args.py` 2 处、`test_api_pagination_search_deep2.py` 2 处，期望由 200 改 400 并改名）。
+- 靶向 pytest 30/30 通过（15.02 秒）；`ruff check` 改动 4 文件全洁（`ruff format` 的文件级差异为既有漂移，本轮未动）。
+
+### 已知限制
+- 全量 pytest 未跑，仅跑靶向 3 文件 30 例。
+- `scope` 非法仍静默回落 `unread`，`feed_id` / `folder_id` 非法仍视为不过滤；这两处不在本轮范围，留待后续轮次。
+- 无 UI 改动，视觉验收不适用。
+
 ## v1.20.0 — 2026-10-26
 
 ### 新增

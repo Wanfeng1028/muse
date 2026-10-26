@@ -30,20 +30,16 @@ def _seed_three(db_path):
     return feed_id
 
 
-def test_limit_invalid_falls_back(client, tmp_db):
+def test_limit_invalid_returns_400(client, tmp_db):
     fid = _seed_three(tmp_db)
 
     resp = client.get(f"/api/articles?feed_id={fid}&limit=abc")
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["total"] == 3
-    assert len(data["articles"]) == 3
+    assert resp.status_code == 400
+    assert "limit 参数非法" in resp.get_json()["error"]
 
     resp = client.get(f"/api/articles?feed_id={fid}&limit=-3")
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["total"] == 3
-    assert len(data["articles"]) == 3
+    assert resp.status_code == 400
+    assert "limit 参数非法" in resp.get_json()["error"]
 
     resp = client.get(f"/api/articles?feed_id={fid}&limit=")
     assert resp.status_code == 200
@@ -52,14 +48,12 @@ def test_limit_invalid_falls_back(client, tmp_db):
     assert len(data["articles"]) == 3
 
 
-def test_offset_invalid_falls_back(client, tmp_db):
+def test_offset_invalid_returns_400(client, tmp_db):
     fid = _seed_three(tmp_db)
 
     resp = client.get(f"/api/articles?feed_id={fid}&offset=7x")
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["total"] == 3
-    assert len(data["articles"]) == 3
+    assert resp.status_code == 400
+    assert "offset 参数非法" in resp.get_json()["error"]
 
 
 def test_limit_offset_slice(client, tmp_db):

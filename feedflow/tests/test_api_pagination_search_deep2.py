@@ -79,11 +79,10 @@ def test_pagination_offset_beyond_total(client, seeded):
     assert data["articles"] == []
 
 
-def test_pagination_limit_zero_falls_back_to_50(client, seeded):
+def test_pagination_limit_zero_returns_400(client, seeded):
     resp = client.get("/api/articles?scope=all&limit=0&offset=0")
-    data = resp.get_json()
-    assert data["total"] == 5
-    assert len(data["articles"]) == 5
+    assert resp.status_code == 400
+    assert "limit 参数非法" in resp.get_json()["error"]
 
 
 def test_pagination_limit_over_200_clamped(client, seeded):
@@ -93,11 +92,10 @@ def test_pagination_limit_over_200_clamped(client, seeded):
     assert len(data["articles"]) == 5
 
 
-def test_pagination_negative_offset_falls_back_to_zero(client, seeded):
+def test_pagination_negative_offset_returns_400(client, seeded):
     resp = client.get("/api/articles?scope=all&limit=2&offset=-5")
-    data = resp.get_json()
-    assert data["total"] == 5
-    assert len(data["articles"]) == 2
+    assert resp.status_code == 400
+    assert "offset 参数非法" in resp.get_json()["error"]
 
 
 def test_invalid_scope_falls_back_to_unread(client, tmp_db):

@@ -137,13 +137,27 @@ def list_articles():
         scope = "unread"
     feed_id = _int_arg("feed_id")
     folder_id = _int_arg("folder_id")
-    limit = _int_arg("limit", 50)
-    offset = _int_arg("offset", 0)
-    if limit is None or limit <= 0:
+    raw_limit = request.args.get("limit")
+    if raw_limit is None or raw_limit == "":
         limit = 50
+    else:
+        try:
+            limit = int(raw_limit)
+        except (TypeError, ValueError):
+            return _err("limit 参数非法", 400)
+        if limit < 1:
+            return _err("limit 参数非法", 400)
     limit = min(limit, 200)
-    if offset is None or offset < 0:
+    raw_offset = request.args.get("offset")
+    if raw_offset is None or raw_offset == "":
         offset = 0
+    else:
+        try:
+            offset = int(raw_offset)
+        except (TypeError, ValueError):
+            return _err("offset 参数非法", 400)
+        if offset < 0:
+            return _err("offset 参数非法", 400)
     total, articles = store.list_articles(
         _db(),
         scope=scope,
