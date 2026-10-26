@@ -134,19 +134,21 @@ export default function Exams() {
     }
   }, [trendSubject]);
 
+  const [bySubjectWindow, setBySubjectWindow] = useState<'all' | '7' | '1'>('all');
+
   // 加载分科汇总数据
   const loadBySubject = useCallback(async () => {
     setBySubjectLoading(true);
     setBySubjectError(null);
     try {
-      const data = await api.examSummaryBySubject();
+      const data = await api.examSummaryBySubject(bySubjectWindow === 'all' ? undefined : Number(bySubjectWindow));
       setBySubject(data);
     } catch (e) {
       setBySubjectError(e instanceof Error ? e.message : '加载失败');
     } finally {
       setBySubjectLoading(false);
     }
-  }, []);
+  }, [bySubjectWindow]);
 
 
   // 依赖变化时重新加载
@@ -445,6 +447,29 @@ export default function Exams() {
       {/* 各科汇总 */}
       <div className="card">
         <h2>各科汇总</h2>
+        <div className="form-row">
+          <button
+            type="button"
+            className={bySubjectWindow === 'all' ? 'btn btn-primary' : 'btn btn-ghost'}
+            onClick={() => setBySubjectWindow('all')}
+          >
+            全部
+          </button>
+          <button
+            type="button"
+            className={bySubjectWindow === '7' ? 'btn btn-primary' : 'btn btn-ghost'}
+            onClick={() => setBySubjectWindow('7')}
+          >
+            近 7 天
+          </button>
+          <button
+            type="button"
+            className={bySubjectWindow === '1' ? 'btn btn-primary' : 'btn btn-ghost'}
+            onClick={() => setBySubjectWindow('1')}
+          >
+            今日
+          </button>
+        </div>
         {bySubjectLoading ? (
           <div className="loading">加载中…</div>
         ) : bySubjectError ? (

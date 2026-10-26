@@ -241,8 +241,8 @@ export const api = {
     request<ExamTrendPoint[]>(`/exams/trend${qs({ subject })}`),
   examSummary: (subject?: string) =>
     request<ExamSummary>(`/exams/summary${qs({ subject })}`),
-  examSummaryBySubject: () =>
-    request<ExamsBySubjectResponse>('/exams/summary/by-subject'),
+  examSummaryBySubject: (days?: number) =>
+    request<ExamsBySubjectResponse>(`/exams/summary/by-subject${qs({ days })}`),
   createExam: (input: CreateExamInput) =>
     request<ExamRecord>('/exams', { method: 'POST', body: JSON.stringify(input) }),
   deleteExam: (id: number) =>

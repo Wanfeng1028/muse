@@ -12,7 +12,7 @@ import {
   type Mistake,
 } from '@kaoyan/shared';
 
-import { todayStr } from '../db';
+import { todayStr, addDays } from '../db';
 
 // 数据库行类型
 interface ExamRow {
@@ -180,9 +180,16 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   });
 
 
-  // GET /api/exams/summary/by-subject - 真题分科汇总：仅返回有记录的科目，按 SUBJECTS 顺序排列
+  // GET /api/exams/summary/by-subject - 真题分科汇总：仅返回有记录的科目，按 SUBJECTS 顺序排列；可选 days：合法数字时仅统计最近 N 天（含今天，按 taken_at 日期界定），N 钳制到 1~31；不传或非法时统计全部历史
   app.get('/api/exams/summary/by-subject', async (req, reply) => {
-    const rows = db.prepare('SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ? ORDER BY taken_at ASC, id ASC').all(req.user!.id) as unknown as ExamRow[];
+    const rawDays = (req.query as { days?: string }).days;
+    const parsedDays = Number(rawDays);
+    const days = rawDays !== undefined && rawDays !== '' && Number.isFinite(parsedDays) ? Math.max(1, Math.min(31, Math.trunc(parsedDays))) : null;
+    const today = todayStr();
+    const rangeStart = days === null ? null : addDays(today, -(days - 1));
+    const sql = 'SELECT id, subject, paper, score, total_score, duration_minutes, taken_at FROM exam_records WHERE user_id = ?' + (rangeStart !== null ? ' AND substr(taken_at, 1, 10) >= ?' : '') + ' ORDER BY taken_at ASC, id ASC';
+    const params = rangeStart !== null ? [req.user!.id, rangeStart] : [req.user!.id];
+    const rows = db.prepare(sql).all(...params) as unknown as ExamRow[];
 
     const grouped = new Map<string, ExamRow[]>();
     for (const row of rows) {

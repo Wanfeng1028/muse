@@ -4,6 +4,14 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.11] - 2026-10-26
+
+### Added
+
+- 后端 `GET /api/exams/summary/by-subject` 新增可选 `days` 参数：合法数字时只统计最近 N 天（含今天，按 `taken_at` 日期部分界定），N 按 1~31 钳制；不传或非法时统计全部历史，与计划、专注分科汇总 `days` 口径一致；聚合口径、科目顺序、响应字段不变；SQL 用 `substr(taken_at, 1, 10) >= rangeStart` 过滤，覆盖 ISO 日期时间与纯日期两种 `taken_at` 格式。
+- 前端真题页「各科汇总」卡片新增范围切换：全部 / 近 7 天 / 今日，切换即按窗口重拉分科汇总，复用既有 `card`/`form-row`/`btn` 样式，无新增 CSS；`examSummaryBySubject` 仍为同一方法，仅加可选 `days` 参数。
+- 新增 `tests/exams-summary-by-subject-days.test.ts` 5 例：`days=7` 排除 7 天前及更早、`days=1` 只含今天、`days` 超 31 钳制且 `days=100` 与 `days=31` 结果相同、非法 `days` 视为全部历史、未登录 401。
+
 ## [1.12.10] - 2026-10-26
 
 ### Added
