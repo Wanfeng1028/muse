@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-27 夜烧：创作者计划 v1，主页部分）
+
+- 创作者主页 v1（ROADMAP P2 第 8 项「创作者计划」的主页部分；分成/激励仍待商业方案，v1 不含任何收益数字，页面仅诚实提示规则待公布）：`CreatorProfile`/`CreatorFollow` 实体 + Flyway V25（`creator_profiles`/`creator_follows` 两表，handle 唯一、(creator_id, follower_id) 唯一）；`CreatorService`（创建/编辑/详情/列表/关注/取消关注；编辑仅所有者，否则 403；列表支持搜索与 newest/followers/skills 排序）；`CreatorController`（`GET /api/creators`、`GET /api/creators/{handle}`、`POST /api/creators` 201、`PUT /api/creators/{handle}`、`POST/DELETE /api/creators/{handle}/follow` 幂等，返回 followed 与 followerCount）；统计口径诚实：技能统计按 `Skill.author` 等于 handle 或 displayName 匹配去重（author 本就是自由展示串），粉丝数为真实 follow 行数；`SkillRepository` 增 `findByAuthor` 一行。
+- 前端：`creators.html` + `creators.js`（列表搜索排序、详情卡统计与技能列表、创建/编辑表单 PUT 失败回落 POST、关注切换，中英双语；侧边栏运行分组注册 + 顶栏标题映射）；文档见 docs/creator-program.md。
+- 测试：`CreatorControllerDeepTest` 9 例全绿（创建/详情、重复 handle、非法 handle、缺失 404、Skill 聚合统计、关注往返幂等、编辑、他人编辑 403、关注缺失 404）；隔离构建 `mvn -o test` 全量 4125 例中本轮 9 例全绿，其余 29 类失败经 HEAD 干净基线全量对照为既有失败（见下）。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，调用器为本轮现写最小新文件 batches-drama-20261026-night2/night2_flash_call.py、令牌经 SSH 现取不落盘、钉死 UserKnownHostsFile、显式 -i、ProxyCommand 齐全、未读任何现成调用脚本）产出：28 通，API prompt 合计 672052 / completion 合计 84015 / total 756067；其中 8 通为空响应（纯思考过程，内容作废、已逐条记入 usage.log）；服务稿首通触顶 16000 截断，改续写补齐；控制器与服务记录结构对不上，改一通修复补齐；HTML/JS/测试描述式长稿多次连空，改英文禁思考首行 + 小 scope 分通 + 片段口述稿后产出；HTML 页面头/尾为全站通用样板机械拼接，shell.js 导航 7 处、SkillRepository 一行、JS 的 _t 定义与 api() JSON 序列化、测试围栏清理与 follow 断言按真实 Map API 修正均为编排接线，已如实注明。
+- 基线对照：HEAD 干净拷贝（python copytree 复制后以 `git show HEAD:` 还原本轮 14 个文件）全量重跑 `mvn -o test`：4116 例、45 失败、92 错误、8 跳过，失败类与带改动轮 29 类逐类完全一致（总数差值恰为本轮新增 9 例），故 29 类为既有失败、非本轮回归；另 FinalCutServiceDeepTest 在 HEAD 上单跑同样 14 跑 4 失败 6 错误、失败签名一致（ffmpeg probe 返回 null）。注：首轮基线曾因沙箱写盘 EPERM 致 surefire 报告 0 字节、误报 Tests run: 0，该轮结果作废，不作证据；本条以全量重跑控制台汇总为准。
+- 隔离服务 HTTP 冒烟（隔离包 + 隔离库副本，端口 18220，-Xmx384m，约 35–39 秒启动）：POST /api/creators 两次 201、重复 handle 400；GET 列表/详情、搜索（夜→night-ink）、followers/skills 排序、缺失 404、关注缺失 404 均如预期；关注往返幂等（二次关注不翻倍、二次取消不跌破 0）；PUT 编辑生效。详情聚合实测：night-ink 技能 2（handle 与 displayName 双匹配）、总安装 15、均分 4.5（无评分技能不计分母）。冒烟附带发现（非本轮改动，不修）：Skill 发布在开发库上撞主键（种子 Skill 显式 id 1–4 后 H2 自增计数器未跟进，publish 取 id=1 冲突），故冒烟的 Skill 行以 H2 SQL 夹具写入隔离库副本（仅隔离库，不动产品代码与仓库库）；创作者行、关注行、编辑均走真实 API。
+- 视觉验收（Playwright harness 内联渲染，真实服务数据，亲眼看过）：docs/screenshots/creators-v1.png（列表：织帧者 Skill 1·关注 0、夜墨 Skill 2·关注 1）与 creators-detail-v1.png（夜墨详情：Skill 2、安装 15、评分 4.5、关注 1，技能行含“暂无评分”诚实空值，关注按钮为已关注态）；首轮截图发现模型自造的 `.creator-card` 类无任何 CSS、列表裸文本，已按站内 skills 页 Tabler `.card` 模式机械修正并重拍通过；harness 未内联 lucide 故顶栏图标为空框（已知 harness  artifact，非产品问题）。
+
 ### Added（Flash 路 2026-10-26 夜烧：账号个性化主题偏好服务端持久化）
 
 - auth-service 用户档案新增 theme 偏好：值域 system/light/dark，默认 system；User 实体加 theme 列（可空，沿 language 口径，null 回退 system），Flyway V2__user_theme.sql；UserDto 加 theme，PUT /api/auth/profile 接受 theme（非法值 400“不支持的主题”，null 不改动），GET /api/auth/me 回显 theme。
