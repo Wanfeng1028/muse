@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SLA 趋势 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+<style>
+.bar-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.bar-month {
+  width: 80px;
+}
+.bar-outer {
+  flex: 1;
+  background: #e5e7eb;
+  height: 12px;
+}
+.bar-inner {
+  background: #10b981;
+  height: 12px;
+}
+.bar-text {
+  width: 70px;
+  text-align: right;
+}
+.trend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  margin-bottom: 4px;
+}
+.trend-month {
+  width: 80px;
+}
+.trend-bar {
+  flex: 1;
+  background: #e5e7eb;
+  height: 12px;
+}
+.trend-fill {
+  background: #10b981;
+  height: 12px;
+}
+.trend-pct {
+  width: 70px;
+  text-align: right;
+}
+</style>
+</head>
+<body onload="initSiteSLATrend()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">仪表盘</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sms-log">短信记录</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend" class="active">SLA趋势</a>
+</nav>
+</header>
+<main class="container">
+<h1>SLA 趋势</h1>
+<p>最近 N 个月全站聚合逐月对比：可用性按检查数加权，目标 99.9%。</p>
+<div class="ctrl-row">
+<input type="month" id="end-input">
+<select id="months-select">
+<option value="3">3 个月</option>
+<option value="6">6 个月</option>
+<option value="12">12 个月</option>
+</select>
+<button id="load-btn">查看</button>
+<a id="export-link" href="/api/sla/trend.html">导出 HTML 版</a>
+</div>
+<div id="cards"></div>
+<table class="snap-table">
+  <thead>
+    <tr>
+      <th>月份</th>
+      <th>可用性</th>
+      <th>检查数</th>
+      <th>事件数</th>
+      <th>宕机时长</th>
+      <th>监控数</th>
+      <th>最差监控</th>
+      <th>达标</th>
+    </tr>
+  </thead>
+  <tbody id="trend-rows"></tbody>
+</table>
+<h2>可用性条形</h2>
+<div id="trend-bars"></div>
+<p id="trend-status"></p>
+</main>
+<script>
+function fmtDur(sec) {
+  if (sec === 0) return '0 秒';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const parts = [];
+  if (d > 0) parts.push(d + ' 天');
+  if (h > 0) parts.push(h + ' 小时');
+  if (m > 0) parts.push(m + ' 分');
+  if (d === 0 && h === 0 && s > 0) parts.push(s + ' 秒');
+  return parts.join(' ');
+}
+
+async function loadSiteSLATrend() {
+  const end = document.getElementById('end-input').value;
+  const months = document.getElementById('months-select').value;
+  document.getElementById('export-link').href = '/api/sla/trend.html?end=' + end + '&months=' + months;
+const cards = document.getElementById('cards');
+const status = document.getElementById('trend-status');
+try {
+const rep = await api('/api/sla/trend?end=' + end + '&months=' + months);
+    document.getElementById("trend-rows").innerHTML = rep.items.map((item) =>
+      `<tr>` +
+      `<td>${item.month}</td>` +
+      `<td>${item.uptime_pct.toFixed(2)}%</td>` +
+      `<td>${item.total_checks}</td>` +
+      `<td>${item.down_incidents}</td>` +
+      `<td>${fmtDur(item.total_downtime_sec)}</td>` +
+      `<td>${item.monitor_count}</td>` +
+      `<td>${item.worst_monitor_name || "—"}</td>` +
+      `<td>${item.met ? "达标" : "未达标"}</td>` +
+      `</tr>`
+    ).join("");
+
+    document.getElementById("trend-bars").innerHTML = rep.items.map((item) =>
+      `<div class="bar-row">` +
+      `<span class="bar-month">${item.month}</span>` +
+      `<div class="bar-outer"><div class="bar-inner" style="width:${item.uptime_pct}%"></div></div>` +
+      `<span class="bar-text">${item.uptime_pct.toFixed(2)}%</span>` +
+      `</div>`
+    ).join("");
+
+    cards.innerHTML =
+      `<div class="card-row"><span class="card-label">截止月份</span><span class="card-value">${rep.end_month}</span></div>` +
+      `<div class="card-row"><span class="card-label">目标</span><span class="card-value">${rep.sla_target.toFixed(1)}%</span></div>`;
+  } catch (err) {
+    status.textContent = "加载失败";
+  }
+}
+function initSiteSLATrend() {
+  var now = new Date();
+  var ym = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  document.getElementById("end-input").value = ym;
+  document.getElementById("months-select").value = "6";
+  loadSiteSLATrend();
+  document.getElementById("load-btn").addEventListener("click", loadSiteSLATrend);
+  document.getElementById("months-select").addEventListener("change", loadSiteSLATrend);
+  document.getElementById("end-input").addEventListener("change", loadSiteSLATrend);
+}
+</script>
+</body>
+</html>

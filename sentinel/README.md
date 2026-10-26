@@ -23,6 +23,7 @@
 - **站点健康档案** `/profile?id=N`：7/30 天可用性、延迟分位、30 天每日柱状图、月度 SLA 一页看全
 - **月度 SLA**：选月份，看可用性、检查数、宕机时长、是否达标 99.9%
 - **全站月度 SLA 总报** `/sla-report`：全部监控按月聚合，一页看全站可用性、最差监控与逐监控表，可导出中文 HTML 月报
+- **全站 SLA 趋势** `/sla-trend`：最近 N 个月（3/6/12）全站逐月对比，含可用性条形与中文 HTML 导出
 - **公开状态页** `/status/{slug}`：对外展示，无需登录，客户直接看
 - **状态页主题**：每页可配浅色/深色/自定义主色，`PUT /api/status-pages/{id}/theme`，访客可在页面上切换预览
 - **订阅通知**：访客在状态页留邮箱订阅，宕机/恢复时收邮件；订阅需点确认链接（含退订），防滥用
@@ -97,6 +98,8 @@ open http://localhost:8200
 | GET | `/api/monitors/{id}/sla.html?month=YYYY-MM` | 是 | 月度 SLA 报告（中文 HTML，可存档） |
 | GET | `/api/sla?month=YYYY-MM` | 是 | 全站月度 SLA 总报（全部监控聚合） |
 | GET | `/api/sla.html?month=YYYY-MM` | 是 | 全站月度 SLA 总报（中文 HTML，可存档） |
+| GET | `/api/sla/trend?end=YYYY-MM&months=N` | 是 | 全站 SLA 趋势（最近 N 个月逐月聚合，N=1~12，默认 end=当月、months=6） |
+| GET | `/api/sla/trend.html?end=YYYY-MM&months=N` | 是 | 全站 SLA 趋势（中文 HTML，含逐月表与可用性条形） |
 | PUT | `/api/monitors/{id}/public` | 是 | 设置是否公开，body `{"is_public":0|1}` |
 | POST | `/api/status-pages` | 是 | 新建状态页，body `{"slug":"...","title":"..."}` |
 | GET | `/api/status-pages` | 是 | 状态页列表 |

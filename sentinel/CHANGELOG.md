@@ -3,6 +3,34 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.22.0] - 2026-10-27
+
+### 新增
+
+- 全站 SLA 趋势：`GET /api/sla/trend?end=YYYY-MM&months=N`（需鉴权）返回最近 N 个月逐月全站聚合（月份、可用性、检查数、事件数、宕机时长、监控数、最差监控、是否达标），end 缺省为当月、months 缺省 6、取值 1~12，非法 end/months 返回 400；`GET /api/sla/trend.html` 中文 HTML 导出（含逐月表与可用性条形）；控制台页 `/sla-trend`（截止月份选择、3/6/12 个月选择、逐月表、可用性条形、导出 HTML 链接），各控制台页导航末尾加 SLA趋势链，`/sla-trend` 同时加进鉴权精确名单。
+- Store 层 `SiteSLATrend` 复用 v0.21.0 的 `SiteMonthlySLA` 逐月聚合（月份按时间顺序排列，空月可用性记 100、零检查监控不计入加权）；无 schema 变更、无新环境变量。
+
+### 修复
+
+- 趋势页失败路径变量未初始化问题：首版页面脚本把 `cards`/`status` 的 const 定义放在 `await api(...)` 之后，请求一旦失败、catch 里写 `status` 会命中 TDZ 二次抛错，“加载失败”永远显示不出来；现把两行定义移到 `try` 之前，并新增 `TestSLATrendPageFailurePathOrder` 顺序回归测试锁死该顺序。
+
+### 测试
+
+- 新增 `internal/store/site_sla_trend_test.go`（空库 3 个月：起止月份与目标 99.9、非法 months/endMonth 报错；双月：2 月 10 全成功、3 月 9 成功 1 失败得 90%）与 `internal/handlers/site_sla_trend_test.go`（JSON 的 end_month/months/逐月顺序与 months=0/abc、end=2024-13 的 400、HTML 的 200 与“全站 SLA 趋势/可用性条形”字样）与 `internal/web/sla_trend_test.go`（页面标记与顺序、失败路径顺序）；`go test ./...` 16 包全绿；`go vet` 全洁。
+- 页面 JS 经 node 桩测双路径通过：成功路径渲染逐月行与条形宽度；失败路径（api 抛错）status 为“加载失败”。
+- 真实服务冒烟（隔离库 18492 端口，SENTINEL_TICK_SEC=60）：种子 2 监控（1 up 本地 200 服务、1 down 死端口）各 CheckNow 2 次后 `/api/sla/trend?end=2026-10&months=2` 返回 9 月空月 100%/0 检查、10 月 50%/4 检查/1 事件/最差为死端口/未达标；缺省参数返回 end=2026-10、months=6、6 项；months=0/abc、end=2024-13 均为 400；无鉴权 401；HTML 含趋势字样与条形标记；`/sla-trend` 页 200 且含全部标记；冒烟完二进制、隔离库、端口均已清理。
+- 视觉验收：截图 `docs/screenshots/sla-trend-v022.png` 亲眼核对——导航 8 链齐全且 SLA趋势 active、控件（October 2026、6 个月、查看、导出 HTML 版）、6 个月逐月行（5–9 月 100% 达标、10 月 50% 未达标）、绿色可用性条形（10 月半格 + 灰底余量）均与真实数据一致。
+
+### 已知限制
+
+- 趋势逐月的“最差监控”沿用 v0.21.0 单月报告的口径：空月（零检查）最差监控仍显示首个 100% 监控名（如种子“示例站点”），属继承语义，非本轮新口径；如需“空月最差为空”须另改单月报告逻辑。
+- 截图 harness 说明：本机 Playwright 的 `setContent` 会忽略 url 选项（文档基址为 about:blank，相对 `/api` 解析失败），截图脚本按 shoot2.js 模式把页面脚本的 `/api` 改写为绝对地址后才拿到真实数据；该改写仅限截图环境，产品代码未动。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行，调用器为本轮现写最小新文件 night2_sentinel_call.py，令牌经 SSH 现取不落盘、未读任何现成调用脚本；Go 代码、测试、页面、条形 CSS 均为微片段逐字输出口径；编排侧机械工作：片段拼接换行、F1a 长度守卫加固（`len==0` 改为 `len!=2` 后返回防下标越界）、G2 测试按包内惯例改写（`web.FS`→`FS`、`[]byte`→`string`）、导航链机械追加、CHANGELOG/README 事实性文字。
+- 调用统计（batch 目录 usage.log 全量记录，含重试与空响应）：成功计 token 的调用 prompt 合计 477244、completion 合计 32357；另有 6 条错误行（429 与 IncompleteRead 重试，不计用量）与 6 条空响应行（首通探活解析 bug 致用量未捕获 1 条、F1 两次、H2 一次、H3 两次 reasoning-only 空响应，改拆小稿后均成功；G2 首通推理占满 4000 token 仅出半行签名，改 max_tokens 16000 重发成功）。注意：API 回报的单通 prompt token 约 2.4 万、远大于提示词本身长度，属服务端回报口径、此处如实记录不做折算。
+
 ## [0.21.0] - 2026-10-27
 
 ### 新增
