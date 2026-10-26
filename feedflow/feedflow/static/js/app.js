@@ -172,6 +172,7 @@ function initReader() {
     renderReader(a);
     loadScoreCard(id);
     loadArticleTags(id);
+    loadArticleNote(id);
     requestAnimationFrame(() => {
       if (elScroller) elScroller.scrollTop = a.scroll_pos || 0;
     });
@@ -196,6 +197,7 @@ function initReader() {
     html += `</div></div>`;
     html += `<div id="article-tags" class="article-tags"></div>`;
     html += `<div class="tag-editor"><select id="tag-select"></select><input id="tag-new" type="text" placeholder="或填新标签名"><button id="btn-add-tag" class="btn">贴标签</button></div>`;
+    html += `<div id="article-note" class="article-note"><h3>我的笔记</h3><textarea id="note-text" rows="4"></textarea><button id="btn-save-note" class="btn">保存笔记</button><button id="btn-delete-note" class="btn">删除笔记</button><span id="note-status" class="note-status"></span></div>`;
     html += `<div id="score-card" class="score-card is-loading"><span class="score-loading">正在算这篇为什么值得读…</span></div>`;
     html += `<div class="content">${a.content_html || a.content_text || a.summary || ""}</div>`;
     elReader.innerHTML = html;
@@ -205,6 +207,7 @@ function initReader() {
     if (btnStar) btnStar.addEventListener("click", () => toggleStar(a.id, a.is_starred ? 0 : 1));
     loadTagOptions();
     bindTagEditor(a.id);
+    bindNoteEditor(a.id);
   }
 
   const SCORE_FACTORS = [["recency","时效"],["heat","事件热度"],["source","来源权重"],["keyword","关键词"],["unread","未读加成"]];
@@ -329,6 +332,48 @@ function initReader() {
     });
   }
 
+async function loadArticleNote(id) {
+  const container = document.getElementById('article-note');
+  if (!container) return;
+  let data = null;
+  try {
+    data = await api(`/api/articles/${id}/note`);
+  } catch (e) {
+    return;
+  }
+  if (state.selectedId !== id) return;
+  const text = document.getElementById('note-text');
+  if (text) text.value = data && data.body != null ? data.body : '';
+  const status = document.getElementById('note-status');
+  if (status) status.textContent = '';
+}
+
+function bindNoteEditor(articleId) {
+  const saveBtn = document.getElementById('btn-save-note');
+  const deleteBtn = document.getElementById('btn-delete-note');
+  if (saveBtn) saveBtn.onclick = async () => {
+    const text = document.getElementById('note-text');
+    const status = document.getElementById('note-status');
+    try {
+      await api(`/api/articles/${articleId}/note`, { method: 'PUT', body: JSON.stringify({ body: text ? text.value : '' }) });
+      if (status) status.textContent = '已保存';
+    } catch (e) {
+      if (status) status.textContent = '保存失败';
+    }
+  };
+  if (deleteBtn) deleteBtn.onclick = async () => {
+    const text = document.getElementById('note-text');
+    const status = document.getElementById('note-status');
+    try {
+      await api(`/api/articles/${articleId}/note`, { method: 'DELETE' });
+      if (text) text.value = '';
+      if (status) status.textContent = '已删除';
+    } catch (e) {
+      if (status) status.textContent = '删除失败';
+    }
+  };
+}
+
   function setTagFilter(id, name) {
     state.tagId = id;
     state.tagName = name;
@@ -348,7 +393,7 @@ function initReader() {
   async function markRead(id, v) {
     try { await api("/api/articles/" + id + "/read", { method: "POST", body: JSON.stringify({ is_read: v }) }); } catch (e) { return; }
     if (state.selectedId === id) {
-      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); } catch (e) {}
+      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); } catch (e) {}
     }
     loadArticles();
   }
@@ -357,7 +402,7 @@ function initReader() {
   async function toggleStar(id, v) {
     try { await api("/api/articles/" + id + "/star", { method: "POST", body: JSON.stringify({ is_starred: v }) }); } catch (e) { return; }
     if (state.selectedId === id) {
-      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); } catch (e) {}
+      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); } catch (e) {}
     }
     loadArticles();
   }

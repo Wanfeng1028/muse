@@ -310,6 +310,15 @@ def tags_unassign():
     store.remove_article_tag(db_path, article_id, tag_id)
     return redirect(url_for("web.tags_page", tag_id=tag_id))
 
+@bp.get("/notes")
+def notes_page():
+    db_path = _cfg()["db_path"]
+    notes = store.list_notes(db_path)
+    for note in notes:
+        note["display_time"] = _display_time(note["updated_at"])
+    return render_template("notes.html", notes=notes)
+
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

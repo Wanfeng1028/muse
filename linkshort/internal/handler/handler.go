@@ -908,7 +908,16 @@ func handleQRCode(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *
 		return
 	}
 
-	size := parseIntDefault(r.URL.Query().Get("size"), 256)
+	sizeRaw := r.URL.Query().Get("size")
+	size := 256
+	if sizeRaw != "" {
+		v, err := strconv.Atoi(sizeRaw)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "size 非法")
+			return
+		}
+		size = v
+	}
 	if size <= 0 {
 		writeError(w, http.StatusBadRequest, "size 非法")
 		return

@@ -464,6 +464,41 @@ def remove_article_tag(article_id, tag_id):
     return jsonify({"article_id": article_id, "tag_id": tag_id, "removed": store.remove_article_tag(_db(), article_id, tag_id)})
 
 # ---------------------------------------------------------------------------
+# 阅读笔记
+# ---------------------------------------------------------------------------
+
+@bp.route("/notes", methods=["GET"])
+def list_notes():
+    return jsonify({"notes": store.list_notes(_db())})
+
+
+@bp.route("/articles/<int:article_id>/note", methods=["GET"])
+def get_article_note(article_id):
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    return jsonify(store.get_note(_db(), article_id))
+
+
+@bp.route("/articles/<int:article_id>/note", methods=["PUT"])
+def save_article_note(article_id):
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    body = str(_json_body().get("body") or "")
+    if not body.strip():
+        return _err("笔记内容为空", 400)
+    try:
+        return jsonify(store.save_note(_db(), article_id, body))
+    except ValueError:
+        return _err("笔记内容为空", 400)
+
+
+@bp.route("/articles/<int:article_id>/note", methods=["DELETE"])
+def delete_article_note(article_id):
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    return jsonify({"article_id": article_id, "removed": store.delete_note(_db(), article_id)})
+
+# ---------------------------------------------------------------------------
 # 统计
 # ---------------------------------------------------------------------------
 

@@ -841,3 +841,93 @@ def remove_article_tag(db_path, article_id, tag_id):
             return cur.rowcount > 0
         finally:
             conn.close()
+
+
+# ---------------- article notes ----------------
+
+def get_note(db_path, article_id):
+    """读取文章笔记：文章不存在返回 None，无笔记返回空内容 dict。"""
+    conn = get_conn(db_path)
+    try:
+        row = conn.execute("SELECT 1 FROM articles WHERE id = ?", (article_id,)).fetchone()
+        if row is None:
+            return None
+        note = conn.execute(
+            "SELECT body, updated_at FROM article_notes WHERE article_id = ?", (article_id,)
+        ).fetchone()
+    finally:
+        conn.close()
+    if note is None:
+        return {"article_id": article_id, "body": "", "updated_at": None}
+    return {"article_id": article_id, "body": note[0], "updated_at": note[1]}
+
+
+def save_note(db_path, article_id, body):
+    """保存文章笔记：内容为空抛 ValueError，文章不存在抛 LookupError。"""
+    body = (body or "").strip()
+    if not body:
+        raise ValueError("笔记内容为空")
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            exists = conn.execute("SELECT 1 FROM articles WHERE id = ?", (article_id,)).fetchone()
+            if exists is None:
+                raise LookupError("文章不存在")
+            conn.execute(
+                "INSERT INTO article_notes(article_id, body, updated_at) VALUES(?, ?, ?) "
+                "ON CONFLICT(article_id) DO UPDATE SET body=excluded.body, updated_at=excluded.updated_at",
+                (article_id, body, _now_iso()),
+            )
+            conn.commit()
+        finally:
+            conn.close()
+    return get_note(db_path, article_id)
+
+
+def delete_note(db_path, article_id):
+    """删除指定文章的阅读笔记，文章不存在返回 False，否则当且仅当确实删除一行时返回 True。"""
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            cur = conn.execute("SELECT 1 FROM articles WHERE id = ?", (article_id,))
+            if cur.fetchone() is None:
+                return False
+            cur = conn.execute(
+                "DELETE FROM article_notes WHERE article_id = ?", (article_id,)
+            )
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            conn.close()
+
+
+def list_notes(db_path, limit=50):
+    """返回按更新时间倒序的最近非空阅读笔记列表，附带文章标题与订阅源标题。"""
+    limit = max(1, min(int(limit), 200))
+    conn = get_conn(db_path)
+    try:
+        cur = conn.execute(
+            """
+            SELECT n.article_id, n.body, n.updated_at,
+                   a.title AS title, f.title AS feed_title
+            FROM article_notes n
+            JOIN articles a ON a.id = n.article_id
+            JOIN feeds f ON f.id = a.feed_id
+            WHERE n.body <> ''
+            ORDER BY n.updated_at DESC
+            LIMIT ?
+            """,
+            (limit,),
+        )
+        return [
+            {
+                "article_id": row[0],
+                "body": row[1],
+                "updated_at": row[2],
+                "title": row[3],
+                "feed_title": row[4],
+            }
+            for row in cur.fetchall()
+        ]
+    finally:
+        conn.close()

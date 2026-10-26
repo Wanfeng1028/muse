@@ -79,6 +79,10 @@ OPML：导入导出订阅清单。
 
 ![标签管理页（AI 视角）](docs/screenshots/tags-ai.png)
 
+## 阅读笔记
+
+在阅读器打开一篇文章后，正文区标签编辑器下方的“我的笔记”编辑器可以为这篇文章写下一条纯文本笔记，支持保存与删除，操作结果会以状态文字提示。左侧树底栏的“我的笔记”入口可打开 `/notes` 页，集中查看全部笔记。接口方面提供 `GET /api/notes`，以及针对单篇文章的 `GET` / `PUT` / `DELETE /api/articles/<id>/note`。笔记目前仅支持纯文本，每篇文章一条。
+
 ## Fever API（第三方客户端同步）
 
 想在手机或别的阅读器里看？FeedFlow 兼容 Fever 协议，Reeder、Unread 这类支持 Fever 的客户端可以直接连上来同步，

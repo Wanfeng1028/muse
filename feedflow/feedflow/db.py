@@ -293,6 +293,20 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
         "CREATE INDEX IF NOT EXISTS idx_article_tags_tag ON article_tags(tag_id)",
     ],
 ),
+    (
+        8,
+        "一篇文章一条阅读笔记",
+        [
+            """
+            CREATE TABLE IF NOT EXISTS article_notes (
+                article_id INTEGER PRIMARY KEY REFERENCES articles(id) ON DELETE CASCADE,
+                body TEXT NOT NULL DEFAULT '',
+                updated_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_article_notes_updated ON article_notes(updated_at DESC)",
+        ],
+    ),
 ]
 
 

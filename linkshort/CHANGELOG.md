@@ -5,6 +5,14 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.26.0] - 2026-10-27
+
+### 新增
+- `GET /api/links/{id}/qrcode.png` 的 `size` 参数校验收紧：非数字值返回 400，错误体为 `{"error": "size 非法"}`；此前非数字值经默认值回落静默按 256 生成。缺参或空串仍默认 256；小于等于 0 仍返回 400（既有行为）；链接不存在仍先返回 404。
+
+### 测试
+- 新增 internal/handler/qrcode_size_validation_test.go 4 例全绿（size=abc 返回 400、无参返回 200 且为 PNG、size=256 返回 200 且为 PNG、不存在的链接加 size=abc 返回 404）。
+
 ## [v1.25.0] - 2026-10-26
 
 ### 新增

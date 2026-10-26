@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}笔记 · 信流{% endblock %}
+{% block content %}
+<div style="background-color:#FAFAF7;color:#1C1A17;padding:28px 24px;">
+  <h1 style="margin:0 0 8px;font-size:26px;color:#1C1A17;">我的笔记</h1>
+  <p style="margin:0 0 24px;color:#6B655A;">在阅读器里给文章写下的笔记都在这里。</p>
+  {% if not notes %}
+  <div style="border:1px solid #E7E2D6;padding:28px;text-align:center;color:#6B655A;">
+    还没有笔记，去阅读器打开一篇文章写下第一条吧。
+  </div>
+  {% else %}
+    {% for note in notes %}
+    <div class="note-row" style="border-bottom:1px solid #E7E2D6;padding:16px 0;">
+      <div style="display:flex;align-items:baseline;justify-content:space-between;gap:12px;">
+        <span style="font-weight:600;color:#1C1A17;">{{ note.title }}</span>
+        <span style="color:#8A8378;font-size:13px;">{{ note.feed_title }} · {{ note.display_time }}</span>
+      </div>
+      <p style="margin:8px 0;color:#1C1A17;">{{ note.body }}</p>
+      <a href="/" style="color:#C2410C;text-decoration:none;">去阅读器</a>
+    </div>
+    {% endfor %}
+  {% endif %}
+</div>
+{% endblock %}
