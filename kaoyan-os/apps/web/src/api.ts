@@ -263,6 +263,42 @@ export const api = {
     return await res.blob();
   },
 
+  exportMistakesCsv: async (subject?: string): Promise<Blob> => {
+      const res = await fetch(BASE + `/mistakes/export${qs({ subject })}`, {
+        credentials: 'same-origin',
+      });
+      if (res.status === 401) {
+        handleUnauthorized('/mistakes/export');
+        throw new Error('登录已过期，请重新登录。');
+      }
+      if (!res.ok) throw new Error(`导出失败（${res.status}）`);
+      return await res.blob();
+    },
+
+  exportWordsCsv: async (source?: string): Promise<Blob> => {
+      const res = await fetch(BASE + `/words/export${qs({ source })}`, {
+        credentials: 'same-origin',
+      });
+      if (res.status === 401) {
+        handleUnauthorized('/words/export');
+        throw new Error('登录已过期，请重新登录。');
+      }
+      if (!res.ok) throw new Error(`导出失败（${res.status}）`);
+      return await res.blob();
+    },
+
+  exportPlansCsv: async (subject?: string): Promise<Blob> => {
+      const res = await fetch(BASE + `/plans/export${qs({ subject })}`, {
+        credentials: 'same-origin',
+      });
+      if (res.status === 401) {
+        handleUnauthorized('/plans/export');
+        throw new Error('登录已过期，请重新登录。');
+      }
+      if (!res.ok) throw new Error(`导出失败（${res.status}）`);
+      return await res.blob();
+    },
+
 
   // 设置
   getSettings: () => request<Settings>('/settings'),

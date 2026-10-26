@@ -19,7 +19,7 @@
 | 真题计时与得分统计 | 套卷计时、按题型/科目录入得分，输出趋势统计、本阶段汇总与各科汇总（场次/平均分/得分率/最高分/进步幅度） |
 
 | 仪表盘 | 初试倒计时、今日任务、专注时长、待复习单词、错题与真题得分概览 |
-| 数据导入导出 | 全量 JSON 备份与恢复（覆盖/合并）、单词 CSV 与错题 CSV 导入 |
+| 数据导入导出 | 全量 JSON 备份与恢复（覆盖/合并）、单词 CSV 与错题 CSV 导入、错题/单词/计划 CSV 导出（与真题导出同口径：BOM + RFC4180 转义） |
 | 深色模式 | 浅/深主题一键切换，偏好存服务端多端同步，深色板为 slate 家族配色体系 |
 | 自律热力图 | 近 1/3/6 个月专注热力图、当前/最长连续打卡与累计专注天数，点击格子查看当日专注、计划、错题、模考明细 |
 | 周报 | 本周概览卡、7 天专注条形、计划完成率圆环、上周对比、连续打卡 |
@@ -218,10 +218,10 @@ docker run -d \
 | 分组 | 主要端点 | 说明 |
 | --- | --- | --- |
 | health | `GET /api/health` | 服务健康检查 |
-| plans | `GET/POST /api/plans`，`PATCH/DELETE /api/plans/:id`，`GET /api/plans/summary` | 复习计划增删改查与完成状态；summary 返回逐计划 actualMinutes（关联专注分钟和） |
+| plans | `GET/POST /api/plans`，`PATCH/DELETE /api/plans/:id`，`GET /api/plans/summary`，`GET /api/plans/export` | 复习计划增删改查与完成状态；summary 返回逐计划 actualMinutes（关联专注分钟和）；export 按科目筛选导出 CSV |
 | focus | `GET/POST /api/focus`（POST 可选 planId 关联计划） | 番茄专注会话记录与统计 |
-| mistakes | `GET/POST /api/mistakes`，`PATCH/DELETE /api/mistakes/:id`，`GET /api/mistakes/summary` | 错题归档、错因与重做状态、掌握率汇总 |
-| words | `GET/POST /api/words`，`POST /api/words/:id/review` | 词条管理与 SRS 复习结果提交 |
+| mistakes | `GET/POST /api/mistakes`，`PATCH/DELETE /api/mistakes/:id`，`GET /api/mistakes/summary`，`GET /api/mistakes/export` | 错题归档、错因与重做状态、掌握率汇总；export 按科目筛选导出 CSV |
+| words | `GET/POST /api/words`，`POST /api/words/:id/review`，`GET /api/words/export` | 词条管理与 SRS 复习结果提交；export 按来源筛选导出 CSV（含 SRS 列） |
 | exams | `GET/POST /api/exams`，`GET /api/exams/trend`，`GET /api/exams/summary`，`GET /api/exams/summary/by-subject`，`GET /api/exams/export` | 真题计时记录、得分率趋势、本阶段汇总统计与 CSV 导出 |
 | settings | `GET/PUT /api/settings` | 考试日期、科目等配置 |
 | stats | `GET /api/stats/weekly`，`GET /api/stats/heatmap` | 周报聚合（专注分钟/计划完成率/新增错题/模考场次/连续打卡 + 7 天每日专注分钟）；热力图聚合（专注/计划/错题/模考按天聚合 + 连续打卡统计） |

@@ -179,6 +179,26 @@ export default function Mistakes() {
     }
   }
 
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await api.exportMistakesCsv(subject === 'all' ? undefined : subject);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      document.body.appendChild(a);
+      a.download = 'kaoyan-mistakes.csv';
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '导出失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="page">
       {/* 掌握率汇总 */}
@@ -260,6 +280,7 @@ export default function Mistakes() {
             value={q}
             onChange={(e) => setQ(e.target.value)}
           />
+          <button type="button" className="btn btn-sm" onClick={handleExport} disabled={exporting}>{exporting ? '导出中…' : '导出 CSV'}</button>
         </div>
       </div>
 

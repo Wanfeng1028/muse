@@ -116,6 +116,26 @@ export default function Words() {
 
   const reviewed = total - queue.length;
 
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await api.exportWordsCsv(sourceFilter === 'all' ? undefined : sourceFilter);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      document.body.appendChild(a);
+      a.download = 'kaoyan-words.csv';
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setWordsError(err instanceof Error ? err.message : '导出失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -214,6 +234,7 @@ export default function Words() {
       {/* ③ 词表管理 */}
       <div className="card" style={{ marginTop: 16 }}>
         <h2>词表管理</h2>
+        <button type="button" className="btn btn-sm" onClick={handleExport} disabled={exporting}>{exporting ? '导出中…' : '导出 CSV'}</button>
 
         <form className="form-grid words-form-grid" onSubmit={handleSubmit} style={{ marginBottom: 16 }}>
           <input

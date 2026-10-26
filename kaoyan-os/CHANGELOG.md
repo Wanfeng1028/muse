@@ -4,6 +4,25 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.13.0] - 2026-10-27
+
+### Added
+
+- 后端新增 `GET /api/mistakes/export`：按科目筛选导出错题 CSV，表头 id,subject,subject_name,title,content,analysis,mastered,created_at，mastered 输出 1/0，按 created_at 升序、id 升序，非法 subject 返回 400。
+- 后端新增 `GET /api/words/export`：按来源筛选导出单词 CSV，表头 id,word,phonetic,meaning,example,source,source_name,memory_tip,repetitions,due_date，无 SRS 时 repetitions 与 due_date 为空，按 id 升序，非法 source 返回 400。
+- 后端新增 `GET /api/plans/export`：按科目筛选导出计划 CSV，表头 id,date,subject,subject_name,title,planned_minutes,done,created_at，done 输出 1/0，按 date 升序、id 升序，非法 subject 返回 400。
+- 三路导出统一真题导出口径：UTF-8 BOM、RFC4180 转义（逗号/双引号/换行加引号、内部双引号翻倍）、Content-Type text/csv; charset=utf-8、Content-Disposition 附件下载（带筛选时文件名含筛选值），用户隔离与未登录 401 由全局认证钩子保证。
+- 前端 api.ts 新增 exportMistakesCsv / exportWordsCsv / exportPlansCsv（与 exportExamsCsv 同款 fetch + 401 处理）；错题页筛选栏、计划页页头（智能排期旁）、单词页词表管理卡片各新增「导出 CSV」按钮，导出按当前筛选（错题科目/计划科目/单词来源）走，下载文件名分别为 kaoyan-mistakes.csv / kaoyan-plans.csv / kaoyan-words.csv。
+- 新增测试 mistakes-export.test.ts / words-export.test.ts / plans-export.test.ts，各 6 例：空库表头+BOM+text/csv、排序与中文名与状态列、RFC4180 转义、筛选与非法参数 400、用户隔离、未登录 401。
+- API 文档新增三节（错题/单词/计划导出）；前后端对照快照（api-route-parity）同步：调用数 54→57，计入本轮三条新路由。
+- 截图：docs/screenshots/plans-export.png、mistakes-export.png、words-export.png（真实服务 + 演示数据，三页导出按钮均可见，console 零错误；三路导出接口在真实服务上实测均为 200 且表头/数据行正确）。
+
+### Notes
+
+- 本轮模型调用只走 BotsRouter 大写 GLM-5.3-Flash（令牌 id=5）；首通错题导出 16000 预算与 32000 预算连空两次，原始响应实测为模型只发 reasoning_content 后以 tool_calls 收尾、正文 0 字，属 reasoning-only 空响应；改在首行加“不许调用任何工具”后出正文，后续各通均沿用该首行。
+- 编排修正（非模型稿）：错题导出路由路径由模型写的相对路径 /export 改为本文件全路径 /api/mistakes/export；错题导出查询结果断言加 as unknown 中转（TS2352）；前端三组处理器补真题页同款 document.body.appendChild（模型稿漏掉，Firefox 下不挂 DOM 点不动）；单词测试把模型编造的表名 word_srs 改为真实表 srs_state；api.ts 新方法缩进统一为 2 空格。
+- 上游 usage 回包里每通 prompt_tokens 约 24000，其中约 23936 为网关侧 cached_tokens（首通探活小提示词亦如此），非本轮提示词本身长度；记账按回包原值汇总。
+
 ## [1.12.11] - 2026-10-26
 
 ### Added

@@ -170,6 +170,53 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
     return reply.send(rows.map(mapPlan));
   });
 
+  // GET /api/plans/export - 导出计划为 CSV（同真题导出口径：BOM + RFC4180 转义）
+app.get('/api/plans/export', async (req, reply) => {
+  const subject = (req.query as { subject?: string }).subject;
+  if (subject !== undefined && !isSubjectKey(subject)) {
+    return reply.status(400).send({ error: 'subject 非法' });
+  }
+
+  const escapeField = (value: string): string => {
+    if (/[,"\r\n]/.test(value)) {
+      return '"' + value.replace(/"/g, '""') + '"';
+    }
+    return value;
+  };
+
+  const sql =
+    'SELECT id, date, subject, title, planned_minutes, done, created_at FROM plans WHERE user_id = ?' +
+    (subject ? ' AND subject = ?' : '') +
+    ' ORDER BY date ASC, id ASC';
+  const rows = (
+    subject
+      ? db.prepare(sql).all(req.user!.id, subject)
+      : db.prepare(sql).all(req.user!.id)
+  ) as unknown as PlanRow[];
+
+  const header = 'id,date,subject,subject_name,title,planned_minutes,done,created_at';
+  const lines = rows.map((row) => {
+    const subjectName = SUBJECTS.find((s) => s.key === row.subject)?.name ?? row.subject;
+    return [
+      escapeField(String(row.id)),
+      escapeField(String(row.date)),
+      escapeField(String(row.subject)),
+      escapeField(String(subjectName)),
+      escapeField(String(row.title)),
+      escapeField(String(row.planned_minutes)),
+      escapeField(row.done ? '1' : '0'),
+      escapeField(String(row.created_at)),
+    ].join(',');
+  });
+  const csv = '\ufeff' + [header, ...lines].join('\n') + '\n';
+
+  const filename = subject ? `kaoyan-plans-${subject}.csv` : 'kaoyan-plans.csv';
+  reply
+    .header('Content-Type', 'text/csv; charset=utf-8')
+    .header('Content-Disposition', `attachment; filename="${filename}"`);
+  return reply.send(csv);
+});
+
   // 计划汇总统计
   app.get('/api/plans/summary', async (req, reply) => {
     const q = req.query as Record<string, unknown>;

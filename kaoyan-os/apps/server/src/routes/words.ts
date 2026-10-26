@@ -312,6 +312,62 @@ export function registerWordsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     return result;
   });
 
+  // GET /api/words/export - 导出单词为 CSV（同真题导出口径：BOM + RFC4180 转义）
+app.get('/api/words/export', async (request, reply) => {
+  const query = request.query as { source?: string };
+  const source = query.source;
+  if (source && !(source in WORD_SOURCES)) {
+    return reply.status(400).send({ error: '无效的 source 参数' });
+  }
+
+  const rows = db
+    .prepare(
+      source
+        ? `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source, w.memory_tip, s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date FROM words w LEFT JOIN srs_state s ON s.word_id = w.id WHERE w.user_id = ? AND w.source = ? ORDER BY w.id ASC`
+        : `SELECT w.id, w.word, w.phonetic, w.meaning, w.example, w.source, w.memory_tip, s.word_id AS word_id_srs, s.ease, s.interval_days, s.repetitions, s.due_date FROM words w LEFT JOIN srs_state s ON s.word_id = w.id WHERE w.user_id = ? ORDER BY w.id ASC`
+    )
+    .all(...(source ? [request.user!.id, source] : [request.user!.id])) as unknown as WordWithStateRow[];
+
+  const escapeField = (value: string | number | null | undefined): string => {
+    if (value === null || value === undefined) {
+      return '';
+    }
+    const text = String(value);
+    if (/[",\r\n]/.test(text)) {
+      return `"${text.replace(/"/g, '""')}"`;
+    }
+    return text;
+  };
+
+  const lines = rows.map((row) => {
+    const hasSrs = row.word_id_srs !== null && row.word_id_srs !== undefined;
+    return [
+      escapeField(row.id),
+      escapeField(row.word),
+      escapeField(row.phonetic),
+      escapeField(row.meaning),
+      escapeField(row.example),
+      escapeField(row.source),
+      escapeField((WORD_SOURCES as Record<string, string>)[row.source] ?? row.source),
+      escapeField(row.memory_tip),
+      hasSrs ? escapeField(row.repetitions) : '',
+      hasSrs ? escapeField(row.due_date) : '',
+    ].join(',');
+  });
+
+  const csv =
+    '\ufeff' +
+    ['id,word,phonetic,meaning,example,source,source_name,memory_tip,repetitions,due_date', ...lines].join('\n') +
+    '\n';
+
+  const filename = source ? `kaoyan-words-${source}.csv` : 'kaoyan-words.csv';
+
+  reply
+    .header('Content-Type', 'text/csv; charset=utf-8')
+    .header('Content-Disposition', `attachment; filename="${filename}"`);
+  return reply.send(csv);
+});
+
   // POST /api/words：创建单词并初始化 SRS 状态
   app.post<{ Body: CreateWordInput }>('/api/words', async (request, reply) => {
     const body = request.body ?? ({} as CreateWordInput);

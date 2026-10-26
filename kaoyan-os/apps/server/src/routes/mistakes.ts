@@ -114,6 +114,58 @@ export function registerMistakesRoutes(app: FastifyInstance, db: DatabaseSync): 
     return reply.send(result);
   });
 
+  // GET /api/mistakes/export - 导出错题为 CSV（同真题导出口径：BOM + RFC4180 转义）
+app.get('/api/mistakes/export', async (request, reply) => {
+  const { subject } = request.query as { subject?: string };
+  if (subject && !isSubjectKey(subject)) {
+    return reply.code(400).send({ error: '无效的 subject' });
+  }
+
+  const escapeField = (value: unknown): string => {
+    const str = value == null ? '' : String(value);
+    if (/[",\r\n]/.test(str)) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return str;
+  };
+
+  const params: Array<string | number> = [request.user!.id];
+  let sql =
+    'SELECT id, subject, title, content, analysis, mastered, created_at FROM mistakes WHERE user_id = ?';
+  if (subject) {
+    sql += ' AND subject = ?';
+    params.push(subject);
+  }
+  sql += ' ORDER BY created_at ASC, id ASC';
+
+  const rows = db.prepare(sql).all(...params) as unknown as MistakeRow[];
+
+  const lines = ['id,subject,subject_name,title,content,analysis,mastered,created_at'];
+  for (const row of rows) {
+    const subjectName = SUBJECTS.find((s) => s.key === row.subject)?.name ?? row.subject;
+    lines.push(
+      [
+        escapeField(row.id),
+        escapeField(row.subject),
+        escapeField(subjectName),
+        escapeField(row.title),
+        escapeField(row.content),
+        escapeField(row.analysis),
+        escapeField(row.mastered ? 1 : 0),
+        escapeField(row.created_at),
+      ].join(','),
+    );
+  }
+
+  const csv = '\ufeff' + lines.join('\n') + '\n';
+  const filename = subject ? `kaoyan-mistakes-${subject}.csv` : 'kaoyan-mistakes.csv';
+
+  reply
+    .header('Content-Type', 'text/csv; charset=utf-8')
+    .header('Content-Disposition', 'attachment; filename="' + filename + '"');
+  return reply.send(csv);
+});
+
   // 列表：可选 subject、mastered、q
   app.get('/api/mistakes', async (request, reply) => {
 

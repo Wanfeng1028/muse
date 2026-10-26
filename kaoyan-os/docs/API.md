@@ -258,6 +258,43 @@
 }
 ```
 
+### `GET /api/plans/export`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| GET | `/api/plans/export` | 需要（登录用户） |
+
+将学习计划导出为 CSV 文件下载，返回 `text/csv` 而非 JSON，响应头为 `Content-Type: text/csv; charset=utf-8` 与 `Content-Disposition: attachment; filename="kaoyan-plans.csv"`。要点：
+
+- 可选 query 参数 `subject` 用于按科目过滤；非法时返回 400 `{ "error": "subject 非法" }`。
+- CSV 表头固定为 `id,date,subject,subject_name,title,planned_minutes,done,created_at`。
+- `done` 取值 `1` 或 `0`。
+- 记录按 `date` 升序、`id` 升序排列。
+- 文件名为 `kaoyan-plans.csv`；带 `subject` 参数时为 `kaoyan-plans-<subject>.csv`。
+- 输出带 UTF-8 BOM，行以换行分隔、末尾追加换行；字段含双引号、逗号、回车或换行时用双引号包裹，内部双引号翻倍。
+
+#### 请求参数
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| subject | query | string | 否 | 按科目过滤计划；非法时返回 400 |
+
+#### 成功响应
+
+状态码 200，返回 CSV 文件：
+
+```csv
+id,date,subject,subject_name,title,planned_minutes,done,created_at
+1,2024-06-01,math,数学,数学新学1,60,1,2024-05-31 09:00:00
+```
+
+#### 错误码
+
+| 状态码 | 响应体 | 说明 |
+| --- | --- | --- |
+| 400 | `{ "error": "subject 非法" }` | `subject` 参数非法 |
+| 401 | `{ "error": "Unauthorized" }` | 未登录（由全局认证钩子返回） |
+
 ### `GET /api/plans/overdue`
 
 | GET | /api/plans/overdue | 需登录 |
@@ -829,6 +866,43 @@
 | --- | --- | --- |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
+### `GET /api/mistakes/export`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| GET | `/api/mistakes/export` | 需要（登录用户） |
+
+将错题记录导出为 CSV 文件下载，返回 `text/csv` 而非 JSON，响应头为 `Content-Type: text/csv; charset=utf-8` 与 `Content-Disposition: attachment; filename="kaoyan-mistakes.csv"`。要点：
+
+- 可选 query 参数 `subject` 用于按科目过滤；非法时返回 400 `{ "error": "无效的 subject" }`。
+- CSV 表头固定为 `id,subject,subject_name,title,content,analysis,mastered,created_at`。
+- `mastered` 取值 `1` 或 `0`。
+- 记录按 `created_at` 升序、`id` 升序排列。
+- 文件名为 `kaoyan-mistakes.csv`；带 `subject` 参数时为 `kaoyan-mistakes-<subject>.csv`。
+- 输出带 UTF-8 BOM，行以换行分隔、末尾追加换行；字段含双引号、逗号、回车或换行时用双引号包裹，内部双引号翻倍。
+
+#### 请求参数
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| subject | query | string | 否 | 按科目过滤错题；非法时返回 400 |
+
+#### 成功响应
+
+状态码 200，返回 CSV 文件：
+
+```csv
+id,subject,subject_name,title,content,analysis,mastered,created_at
+1,math,数学,二元一次方程,解题步骤,先移项,1,2024-06-01 08:00:00
+```
+
+#### 错误码
+
+| 状态码 | 响应体 | 说明 |
+| --- | --- | --- |
+| 400 | `{ "error": "无效的 subject" }` | `subject` 参数非法 |
+| 401 | `{ "error": "Unauthorized" }` | 未登录（由全局认证钩子返回） |
+
 ### `GET /api/mistakes`
 
 | 方法 | 路径 | 认证 |
@@ -1166,6 +1240,44 @@
 按来源返回单词汇总：每项含 source、total（该来源单词总数）、due（有 SRS 状态且 due_date <= 今天的单词数）、notStarted（无 SRS 状态的单词数）；仅返回有单词的来源，按内置、核心500词库、手动录入、CSV导入的顺序排列。
 
 本接口无请求参数。
+
+### `GET /api/words/export`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| GET | `/api/words/export` | 需要（登录用户） |
+
+将单词导出为 CSV 文件下载，返回 `text/csv` 而非 JSON，响应头为 `Content-Type: text/csv; charset=utf-8` 与 `Content-Disposition: attachment; filename="kaoyan-words.csv"`。要点：
+
+- 可选 query 参数 `source` 用于按来源过滤，取值为 `builtin`、`core500`、`manual`、`csv`；非法时返回 400 `{ "error": "无效的 source 参数" }`。
+- CSV 表头固定为 `id,word,phonetic,meaning,example,source,source_name,memory_tip,repetitions,due_date`。
+- `source_name` 取 `WORD_SOURCES` 中对应来源的中文名。
+- 无 SRS 时 `repetitions` 与 `due_date` 为空。
+- 记录按 `id` 升序排列。
+- 文件名为 `kaoyan-words.csv`；带 `source` 参数时为 `kaoyan-words-<source>.csv`。
+- 输出带 UTF-8 BOM，行以换行分隔、末尾追加换行；字段含双引号、逗号、回车或换行时用双引号包裹，内部双引号翻倍。
+
+#### 请求参数
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| source | query | string | 否 | 按来源过滤，取值 `builtin`、`core500`、`manual`、`csv`；非法时返回 400 |
+
+#### 成功响应
+
+状态码 200，返回 CSV 文件：
+
+```csv
+id,word,phonetic,meaning,example,source,source_name,memory_tip,repetitions,due_date
+1,abandon,əˈbændən,放弃,Don't abandon hope.,manual,手动录入,,3,2024-06-10
+```
+
+#### 错误码
+
+| 状态码 | 响应体 | 说明 |
+| --- | --- | --- |
+| 400 | `{ "error": "无效的 source 参数" }` | `source` 参数非法 |
+| 401 | `{ "error": "Unauthorized" }` | 未登录（由全局认证钩子返回） |
 
 ### `GET /api/words/due`
 

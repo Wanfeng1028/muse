@@ -194,6 +194,26 @@ export default function Plans() {
     return `共 ${summary.total} 项、完成 ${summary.done} 项`;
   }, [summary]);
 
+  const [exporting, setExporting] = useState(false);
+  const handleExport = async () => {
+    setExporting(true);
+    try {
+      const blob = await api.exportPlansCsv(subjectFilter === '' ? undefined : subjectFilter);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      document.body.appendChild(a);
+      a.download = 'kaoyan-plans.csv';
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '导出失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="page">
       <div className="page-header">
@@ -204,6 +224,14 @@ export default function Plans() {
                   onClick={() => setSchedOpen(true)}
                 >
                   智能排期
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  type="button"
+                  onClick={handleExport}
+                  disabled={exporting}
+                >
+                  {exporting ? '导出中…' : '导出 CSV'}
                 </button>
         <div className="form-row plans-filter-row">
           <input
