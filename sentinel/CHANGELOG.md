@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.11] - 2026-10-26
+
+### 修复
+
+- `GET /api/status-pages/{id}/snapshots`（`internal/handlers/snapshot_archive.go` 的 `handleListSnapshots`）新增 `limit` 校验：`limit` 存在但不是整数、或小于 1 时返回 400，文案为“limit 参数非法”，与检查记录、事件、短信记录接口的校验口径一致。
+- 合同变更声明：此前 `limit` 非法时静默回退为默认 50，本版起改为返回 400；缺参或空串时仍默认 50；大于等于 1 的值照旧采用，不新增上限钳制。
+
+### 测试
+
+- 新增 `internal/handlers/snapshot_limit_validation_test.go` 中的 `TestSnapshotListLimitValidation`：建 1 页并生成 2 条快照，limit=abc、limit=0、limit=-1 均期望 400，limit=2 期望 200 且 items 长度 2，无 limit 参数期望 200 且 items 长度 2。
+- 既有快照测试同跑通过：`TestSnapshotArchiveFullCycle`、`TestSnapshotListLimit` 与新测试 3/3 全绿；`go vet ./internal/handlers/` 全洁；`gofmt` 本轮文件全洁。
+- 无 UI 改动，无 schema 变更，无新环境变量。
+
 ## [0.20.10] - 2026-10-26
 
 ### 修复

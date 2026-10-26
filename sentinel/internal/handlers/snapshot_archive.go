@@ -69,9 +69,12 @@ func (s *Server) handleListSnapshots(w http.ResponseWriter, r *http.Request) {
 	}
 	limit := 50
 	if v := r.URL.Query().Get("limit"); v != "" {
-		if n, e := strconv.Atoi(v); e == nil && n > 0 {
-			limit = n
+		n, e := strconv.Atoi(v)
+		if e != nil || n < 1 {
+			writeErr(w, http.StatusBadRequest, "limit 参数非法")
+			return
 		}
+		limit = n
 	}
 	snaps, err := s.store.ListStatusSnapshots(id, limit)
 	if err != nil {
