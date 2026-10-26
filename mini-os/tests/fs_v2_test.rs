@@ -369,13 +369,44 @@ async fn search_cross_user_isolation() {
     assert_eq!(arr.len(), 0);
 }
 
-// 意图：limit 参数超范围时被钳制，接口仍返回 200 与数组。
+// 意图：limit 参数超出合法范围时返回 400 及错误体。
 #[tokio::test]
-async fn search_limit_clamp() {
+async fn search_limit_out_of_range_400() {
     let (app, cookie) = test_app().await;
     create_file(&app, "a.txt", "x", None, &cookie).await;
 
     let (status, v) = req(&app, "GET", "/api/fs/search?q=a&limit=1000", None, &cookie).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    assert_eq!(v["error"], "limit 参数非法");
+    let (status, _v) = req(&app, "GET", "/api/fs/search?q=a&limit=0", None, &cookie).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+// 意图：limit 参数非整数时返回 400。
+#[tokio::test]
+async fn search_limit_non_integer_400() {
+    let (app, cookie) = test_app().await;
+    create_file(&app, "a.txt", "x", None, &cookie).await;
+
+    let (status, _v) = req(&app, "GET", "/api/fs/search?q=a&limit=abc", None, &cookie).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+    let (status, _v) = req(&app, "GET", "/api/fs/search?q=a&limit=1.5", None, &cookie).await;
+    assert_eq!(status, StatusCode::BAD_REQUEST);
+}
+
+// 意图：合法 limit 边界及缺省时返回 200 与数组。
+#[tokio::test]
+async fn search_limit_boundary_ok() {
+    let (app, cookie) = test_app().await;
+    create_file(&app, "a.txt", "x", None, &cookie).await;
+
+    let (status, v) = req(&app, "GET", "/api/fs/search?q=a&limit=1", None, &cookie).await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(v.is_array());
+    let (status, v) = req(&app, "GET", "/api/fs/search?q=a&limit=200", None, &cookie).await;
+    assert_eq!(status, StatusCode::OK);
+    assert!(v.is_array());
+    let (status, v) = req(&app, "GET", "/api/fs/search?q=a", None, &cookie).await;
     assert_eq!(status, StatusCode::OK);
     assert!(v.is_array());
 }

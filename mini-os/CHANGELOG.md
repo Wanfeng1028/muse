@@ -1,3 +1,9 @@
+## [1.19.7] - 2026-10-26
+
+- GET /api/fs/search 的 limit 参数：缺失或空串默认 50；非整数、小于 1 或大于 200 时返回 400，错误体 {"error": "limit 参数非法"}；此前为静默钳制到 1 到 200。
+- 测试：tests/fs_v2_test.rs 旧 search_limit_clamp 测试替换为 search_limit_out_of_range_400、search_limit_non_integer_400、search_limit_boundary_ok 三组。
+- 验证：fs_v2_test 15/15、vfs_search_r2 2/2 通过；cargo fmt 干净；真实服务冒烟 limit=1000 与 limit=abc 均 400、limit=200 返回 200 且含文件。
+
 ## [1.19.6] - 2026-10-26
 
 - list_events: 如果 `from` 大于 `to` 返回 400，消息“开始时间不能晚于结束时间”。如果 `from` 等于 `to` 返回 200 空数组。

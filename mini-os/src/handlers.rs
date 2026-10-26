@@ -794,7 +794,7 @@ pub async fn move_fs(
 #[derive(Deserialize)]
 pub struct SearchQuery {
     pub q: Option<String>,
-    pub limit: Option<i64>,
+    pub limit: Option<String>,
 }
 
 pub async fn search_fs(
@@ -809,7 +809,13 @@ pub async fn search_fs(
     if q.chars().count() > 100 {
         return Err(err(StatusCode::BAD_REQUEST, "搜索关键词过长"));
     }
-    let limit = query.limit.unwrap_or(50).clamp(1, 200);
+    let limit = match query.limit.as_deref().map(str::trim) {
+        None | Some("") => 50,
+        Some(raw) => match raw.parse::<i64>() {
+            Ok(v) if (1..=200).contains(&v) => v,
+            _ => return Err(err(StatusCode::BAD_REQUEST, "limit 参数非法")),
+        },
+    };
 
     // LIKE 转义：把 \ % _ 当字面量
     let escaped = q
