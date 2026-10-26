@@ -327,7 +327,7 @@ def _scope_clause(scope):
 
 
 def list_articles(db_path, scope="unread", feed_id=None, folder_id=None,
-                  limit=50, offset=0):
+                  tag_id=None, limit=50, offset=0):
     """列出文章，返回 (total, rows)。rows 含 feed_title 与簇大小，按 published_at 倒序 NULL 排后。"""
     conn = get_conn(db_path)
     try:
@@ -336,6 +336,9 @@ def list_articles(db_path, scope="unread", feed_id=None, folder_id=None,
         if feed_id is not None:
             where.append("a.feed_id = ?")
             params.append(feed_id)
+        if tag_id is not None:
+            where.append("EXISTS (SELECT 1 FROM article_tags at WHERE at.article_id = a.id AND at.tag_id = ?)")
+            params.append(tag_id)
         if folder_id is not None:
             where.append("f.folder_id = ?")
             params.append(folder_id)
@@ -759,5 +762,77 @@ def set_job_state(db_path, key, value):
                 (key, value, _now_iso()),
             )
             conn.commit()
+        finally:
+            conn.close()
+
+
+# ---------------- tags ----------------
+
+def create_tag(db_path, name):
+    normalized = " ".join(name.split()).lower()
+    if not normalized:
+        raise ValueError("tag name cannot be empty")
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            conn.execute(
+                "INSERT OR IGNORE INTO tags(name, created_at) VALUES (?, ?)",
+                (normalized, _now_iso()),
+            )
+            conn.commit()
+            row = conn.execute("SELECT id, name FROM tags WHERE name = ?", (normalized,)).fetchone()
+            return {"id": row["id"], "name": row["name"]}
+        finally:
+            conn.close()
+
+
+def list_tags(db_path):
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT t.id, t.name, COUNT(a.article_id) AS article_count "
+            "FROM tags t LEFT JOIN article_tags a ON a.tag_id = t.id "
+            "GROUP BY t.id, t.name ORDER BY t.name ASC"
+        ).fetchall()
+        return [{"id": r["id"], "name": r["name"], "article_count": r["article_count"]} for r in rows]
+    finally:
+        conn.close()
+
+
+def list_article_tags(db_path, article_id):
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT t.id, t.name FROM tags t "
+            "JOIN article_tags a ON a.tag_id = t.id "
+            "WHERE a.article_id = ? ORDER BY t.name ASC",
+            (article_id,),
+        ).fetchall()
+        return [{"id": r["id"], "name": r["name"]} for r in rows]
+    finally:
+        conn.close()
+
+
+def add_article_tag(db_path, article_id, tag_id):
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            ok = conn.execute("SELECT (SELECT 1 FROM articles WHERE id = ?) AND (SELECT 1 FROM tags WHERE id = ?)", (article_id, tag_id)).fetchone()[0]
+            if not ok or conn.execute("SELECT 1 FROM article_tags WHERE article_id = ? AND tag_id = ?", (article_id, tag_id)).fetchone():
+                return False
+            conn.execute("INSERT INTO article_tags (article_id, tag_id) VALUES (?, ?)", (article_id, tag_id))
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+
+def remove_article_tag(db_path, article_id, tag_id):
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            cur = conn.execute("DELETE FROM article_tags WHERE article_id = ? AND tag_id = ?", (article_id, tag_id))
+            conn.commit()
+            return cur.rowcount > 0
         finally:
             conn.close()

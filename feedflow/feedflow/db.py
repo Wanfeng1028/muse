@@ -271,6 +271,28 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "CREATE TABLE IF NOT EXISTS login_lockouts (ip TEXT PRIMARY KEY, failures INTEGER NOT NULL, first_fail REAL NOT NULL, locked_until REAL)",
         ],
     ),
+(
+    7,
+    "add tags and article_tags tables with indexes",
+    [
+        """
+        CREATE TABLE IF NOT EXISTS tags (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS article_tags (
+            article_id INTEGER NOT NULL,
+            tag_id INTEGER NOT NULL,
+            PRIMARY KEY (article_id, tag_id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_article_tags_article ON article_tags(article_id)",
+        "CREATE INDEX IF NOT EXISTS idx_article_tags_tag ON article_tags(tag_id)",
+    ],
+),
 ]
 
 

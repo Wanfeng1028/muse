@@ -13,7 +13,7 @@ from feedflow import create_app
 # 一次性测试密码：只存在于本文件，用后即弃
 _TEST_PASSWORD = "v117-loggedin-topbar-onceoff-password"
 
-_LOGGEDOUT_LINK_TEXTS = ("阅读器", "今日必读", "聚类 Top", "订阅管理", "统计", "OPML")
+_LOGGEDOUT_LINK_TEXTS = ("阅读器", "今日必读", "聚类 Top", "标签", "订阅管理", "统计", "OPML")
 _LOGGEDIN_ONLY_TEXT = "退出"
 
 _V116_CSS_PATH = "/static/css/design-v116.css"
@@ -47,7 +47,7 @@ def gated_app(tmp_path):
     return _make_gated_app(tmp_path)
 
 
-def test_loggedin_nav_has_seven_links_and_v116_layer(gated_app):
+def test_loggedin_nav_has_eight_links_and_v116_layer(gated_app):
     client = gated_app.test_client()
 
     login = client.post("/login", data={"password": _TEST_PASSWORD, "next": "/"})
@@ -61,7 +61,7 @@ def test_loggedin_nav_has_seven_links_and_v116_layer(gated_app):
     assert _LOGGEDIN_ONLY_TEXT in html
 
     segment = _mainnav_segment(html)
-    assert segment.count("<a") == 7, f"mainnav 应有 7 个 <a>，实际 {segment.count('<a')}"
+    assert segment.count("<a") == 8, f"mainnav 应有 8 个 <a>，实际 {segment.count('<a')}"
     for text in (*_LOGGEDOUT_LINK_TEXTS, _LOGGEDIN_ONLY_TEXT):
         assert text in segment, f"mainnav 缺少链接文本：{text}"
 
@@ -72,8 +72,8 @@ def test_loggedin_nav_has_seven_links_and_v116_layer(gated_app):
     assert "height: auto" in css_text
 
 
-def test_loggedout_nav_has_six_links_no_logout(tmp_path):
-    # 未开启密码门的应用：首页直接 200，导航为 6 链无“退出”。
+def test_loggedout_nav_has_seven_links_no_logout(tmp_path):
+    # 未开启密码门的应用：首页直接 200，导航为 7 链无“退出”。
     # 注意：开启密码门时未登录 GET / 会 302 到 /login，登录页没有导航，
     # 因此本例必须用不带 auth 配置的应用，不能复用 gated_app。
     app = create_app(
@@ -93,6 +93,6 @@ def test_loggedout_nav_has_six_links_no_logout(tmp_path):
     assert _LOGGEDIN_ONLY_TEXT not in html
 
     segment = _mainnav_segment(html)
-    assert segment.count("<a") == 6
+    assert segment.count("<a") == 7
     for text in _LOGGEDOUT_LINK_TEXTS:
         assert text in html, f"正文缺少未登录链接文本：{text}"

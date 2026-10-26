@@ -1,6 +1,33 @@
 
 # 更新日志
 
+## v1.23.0 — 2026-10-26
+
+### Added
+
+#### 文章标签系统
+
+- **数据库**：迁移 v7 新增 `tags` 与 `article_tags` 两张表及两个索引
+- **store 层**：
+  - `create_tag`：规范化处理（去空白、折叠连续空白、转小写），重复创建返回已有标签
+  - `list_tags`：返回标签列表，含 `article_count` 篇数
+  - `list_article_tags`、`add_article_tag`、`remove_article_tag`
+  - `list_articles` 新增 `tag_id` 过滤参数
+- **API**：
+  - `GET /api/tags`、`POST /api/tags`
+  - `GET /api/articles/<id>/tags`、`POST /api/articles/<id>/tags`、`DELETE /api/articles/<id>/tags`
+  - `GET /api/articles?tag_id=` 按标签过滤文章列表
+- **Web**：
+  - 新增 `/tags` 页：新建标签、标签列表（含篇数）、选中标签的文章列表、贴标签与取消关联表单
+  - 顶栏新增“标签”入口
+- **测试**：`tests/test_tags.py`（8 例）与 `tests/test_tags_api.py`（9 例）共 17 例通过，`ruff` 全部通过
+- **顶栏翻转点修正（design-v118.css 层，原 v112–v117 层不动）**：新增“标签”入口后实测翻转点后移（已登录 8 链 571px 起单行、未登录 7 链 521px 起单行），v117 旧阈值（521/471）在错位带（已登录 521–570px、未登录 471–520px）把两行顶栏按单行算、阅读区溢出 62px；新层在错位带改回 183px 两行算式，复测错位带 app-shell 恢复 613px、单行带仍 675px；新增 `tests/test_design_v118.py` 3 例；`tests/test_design_v117_loggedin_topbar.py` 导航计数同步为已登录 8 链、未登录 7 链
+
+### 已知限制
+
+- 阅读器正文区暂不显示标签 chips，标签管理请通过 `/tags` 页与 API 完成
+
+
 ## v1.22.0 — 2026-10-26
 
 - **接口行为调整**：收紧 `GET /api/articles` 的 `scope` 参数校验。改动前，当 `scope` 取值非法时，系统会静默回落至 `unread`；改动后，若 `scope` 非法，接口将直接返回 HTTP 400 状态码，且响应体中的错误信息（`error` 字段）为 "scope 非法"。当请求中缺失 `scope` 参数或其值为空字符串时，仍默认按 `unread` 处理。

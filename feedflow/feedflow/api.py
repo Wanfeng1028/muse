@@ -137,6 +137,7 @@ def list_articles():
         return _err("scope 非法", 400)
     feed_id = _int_arg("feed_id")
     folder_id = _int_arg("folder_id")
+    tag_id = _int_arg("tag_id")
     raw_limit = request.args.get("limit")
     if raw_limit is None or raw_limit == "":
         limit = 50
@@ -163,6 +164,7 @@ def list_articles():
         scope=scope,
         feed_id=feed_id,
         folder_id=folder_id,
+        tag_id=tag_id,
         limit=limit,
         offset=offset,
     )
@@ -410,6 +412,51 @@ def reactivate_feed(feed_id: int):
     return jsonify(store.get_feed(db, feed_id))
 
 
+
+# ---------------------------------------------------------------------------
+# 标签
+# ---------------------------------------------------------------------------
+
+@bp.get("/tags")
+def list_tags():
+    return jsonify({"tags": store.list_tags(_db())})
+
+
+@bp.post("/tags")
+def create_tag():
+    body = _json_body()
+    name = str(body.get("name") or "").strip()
+    if not name: return _err("标签名为空", 400)
+    try: tag = store.create_tag(_db(), name)
+    except ValueError: return _err("标签名为空", 400)
+    return jsonify(tag), 201
+
+
+@bp.get("/articles/<int:article_id>/tags")
+def list_article_tags(article_id):
+    if not store.get_article(_db(), article_id): return _err("文章不存在", 404)
+    return jsonify({"article_id": article_id, "tags": store.list_article_tags(_db(), article_id)})
+
+
+@bp.post("/articles/<int:article_id>/tags")
+def add_article_tag(article_id):
+    if not store.get_article(_db(), article_id): return _err("文章不存在", 404)
+    body = _json_body()
+    tag_id = body.get("tag_id")
+    if tag_id is None:
+        name = str(body.get("name") or "").strip()
+        if not name: return _err("标签名为空", 400)
+        try: tag_id = store.create_tag(_db(), name)["id"]
+        except ValueError: return _err("标签名为空", 400)
+    elif not any(t.get("id") == tag_id for t in store.list_tags(_db())):
+        return _err("标签不存在", 404)
+    return jsonify({"article_id": article_id, "tag_id": tag_id, "added": store.add_article_tag(_db(), article_id, tag_id)})
+
+
+@bp.delete("/articles/<int:article_id>/tags/<int:tag_id>")
+def remove_article_tag(article_id, tag_id):
+    if not store.get_article(_db(), article_id): return _err("文章不存在", 404)
+    return jsonify({"article_id": article_id, "tag_id": tag_id, "removed": store.remove_article_tag(_db(), article_id, tag_id)})
 
 # ---------------------------------------------------------------------------
 # 统计

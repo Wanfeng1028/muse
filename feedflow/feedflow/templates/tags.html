@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}标签 · 信流{% endblock %}
+
+{% block content %}
+<style>
+  .tags-page { max-width: 720px; margin: 0 auto; padding: 24px 16px 48px; background: #FAFAF7; color: #1C1A17; }
+  .tags-page h1 { font-size: 30px; letter-spacing: 3px; margin: 0 0 6px; }
+  .tags-page .sub { color: #6B655A; font-size: 14px; margin: 0 0 20px; }
+  .tags-page .flash { background: #FBEDE6; border: 1px solid #C2410C; padding: 8px 12px; margin-bottom: 16px; font-size: 14px; }
+  .tags-page form { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 20px; }
+  .tags-page input, .tags-page select { border: 1px solid #E7E2D6; background: #FAFAF7; color: #1C1A17; padding: 6px 10px; font-size: 14px; }
+  .tags-page button { border: 1px solid #C2410C; background: #C2410C; color: #FAFAF7; padding: 6px 14px; font-size: 14px; cursor: pointer; }
+  .tags-page button:hover { background: #FBEDE6; color: #C2410C; }
+  .tags-page h2 { font-size: 18px; margin: 24px 0 8px; }
+  .tags-page .tag-list { border-top: 1px solid #E7E2D6; }
+  .tags-page .tag-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 10px; border-bottom: 1px solid #E7E2D6; }
+  .tags-page .tag-row a { color: #1C1A17; text-decoration: none; }
+  .tags-page .tag-row a:hover { color: #C2410C; }
+  .tags-page .tag-row.is-active { background: #FBEDE6; }
+  .tags-page .tag-row.is-active a { color: #C2410C; font-weight: bold; }
+  .tags-page .count { color: #6B655A; font-size: 13px; }
+  .tags-page .art-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px; border-bottom: 1px solid #E7E2D6; }
+  .tags-page .art-meta { color: #6B655A; font-size: 13px; margin-left: 8px; }
+  .tags-page .art-row form button { border-color: #E7E2D6; background: #FAFAF7; color: #6B655A; padding: 3px 10px; font-size: 12px; }
+  .tags-page .art-row form button:hover { border-color: #C2410C; color: #C2410C; }
+  .tags-page .empty { color: #6B655A; font-size: 14px; padding: 6px 0; }
+</style>
+<div class="tags-page">
+  <h1>标签</h1>
+  <p class="sub">给文章贴标签，按标签找回同一主题的文章。</p>
+
+  {% if request.args.get('saved') %}<p class="flash">已保存。</p>{% endif %}
+  {% if request.args.get('err') == 'empty' %}<p class="flash">标签名不能为空。</p>{% endif %}
+  {% if request.args.get('err') == 'bad' %}<p class="flash">文章或标签编号不对。</p>{% endif %}
+
+  <form method="post" action="/tags">
+    <input type="text" name="name" placeholder="新标签名" required>
+    <button type="submit">新建标签</button>
+  </form>
+
+  {% if tags %}
+  <div class="tag-list">
+    {% for t in tags %}
+    <div class="tag-row{% if tag_id == t.id %} is-active{% endif %}">
+      <a href="/tags?tag_id={{ t.id }}">{{ t.name }}</a>
+      <span class="count">{{ t.article_count }} 篇</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <p class="empty">还没有标签，先新建一个。</p>
+  {% endif %}
+
+  {% if tag_id is not none %}
+  <h2>该标签的文章</h2>
+  {% if articles %}
+    {% for a in articles %}
+    <div class="art-row">
+      <div>
+        <span>{{ a.title }}</span>
+        <span class="art-meta">{{ a.feed_title }} · {{ a.published_at }}</span>
+      </div>
+      <form method="post" action="/tags/unassign">
+        <input type="hidden" name="article_id" value="{{ a.id }}">
+        <input type="hidden" name="tag_id" value="{{ tag_id }}">
+        <button type="submit">取消关联</button>
+      </form>
+    </div>
+    {% endfor %}
+  {% else %}
+  <p class="empty">这个标签下还没有文章。</p>
+  {% endif %}
+  {% else %}
+  <p class="empty">点一个标签，看它下面的文章。</p>
+  {% endif %}
+
+  <h2>贴标签</h2>
+  <form method="post" action="/tags/assign">
+    <input type="number" name="article_id" placeholder="文章编号" required>
+    <select name="tag_id">
+      {% for t in tags %}
+      <option value="{{ t.id }}">{{ t.name }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="name" placeholder="或填新标签名">
+    <button type="submit">贴标签</button>
+  </form>
+</div>
+{% endblock %}

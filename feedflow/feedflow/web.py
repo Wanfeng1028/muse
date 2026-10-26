@@ -245,6 +245,59 @@ def digest_clusters_page():
 
 
 
+@bp.get("/tags")
+def tags_page():
+    db_path = _cfg()["db_path"]
+    tags = store.list_tags(db_path)
+    tag_id = request.args.get("tag_id", type=int)
+    if tag_id is not None:
+        articles = store.list_articles(db_path, scope="all", tag_id=tag_id)[1]
+    else:
+        articles = []
+    return render_template("tags.html", tags=tags, articles=articles, tag_id=tag_id)
+
+
+@bp.post("/tags")
+def tags_create():
+    db_path = _cfg()["db_path"]
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        return redirect(url_for("web.tags_page", err="empty"))
+    try:
+        store.create_tag(db_path, name)
+    except ValueError:
+        return redirect(url_for("web.tags_page", err="empty"))
+    return redirect(url_for("web.tags_page", saved="1"))
+
+
+@bp.post("/tags/assign")
+def tags_assign():
+    db_path = _cfg()["db_path"]
+    if (article_id := request.form.get("article_id", type=int)) is None:
+        return redirect(url_for("web.tags_page", err="bad"))
+    raw = (request.form.get("tag_id") or "").strip()
+    tag_id = int(raw) if raw.isdigit() else None
+    if raw and tag_id is None:
+        return redirect(url_for("web.tags_page", err="bad"))
+    if tag_id is None:
+        try:
+            tag_id = store.create_tag(db_path, (request.form.get("name") or "").strip())["id"]
+        except ValueError:
+            return redirect(url_for("web.tags_page", err="empty"))
+    store.add_article_tag(db_path, article_id, tag_id)
+    return redirect(url_for("web.tags_page", tag_id=tag_id))
+
+
+@bp.post("/tags/unassign")
+def tags_unassign():
+    db_path = _cfg()["db_path"]
+    article_id = request.form.get("article_id", type=int)
+    tag_id = request.form.get("tag_id", type=int)
+    if article_id is None or tag_id is None:
+        return redirect(url_for("web.tags_page", err="bad"))
+    store.remove_article_tag(db_path, article_id, tag_id)
+    return redirect(url_for("web.tags_page", tag_id=tag_id))
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

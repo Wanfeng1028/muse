@@ -69,6 +69,14 @@ OPML：导入导出订阅清单。
 设计注记：卡片流不用三栏特性格样板；分数必须可解释——用户能看到每一项的来由；无数据时如实提示，不许空状态当门面。
 
 
+## 文章标签
+
+在 `/tags` 页新建标签并给文章贴标签，点击任一标签即可找回同一主题的全部文章。标签名会自动规范化：去除首尾与多余空白并转为小写，重复名称直接复用已有标签。也可通过 API 操作：`GET/POST /api/tags` 与 `GET/POST/DELETE /api/articles/<id>/tags`。
+
+![标签管理页](docs/screenshots/tags.png)
+
+![标签管理页（AI 视角）](docs/screenshots/tags-ai.png)
+
 ## Fever API（第三方客户端同步）
 
 想在手机或别的阅读器里看？FeedFlow 兼容 Fever 协议，Reeder、Unread 这类支持 Fever 的客户端可以直接连上来同步，
