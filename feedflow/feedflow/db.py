@@ -335,6 +335,14 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
         "CREATE INDEX IF NOT EXISTS idx_read_history_last ON read_history(last_read_at DESC)",
     ],
 ),
+(
+    11,
+    "articles 新增 starred_at（加星时间，v1.28 星标收藏用）",
+    [
+        "ALTER TABLE articles ADD COLUMN starred_at TEXT",
+        "CREATE INDEX IF NOT EXISTS idx_articles_starred_at ON articles(starred_at DESC)",
+    ],
+),
 ]
 
 

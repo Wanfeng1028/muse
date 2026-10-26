@@ -368,6 +368,27 @@ def history_clear():
     return redirect(url_for("web.history_page", cleared=1))
 
 
+@bp.get("/starred")
+def starred_page():
+    db_path = _cfg()["db_path"]
+    items = store.list_starred(db_path)
+    for item in items:
+        item["display_time"] = _display_time(item["starred_at"])
+    return render_template("starred.html", items=items)
+
+@bp.post("/starred/unstar")
+def starred_unstar():
+    """将指定文章取消星标。"""
+    article_id = request.form.get("article_id", type=int)
+    if not article_id:
+        return redirect(url_for("web.starred_page", err="bad"))
+    db_path = _cfg()["db_path"]
+    if store.get_article(db_path, article_id) is None:
+        return redirect(url_for("web.starred_page", err="bad"))
+    store.set_starred(db_path, article_id, 0)
+    return redirect(url_for("web.starred_page", removed=1))
+
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

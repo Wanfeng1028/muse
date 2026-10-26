@@ -1,6 +1,33 @@
 
 # 更新日志
 
+## v1.28.0 — 2026-10-27
+
+### Added
+
+- 星标收藏
+  - 迁移 v11 给 `articles` 表新增 `starred_at` 列（加星时间，可为空）及 `idx_articles_starred_at` 索引
+  - store 层：`set_starred` 加星时写当前时间、取消星标时清空 `starred_at`；新增 `list_starred`（只取 `is_starred = 1`，按加星时间倒序、空时间老星标排最后，limit 钳制 1–200）
+  - API：`GET /api/starred`（返回 `starred` 列表）；`POST /api/articles/<id>/star` 返回结果新增 `starred_at` 字段（加星为时间、取消为 null），404/必填/非法校验一字不动
+  - Web：新增 `/starred` 页（每行显示标题、来源与加星时间，已读标“已读”，右侧“取消星标”按钮，空态文案）与 `POST /starred/unstar`（文章不存在或参数非法重定向带 `err=bad`，成功带 `removed=1`）；新增模板 `templates/starred.html`
+  - 阅读器左侧树底栏新增“星标收藏”入口；顶栏不加入口（与历史/笔记先例一致，翻转点与导航计数不受影响）
+
+### 测试
+
+- `tests/test_starred_store.py`（6 例：加星写时间、取消清空、只列星标、按加星时间倒序、limit 钳制、迁移 v11 与索引断言）
+- `tests/test_starred_api.py`（5 例：只列星标、星标返回时间、取消后移出列表、按加星时间倒序、行字段形状；种子库本身含星标文章，测试先清星标再断言，初始为空的写法会误判）
+- `tests/test_starred_web.py`（4 例：空态、列表含标题与“取消星标”、取消表单重定向、阅读器底栏链接）
+- 靶向 15/15 通过；`ruff check` 改动文件全洁（`ruff format` 差异为既有漂移，本轮未动）
+- 全量 pytest：1103 通过、2 失败（424.11 秒），2 处失败均为 v1.21 旧契约既有失败（`test_api_deep.py::test_pagination_limit_clamped`、`test_api_deep2.py::test_articles_pagination_edge_cases`，分页 limit 旧期望与 v1.21 收紧后的 400 冲突），本轮未动分页逻辑，零回归
+- 视觉验收：真实服务（18428 端口，应用自带种子库 33 篇，先清 6 篇种子星标、只星 2 篇真实文章），截图 `docs/screenshots/starred-v128.png`（星标页两行真实数据、取消星标按钮、已读徽标）与 `docs/screenshots/reader-foot-v128.png`（树底栏“星标收藏”入口），两路 console 零错误；冒烟服务与演示库已删，截图脚本在 `muse-build/batches-feedflow-20261026-night6/ff_n6_starred_shot.js`
+- 模型稿（只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行，prompt 首行禁思考过程，调用器为本轮现写的最小新文件 `ff_n6_starlight_call.py`，令牌经 SSH 现取不落盘、未读任何现成调用脚本）：9 通全部一次成功、零空响应、零失败；编排修正 2 处（均已披露）：① 落仓脚本锚定漏了 v10 元组收尾的 `),` 致 db.py 语法错误，补回该行后迁移 v11 冒烟通过（模型稿本身无误）；② README 段落模型稿把空态引文里的“星标”写成单引号‘星标’，校回与模板一致的双引号“星标”
+
+### 已知限制
+
+- `/starred` 页标题链接指向原文外链，与 `/later`、`/history` 页已知限制同款，不跳回站内阅读器。
+- 迁移前已加星的文章 `starred_at` 为空，排在列表最后；重新加星一次即按新时间排序。
+- 顶栏无“星标收藏”入口，只在阅读器树底栏，与历史/笔记一致。
+
 ## v1.27.0 — 2026-10-27
 
 ### Added

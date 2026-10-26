@@ -264,7 +264,12 @@ def set_article_star(article_id: int):
     except (TypeError, ValueError):
         return _err("is_starred 非法", 400)
     store.set_starred(db, article_id, value)
-    return jsonify({"id": article_id, "is_starred": value})
+    article = store.get_article(db, article_id)
+    return jsonify({
+        "id": article_id,
+        "is_starred": value,
+        "starred_at": article["starred_at"] if article is not None else None,
+    })
 
 
 @bp.post("/articles/<int:article_id>/progress")
@@ -567,6 +572,14 @@ def record_article_history(article_id):
 @bp.delete("/history")
 def clear_history_api():
     return jsonify({"cleared": store.clear_history(_db())})
+
+
+# ---------------- 星标收藏 ----------------
+
+@bp.get("/starred")
+def list_starred_api():
+    """列出星标文章。"""
+    return jsonify({"starred": store.list_starred(_db())})
 
 
 # ---------------------------------------------------------------------------

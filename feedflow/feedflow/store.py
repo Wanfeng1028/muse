@@ -401,10 +401,16 @@ def set_starred(db_path, article_id, is_starred):
     with write_lock:
         conn = get_conn(db_path)
         try:
-            conn.execute(
-                "UPDATE articles SET is_starred = ? WHERE id = ?",
-                (1 if is_starred else 0, article_id),
-            )
+            if is_starred:
+                conn.execute(
+                    "UPDATE articles SET is_starred = 1, starred_at = ? WHERE id = ?",
+                    (_now_iso(), article_id),
+                )
+            else:
+                conn.execute(
+                    "UPDATE articles SET is_starred = 0, starred_at = NULL WHERE id = ?",
+                    (article_id,),
+                )
             conn.commit()
         finally:
             conn.close()
@@ -1187,3 +1193,40 @@ def clear_history(db_path):
             return cur.rowcount
         finally:
             conn.close()
+
+
+# ---------------- 星标收藏 ----------------
+
+def list_starred(db_path, limit=50):
+    """按加星时间倒序返回星标文章列表；未记 starred_at 的老星标排在最后。"""
+    limit = max(1, min(int(limit), 200))
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            """
+            SELECT a.id AS article_id, a.title, a.link, f.title AS feed_title,
+                   a.published_at, a.is_read, a.is_starred, a.starred_at
+            FROM articles a
+            JOIN feeds f ON f.id = a.feed_id
+            WHERE a.is_starred = 1
+            ORDER BY (a.starred_at IS NULL) ASC, a.starred_at DESC,
+                     a.published_at DESC, a.id ASC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [
+            {
+                "article_id": r["article_id"],
+                "title": r["title"],
+                "link": r["link"],
+                "feed_title": r["feed_title"],
+                "published_at": r["published_at"],
+                "is_read": bool(r["is_read"]),
+                "is_starred": bool(r["is_starred"]),
+                "starred_at": r["starred_at"],
+            }
+            for r in rows
+        ]
+    finally:
+        conn.close()
