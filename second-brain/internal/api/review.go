@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"time"
 
 	logpkg "github.com/Wanfeng1028/muse/second-brain/internal/log"
@@ -25,7 +26,16 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
-		limit := parseIntDefault(r.URL.Query().Get("limit"), 20)
+		rawLimit := r.URL.Query().Get("limit")
+		limit := 20
+		if rawLimit != "" {
+			parsed, err := strconv.Atoi(rawLimit)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "limit 参数非法")
+				return
+			}
+			limit = parsed
+		}
 		if limit <= 0 {
 			limit = 20
 		}
