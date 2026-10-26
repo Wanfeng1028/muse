@@ -615,16 +615,23 @@ func handleCreateLink(w http.ResponseWriter, r *http.Request, st *store.Store, c
 func handleListLinks(w http.ResponseWriter, r *http.Request, st *store.Store, cfg *config.Config) {
 	q := r.URL.Query()
 	search := q.Get("search")
-	page := parseIntDefault(q.Get("page"), 1)
-	if page < 1 {
-		page = 1
+	page := 1
+	if s := q.Get("page"); s != "" {
+		v, err := strconv.Atoi(s)
+		if err != nil || v < 1 {
+			writeError(w, http.StatusBadRequest, "page 非法")
+			return
+		}
+		page = v
 	}
-	perPage := parseIntDefault(q.Get("per_page"), 20)
-	if perPage < 1 {
-		perPage = 20
-	}
-	if perPage > 200 {
-		perPage = 200
+	perPage := 20
+	if s := q.Get("per_page"); s != "" {
+		v, err := strconv.Atoi(s)
+		if err != nil || v < 1 || v > 200 {
+			writeError(w, http.StatusBadRequest, "per_page 非法")
+			return
+		}
+		perPage = v
 	}
 	sort := q.Get("sort")
 	if sort != "clicks" && sort != "created_at" && sort != "expires_at" {

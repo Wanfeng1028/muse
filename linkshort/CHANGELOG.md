@@ -5,6 +5,19 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.24.0] - 2026-10-26
+
+### 新增
+
+- `GET /api/links` 分页参数收紧：`page` 缺省为 1，须为正整数，非法值返回 400（`page 非法`）；`per_page` 缺省为 20，合法范围 1–200，非法值返回 400（`per_page 非法`）；其余筛选与排序口径不变。
+- store 层原有的分页钳制逻辑保留，作为 handler 参数校验之后的后置防线。
+- API 文档页 `GET /api/links` 说明同步更新分页参数口径。
+
+### 测试
+
+- 新增 `internal/handler/list_links_pagination_test.go`，含 8 个子测试：`page_zero`、`page_abc`、`page_negative`、`per_page_zero`、`per_page_over`、`per_page_abc`、`valid_pagination`、`defaults`。
+- 全量测试：`go test ./... -race -count=1`，14 个包全部通过；`go vet` 全洁；本轮改动文件与新文件 `gofmt` 全洁；真实服务冒烟（18451 隔离库）：建链 3 条，page=0 / per_page=201 / page=abc 均 400 且体含对应参数名，page=1&per_page=2 返回 total 3、2 条，page=2&per_page=2 返回 total 3、1 条且与前页无交集，缺省参数返回 total 3，`GET /ui/docs.html` 实测含新分页口径短语。
+
 ## [v1.23.0] - 2026-10-26
 
 ### 新增
