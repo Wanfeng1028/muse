@@ -264,6 +264,13 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "ALTER TABLE feeds ADD COLUMN dead_at TEXT NOT NULL DEFAULT ''",
         ],
     ),
+    (
+        6,
+        "登录失败锁定持久化表",
+        [
+            "CREATE TABLE IF NOT EXISTS login_lockouts (ip TEXT PRIMARY KEY, failures INTEGER NOT NULL, first_fail REAL NOT NULL, locked_until REAL)",
+        ],
+    ),
 ]
 
 

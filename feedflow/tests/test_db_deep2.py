@@ -39,7 +39,7 @@ def test_migration_idempotent_repeat_init(db_path):
         v1 = db_mod._get_user_version(conn)
     finally:
         conn.close()
-    assert v1 == 5
+    assert v1 == len(db_mod.MIGRATIONS)
 
     fid = _make_feed(db_path)
     aid = _insert_article(db_path, fid, "guid-1", title="keep me")
@@ -52,7 +52,7 @@ def test_migration_idempotent_repeat_init(db_path):
         v2 = db_mod._get_user_version(conn)
     finally:
         conn.close()
-    assert v2 == 5
+    assert v2 == len(db_mod.MIGRATIONS)
 
     # 数据仍在
     art = store.get_article(db_path, aid)
@@ -81,7 +81,7 @@ def test_migration_rerun_after_version_reset(db_path):
         cols = [dict(r)["name"] for r in conn.execute("PRAGMA table_info(articles)").fetchall()]
     finally:
         conn.close()
-    assert v == 5
+    assert v == len(db_mod.MIGRATIONS)
     assert "simhash" in cols
     assert "cluster_id" in cols
     assert "last_read_at" in cols

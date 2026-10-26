@@ -56,10 +56,11 @@ def create_app(cfg=None) -> Flask:
     if cfg.get("secret_key"):
         app.secret_key = cfg["secret_key"]
 
-    # 登录失败锁定器（内存计数，每应用实例独立；测试用 create_app 各自独立不串计数）。
+    # 登录失败锁定持久化到 SQLite，进程重启后计数依然有效。
     from .login_lockout import LoginLockout
 
     app.extensions["FEEDFLOW_LOGIN_LOCKOUT"] = LoginLockout(
+        db_path=db_path,
         max_attempts=int(cfg.get("auth_max_attempts", 5)),
         window_seconds=int(cfg.get("auth_window_seconds", 900)),
         lock_seconds=int(cfg.get("auth_lock_seconds", 900)),
