@@ -103,6 +103,40 @@ fn validate_dt(s: &str) -> Result<String, String> {
     if !(digits_ok(8) && digits_ok(9)) {
         return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
     }
+
+    // 解析年份、月份、日期数值
+    let year = (bytes[0] as u32 - b'0' as u32) * 1000
+        + (bytes[1] as u32 - b'0' as u32) * 100
+        + (bytes[2] as u32 - b'0' as u32) * 10
+        + (bytes[3] as u32 - b'0' as u32);
+    let month = (bytes[5] as u32 - b'0' as u32) * 10 + (bytes[6] as u32 - b'0' as u32);
+    let day = (bytes[8] as u32 - b'0' as u32) * 10 + (bytes[9] as u32 - b'0' as u32);
+
+    // 月份范围 01-12
+    if month < 1 || month > 12 {
+        return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
+    }
+
+    // 当月天数
+    let days_in_month = match month {
+        1 | 3 | 5 | 7 | 8 | 10 | 12 => 31,
+        4 | 6 | 9 | 11 => 30,
+        2 => {
+            let is_leap = (year % 4 == 0) && (year % 100 != 0 || year % 400 == 0);
+            if is_leap {
+                29
+            } else {
+                28
+            }
+        }
+        _ => 0,
+    };
+
+    // 日期范围 01-当月天数
+    if day < 1 || day > days_in_month {
+        return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
+    }
+
     if n == 10 {
         return Ok(norm_dt(s));
     }
@@ -119,6 +153,20 @@ fn validate_dt(s: &str) -> Result<String, String> {
     if !(digits_ok(14) && digits_ok(15)) {
         return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
     }
+
+    // 解析小时、分钟数值
+    let hour = (bytes[11] as u32 - b'0' as u32) * 10 + (bytes[12] as u32 - b'0' as u32);
+    let minute = (bytes[14] as u32 - b'0' as u32) * 10 + (bytes[15] as u32 - b'0' as u32);
+
+    // 小时范围 00-23
+    if hour > 23 {
+        return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
+    }
+    // 分钟范围 00-59
+    if minute > 59 {
+        return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
+    }
+
     if n == 16 {
         return Ok(norm_dt(s));
     }
@@ -129,6 +177,15 @@ fn validate_dt(s: &str) -> Result<String, String> {
     if !(digits_ok(17) && digits_ok(18)) {
         return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
     }
+
+    // 解析秒数值
+    let second = (bytes[17] as u32 - b'0' as u32) * 10 + (bytes[18] as u32 - b'0' as u32);
+
+    // 秒范围 00-59
+    if second > 59 {
+        return Err("时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM".to_string());
+    }
+
     Ok(norm_dt(s))
 }
 
