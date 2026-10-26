@@ -59,7 +59,7 @@
     <div class="art-row">
       <div>
         <span>{{ a.title }}</span>
-        <span class="art-meta">{{ a.feed_title }} · {{ a.published_at }}</span>
+                <span class="art-meta">{{ a.feed_title }} · {{ a.display_time }}</span>
       </div>
       <form method="post" action="/tags/unassign">
         <input type="hidden" name="article_id" value="{{ a.id }}">
@@ -79,6 +79,7 @@
   <form method="post" action="/tags/assign">
     <input type="number" name="article_id" placeholder="文章编号" required>
     <select name="tag_id">
+      <option value="">选已有标签</option>
       {% for t in tags %}
       <option value="{{ t.id }}">{{ t.name }}</option>
       {% endfor %}

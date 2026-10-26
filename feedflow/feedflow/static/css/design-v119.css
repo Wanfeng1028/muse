@@ -1,0 +1,67 @@
+/* design-v119.css — 文章标签 UI（本通新增，不覆盖既有选择器） */
+
+.article-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.tag-chip {
+  display: inline-flex;
+  align-items: center;
+  background: #FBEDE6;
+  color: #1C1A17;
+  border: 1px solid #E7E2D6;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.4;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+
+.tag-chip-x {
+  background: none;
+  border: none;
+  color: #C2410C;
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1;
+  padding: 0 2px;
+  margin-left: -4px;
+  cursor: pointer;
+}
+
+.tag-empty {
+  color: #6B655A;
+  font-size: 13px;
+}
+
+.tag-editor {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 12px 0;
+}
+
+.tag-editor select,
+.tag-editor input {
+  background: #FAFAF7;
+  color: #1C1A17;
+  border: 1px solid #E7E2D6;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 13px;
+  padding: 6px 10px;
+}
+
+.tag-editor input {
+  min-width: 140px;
+}
+
+#clear-tag-filter {
+  margin-left: 8px;
+}

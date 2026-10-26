@@ -20,7 +20,7 @@ async function api(path, opts) {
 
 // ---------------- 阅读器页 ----------------
 function initReader() {
-  const state = { scope: "unread", feedId: null, folderId: null, selectedId: null };
+  const state = { scope: "unread", feedId: null, folderId: null, selectedId: null, tagId: null, tagName: "" };
   const elTree = document.getElementById("feed-tree");
   const elList = document.getElementById("article-list");
   const elReader = document.getElementById("reader-pane");
@@ -40,9 +40,13 @@ function initReader() {
       state.folderId = null;
       document.querySelectorAll(".filter-btn[data-scope]").forEach(b => b.classList.toggle("is-active", b === btn));
       clearActive();
+      state.tagId = null; state.tagName = "";
       loadArticles();
     });
   });
+
+  const clearTagFilterBtn = document.getElementById("clear-tag-filter");
+  if (clearTagFilterBtn) clearTagFilterBtn.addEventListener("click", clearTagFilter);
 
   // 清除树中激活态
   function clearActive() {
@@ -57,6 +61,7 @@ function initReader() {
       state.folderId = null;
       clearActive();
       feedBtn.classList.add("active");
+      state.tagId = null; state.tagName = "";
       loadArticles();
       return;
     }
@@ -68,18 +73,22 @@ function initReader() {
       state.feedId = null;
       clearActive();
       head.classList.add("active");
+      state.tagId = null; state.tagName = "";
       loadArticles();
     }
   });
 
   // 渲染中栏文章列表
   async function loadArticles() {
-    elStatus.textContent = scopeLabel[state.scope] || "未读";
+    elStatus.textContent = (scopeLabel[state.scope] || "未读") + (state.tagName ? " · 标签：" + state.tagName : "");
     const params = new URLSearchParams();
     params.set("scope", state.scope);
     if (state.feedId != null) params.set("feed_id", state.feedId);
     if (state.folderId != null) params.set("folder_id", state.folderId);
+    if (state.tagId != null) params.set("tag_id", state.tagId);
     params.set("limit", "100");
+    const clearTagBtn = document.getElementById("clear-tag-filter");
+    if (clearTagBtn) clearTagBtn.style.display = state.tagId == null ? "none" : "";
     let data;
     try { data = await api("/api/articles?" + params.toString()); } catch (e) { data = { total: 0, articles: [] }; }
     const arts = (data && data.articles) || [];
@@ -162,6 +171,7 @@ function initReader() {
     elList.querySelectorAll(".article-item").forEach(n => n.classList.toggle("active", parseInt(n.dataset.id, 10) === id));
     renderReader(a);
     loadScoreCard(id);
+    loadArticleTags(id);
     requestAnimationFrame(() => {
       if (elScroller) elScroller.scrollTop = a.scroll_pos || 0;
     });
@@ -184,6 +194,8 @@ function initReader() {
     html += `<button id="btn-star" class="btn">${star}</button>`;
     if (a.link) html += `<a class="btn" href="${escapeAttr(a.link)}" target="_blank" rel="noopener">查看原文</a>`;
     html += `</div></div>`;
+    html += `<div id="article-tags" class="article-tags"></div>`;
+    html += `<div class="tag-editor"><select id="tag-select"></select><input id="tag-new" type="text" placeholder="或填新标签名"><button id="btn-add-tag" class="btn">贴标签</button></div>`;
     html += `<div id="score-card" class="score-card is-loading"><span class="score-loading">正在算这篇为什么值得读…</span></div>`;
     html += `<div class="content">${a.content_html || a.content_text || a.summary || ""}</div>`;
     elReader.innerHTML = html;
@@ -191,6 +203,8 @@ function initReader() {
     const btnStar = document.getElementById("btn-star");
     if (btnRead) btnRead.addEventListener("click", () => markRead(a.id, a.is_read ? 0 : 1));
     if (btnStar) btnStar.addEventListener("click", () => toggleStar(a.id, a.is_starred ? 0 : 1));
+    loadTagOptions();
+    bindTagEditor(a.id);
   }
 
   const SCORE_FACTORS = [["recency","时效"],["heat","事件热度"],["source","来源权重"],["keyword","关键词"],["unread","未读加成"]];
@@ -227,11 +241,114 @@ function initReader() {
     card.innerHTML = html;
   }
 
+
+  async function loadArticleTags(id) {
+    const box = document.getElementById("article-tags");
+    if (!box) return;
+    let tags = [];
+    try {
+      const res = await api("/api/articles/" + id + "/tags");
+      tags = Array.isArray(res.tags) ? res.tags : [];
+    } catch (e) {
+      return;
+    }
+    if (state.selectedId !== id) return;
+    if (!tags.length) {
+      box.innerHTML = `<span class="tag-empty">还没有标签</span>`;
+      return;
+    }
+    box.innerHTML = "";
+    tags.forEach((t) => {
+      const chip = document.createElement("button");
+      chip.className = "tag-chip";
+      chip.dataset.tagId = t.id;
+      chip.dataset.tagName = t.name || "";
+      chip.textContent = t.name || "";
+      chip.addEventListener("click", () => {
+        if (typeof setTagFilter === "function") setTagFilter(t.id, t.name || "");
+      });
+      const x = document.createElement("button");
+      x.className = "tag-chip-x";
+      x.dataset.tagId = t.id;
+      x.textContent = "×";
+      x.setAttribute("aria-label", "取消关联");
+      x.addEventListener("click", async () => {
+        try {
+          await api("/api/articles/" + id + "/tags/" + t.id, { method: "DELETE" });
+          loadArticleTags(id);
+        } catch (e) {}
+      });
+      box.appendChild(chip);
+      box.appendChild(x);
+    });
+  }
+
+  async function loadTagOptions() {
+    const sel = document.getElementById("tag-select");
+    if (!sel) return;
+    sel.innerHTML = "";
+    const first = document.createElement("option");
+    first.value = "";
+    first.textContent = "选已有标签";
+    sel.appendChild(first);
+    try {
+      const data = await api("/api/tags");
+      (data.tags || []).forEach((t) => {
+        const opt = document.createElement("option");
+        opt.value = t.id;
+        opt.textContent = t.name;
+        sel.appendChild(opt);
+      });
+    } catch (e) {}
+  }
+
+  function bindTagEditor(articleId) {
+    const btn = document.getElementById("btn-add-tag");
+    if (!btn) return;
+    btn.addEventListener("click", async () => {
+      const sel = document.getElementById("tag-select");
+      const input = document.getElementById("tag-new");
+      let body = null;
+      if (sel && sel.value) {
+        body = { tag_id: Number(sel.value) };
+      } else if (input && input.value.trim()) {
+        body = { name: input.value.trim() };
+      }
+      if (!body) return;
+      try {
+        await api(`/api/articles/${articleId}/tags`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body),
+        });
+        loadArticleTags(articleId);
+        loadTagOptions();
+        if (input) input.value = "";
+        if (sel) sel.value = "";
+      } catch (e) {}
+    });
+  }
+
+  function setTagFilter(id, name) {
+    state.tagId = id;
+    state.tagName = name;
+    state.feedId = null;
+    state.folderId = null;
+    clearActive();
+    loadArticles();
+  }
+
+  function clearTagFilter() {
+    state.tagId = null;
+    state.tagName = "";
+    loadArticles();
+  }
+
   // 标记已读/未读
   async function markRead(id, v) {
     try { await api("/api/articles/" + id + "/read", { method: "POST", body: JSON.stringify({ is_read: v }) }); } catch (e) { return; }
     if (state.selectedId === id) {
-      try { const a = await api("/api/articles/" + id); renderReader(a); } catch (e) {}
+      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); } catch (e) {}
     }
     loadArticles();
   }
@@ -240,7 +357,7 @@ function initReader() {
   async function toggleStar(id, v) {
     try { await api("/api/articles/" + id + "/star", { method: "POST", body: JSON.stringify({ is_starred: v }) }); } catch (e) { return; }
     if (state.selectedId === id) {
-      try { const a = await api("/api/articles/" + id); renderReader(a); } catch (e) {}
+      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); } catch (e) {}
     }
     loadArticles();
   }
@@ -250,6 +367,7 @@ function initReader() {
     const body = { scope: state.scope };
     if (state.feedId != null) body.feed_id = state.feedId;
     if (state.folderId != null) body.folder_id = state.folderId;
+    if (state.tagId != null) body.tag_id = state.tagId;
     try { await api("/api/articles/mark_read", { method: "POST", body: JSON.stringify(body) }); } catch (e) { return; }
     loadArticles();
   }

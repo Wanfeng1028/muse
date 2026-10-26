@@ -73,6 +73,8 @@ OPML：导入导出订阅清单。
 
 在 `/tags` 页新建标签并给文章贴标签，点击任一标签即可找回同一主题的全部文章。标签名会自动规范化：去除首尾与多余空白并转为小写，重复名称直接复用已有标签。也可通过 API 操作：`GET/POST /api/tags` 与 `GET/POST/DELETE /api/articles/<id>/tags`。
 
+阅读器正文区标题下方现以 chips 展示文章标签：点按任一标签即按该标签筛选文章列表，chip 后的 × 可摘除该关联；chips 下方提供贴标签编辑器，可下拉选已有标签或填新标签名（下拉优先）。点 chip 进入筛选后保留当前 scope，状态栏显示“<scope 文案> · 标签：<名>”，并可用“清除标签筛选”按钮退出筛选。切换 scope 或点订阅树/分组也会清除标签筛选。
+
 ![标签管理页](docs/screenshots/tags.png)
 
 ![标签管理页（AI 视角）](docs/screenshots/tags-ai.png)

@@ -245,6 +245,16 @@ def digest_clusters_page():
 
 
 
+def _display_time(s):
+    if not s:
+        return s
+    try:
+        dt = datetime.fromisoformat(s)
+    except (ValueError, TypeError):
+        return s
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
 @bp.get("/tags")
 def tags_page():
     db_path = _cfg()["db_path"]
@@ -254,6 +264,8 @@ def tags_page():
         articles = store.list_articles(db_path, scope="all", tag_id=tag_id)[1]
     else:
         articles = []
+    for a in articles:
+        a["display_time"] = _display_time(a.get("published_at"))
     return render_template("tags.html", tags=tags, articles=articles, tag_id=tag_id)
 
 

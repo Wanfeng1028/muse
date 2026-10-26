@@ -294,6 +294,7 @@ def mark_all_read():
     data = _json_body()
     feed_id = data.get("feed_id")
     folder_id = data.get("folder_id")
+    tag_id = data.get("tag_id")
     scope = data.get("scope") or "unread"
     try:
         feed_id = int(feed_id) if feed_id not in (None, "") else None
@@ -303,9 +304,13 @@ def mark_all_read():
         folder_id = int(folder_id) if folder_id not in (None, "") else None
     except (TypeError, ValueError):
         return _err("folder_id 非法", 400)
+    try:
+        tag_id = int(tag_id) if tag_id not in (None, "") else None
+    except (TypeError, ValueError):
+        return _err("tag_id 非法", 400)
     if scope not in ("unread", "starred", "all"):
         scope = "unread"
-    count = store.mark_all_read(_db(), feed_id=feed_id, folder_id=folder_id, scope=scope)
+    count = store.mark_all_read(_db(), feed_id=feed_id, folder_id=folder_id, tag_id=tag_id, scope=scope)
     return jsonify({"updated": count})
 
 

@@ -445,7 +445,7 @@ def get_scroll_pos(db_path, article_id):
         conn.close()
 
 
-def mark_all_read(db_path, feed_id=None, folder_id=None, scope="unread"):
+def mark_all_read(db_path, feed_id=None, folder_id=None, tag_id=None, scope="unread"):
     """批量标记已读。scope: unread|starred|all。"""
     where = [_scope_clause(scope)]
     params = []
@@ -455,6 +455,11 @@ def mark_all_read(db_path, feed_id=None, folder_id=None, scope="unread"):
     if folder_id is not None:
         where.append("feed_id IN (SELECT id FROM feeds WHERE folder_id = ?)")
         params.append(folder_id)
+    if tag_id is not None:
+        where.append(
+            "EXISTS (SELECT 1 FROM article_tags WHERE article_tags.article_id = articles.id AND tag_id = ?)"
+        )
+        params.append(tag_id)
     where_sql = " AND ".join(where).replace("a.", "")  # UPDATE 不支持表别名，去掉 a. 前缀
     with write_lock:
         conn = get_conn(db_path)
