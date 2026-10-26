@@ -115,9 +115,10 @@
       });
     },
 
-    updateProfile: function (nickname, avatarUrl, language) {
+    updateProfile: function (nickname, avatarUrl, language, theme) {
       var body = { nickname: nickname, avatarUrl: avatarUrl };
       if (language !== undefined) body.language = language;
+      if (theme !== undefined) body.theme = theme;
       return request('/profile', { method: 'PUT', body: body });
     },
 

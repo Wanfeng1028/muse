@@ -5,11 +5,12 @@
 
 ## [Unreleased]
 
-### Added（Flash 路 2026-10-26 夜烧：账号个性化主题偏好服务端持久化，后端部分）
+### Added（Flash 路 2026-10-26 夜烧：账号个性化主题偏好服务端持久化）
 
 - auth-service 用户档案新增 theme 偏好：值域 system/light/dark，默认 system；User 实体加 theme 列（可空，沿 language 口径，null 回退 system），Flyway V2__user_theme.sql；UserDto 加 theme，PUT /api/auth/profile 接受 theme（非法值 400“不支持的主题”，null 不改动），GET /api/auth/me 回显 theme。
 - 测试：AuthServiceTest 新增 profile_theme* 4 例（改 dark 生效、非法值 400、null 不改动、新注册默认 system），既有 4 参调用补第 5 参；隔离构建全量 29/29 全绿；隔离服务 HTTP 冒烟：注册回 system、PUT dark 后 me 回 dark、PUT blue 回 400、缺 theme 时 dark 不变。
-- 未做（待续）：账号页前端主题与服务端同步（account.js 主题单选目前只写 localStorage，auth.js updateProfile 尚未加 theme 参）；本轮因 BotsRouter 连续 429 触发硬停规则而停手，未再发模型调用。模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，单路串行，调用器为本轮现写最小新文件 batches-drama-20261026-night/night26_flash_call.py、令牌经 SSH 现取不落盘）产出：大稿与 PATCH 式微稿连空（只交思考过程），改走纯代码微稿后逐段产出；用量见该目录 usage.log。
+- 前端同步：auth.js updateProfile 加第 4 参 theme（3 参老调用兼容，不传不发送）；account.js 主题单选改动时登录态下 PUT 同步服务端、失败回滚到旧值，reloadMe 以服务端 theme 为准同步单选钮与 localStorage；未登录沿用 localStorage。双服务隔离 E2E 实测：点深色→PUT 200→服务端 dark→重载后深色单选选中且深色生效，再点回浅色同样往返通过；截图存 docs/screenshots/account-theme-server-sync-dark.png（harness 内联渲染，因受管浏览器 LNA 拦直接导航，lucide 未内联故图标为空框，主题与数据均为真实）。
+- 模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，单路串行，调用器为本轮现写最小新文件 batches-drama-20261026-night/night26_flash_call.py、令牌经 SSH 现取不落盘）产出：大稿与 PATCH 式微稿连空（只交思考过程），改走纯代码微稿后逐段产出；中途 BotsRouter 连续 429 触发硬停规则停手一次，后经用户死命令（只许 GLM-5.3-Flash）恢复续做；用量见该目录 usage.log。
 
 ### Fixed（2026-10-26 深耕轮：按运行聚合接口参数收紧）
 

@@ -8,6 +8,9 @@
   // bindLanguage 内赋值，供 reloadMe 同步语言单选按钮
   var syncLangRadios = null;
 
+  // bindTheme 内赋值，供 reloadMe 同步主题单选按钮
+  var syncThemeRadios = null;
+
   var I18N = {
     'doc.title': { 'zh-CN': '账号 · AI 短剧工坊', 'en': 'Account · AI Drama Factory' },
     'page.title': { 'zh-CN': '账号', 'en': 'Account' },
@@ -98,6 +101,17 @@
       DFI18N.applyI18n();
       // 服务端语言可能与本地初始值不一致，同步语言单选按钮
       if (typeof syncLangRadios === 'function') syncLangRadios(lang);
+      // 服务端主题可能与本地初始值不一致，同步主题单选按钮
+      var theme = u && (u.theme === 'system' || u.theme === 'light' || u.theme === 'dark') ? u.theme : '';
+      if (theme) {
+        try {
+          localStorage.setItem('df-theme', theme);
+        } catch (e) {
+          // 存储不可用时忽略
+        }
+        applyTheme(theme);
+        if (typeof syncThemeRadios === 'function') syncThemeRadios(theme);
+      }
       return u;
     });
   }
@@ -320,12 +334,26 @@
   function bindTheme() {
     var current = readTheme();
     var radios = document.querySelectorAll('input[name="theme"]');
+    var syncChecked = function (theme) {
+      radios.forEach(function (r) {
+        r.checked = r.value === theme;
+      });
+    };
+    syncThemeRadios = syncChecked;
     radios.forEach(function (r) {
       if (r.value === current) r.checked = true;
       r.addEventListener('change', function () {
         if (!r.checked) return;
+        var prev = readTheme();
         try { localStorage.setItem('df-theme', r.value); } catch (e) {}
         applyTheme(r.value);
+        if (user) {
+          Auth.updateProfile(null, null, null, r.value).catch(function () {
+            try { localStorage.setItem('df-theme', prev); } catch (e) {}
+            applyTheme(prev);
+            syncChecked(prev);
+          });
+        }
       });
     });
 
