@@ -1342,3 +1342,173 @@ def delete_saved_search(db_path, search_id):
             return cur.rowcount > 0
         finally:
             conn.close()
+
+
+# ---------------- 阅读清单 ----------------
+
+def create_reading_list(db_path, name):
+    normalized = re.sub(r"\s+", " ", (name or "").strip())
+    if not normalized:
+        raise ValueError("清单名为空")
+    conn = get_conn(db_path)
+    try:
+        with write_lock:
+            row = conn.execute(
+                "SELECT id, name, created_at FROM reading_lists WHERE name = ?",
+                (normalized,),
+            ).fetchone()
+            if row is not None:
+                return {"id": row[0], "name": row[1], "created_at": row[2]}
+            created_at = _now_iso()
+            cur = conn.execute(
+                "INSERT INTO reading_lists (name, created_at) VALUES (?, ?)",
+                (normalized, created_at),
+            )
+            conn.commit()
+            return {"id": cur.lastrowid, "name": normalized, "created_at": created_at}
+    finally:
+        conn.close()
+
+
+def list_reading_lists(db_path, limit=50):
+    safe_limit = max(1, min(int(limit), 200))
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT l.id, l.name, l.created_at, COUNT(i.id) AS article_count "
+            "FROM reading_lists AS l "
+            "LEFT JOIN reading_list_items AS i ON i.list_id = l.id "
+            "GROUP BY l.id "
+            "ORDER BY l.created_at DESC, l.id DESC "
+            "LIMIT ?",
+            (safe_limit,),
+        ).fetchall()
+        return [
+            {"id": r[0], "name": r[1], "created_at": r[2], "article_count": r[3]}
+            for r in rows
+        ]
+    finally:
+        conn.close()
+
+
+def get_reading_list(db_path, list_id):
+    conn = get_conn(db_path)
+    try:
+        row = conn.execute(
+            "SELECT l.id, l.name, l.created_at, COUNT(i.id) AS article_count "
+            "FROM reading_lists AS l "
+            "LEFT JOIN reading_list_items AS i ON i.list_id = l.id "
+            "WHERE l.id = ? "
+            "GROUP BY l.id",
+            (list_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        return {"id": row[0], "name": row[1], "created_at": row[2], "article_count": row[3]}
+    finally:
+        conn.close()
+
+
+def delete_reading_list(db_path, list_id):
+    conn = get_conn(db_path)
+    try:
+        with write_lock:
+            conn.execute("DELETE FROM reading_list_items WHERE list_id = ?", (list_id,))
+            cur = conn.execute("DELETE FROM reading_lists WHERE id = ?", (list_id,))
+            deleted = cur.rowcount > 0
+            conn.commit()
+            return deleted
+    finally:
+        conn.close()
+
+
+def add_article_to_list(db_path, list_id, article_id):
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            if conn.execute(
+                "SELECT 1 FROM reading_lists WHERE id = ?", (list_id,)
+            ).fetchone() is None:
+                return None
+            if conn.execute(
+                "SELECT 1 FROM articles WHERE id = ?", (article_id,)
+            ).fetchone() is None:
+                return None
+            row = conn.execute(
+                "SELECT id, list_id, article_id, added_at FROM reading_list_items "
+                "WHERE list_id = ? AND article_id = ?",
+                (list_id, article_id),
+            ).fetchone()
+            if row is not None:
+                return {
+                    "id": row[0],
+                    "list_id": row[1],
+                    "article_id": row[2],
+                    "added_at": row[3],
+                }
+            added_at = _now_iso()
+            cur = conn.execute(
+                "INSERT INTO reading_list_items (list_id, article_id, added_at) "
+                "VALUES (?, ?, ?)",
+                (list_id, article_id, added_at),
+            )
+            conn.commit()
+            return {
+                "id": cur.lastrowid,
+                "list_id": list_id,
+                "article_id": article_id,
+                "added_at": added_at,
+            }
+        finally:
+            conn.close()
+
+
+def remove_article_from_list(db_path, list_id, article_id):
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            cur = conn.execute(
+                "DELETE FROM reading_list_items WHERE list_id = ? AND article_id = ?",
+                (list_id, article_id),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            conn.close()
+
+
+def list_reading_list_articles(db_path, list_id, limit=50):
+    limit = max(1, min(int(limit), 200))
+    conn = get_conn(db_path)
+    try:
+        if conn.execute(
+            "SELECT 1 FROM reading_lists WHERE id = ?", (list_id,)
+        ).fetchone() is None:
+            return None
+        rows = conn.execute(
+            "SELECT articles.id, articles.title, articles.link, feeds.title, "
+            "articles.published_at, articles.is_read, articles.is_starred, "
+            "reading_list_items.added_at "
+            "FROM reading_list_items "
+            "JOIN articles ON articles.id = reading_list_items.article_id "
+            "JOIN feeds ON feeds.id = articles.feed_id "
+            "WHERE reading_list_items.list_id = ? "
+            "ORDER BY reading_list_items.added_at DESC, reading_list_items.id DESC "
+            "LIMIT ?",
+            (list_id, limit),
+        ).fetchall()
+        return [
+            {
+                "article_id": row[0],
+                "title": row[1],
+                "link": row[2],
+                "feed_title": row[3],
+                "published_at": row[4],
+                "is_read": bool(row[5]),
+                "is_starred": bool(row[6]),
+                "added_at": row[7],
+            }
+            for row in rows
+        ]
+    finally:
+        conn.close()

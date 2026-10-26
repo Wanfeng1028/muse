@@ -645,6 +645,67 @@ def remove_saved_search(search_id):
     return jsonify({"id": search_id, "removed": True})
 
 # ---------------------------------------------------------------------------
+# 阅读清单
+# ---------------------------------------------------------------------------
+
+
+@bp.get("/reading-lists")
+def get_reading_lists():
+    return jsonify({"reading_lists": store.list_reading_lists(_db())})
+
+
+@bp.post("/reading-lists")
+def add_reading_list():
+    body = _json_body()
+    name = body.get("name")
+    if not isinstance(name, str) or not name.strip():
+        return _err("清单名为空", 400)
+    try:
+        row = store.create_reading_list(_db(), name.strip())
+    except ValueError:
+        return _err("清单名为空", 400)
+    return jsonify(row)
+
+
+@bp.delete("/reading-lists/<int:list_id>")
+def remove_reading_list(list_id):
+    if not store.delete_reading_list(_db(), list_id):
+        return _err("阅读清单不存在", 404)
+    return jsonify({"id": list_id, "removed": True})
+
+
+@bp.get("/reading-lists/<int:list_id>/articles")
+def get_reading_list_articles(list_id):
+    articles = store.list_reading_list_articles(_db(), list_id)
+    if articles is None:
+        return _err("阅读清单不存在", 404)
+    return jsonify({"list_id": list_id, "articles": articles})
+
+
+@bp.post("/reading-lists/<int:list_id>/articles")
+def add_article_to_reading_list(list_id):
+    body = _json_body()
+    article_id = body.get("article_id")
+    if not isinstance(article_id, int) or isinstance(article_id, bool):
+        return _err("article_id 非法", 400)
+    if store.get_reading_list(_db(), list_id) is None:
+        return _err("阅读清单不存在", 404)
+    row = store.add_article_to_list(_db(), list_id, article_id)
+    if row is None:
+        return _err("文章不存在", 404)
+    return jsonify(row)
+
+
+@bp.delete("/reading-lists/<int:list_id>/articles/<int:article_id>")
+def remove_article_from_reading_list(list_id, article_id):
+    if store.get_reading_list(_db(), list_id) is None:
+        return _err("阅读清单不存在", 404)
+    if not store.remove_article_from_list(_db(), list_id, article_id):
+        return _err("文章不在清单中", 404)
+    return jsonify({"list_id": list_id, "article_id": article_id, "removed": True})
+
+
+# ---------------------------------------------------------------------------
 # 统计
 # ---------------------------------------------------------------------------
 

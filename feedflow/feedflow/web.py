@@ -444,6 +444,57 @@ def saved_searches_delete():
     return redirect(url_for("web.saved_searches_page", removed=1))
 
 
+@bp.get("/reading-lists")
+def reading_lists_page():
+    db = _cfg()["db_path"]
+    lists = store.list_reading_lists(db)
+    for lst in lists:
+        lst["display_time"] = _display_time(lst["created_at"])
+        articles = store.list_reading_list_articles(db, lst["id"]) or []
+        for art in articles:
+            art["display_time"] = _display_time(art["added_at"])
+        lst["articles"] = articles
+    return render_template("reading_lists.html", lists=lists)
+
+
+@bp.post("/reading-lists/create")
+def reading_lists_create():
+    name = (request.form.get("name") or "").strip()
+    if not name:
+        return redirect(url_for("web.reading_lists_page", err="bad"))
+    try:
+        store.create_reading_list(_cfg()["db_path"], name)
+    except ValueError:
+        return redirect(url_for("web.reading_lists_page", err="bad"))
+    return redirect(url_for("web.reading_lists_page", created=1))
+
+
+@bp.post("/reading-lists/delete")
+def reading_lists_delete():
+    list_id = request.form.get("list_id", type=int)
+    if list_id is None or not store.delete_reading_list(_cfg()["db_path"], list_id):
+        return redirect(url_for("web.reading_lists_page", err="bad"))
+    return redirect(url_for("web.reading_lists_page", removed=1))
+
+
+@bp.post("/reading-lists/<int:list_id>/add")
+def reading_lists_add(list_id):
+    article_id = request.form.get("article_id", type=int)
+    if article_id is None:
+        return redirect(url_for("web.reading_lists_page", err="bad"))
+    if store.add_article_to_list(_cfg()["db_path"], list_id, article_id) is None:
+        return redirect(url_for("web.reading_lists_page", err="bad"))
+    return redirect(url_for("web.reading_lists_page", added=1))
+
+
+@bp.post("/reading-lists/<int:list_id>/remove")
+def reading_lists_remove(list_id):
+    article_id = request.form.get("article_id", type=int)
+    if article_id is None or not store.remove_article_from_list(_cfg()["db_path"], list_id, article_id):
+        return redirect(url_for("web.reading_lists_page", err="bad"))
+    return redirect(url_for("web.reading_lists_page", removed=1))
+
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

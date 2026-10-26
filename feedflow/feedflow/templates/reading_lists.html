@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+
+{% block title %}阅读清单 · 信流{% endblock %}
+
+{% block content %}
+<div style="max-width: 640px; margin: 0 auto; padding: 32px 20px 64px; background: #FAFAF7; color: #1C1A17;">
+  <h1 style="margin: 0 0 8px; font-size: 26px; font-weight: 700; letter-spacing: 0.02em; color: #1C1A17;">阅读清单</h1>
+  <p style="margin: 0 0 20px; color: #6B655A; font-size: 14px;">把想慢慢读的文章收进清单，一个清单就是一个主题。</p>
+
+  {% if request.args.get('created') == '1' %}
+  <div style="margin-bottom: 20px; padding: 10px 14px; border: 1px solid #E7E2D6; border-left: 3px solid #C2410C; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 14px;">已新建清单。</div>
+  {% endif %}
+  {% if request.args.get('added') == '1' %}
+  <div style="margin-bottom: 20px; padding: 10px 14px; border: 1px solid #E7E2D6; border-left: 3px solid #C2410C; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 14px;">已加入清单。</div>
+  {% endif %}
+  {% if request.args.get('removed') == '1' %}
+  <div style="margin-bottom: 20px; padding: 10px 14px; border: 1px solid #E7E2D6; border-left: 3px solid #C2410C; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 14px;">已删除。</div>
+  {% endif %}
+  {% if request.args.get('err') == 'bad' %}
+  <div style="margin-bottom: 20px; padding: 10px 14px; border: 1px solid #E7E2D6; border-left: 3px solid #C2410C; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 14px;">清单不对。</div>
+  {% endif %}
+
+  <form method="post" action="/reading-lists/create" style="display: flex; gap: 8px; margin-bottom: 32px;">
+    <input type="text" name="name" placeholder="清单名称" required style="flex: 1; padding: 6px 10px; border: 1px solid #E7E2D6; border-radius: 4px; background: #FFFFFF; color: #1C1A17; font-size: 14px;">
+    <button type="submit" style="padding: 4px 10px; border: 1px solid #E7E2D6; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 13px; cursor: pointer;">新建清单</button>
+  </form>
+
+  {% for lst in lists %}
+  <div style="margin-bottom: 40px;">
+    <div style="display: flex; align-items: baseline; justify-content: space-between; gap: 12px;">
+      <h2 style="margin: 0; font-size: 18px; font-weight: 700; color: #1C1A17;">{{ lst.name }}</h2>
+      <form method="post" action="/reading-lists/delete">
+        <input type="hidden" name="list_id" value="{{ lst.id }}">
+        <button type="submit" style="padding: 4px 10px; border: 1px solid #E7E2D6; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 13px; cursor: pointer;">删除清单</button>
+      </form>
+    </div>
+    <p style="margin: 4px 0 12px; color: #6B655A; font-size: 13px;">共 {{ lst.article_count }} 篇 · 创建于 {{ lst.display_time }}</p>
+
+    <form method="post" action="/reading-lists/{{ lst.id }}/add" style="display: flex; gap: 8px; margin-bottom: 16px;">
+      <input type="number" name="article_id" min="1" placeholder="文章 ID" required style="flex: 1; padding: 6px 10px; border: 1px solid #E7E2D6; border-radius: 4px; background: #FFFFFF; color: #1C1A17; font-size: 14px;">
+      <button type="submit" style="padding: 4px 10px; border: 1px solid #E7E2D6; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 13px; cursor: pointer;">按文章 ID 加入</button>
+    </form>
+
+    {% if lst.articles %}
+    <ul style="list-style: none; margin: 0; padding: 0; border-top: 1px solid #E7E2D6;">
+      {% for item in lst.articles %}
+      <li style="display: flex; align-items: baseline; gap: 12px; padding: 14px 4px; border-bottom: 1px solid #E7E2D6;">
+        <div style="flex: 1;">
+          {% if item.link %}
+          <a href="{{ item.link }}" target="_blank" rel="noopener" style="color: #1C1A17; font-size: 16px; font-weight: 600; text-decoration: none; border-bottom: 1px solid #E7E2D6;">{{ item.title }}</a>
+          {% else %}
+          <span style="color: #1C1A17; font-size: 16px; font-weight: 600;">{{ item.title }}</span>
+          {% endif %}
+          <span style="display: block; margin-top: 4px; color: #6B655A; font-size: 13px;">{% if item.is_read %}已读 · {% endif %}{{ item.feed_title }} · 加入于 {{ item.display_time }}</span>
+        </div>
+        <form method="post" action="/reading-lists/{{ lst.id }}/remove">
+          <input type="hidden" name="article_id" value="{{ item.article_id }}">
+          <button type="submit" style="padding: 4px 10px; border: 1px solid #E7E2D6; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 13px; cursor: pointer;">移出</button>
+        </form>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <div style="padding: 48px 16px; text-align: center; color: #6B655A; font-size: 14px; border: 1px dashed #E7E2D6; border-radius: 8px; background: #FAFAF7;">这个清单还没有文章。</div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div style="padding: 48px 16px; text-align: center; color: #6B655A; font-size: 14px; border: 1px dashed #E7E2D6; border-radius: 8px; background: #FAFAF7;">还没有阅读清单，新建一个，把想慢慢读的文章收进来吧。</div>
+  {% endfor %}
+
+  <div style="margin-top: 40px; text-align: center;">
+    <a href="/" style="color: #C2410C; font-size: 14px; text-decoration: none; border-bottom: 1px solid #E7E2D6;">去阅读器</a>
+  </div>
+</div>
+{% endblock %}

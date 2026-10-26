@@ -1,6 +1,32 @@
 
 # 更新日志
 
+## v1.31.0 — 2026-10-27
+
+### Added
+- 迁移：新增迁移 v14，建表 reading_lists(id, name UNIQUE, created_at) 与 reading_list_items(id, list_id, article_id, added_at, UNIQUE(list_id, article_id))，并建索引 idx_reading_lists_created、idx_reading_list_items_list、idx_reading_list_items_article。
+- store：新增 create_reading_list（名称 strip 并折叠空白、保持大小写，空名抛 ValueError("清单名为空")，重名复用已有清单行）、list_reading_lists（limit 钳制 1-200，按创建时间倒序，每行附 article_count）、get_reading_list（不存在返回 None）、delete_reading_list（显式先清成员行再删清单，返回 True/False）、add_article_to_list（清单或文章不存在返回 None，重复加入返回已有成员行）、remove_article_from_list（返回 True/False）、list_reading_list_articles（清单不存在返回 None，按加入时间倒序，成员行含 article_id/title/link/feed_title/published_at/is_read/is_starred/added_at）。
+- API：GET /api/reading-lists；POST /api/reading-lists（空名返回 400“清单名为空”）；DELETE /api/reading-lists/<id>（不存在返回 404“阅读清单不存在”）；GET /api/reading-lists/<id>/articles（清单不存在返回 404）；POST /api/reading-lists/<id>/articles（article_id 非法返回 400“article_id 非法”、清单不存在 404、文章不存在 404）；DELETE /api/reading-lists/<id>/articles/<article_id>（文章不在清单中返回 404“文章不在清单中”）。
+- Web：GET /reading-lists 清单页，含新建表单、每个清单的删除表单与按文章 ID 加入表单、成员行与移出表单；空态文案“还没有阅读清单，新建一个，把想慢慢读的文章收进来吧。”，清单内空态“这个清单还没有文章。”；POST /reading-lists/create 成功 created=1、/reading-lists/delete 成功 removed=1、/reading-lists/<id>/add 成功 added=1、/reading-lists/<id>/remove 成功 removed=1，非法一律 err=bad；阅读器左侧树底栏新增“阅读清单”入口，顶栏不加入口（与星标/归档/保存的搜索先例一致，导航计数不受影响）。
+- 测试：新增 tests/test_reading_lists_store.py 10 例、tests/test_reading_lists_api.py 8 例、tests/test_reading_lists_web.py 6 例，靶向 24/24 通过；ruff check 改动文件全洁；既有测试 test_store_starred_migration、test_store_archived_migration、test_store_saved_searches_store 的 user_version 期望由 13 改为 14（迁移版本耦合断言，本轮迁移 v14 直接导致，非 v1.21 旧契约）。全量 pytest：1161 通过、2 失败（465.32 秒），2 处失败均为 v1.21 旧契约既有失败（`test_api_deep.py::test_pagination_limit_clamped`、`test_api_deep2.py::test_articles_pagination_edge_cases`），本轮未动分页逻辑，零回归。
+
+### 视觉验收
+真实服务跑在 18431 端口、应用自带种子库 33 篇，先建 2 条真实清单（“周末深读”2 篇、“AI 追踪”1 篇）后截图：docs/screenshots/reading-lists-v131.png 为清单页两清单真实数据、删除与移出按钮、加入时间；docs/screenshots/reader-foot-v131.png 为三栏阅读器、树底栏“阅读清单”入口、真实种子文章列表。两路 console 零错误。冒烟服务与演示库已删，截图脚本在 muse-build/batches-feedflow-20261026-night9/ff_n9_maple_shot.js。阅读器截图左下树底栏链接竖排与 v1.30 同款截图一致，属既有形态、非本轮回归。
+
+### 模型稿与编排修正
+- 模板模型稿对无链接文章直接输出空 href，编排按星标页范本补了无链接时渲染纯文本标题的分支。
+- Web 测试模型稿的 _get_lists 辅助找的是 lists/data 键，API 实际返回 reading_lists 键，编排修正为 reading_lists 键后 6 例通过。
+- Web 测试 import 块缺空行致 ruff I001，编排用 ruff --fix 补空行。
+- 迁移落仓时模型稿末尾“),]”连写，编排改为分行。
+- store 测试模型稿首行 import os, sys 写在一行，编排拆为两行。
+- API 测试模型稿缺 sys.path 插入头，编排按既有测试补齐。
+
+### 已知限制
+- 首版加入入口在清单页（按文章 ID）与 API，阅读器内快捷加入留待下轮（与 v1.23 标签先落页、v1.24 再进阅读器的先例一致）。
+- 清单页标题链接指向原文外链；与星标/归档/保存的搜索先例不同的是，保存的搜索跳站内搜索页、清单页同星标页跳外链。
+- 清单名规范化保持大小写，故“ABC”与“abc”为两个清单。
+- 删清单显式先清成员行再删清单（store 直连默认不开外键，不依赖级联）。
+
 ## v1.30.0 — 2026-10-27
 
 ### Added

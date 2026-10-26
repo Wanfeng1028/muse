@@ -49,7 +49,7 @@ def test_store_saved_search_limit_clamped(tmp_db):
 def test_store_saved_searches_migration(tmp_db):
     conn = sqlite3.connect(tmp_db)
     try:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 13
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == 14
         columns = {row[1] for row in conn.execute("PRAGMA table_info(saved_searches)")}
         assert {"id", "query", "created_at"} <= columns
         indexes = {

@@ -360,6 +360,17 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
         "CREATE INDEX IF NOT EXISTS idx_saved_searches_created ON saved_searches(created_at DESC)",
     ],
 ),
+(
+    14,
+    "阅读清单表（v1.31 阅读清单用）",
+    [
+        "CREATE TABLE IF NOT EXISTS reading_lists (id INTEGER PRIMARY KEY AUTOINCREMENT, name TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL)",
+        "CREATE TABLE IF NOT EXISTS reading_list_items (id INTEGER PRIMARY KEY AUTOINCREMENT, list_id INTEGER NOT NULL REFERENCES reading_lists(id) ON DELETE CASCADE, article_id INTEGER NOT NULL REFERENCES articles(id) ON DELETE CASCADE, added_at TEXT NOT NULL, UNIQUE(list_id, article_id))",
+        "CREATE INDEX IF NOT EXISTS idx_reading_lists_created ON reading_lists(created_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_reading_list_items_list ON reading_list_items(list_id, added_at DESC)",
+        "CREATE INDEX IF NOT EXISTS idx_reading_list_items_article ON reading_list_items(article_id)",
+    ],
+),
 ]
 
 
