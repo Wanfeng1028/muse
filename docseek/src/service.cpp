@@ -307,7 +307,11 @@ public:
                 auto tbit = req.query.find("title_boost");
                 if (tbit != req.query.end() && !tbit->second.empty()) {
                     try {
-                        double parsed = std::stod(tbit->second);
+                        size_t pos = 0;
+                        double parsed = std::stod(tbit->second, &pos);
+                        if (pos != tbit->second.size()) {
+                            return HttpResponse::json("{\"error\":\"title_boost 参数无效\"}", 400);
+                        }
                         if (!std::isfinite(parsed) || parsed < 0.0 || parsed > 1000.0) {
                             return HttpResponse::json("{\"error\":\"title_boost 参数无效\"}", 400);
                         }
@@ -319,7 +323,11 @@ public:
                 auto pbit = req.query.find("phrase_boost");
                 if (pbit != req.query.end() && !pbit->second.empty()) {
                     try {
-                        double parsed = std::stod(pbit->second);
+                        size_t pos = 0;
+                        double parsed = std::stod(pbit->second, &pos);
+                        if (pos != pbit->second.size()) {
+                            return HttpResponse::json("{\"error\":\"phrase_boost 参数无效\"}", 400);
+                        }
                         if (!std::isfinite(parsed) || parsed < 0.0 || parsed > 1000.0) {
                             return HttpResponse::json("{\"error\":\"phrase_boost 参数无效\"}", 400);
                         }

@@ -266,4 +266,15 @@ TEST_F(ServeErrParamR2, BoostsOutOfRange) {
     expectContains(respBig, "phrase_boost 参数无效");
 }
 
+// 5. title_boost=1x / phrase_boost=2y（尾字符非法）：400，body 含对应文案。
+TEST_F(ServeErrParamR2, BoostTrailingGarbage) {
+    std::string respTitle = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&title_boost=1x");
+    EXPECT_EQ(statusCode(respTitle), 400) << respTitle;
+    expectContains(respTitle, "title_boost 参数无效");
+
+    std::string respPhrase = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&phrase_boost=2y");
+    EXPECT_EQ(statusCode(respPhrase), 400) << respPhrase;
+    expectContains(respPhrase, "phrase_boost 参数无效");
+}
+
 }  // namespace

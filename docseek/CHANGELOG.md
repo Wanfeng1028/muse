@@ -12,6 +12,9 @@
 ### 诚实记录
 - gtest 夹具同名冲突为既存结构问题（多个测试文件各自定义 ServeFixture 类），非本轮引入；后续轮次若要让这 4 例在二进制里跑通，需先给各文件夹具改名或分二进制，本轮不扩范围。
 - 全量 ctest 与全量 1440 对评测本轮未跑（v0.37 全量对比仍排期）。
+### 补充（2026-10-26 深耕轮：boost 尾字符非法返回 400）
+- 修复：`serve` 子命令 `/api/search` 中 `title_boost` 与 `phrase_boost` 的解析，改用带 `pos` 的 `stod` 并要求 `pos == value.size()`。此前 `stod("1x")` 返回 `1.0` 且不抛异常，导致 `title_boost=1x`、`phrase_boost=2y` 这类带尾随非法字符的取值会被静默接受；改动后尾字符非法时返回 400，错误文案保持为 "title_boost 参数无效" / "phrase_boost 参数无效"。既有对非数字、小于 0、大于 1000 的校验规则保持不变。测试：`tests/test_serve_r2_errparam.cpp` 新增 `BoostTrailingGarbage` 用例，覆盖 `title_boost=1x` 与 `phrase_boost=2y` 各返回 400 且 body 含对应文案。无版本号变更、无 schema 变更、无 UI 改动。
+
 ## v0.37.0（2026-10-26）——专节标题精确命中
 ### 动机
 为实现专节标题精确命中，加成逻辑新增：当 searchDetailed 中 token 字节全等 trim 后节标题时得 0.5，每互异 token +0.5，每文档封顶 1.0；跳过与文档标题全等的标题行；不以 titleDegraded 为门控；计入 finalScore 与 structuralBonus。
