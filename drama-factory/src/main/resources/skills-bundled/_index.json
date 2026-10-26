@@ -14509,6 +14509,28 @@
       "source": "zenstory-ai/drama-skills",
       "sourceUrl": "https://github.com/zenstory-ai/drama-skills/blob/HEAD/maintainers/skills/short-drama-knowhow/SKILL.md",
       "rewritten": false
+    },
+    {
+      "id": "elayadesign-landing-page-design",
+      "name": "landing-page-design",
+      "version": "1.0.0",
+      "description": "从零搭建高转化落地页的完整系统：需求访谈、页面结构、转化文案、SEO，以及排版、间距、圆角、背景、Hero 布局、图标与动效的严格视觉规则。",
+      "author": "elayadesign",
+      "license": "MIT",
+      "source": "elayadesign/ai-design-skills",
+      "sourceUrl": "https://github.com/elayadesign/ai-design-skills/blob/HEAD/skills/landing-page-design/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "elayadesign-design-to-motion",
+      "name": "design-to-motion",
+      "version": "1.0.0",
+      "description": "把静态设计（Figma 帧、看板、卡片、应用界面）还原为像素级精确的 HTML 复刻并做成循环展示动画：空状态载入、每个视觉元素演绎其故事、无缝循环，导出 MP4 与 GIF。",
+      "author": "elayadesign",
+      "license": "MIT",
+      "source": "elayadesign/ai-design-skills",
+      "sourceUrl": "https://github.com/elayadesign/ai-design-skills/blob/HEAD/skills/design-to-motion/SKILL.md",
+      "rewritten": false
     }
   ]
 }
