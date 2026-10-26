@@ -4,6 +4,24 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.14.0] - 2026-10-27
+
+### Added
+
+- 后端新增 `POST /api/import/exams`：真题 CSV 导入，必需列 subject/paper/score/total_score，可选 duration_minutes（缺省 0，取整）/taken_at（缺省今天）；逐行校验（subject 合法性、score 在 0 到 total_score 之间、taken_at 严格日期），错误行记 errors（前 50 条）与 errorRows，合法行入库，响应 200 { imported, errors, errorRows }。
+- 后端新增 `POST /api/import/plans`：计划 CSV 导入，必需列 date/subject/title，可选 planned_minutes（缺省 60，须 1~1440）/done（缺省 0，只接受 0/1）；逐行校验与错误口径同真题导入。
+- 两路导入复用备份导入的 CSV 解析（BOM、引号转义、CRLF、表头大小写不敏感），backup.ts 的 parseCsv/isBlankRow/normalizeHeader/buildHeaderIndex/cellAt 改为导出函数；用户隔离与未登录 401 由全局认证钩子保证。
+- 前端 api.ts 新增 importExamsCsv / importPlansCsv 与 ExamsImportResult / PlansImportResult 类型；数据导入导出页（/data）新增「真题 CSV 导入」与「计划 CSV 导入」两张卡片（模板下载、文件选择、导入结果与错误列表，复用错题卡片样式与 ErrorList）。
+- 新增测试 exams-import.test.ts / plans-import.test.ts，各 6 例：空 csv 400、缺列 400、混合行导入与错误行号、非法 subject、缺省值（taken_at 今天 / planned_minutes 60 / done 1）、未登录 401。
+- API 文档第 8 章新增两节（真题/计划导入）；前后端对照快照（api-route-parity）同步：调用数 57→59，计入本轮两条新路由。
+- 截图：docs/screenshots/data-transfer-imports.png（真实服务 + 演示数据，/data 页两张新卡片均可见，console 零错误）。
+
+### Notes
+
+- 本轮模型调用只走 BotsRouter 大写 GLM-5.3-Flash（令牌 id=5）；计划导入测试首通 16000 预算被推理吃光、正文 0 字，改 32000 预算后出正文。
+- 编排修正（非模型稿）：真题导入表头处理改用备份解析真实的 Map 接口（模型稿误作 Record 索引）与 duration 取整改 Math.floor 对齐 POST 口径；计划导入同样改用 Map.get（模型稿误作索引致恒 400）并补 trim；两份测试的编造点已修正（auth 导入路径改回 ../src/auth、测试用登录改走 test-utils、科目中文名改 subject key、GET 断言字段改驼峰 totalScore/takenAt、计划表头 plannedMinutes 改 planned_minutes）；前端模型稿的独立函数形态改回 api 对象方法、downloadText 补齐 mime 参数、计划卡片文案纠正 planned_minutes 为可选列；文档模型稿的 errorRows 类型、Content-Type 与科目示例已按真实实现纠正。
+- 上游 usage 回包里每通 prompt_tokens 约 24000，其中约 23936 为网关侧 cached_tokens（与 v1.13.0 同口径），非本轮提示词本身长度；记账按回包原值汇总。
+
 ## [1.13.0] - 2026-10-27
 
 ### Added

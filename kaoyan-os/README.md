@@ -19,7 +19,7 @@
 | 真题计时与得分统计 | 套卷计时、按题型/科目录入得分，输出趋势统计、本阶段汇总与各科汇总（场次/平均分/得分率/最高分/进步幅度） |
 
 | 仪表盘 | 初试倒计时、今日任务、专注时长、待复习单词、错题与真题得分概览 |
-| 数据导入导出 | 全量 JSON 备份与恢复（覆盖/合并）、单词 CSV 与错题 CSV 导入、错题/单词/计划 CSV 导出（与真题导出同口径：BOM + RFC4180 转义） |
+| 数据导入导出 | 全量 JSON 备份与恢复（覆盖/合并）、单词 / 错题 / 真题 / 计划 CSV 导入、错题/单词/计划 CSV 导出（与真题导出同口径：BOM + RFC4180 转义） |
 | 深色模式 | 浅/深主题一键切换，偏好存服务端多端同步，深色板为 slate 家族配色体系 |
 | 自律热力图 | 近 1/3/6 个月专注热力图、当前/最长连续打卡与累计专注天数，点击格子查看当日专注、计划、错题、模考明细 |
 | 周报 | 本周概览卡、7 天专注条形、计划完成率圆环、上周对比、连续打卡 |
@@ -228,7 +228,7 @@ docker run -d \
 | 排期 | `GET /api/plans/range?from=&to=`，`GET /api/plans/overload?weekStart=&dailyMinutes=` | 区间计划查询（≤62 天）；周负荷明细与单日超负荷判定 |
 | 组卷 | `POST /api/mistakes/quiz/generate`，`POST /api/mistakes/quiz/grade` | 按条件组卷（不含解析）；自评批改并回写掌握度 |
 
-| 备份导入 | `GET /api/backup/export`，`POST /api/backup/import`，`POST /api/import/words`，`POST /api/import/mistakes` | 全量备份导出/恢复（覆盖·合并）、单词 CSV / 错题 CSV 导入 |
+| 备份导入 | `GET /api/backup/export`，`POST /api/backup/import`，`POST /api/import/words`，`POST /api/import/mistakes`，`POST /api/import/exams`，`POST /api/import/plans` | 全量备份导出/恢复（覆盖·合并）、单词 / 错题 / 真题 / 计划 CSV 导入 |
 
 ## 开发说明与路线图
 

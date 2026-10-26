@@ -14,6 +14,7 @@ import {
   SUBJECTS,
 } from '@kaoyan/shared';
 import { todayStr, addDays } from '../db';
+import { parseCsv, isBlankRow, normalizeHeader, buildHeaderIndex, cellAt } from './backup';
 import { computeDayLoads } from '../schedule-stats';
 
 // 数据库行类型（snake_case）
@@ -713,5 +714,89 @@ app.get('/api/plans/export', async (req, reply) => {
       overloadedDays,
       days,
     });
+  });
+  // POST /api/import/plans
+  app.post('/api/import/plans', { bodyLimit: 5 * 1024 * 1024 }, async (req, reply) => {
+    const body = req.body as unknown;
+    if (typeof body !== 'object' || body === null) {
+      return reply.code(400).send({ error: 'csv 不能为空' });
+    }
+    const csv = (body as Record<string, unknown>).csv;
+    if (typeof csv !== 'string' || csv.trim() === '') {
+      return reply.code(400).send({ error: 'csv 不能为空' });
+    }
+
+    const rows = parseCsv(csv);
+    let i = 0;
+    while (i < rows.length && isBlankRow(rows[i])) i += 1;
+    if (i >= rows.length) {
+      return reply.code(400).send({ error: '缺少必需列：date / subject / title' });
+    }
+    const headerIndex = buildHeaderIndex(normalizeHeader(rows[i]));
+    const dateCol = headerIndex.get('date') ?? -1;
+    const subjectCol = headerIndex.get('subject') ?? -1;
+    const titleCol = headerIndex.get('title') ?? -1;
+    const plannedMinutesCol = headerIndex.get('planned_minutes') ?? -1;
+    const doneCol = headerIndex.get('done') ?? -1;
+    if (dateCol < 0 || subjectCol < 0 || titleCol < 0) {
+      return reply.code(400).send({ error: '缺少必需列：date / subject / title' });
+    }
+
+    const errors: { row: number; message: string }[] = [];
+    let errorRows = 0;
+    let imported = 0;
+    const userId = req.user!.id;
+    const createdAt = new Date().toISOString();
+
+    for (let r = i + 1; r < rows.length; r += 1) {
+      const row = rows[r];
+      if (isBlankRow(row)) continue;
+      const rowNo = r + 1;
+      const date = cellAt(row, dateCol).trim();
+      const subject = cellAt(row, subjectCol).trim();
+      const title = cellAt(row, titleCol).trim();
+      const plannedMinutesRaw = plannedMinutesCol < 0 ? '' : cellAt(row, plannedMinutesCol).trim();
+      const doneRaw = doneCol < 0 ? '' : cellAt(row, doneCol).trim();
+
+      const rowErrors: string[] = [];
+      if (!isValidDate(date)) rowErrors.push('date 须为 YYYY-MM-DD 格式的真实日期');
+      if (!isSubjectKey(subject)) rowErrors.push('subject 非法');
+      if (title === '') rowErrors.push('title 不能为空');
+
+      let plannedMinutes = 60;
+      if (plannedMinutesRaw !== '') {
+        const parsed = Number(plannedMinutesRaw);
+        if (!Number.isFinite(parsed) || parsed < 1 || parsed > 1440) {
+          rowErrors.push('planned_minutes 须为 1-1440 之间的数字');
+        } else {
+          plannedMinutes = parsed;
+        }
+      }
+
+      let done = 0;
+      if (doneRaw !== '') {
+        if (doneRaw === '0' || doneRaw === '1') {
+          done = Number(doneRaw);
+        } else {
+          rowErrors.push('done 只能为 0 或 1');
+        }
+      }
+
+      if (rowErrors.length > 0) {
+        errorRows += 1;
+        for (const message of rowErrors) {
+          if (errors.length >= 50) break;
+          errors.push({ row: rowNo, message });
+        }
+        continue;
+      }
+
+      db.prepare(
+        'INSERT INTO plans (user_id, date, subject, title, planned_minutes, done, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(userId, date, subject, title, plannedMinutes, done, createdAt);
+      imported += 1;
+    }
+
+    return reply.code(200).send({ imported, errors, errorRows });
   });
 }

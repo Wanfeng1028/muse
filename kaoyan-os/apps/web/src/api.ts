@@ -63,6 +63,16 @@ export interface MistakesImportResult {
   errors: Array<{ row: number; message: string }>;
   errorRows: number;
 }
+export interface ExamsImportResult {
+  imported: number;
+  errors: Array<{ row: number; message: string }>;
+  errorRows: number;
+}
+export interface PlansImportResult {
+  imported: number;
+  errors: Array<{ row: number; message: string }>;
+  errorRows: number;
+}
 export interface VocabSeedResult {
   imported: number;
   skippedExisting: number;
@@ -318,6 +328,16 @@ export const api = {
     }),
   importMistakesCsv: (csv: string) =>
     request<MistakesImportResult>('/import/mistakes', {
+      method: 'POST',
+      body: JSON.stringify({ csv }),
+    }),
+  importExamsCsv: (csv: string) =>
+    request<ExamsImportResult>('/import/exams', {
+      method: 'POST',
+      body: JSON.stringify({ csv }),
+    }),
+  importPlansCsv: (csv: string) =>
+    request<PlansImportResult>('/import/plans', {
       method: 'POST',
       body: JSON.stringify({ csv }),
     }),

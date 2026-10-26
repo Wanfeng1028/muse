@@ -13,6 +13,7 @@ import {
 } from '@kaoyan/shared';
 
 import { todayStr, addDays } from '../db';
+import { parseCsv, isBlankRow, normalizeHeader, buildHeaderIndex, cellAt } from './backup';
 
 // 数据库行类型
 interface ExamRow {
@@ -376,6 +377,133 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     return reply.code(201).send(mapExam(row));
   });
 
+  // POST /api/import/exams
+  app.post('/api/import/exams', { bodyLimit: 5 * 1024 * 1024 }, async (req, reply) => {
+    const body: unknown = req.body;
+    const csv = body !== null && typeof body === 'object' ? (body as { csv?: unknown }).csv : undefined;
+    if (typeof csv !== 'string' || csv.trim() === '') {
+      return reply.code(400).send({ error: 'csv 不能为空' });
+    }
+
+    const rows = parseCsv(csv);
+
+    let headerRowIndex = -1;
+    for (let i = 0; i < rows.length; i++) {
+      if (!isBlankRow(rows[i])) {
+        headerRowIndex = i;
+        break;
+      }
+    }
+
+    const headerMap: Map<string, number> =
+      headerRowIndex >= 0 ? buildHeaderIndex(normalizeHeader(rows[headerRowIndex])) : new Map();
+
+    const subjectCol = headerMap.get('subject');
+    const paperCol = headerMap.get('paper');
+    const scoreCol = headerMap.get('score');
+    const totalScoreCol = headerMap.get('total_score');
+    const durationCol = headerMap.get('duration_minutes');
+    const takenCol = headerMap.get('taken_at');
+    if (
+      headerRowIndex < 0 ||
+      subjectCol === undefined ||
+      paperCol === undefined ||
+      scoreCol === undefined ||
+      totalScoreCol === undefined
+    ) {
+      return reply.code(400).send({ error: '缺少必需列：subject / paper / score / total_score' });
+    }
+
+    const errors: { row: number; message: string }[] = [];
+    let errorRows = 0;
+    let imported = 0;
+    const dateRe = /^\d{4}-\d{2}-\d{2}$/;
+
+    for (let i = headerRowIndex + 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (isBlankRow(row)) continue;
+
+      const rowNo = i + 1;
+      const rowErrors: string[] = [];
+
+      const subject = cellAt(row, subjectCol).trim();
+      const paper = cellAt(row, paperCol).trim();
+      const scoreRaw = cellAt(row, scoreCol).trim();
+      const totalRaw = cellAt(row, totalScoreCol).trim();
+      const durationRaw = durationCol === undefined ? '' : cellAt(row, durationCol).trim();
+      const takenRaw = takenCol === undefined ? '' : cellAt(row, takenCol).trim();
+
+      if (!isSubjectKey(subject)) {
+        rowErrors.push('subject 非法');
+      }
+      if (paper === '') {
+        rowErrors.push('paper 不能为空');
+      }
+
+      const score = Number(scoreRaw);
+      const totalScore = Number(totalRaw);
+      const scoreOk = scoreRaw !== '' && Number.isFinite(score);
+      const totalOk = totalRaw !== '' && Number.isFinite(totalScore);
+
+      if (!scoreOk) {
+        rowErrors.push('score 必须是数字');
+      }
+      if (!totalOk) {
+        rowErrors.push('total_score 必须是数字');
+      } else if (totalScore <= 0) {
+        rowErrors.push('total_score 必须大于 0');
+      }
+      if (scoreOk && totalOk && totalScore > 0) {
+        if (score < 0) {
+          rowErrors.push('score 不能小于 0');
+        } else if (score > totalScore) {
+          rowErrors.push('score 不能大于 total_score');
+        }
+      }
+
+      let durationMinutes = 0;
+      if (durationRaw !== '') {
+        const duration = Number(durationRaw);
+        if (!Number.isFinite(duration) || duration < 0) {
+          rowErrors.push('duration_minutes 必须是大于等于 0 的数字');
+        } else {
+          durationMinutes = Math.floor(duration);
+        }
+      }
+
+      let takenAt = todayStr();
+      if (takenRaw !== '') {
+        let validDate = false;
+        if (dateRe.test(takenRaw)) {
+          const year = Number(takenRaw.slice(0, 4));
+          const month = Number(takenRaw.slice(5, 7));
+          const day = Number(takenRaw.slice(8, 10));
+          const d = new Date(Date.UTC(year, month - 1, day));
+          validDate = d.getUTCFullYear() === year && d.getUTCMonth() === month - 1 && d.getUTCDate() === day;
+        }
+        if (!validDate) {
+          rowErrors.push('taken_at 必须是 YYYY-MM-DD 格式的真实日期');
+        } else {
+          takenAt = takenRaw;
+        }
+      }
+
+      if (rowErrors.length > 0) {
+        errorRows++;
+        if (errors.length < 50) {
+          errors.push({ row: rowNo, message: rowErrors.join('；') });
+        }
+        continue;
+      }
+
+      db.prepare(
+        'INSERT INTO exam_records (user_id, subject, paper, score, total_score, duration_minutes, taken_at) VALUES (?, ?, ?, ?, ?, ?, ?)'
+      ).run(req.user!.id, subject, paper, score, totalScore, durationMinutes, takenAt);
+      imported++;
+    }
+
+    return reply.code(200).send({ imported, errors, errorRows });
+  });
   // DELETE /api/exams/:id - 删除考试记录
   app.delete('/api/exams/:id', async (req, reply) => {
     const params = req.params as { id: string };

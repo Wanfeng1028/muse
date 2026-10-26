@@ -86,6 +86,28 @@ export default function DataTransfer() {
     errors: RowError[];
   } | null>(null);
 
+  // 真题导入
+  const examsInputRef = useRef<HTMLInputElement>(null);
+  const [examsFile, setExamsFile] = useState<File | null>(null);
+  const [examsImporting, setExamsImporting] = useState(false);
+  const [examsError, setExamsError] = useState('');
+  const [examsResult, setExamsResult] = useState<{
+    imported: number;
+    errors: RowError[];
+    errorRows: number;
+  } | null>(null);
+
+  // 计划导入
+  const plansInputRef = useRef<HTMLInputElement>(null);
+  const [plansFile, setPlansFile] = useState<File | null>(null);
+  const [plansImporting, setPlansImporting] = useState(false);
+  const [plansError, setPlansError] = useState('');
+  const [plansResult, setPlansResult] = useState<{
+    imported: number;
+    errors: RowError[];
+    errorRows: number;
+  } | null>(null);
+
   const handleExport = useCallback(async () => {
     setExporting(true);
     setExportError('');
@@ -180,6 +202,54 @@ export default function DataTransfer() {
       setMistakesImporting(false);
     }
   }, [mistakesFile]);
+
+  const handleExamsTemplate = useCallback(() => {
+    const csv =
+      'subject,paper,score,total_score,duration_minutes,taken_at\n' +
+      'math,真题卷一,96,120,120,2026-10-20\n' +
+      'english,真题卷二,88,100,100,2026-10-21\n';
+    downloadText('exams-template.csv', csv, 'text/csv');
+  }, []);
+
+  const handleExamsImport = useCallback(async () => {
+    if (!examsFile) return;
+    setExamsImporting(true);
+    setExamsError('');
+    setExamsResult(null);
+    try {
+      const csv = await examsFile.text();
+      const res = await api.importExamsCsv(csv);
+      setExamsResult({ imported: res.imported, errors: res.errors, errorRows: res.errorRows });
+    } catch (e) {
+      setExamsError(e instanceof Error ? e.message : '导入失败');
+    } finally {
+      setExamsImporting(false);
+    }
+  }, [examsFile]);
+
+  const handlePlansTemplate = useCallback(() => {
+    const csv =
+      'date,subject,title,planned_minutes,done\n' +
+      '2026-10-27,math,真题卷一套,120,0\n' +
+      '2026-10-28,english,阅读精读,45,1\n';
+    downloadText('plans-template.csv', csv, 'text/csv');
+  }, []);
+
+  const handlePlansImport = useCallback(async () => {
+    if (!plansFile) return;
+    setPlansImporting(true);
+    setPlansError('');
+    setPlansResult(null);
+    try {
+      const csv = await plansFile.text();
+      const res = await api.importPlansCsv(csv);
+      setPlansResult({ imported: res.imported, errors: res.errors, errorRows: res.errorRows });
+    } catch (e) {
+      setPlansError(e instanceof Error ? e.message : '导入失败');
+    } finally {
+      setPlansImporting(false);
+    }
+  }, [plansFile]);
 
   useEffect(() => {
     return () => {
@@ -334,6 +404,94 @@ export default function DataTransfer() {
           <div className="stack">
             <p>导入 {mistakesResult.imported} 条</p>
             <ErrorList errors={mistakesResult.errors} />
+          </div>
+        )}
+      </div>
+
+      <div className="card stack">
+        <h2>真题 CSV 导入</h2>
+        <p className="muted">
+          表头必须是 subject,paper,score,total_score，可加 duration_minutes,taken_at。subject 用 math/english/politics/major。
+        </p>
+        <div className="row dt-row">
+          <button className="btn btn-ghost" onClick={handleExamsTemplate}>
+            下载模板
+          </button>
+        </div>
+        <div className="row dt-row dt-row-file">
+          <input
+            ref={examsInputRef}
+            type="file"
+            accept=".csv"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              setExamsFile(f);
+              setExamsError('');
+              setExamsResult(null);
+            }}
+          />
+          {examsFile && <span className="muted">{examsFile.name}</span>}
+        </div>
+        <div className="row dt-row">
+          <button
+            className="btn btn-primary"
+            onClick={handleExamsImport}
+            disabled={examsImporting || !examsFile}
+          >
+            {examsImporting ? '处理中…' : '开始导入'}
+          </button>
+        </div>
+        {examsError && <p className="muted">导入失败：{examsError}</p>}
+        {examsResult && (
+          <div className="stack">
+            <p>
+              导入 {examsResult.imported} 条，错误 {examsResult.errorRows} 行
+            </p>
+            <ErrorList errors={examsResult.errors} />
+          </div>
+        )}
+      </div>
+
+      <div className="card stack">
+        <h2>计划 CSV 导入</h2>
+        <p className="muted">
+          表头必须是 date,subject,title，可加 planned_minutes,done。subject 用 math/english/politics/major，done 为 0 或 1，planned_minutes 缺省 60。
+        </p>
+        <div className="row dt-row">
+          <button className="btn btn-ghost" onClick={handlePlansTemplate}>
+            下载模板
+          </button>
+        </div>
+        <div className="row dt-row dt-row-file">
+          <input
+            ref={plansInputRef}
+            type="file"
+            accept=".csv"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              setPlansFile(f);
+              setPlansError('');
+              setPlansResult(null);
+            }}
+          />
+          {plansFile && <span className="muted">{plansFile.name}</span>}
+        </div>
+        <div className="row dt-row">
+          <button
+            className="btn btn-primary"
+            onClick={handlePlansImport}
+            disabled={plansImporting || !plansFile}
+          >
+            {plansImporting ? '处理中…' : '开始导入'}
+          </button>
+        </div>
+        {plansError && <p className="muted">导入失败：{plansError}</p>}
+        {plansResult && (
+          <div className="stack">
+            <p>
+              导入 {plansResult.imported} 条，错误 {plansResult.errorRows} 行
+            </p>
+            <ErrorList errors={plansResult.errors} />
           </div>
         )}
       </div>

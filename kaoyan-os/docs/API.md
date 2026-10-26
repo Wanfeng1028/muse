@@ -2258,6 +2258,103 @@ CSV 列：
 | 400 | `{ "error": "csv 不能为空" }` | csv 缺失或空白 | csv 不是 string 或 trim 后为空 |
 | 400 | `{ "error": "缺少必需列：subject / title" }` | 无表头或缺少必需列 | 全部行为空白行，或表头中不存在 `subject` 或不存在 `title` |
 
+### `POST /api/import/exams`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| POST | /api/import/exams | 需要登录 |
+
+请求体上限：5 MiB（`bodyLimit: 5 * 1024 * 1024`）。CSV 解析规则同上。
+
+**请求参数**
+
+| 位置 | 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| Body | csv | string | 是 | CSV 文本，非空（trim 后） |
+
+CSV 列：
+
+| 列名 | 必填 | 说明 |
+| --- | --- | --- |
+| subject | 是 | 必须为合法 SubjectKey（math/english/politics/major），否则计入错误行 |
+| paper | 是 | trim 后为空计入错误行 |
+| score | 是 | 必须为数字，且在 0 到 total_score 之间，否则计入错误行 |
+| total_score | 是 | 必须为数字且大于 0，否则计入错误行 |
+| duration_minutes | 否 | 缺省 0；非空时必须为大于等于 0 的数字，否则计入错误行，写入时取整 |
+| taken_at | 否 | 缺省今天；非空时必须为严格 YYYY-MM-DD 真实日期，否则计入错误行 |
+
+表头大小写不敏感。合法行写入 exam_records，`taken_at` 缺省为今天。
+
+**成功响应**
+
+状态码：200
+
+```json
+{
+  "imported": 2,
+  "errors": [{ "row": 4, "message": "score 不能大于 total_score" }],
+  "errorRows": 1
+}
+```
+
+`errors` 最多收集 50 条，`errorRows` 为错误行总数。
+
+**错误码**
+
+| 状态码 | 返回体 | 含义 | 触发条件 |
+| --- | --- | --- | --- |
+| 400 | `{ "error": "csv 不能为空" }` | csv 缺失或空白 | csv 不是 string 或 trim 后为空 |
+| 400 | `{ "error": "缺少必需列：subject / paper / score / total_score" }` | 无表头或缺少必需列 | 全部行为空白行，或表头中不存在必需列 |
+| 401 | 未登录 | 需要登录 | 未携带有效登录凭据 |
+
+### `POST /api/import/plans`
+
+| 方法 | 路径 | 认证 |
+| --- | --- | --- |
+| POST | /api/import/plans | 需要登录 |
+
+请求体上限：5 MiB（`bodyLimit: 5 * 1024 * 1024`）。CSV 解析规则同上。
+
+**请求参数**
+
+| 位置 | 名称 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- | --- |
+| Body | csv | string | 是 | CSV 文本，非空（trim 后） |
+
+CSV 列：
+
+| 列名 | 必填 | 说明 |
+| --- | --- | --- |
+| date | 是 | 必须为严格 YYYY-MM-DD 真实日期，否则计入错误行 |
+| subject | 是 | 必须为合法 SubjectKey（math/english/politics/major），否则计入错误行 |
+| title | 是 | trim 后为空计入错误行 |
+| planned_minutes | 否 | 缺省 60；非空时必须为 1~1440 的数字，否则计入错误行 |
+| done | 否 | 缺省 0；非空时只接受 0 或 1，否则计入错误行 |
+
+表头大小写不敏感。合法行写入 plans，`created_at` 使用当前 ISO 时间。
+
+**成功响应**
+
+状态码：200
+
+```json
+{
+  "imported": 2,
+  "errors": [{ "row": 4, "message": "date 须为 YYYY-MM-DD 格式的真实日期" }],
+  "errorRows": 1
+}
+```
+
+`errors` 最多收集 50 条，`errorRows` 为错误行总数。
+
+**错误码**
+
+| 状态码 | 返回体 | 含义 | 触发条件 |
+| --- | --- | --- | --- |
+| 400 | `{ "error": "csv 不能为空" }` | csv 缺失或空白 | csv 不是 string 或 trim 后为空 |
+| 400 | `{ "error": "缺少必需列：date / subject / title" }` | 无表头或缺少必需列 | 全部行为空白行，或表头中不存在必需列 |
+| 401 | 未登录 | 需要登录 | 未携带有效登录凭据 |
+
 ## 9. 设置
 
 ### `GET /api/settings`

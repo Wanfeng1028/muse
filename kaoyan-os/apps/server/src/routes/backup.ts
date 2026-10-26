@@ -36,7 +36,7 @@ function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-function parseCsv(text: string): string[][] {
+export function parseCsv(text: string): string[][] {
   let input = text;
   if (input.charCodeAt(0) === 0xfeff) {
     input = input.slice(1);
@@ -108,15 +108,15 @@ function parseCsv(text: string): string[][] {
   return rows;
 }
 
-function isBlankRow(cells: string[]): boolean {
+export function isBlankRow(cells: string[]): boolean {
   return cells.every((c) => c.trim() === '');
 }
 
-function normalizeHeader(cells: string[]): string[] {
+export function normalizeHeader(cells: string[]): string[] {
   return cells.map((c) => c.trim().toLowerCase());
 }
 
-function buildHeaderIndex(header: string[]): Map<string, number> {
+export function buildHeaderIndex(header: string[]): Map<string, number> {
   const map = new Map<string, number>();
   for (let i = 0; i < header.length; i += 1) {
     const name = header[i];
@@ -127,7 +127,7 @@ function buildHeaderIndex(header: string[]): Map<string, number> {
   return map;
 }
 
-function cellAt(cells: string[], idx: number | undefined): string {
+export function cellAt(cells: string[], idx: number | undefined): string {
   if (idx === undefined || idx < 0 || idx >= cells.length) {
     return '';
   }

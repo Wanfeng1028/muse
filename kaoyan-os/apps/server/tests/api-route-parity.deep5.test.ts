@@ -60,7 +60,9 @@ describe('api route parity deep5', () => {
     'POST /api/backup/import',
     'POST /api/exams',
     'POST /api/focus',
-    'POST /api/import/mistakes',
+    'POST /api/import/exams',
+  'POST /api/import/mistakes',
+  'POST /api/import/plans',
     'POST /api/import/words',
     'POST /api/mistakes',
     'POST /api/mistakes/quiz/generate',
@@ -99,8 +101,8 @@ describe('api route parity deep5', () => {
     await app.close();
   });
 
-  it('解析出 57 个前端 api 调用（数量快照）', () => {
-    expect(pairs.length).toBe(57);
+  it('解析出 59 个前端 api 调用（数量快照）', () => {
+    expect(pairs.length).toBe(59);
   });
 
   it('解析结果与 EXPECTED 快照完全一致', () => {
