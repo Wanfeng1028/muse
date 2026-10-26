@@ -89,6 +89,9 @@ public UsageService.FilterOptions filters() {
 @GetMapping("/by-run")
     @Operation(summary = "按运行记录聚合用量")
     public List<RunDto> byRun(@RequestParam(name = "limit", defaultValue = "20") int limit) {
+        if (limit < 1 || limit > 500) {
+            throw new IllegalArgumentException("limit 参数非法");
+        }
         return usageService.byRun(limit).stream()
                 .map(r -> new RunDto(r.runId(), r.goal(), r.tokens(), r.costCents(), r.createdAt()))
                 .toList();

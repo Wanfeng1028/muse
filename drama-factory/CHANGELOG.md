@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-26 深耕轮：按运行聚合接口参数收紧）
+
+收紧 GET /api/usage/by-run 的 limit 参数校验。改动前：limit ≤ 0 时 service 侧静默回落默认 20，超大 limit 无上限，调用方传错参数无法发现。改动后：UsageController.byRun 开头先校验再调 service，limit 小于 1 或大于 500 时抛 IllegalArgumentException("limit 参数非法")，全局 handler 转 400；非数字 limit 本就由 Spring 类型转换返回 400。方法签名、默认值 20、前端 usage.js 恒发的 limit=20、service 层回落逻辑均保持不变。无版本号变更、无 schema 变更、无 UI 改动。
+
+新增 UsageByRunValidationTest 7 例，覆盖 limit 0/-1/501/abc 均 400，无参、limit=1、limit=500 均 200。
+
 ### Fixed（2026-10-26 深耕轮：用量明细接口参数收紧）
 - 现象：GET /api/usage/requests 的 limit 与 days 此前无范围校验：limit 小于等于 0 时 service 侧按不限条数返回全部结果，调用方传错参数无法发现；days 为负数时 service 侧按全部历史处理，同样静默容忍；超大 limit/days 无上限。
 - 修法：UsageController.requests 开头先校验再调 service：limit 小于 1 或大于 500 抛 IllegalArgumentException("limit 参数非法")，days 小于 0 或大于 365 抛 IllegalArgumentException("days 参数非法")；days 等于 0 保持原有全部历史语义不拦截；方法签名、默认值（limit 50、days 30）、provider/model 参数、返回映射一字不动；不新增异常类，GlobalExceptionHandler 已把 IllegalArgumentException 与参数类型不匹配映射为 400（非数字 limit/days 本就由 Spring 类型转换返回 400）。
