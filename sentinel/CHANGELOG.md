@@ -3,6 +3,20 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.7] - 2026-10-26
+
+### 修复
+
+- `GET /api/monitors/{id}/checks`（`internal/handlers/handlers.go` 的 `handleListChecks`）新增 `limit` 类型校验：`limit` 存在但不是整数时返回 400，错误文案为「limit 参数非法」；数值仍保留 1~1000 钳制。
+- 校验口径与 v0.20.6 短信记录接口的 `limit` 校验保持一致。
+- 合同变更声明：此前非法 `limit` 会静默回退为 100，本版起改为返回 400；数值钳制行为不变。
+
+### 测试
+
+- 新增 `internal/handlers/checks_limit_validation_test.go` 的 `TestHandleListChecksLimitInvalidDeep3`：`limit=abc` 期望 400，`limit=10` 期望 200 且响应含 `items` 数组。
+- 既有钳制测试同跑通过（`limit=-5` 与 `limit=99999` 均仍返回 200）。
+
+
 ## [0.20.6] - 2026-10-26
 
 ### 新增
