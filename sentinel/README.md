@@ -37,6 +37,7 @@
 - **全站年度 SLA 报告**：全年 12 个月全站聚合（检查加权可用性、检查总数、事件总数、宕机时长、最佳与最差月份、故障归因），最佳与最差月份只在有检查的月份中评选、全年无检查时回落首月，`/sla-year` 页按年份查看，可导出中文 HTML 年报
 - **分组年度 SLA 报告**：全年 12 个月按分组聚合（检查加权可用性、检查总数、事件总数、宕机时长、最佳与最差月份、故障归因），只统计组内监控，最佳与最差月份只在有检查的月份中评选、全年无检查时回落首月，`/group-sla-year` 页按分组与年份查看，可导出中文 HTML 年报
 - **单监控年度 SLA 报告**：全年 12 个月按单监控聚合（检查加权可用性、检查总数、事件总数、宕机时长、最佳与最差月份、故障归因），只统计该监控，最佳与最差月份只在有检查的月份中评选、全年无检查时回落首月，`/monitor-sla-year` 页按监控与年份查看，可导出中文 HTML 年报
+- **全站延迟趋势**：最近 N 个月（3/6/12）全站成功检查延迟逐月对比（p50/p95/p99、均值、成功检查数、监控数、最慢监控），只统计成功检查、失败检查不计入分位与均值，`/latency-trend` 页按截止月份查看，含 p95 延迟条形与中文 HTML 导出
 ## 截图
 
 > 以下为真实运行抓屏，非设计稿。
@@ -57,6 +58,7 @@
 - 单监控 SLA 趋势：`docs/screenshots/monitor-sla-trend-v027.png`
 - 全站年度 SLA 报告：`docs/screenshots/sla-year-v028.png`
 - 分组年度 SLA 报告：`docs/screenshots/group-sla-year-v029.png`
+- 全站延迟趋势：`docs/screenshots/latency-trend-v031.png`
 - 事件页状态筛选（全部/仅进行中）：`docs/screenshots/incidents-status-all.png`、`docs/screenshots/incidents-status-open.png`
 - 事件页点击行展开详情（事件 ID、监控、开始时间、恢复时间、持续、状态、触发原因）：`docs/screenshots/incidents-detail-collapsed.png`、`docs/screenshots/incidents-detail-expanded.png`
 
@@ -151,6 +153,8 @@ open http://localhost:8200
 | GET | `/api/groups/{id}/sla/year.html?year=YYYY` | 是 | 分组年度 SLA 报告（中文 HTML，含逐月表与可用性条形） |
 | GET | `/api/monitors/{id}/sla/year?year=YYYY` | 是 | 单监控年度 SLA 报告（全年 12 个月按单监控聚合，缺省当年，非法年份返回 400、不存在的监控返回 404） |
 | GET | `/api/monitors/{id}/sla/year.html?year=YYYY` | 是 | 单监控年度 SLA 报告（中文 HTML，含逐月表与可用性条形） |
+| GET | `/api/latency/trend?end=YYYY-MM&months=N` | 是 | 全站延迟趋势（最近 N 个月逐月延迟聚合，N=1~12，默认 end=当月、months=6，只统计成功检查） |
+| GET | `/api/latency/trend.html?end=YYYY-MM&months=N` | 是 | 全站延迟趋势（中文 HTML，含逐月表与 p95 延迟条形） |
 | GET | `/healthz` | 否 | 存活探针 |
 | GET | `/readyz` | 否 | 就绪探针 |
 | GET | `/api/metrics` | 否 | Prometheus 指标 |

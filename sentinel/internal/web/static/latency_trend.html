@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>延迟趋势 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+<style>
+.bar-row{display:flex;align-items:center;gap:8px;margin:4px 0}
+.bar-month{width:80px}
+.bar-outer{flex:1;background:#e5e7eb;height:12px}
+.bar-inner{background:#2563eb;height:12px}
+.bar-text{width:90px;text-align:right}
+</style>
+</head>
+<body onload="initSiteLatencyTrend()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">仪表盘</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sms-log">短信记录</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend">SLA趋势</a>
+<a href="/maintenance">维护窗口</a>
+<a href="/groups">监控分组</a>
+<a href="/group-sla">分组SLA</a>
+<a href="/group-sla-trend">分组SLA趋势</a>
+<a href="/monitor-sla-trend">单监控SLA趋势</a>
+<a href="/sla-year">年度SLA</a>
+<a href="/group-sla-year">分组年度SLA</a>
+<a href="/monitor-sla-year">单监控年度SLA</a>
+<a href="/latency-trend" class="active">延迟趋势</a>
+</nav>
+</header>
+<main class="container">
+<h1>延迟趋势</h1>
+<p>最近 N 个月全站成功检查延迟逐月对比，仅统计成功检查，失败检查不计入分位与均值。</p>
+<div class="ctrl-row">
+<input type="month" id="end-input">
+<select id="months-select">
+<option value="3">3 个月</option>
+<option value="6">6 个月</option>
+<option value="12">12 个月</option>
+</select>
+<button id="load-btn">查看</button>
+<a id="export-link" href="/api/latency/trend.html">导出 HTML 版</a>
+</div>
+<div id="latency-cards"></div>
+<table class="snap-table">
+<thead>
+<tr><th>月份</th><th>p50 (ms)</th><th>p95 (ms)</th><th>p99 (ms)</th><th>平均 (ms)</th><th>成功检查数</th><th>监控数</th><th>最慢监控</th></tr>
+</thead>
+<tbody id="latency-rows"></tbody>
+</table>
+<h2>p95 延迟条形</h2>
+<div id="latency-bars"></div>
+<p id="latency-status"></p>
+</main><script>
+async function loadSiteLatencyTrend() {
+    const end = document.getElementById('end-input').value;
+    const months = document.getElementById('months-select').value;
+    document.getElementById('export-link').href = '/api/latency/trend.html?end=' + end + '&months=' + months;
+    const cards = document.getElementById('latency-cards');
+    const status = document.getElementById('latency-status');
+    try {
+        const rep = await api('/api/latency/trend?end=' + end + '&months=' + months);
+        document.getElementById("latency-rows").innerHTML = rep.items.map(function (item) {
+            return '<tr>'
+                + '<td>' + item.month + '</td>'
+                + '<td>' + item.p50_ms.toFixed(2) + '</td>'
+                + '<td>' + item.p95_ms.toFixed(2) + '</td>'
+                + '<td>' + item.p99_ms.toFixed(2) + '</td>'
+                + '<td>' + item.avg_ms.toFixed(2) + '</td>'
+                + '<td>' + item.total_checks + '</td>'
+                + '<td>' + item.monitor_count + '</td>'
+                + '<td>' + (item.slowest_monitor_name || "—") + '</td>'
+                + '</tr>';
+        }).join('');
+        const maxP95 = Math.max.apply(null, rep.items.map(function (item) { return item.p95_ms; }).concat([0]));
+        document.getElementById("latency-bars").innerHTML = rep.items.map(function (item) {
+            const pct = maxP95 > 0 ? (item.p95_ms / maxP95 * 100).toFixed(2) : "0.00";
+            return '<div class="bar-row">'
+                + '<span class="bar-month">' + item.month + '</span>'
+                + '<div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%"></div></div>'
+                + '<span class="bar-text">' + item.p95_ms.toFixed(2) + ' ms</span>'
+                + '</div>';
+        }).join('');
+        const totalChecks = rep.items.reduce(function (sum, item) { return sum + item.total_checks; }, 0);
+        cards.innerHTML = '<div class="card-row"><span class="card-title">截止月份</span><span class="card-value">' + rep.end_month + '</span></div>'
+            + '<div class="card-row"><span class="card-title">成功检查总数</span><span class="card-value">' + totalChecks + '</span></div>';
+    } catch (err) {
+        status.textContent = "加载失败";
+    }
+}
+
+function initSiteLatencyTrend() {
+    const now = new Date();
+    const endInput = document.getElementById('end-input');
+    endInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+    const monthsSelect = document.getElementById('months-select');
+    monthsSelect.value = "6";
+    loadSiteLatencyTrend();
+    document.getElementById('load-btn').addEventListener('click', loadSiteLatencyTrend);
+    monthsSelect.addEventListener('change', loadSiteLatencyTrend);
+    endInput.addEventListener('change', loadSiteLatencyTrend);
+}
+
+initSiteLatencyTrend();
+</script></body>
+</html>

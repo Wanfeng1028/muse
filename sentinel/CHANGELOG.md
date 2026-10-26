@@ -2,6 +2,34 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.31.0] - 2026-10-27
+
+### 新增
+
+- 全站延迟趋势：Store 层 SiteMonthlyLatency（单月全站聚合：成功检查延迟的 p50/p95/p99、均值、成功检查数、监控数、最慢监控）与 SiteLatencyTrend（复用既有 shiftMonth 逐月聚合，月份按时间顺序排列；months 取值 1~12、非法 endMonth/months 报错）；API（均需鉴权）GET /api/latency/trend?end=YYYY-MM&months=N（end 缺省当月、months 缺省 6、非法 end/months 返回 400）、GET /api/latency/trend.html（中文 HTML 导出：延迟趋势标题、逐月表、p95 延迟条形，条形宽度按窗口内最大 p95 归一化）；控制台页 /latency-trend（截止月份选择、3/6/12 个月选择、总览卡片、逐月表、p95 延迟条形、导出 HTML 链接），17 个既有控制台页导航末尾加延迟趋势链，/latency-trend 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：只统计 ok=1 的成功检查，失败检查的延迟不计入分位与均值；空月 p50/p95/p99/均值均为 0、成功检查数为 0、最慢监控为空；最慢监控取当月有成功检查的监控中 p95 最大者、并列取先遇到；监控数为当前监控列表总数；月份窗口用 RFC3339 起止（与 MonthlySLA 一致）；分位复用既有 percentileLinear 线性插值。
+- 无 schema 变更、无新环境变量。
+
+### 测试
+
+- 新增 internal/store/site_latency_trend_test.go（空库 3 个月：起止月份与空月零值与非法 months/endMonth/月份报错；双月：2 月延迟 [100,200] 与 [1000,1000] 得 p50 600、p95 1000、p99 1000、均值 575、总数 4、最慢为高延迟监控，3 月延迟 [300,400,500] 加一条 9999 失败检查得 p50 400、p95 490、p99 498、均值 400、总数 3、失败检查已排除）、internal/handlers/site_latency_trend_test.go（JSON 的 end_month/months 与 2 项与 3 月 p50 200/p95 290/总数 3 与非法参数 400、HTML 的 200 与“全站延迟趋势/p95 延迟条形/150.00”字样与非法 end 400；本轮新增 insertLatencyCheck helper 用 RFC3339 日期，规避既有 insertChecks 空格日期的月首漂移）、internal/web/latency_trend_test.go（延迟趋势页 14 个标记与标记顺序、失败路径定义顺序、17 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（16 包，notify 包为既存最慢包，239.351 秒）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18501 端口，SENTINEL_TICK_SEC=60；隔离库与隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建 UP 监控 3 号（本地 200 服务）与 DOWN 监控 4 号（127.0.0.1:9 拒绝）；各 CheckNow 2 次后 GET /api/latency/trend?end=2026-10&months=2 返回 9 月空月 0 检查/零延迟、10 月成功检查数 2（DOWN 的失败检查未计入）、最慢监控为冒烟UP、监控数 4；无鉴权 401、months=0 与 end=2026-13 均为 400；latency/trend.html 含“全站延迟趋势”与“p95 延迟条形”；/latency-trend 页 200 且含全部标记；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 两次冒烟运行的 10 月延迟值不同（首跑 p50/p95/p99/均值均为 2.00，复拍为 2.50/2.95/2.99/2.50），系本地 200 服务实测延迟抖动，非口径变化。
+
+### 视觉验收
+
+- 截图 docs/screenshots/latency-trend-v031.png 亲眼核对——导航 18 链齐全且延迟趋势 active、控件（October 2026、6 个月、查看、导出 HTML 版）、卡片（截止月份 2026-10、成功检查总数 2）与逐月行（5–9 月 0.00、10 月 2.50/2.95/2.99/2.50、2 检查、监控数 4、最慢冒烟UP）及 p95 条形（10 月蓝色满格 2.95 ms、空月灰底 0.00 ms）均与 API 返回一致、无“加载失败”。
+- 截图 harness 说明：Playwright setContent 下相对 /api 解析失败且 about:blank 不透明源读 sessionStorage 抛 SecurityError；截图脚本按既往模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 桩化为空串、页面脚本的 /api 改写为绝对地址并经 route 代理回真实服务（路由层注入冒烟 stub token、OPTIONS 预检直接回 200 并补 CORS 头），该改写仅限截图环境，产品代码未动。首拍 1280 宽下导航末尾被裁，改 1600 宽复拍后 18 链齐全。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 wave11_lat_call.py（令牌经 SSH 现取、只进子进程内存、不落盘、未读任何现成调用脚本；显式流式解析 + include_usage，每次调用用量均已捕获记账，失败重试单独立行记账）；Go 代码、测试、页面均为小片段逐字输出口径；编排侧机械工作：片段拼接与 gofmt、17 页导航链机械追加（保留各页原行首缩进）、路由与鉴权精确名单接线、README/CHANGELOG 事实性文字、Handlers 测试稿 p50 断言修正（[100,200] 的 p50 为 150.00，提示词误写 200.00，模型按线性插值算对、编排侧改断言）。
+- 平台层现象：3 通 reasoning-only 空响应（Store 月函数稿、Store 双月测试稿、Handlers JSON 测试稿，调用器自动重试后均出正文，空响应行已记账）。
+- 调用统计（batch 目录 usage.log 全量记录）：成功调用 12 次，prompt 合计 290303、completion 合计 24128、合计 314431；空响应 3 次（均为 reasoning-only），其上报口径 prompt 合计 72903、completion 合计 12000、合计 84903；错误行 0 条；本轮无 429、无 HTTP 错误行；全量 15 条，prompt 合计 363206、completion 合计 36128、合计 399334；全部调用模型均为大写 GLM-5.3-Flash。
 
 ## [0.30.0] - 2026-10-27
 
