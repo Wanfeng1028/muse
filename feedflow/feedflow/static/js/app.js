@@ -202,6 +202,7 @@ function initReader() {
     html += `</div></div>`;
     html += `<div id="article-tags" class="article-tags"></div>`;
     html += `<div class="tag-editor"><select id="tag-select"></select><input id="tag-new" type="text" placeholder="或填新标签名"><button id="btn-add-tag" class="btn">贴标签</button></div>`;
+html += `<div class="tag-editor"><select id="list-select"></select><input id="list-new" type="text" placeholder="或填新清单名"><button id="btn-add-list" class="btn">加入清单</button><span id="list-add-status" class="note-status"></span></div>`;
     html += `<div id="article-note" class="article-note"><h3>我的笔记</h3><textarea id="note-text" rows="4"></textarea><button id="btn-save-note" class="btn">保存笔记</button><button id="btn-delete-note" class="btn">删除笔记</button><span id="note-status" class="note-status"></span></div>`;
     html += `<div id="score-card" class="score-card is-loading"><span class="score-loading">正在算这篇为什么值得读…</span></div>`;
     html += `<div class="content">${a.content_html || a.content_text || a.summary || ""}</div>`;
@@ -216,6 +217,8 @@ function initReader() {
     if (btnLater) btnLater.addEventListener("click", () => toggleLater(a.id));
     loadTagOptions();
     bindTagEditor(a.id);
+    loadListOptions();
+    bindListEditor(a.id);
     bindNoteEditor(a.id);
   }
 
@@ -340,6 +343,63 @@ function initReader() {
       } catch (e) {}
     });
   }
+
+async function loadListOptions() {
+  const sel = document.getElementById("list-select");
+  if (!sel) return;
+  sel.innerHTML = "";
+  const first = document.createElement("option");
+  first.value = "";
+  first.textContent = "选已有清单";
+  sel.appendChild(first);
+  try {
+    const data = await api("/api/reading-lists");
+    (data.reading_lists || []).forEach((l) => {
+      const opt = document.createElement("option");
+      opt.value = l.id;
+      opt.textContent = l.name;
+      sel.appendChild(opt);
+    });
+  } catch (e) {}
+}
+
+function bindListEditor(articleId) {
+  const btn = document.getElementById("btn-add-list");
+  if (!btn) return;
+  btn.addEventListener("click", async () => {
+    const select = document.getElementById("list-select");
+    const input = document.getElementById("list-new");
+    const status = document.getElementById("list-add-status");
+    const newName = input ? input.value.trim() : "";
+    const hasSelectValue = Boolean(select && select.value);
+    if (!hasSelectValue && !newName) return;
+    try {
+      let listId;
+      let listName;
+      if (hasSelectValue) {
+        listId = Number(select.value);
+        listName = select.options[select.selectedIndex].text;
+      } else {
+        const row = await api("/api/reading-lists", {
+          method: "POST",
+          body: JSON.stringify({ name: newName })
+        });
+        listId = row.id;
+        listName = row.name;
+      }
+      await api(`/api/reading-lists/${listId}/articles`, {
+        method: "POST",
+        body: JSON.stringify({ article_id: articleId })
+      });
+      if (status) status.textContent = `已加入清单「${listName}」`;
+      loadListOptions();
+      if (input) input.value = "";
+      if (select) select.value = "";
+    } catch (err) {
+      if (status) status.textContent = "加入失败，请重试";
+    }
+  });
+}
 
 async function loadArticleNote(id) {
   const container = document.getElementById('article-note');

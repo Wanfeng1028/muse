@@ -1,6 +1,29 @@
 
 # 更新日志
 
+## v1.32.0 — 2026-10-27
+
+### Added
+- 阅读器内快捷加入清单：不新增迁移、不改 store、不改 API，复用 v1.31.0 的 reading_lists 表与 API（GET /api/reading-lists 返回 reading_lists 键；POST /api/reading-lists 建清单，同名复用；POST /api/reading-lists/<id>/articles 加入文章，重复加入返回已有成员行，不重复建成员行）。
+- Web/JS：feedflow/static/js/app.js 的 renderReader 在标签编辑器行之后新增清单编辑器行（复用 tag-editor 样式类），含 select#list-select（首选项“选已有清单”）、input#list-new（占位“或填新清单名”）、button#btn-add-list（文案“加入清单”）、span#list-add-status；新增 loadListOptions()（拉取已有清单填下拉）与 bindListEditor(articleId)（选已有清单直接加入，或填新清单名时先建清单再加入；成功时状态文案为“已加入清单「<清单名>」”，失败为“加入失败，请重试”；成功后刷新下拉并清空输入与选择）。
+- 测试：新增 tests/test_reader_lists_v132.py 5 例（JS 含 7 个 token：list-select、list-new、btn-add-list、list-add-status、loadListOptions、bindListEditor、reading-lists；阅读器页含 static/js/app.js；加入已有清单后成员含标题；重复加入两次成员行 id 相同且只出现一次；新建清单流程后清单页同时含清单名与文章标题），靶向 5/5 通过；ruff check 改动文件全洁。
+- 全量 pytest：1166 通过、2 失败（1169.00 秒），2 处失败均为 v1.21 旧契约既有失败（`test_api_deep.py::test_pagination_limit_clamped`、`test_api_deep2.py::test_articles_pagination_edge_cases`），本轮未动分页逻辑，零回归。
+
+### 视觉验收
+- 真实服务跑在 18432 端口、应用自带种子库 33 篇。先建真实清单“周末深读”，后在阅读器打开真实种子文章（Python 3.14 正式发布），下拉选中该清单点“加入清单”，状态显示“已加入清单「周末深读」”，API 复核成员行已写入。
+- 截图 docs/screenshots/reader-list-add-v132.png：三栏阅读器、清单编辑器行与成功反馈，console 零错误。冒烟服务与演示库已删，截图脚本在 muse-build/batches-feedflow-20261026-night10/ff_n10_elm_shot.js。
+
+### 模型稿与编排修正
+- 模型稿的状态 span 初用 id list-status，与 reader.html 列表栏已有的 id list-status（未读/星标/全部状态文案）冲突，编排改名为 list-add-status。
+- 模型稿测试的 _clear 用 JSON {"id"} 调表单删除端点且断言 200，实际端点读表单 list_id 且返回重定向，编排改回表单 data={"list_id"} 写法。
+- 模型稿下半测试把 _create_list 的返回值当行字典取 ["id"]，实际返回的是 id，编排改取返回值本身。
+- 截图 harness 初版的 /api/ 改写只处理引号前缀，模板字符串反引号前缀的请求在 about:blank 下解析失败致“加入失败”，编排补反引号改写后真实加入成功（属 harness 问题，非应用代码问题）。
+
+### 已知限制
+- 加入入口只在阅读器正文区，不在文章列表行。
+- 清单页与 API 本身不重做。
+- 阅读器内加入后清单页需刷新才见成员。
+
 ## v1.31.0 — 2026-10-27
 
 ### Added
