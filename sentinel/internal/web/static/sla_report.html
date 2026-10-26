@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SLA 月报总览 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+<style>
+.card-header{display:flex;align-items:baseline;gap:.5rem;margin-bottom:.5rem}
+.ctrl-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.75rem}
+</style>
+</head>
+<body onload="initSiteSLA()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">仪表盘</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sms-log">短信记录</a>
+<a href="/sla-report" class="active">SLA总报</a>
+</nav>
+</header>
+<main class="container">
+<h1>SLA 月报总览</h1>
+<p>全站当月聚合：可用性按检查数加权，目标 99.9%。</p>
+<div class="ctrl-row">
+<input type="month" id="month-input">
+<button id="load-btn">查看</button>
+<a id="export-link" href="/api/sla.html">导出 HTML 版</a>
+</div>
+
+<div id="cards"></div>
+<table class="snap-table">
+<thead><tr><th>监控</th><th>目标</th><th>可用性</th><th>检查数</th><th>事件数</th><th>宕机时长</th><th>达标</th></tr></thead>
+<tbody id="report-rows"></tbody>
+</table>
+<p id="report-status"></p>
+</main>
+<script>
+function fmtDur(sec) {
+  if (!sec) return "0 秒";
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const parts = [];
+  if (d) parts.push(d + " 天");
+  if (h) parts.push(h + " 小时");
+  if (m) parts.push(m + " 分");
+  if (d === 0 && h === 0) parts.push(s + " 秒");
+  return parts.join(" ");
+}
+async function loadSiteSLA() {
+  const month = document.getElementById('month-input').value;
+  document.getElementById('export-link').href = '/api/sla.html?month=' + month;
+  const cards = document.getElementById('cards');
+  const status = document.getElementById('report-status');
+  try {
+    const rep = await api('/api/sla?month=' + month);
+    cards.innerHTML = [
+      ['全站可用性', rep.uptime_pct.toFixed(2) + '%'],
+      ['检查总数', rep.total_checks],
+      ['宕机时长', fmtDur(rep.total_downtime_sec)],
+      ['事件总数', rep.down_incidents],
+      ['是否达标', rep.met ? '达标' : '未达标']
+    ].map(function (item) {
+      return '<div class="card"><span class="card-label">' + esc(item[0]) + '</span><strong class="card-value">' + esc(item[1]) + '</strong></div>';
+    }).join('');
+    renderRows(rep);
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = '加载失败：' + e.message;
+  }
+}
+function renderRows(rep) {
+  const rowsEl = document.getElementById("report-rows");
+  const statusEl = document.getElementById("report-status");
+  if (!rep.monitors || rep.monitors.length === 0) {
+    statusEl.textContent = "暂无监控";
+    rowsEl.innerHTML = "";
+    return;
+  }
+  let html = "";
+  for (const m of rep.monitors) {
+    html += "<tr>" +
+      "<td>" + esc(m.name) + "</td>" +
+      "<td>" + esc(m.target) + "</td>" +
+      "<td>" + m.uptime_pct.toFixed(2) + "%</td>" +
+      "<td>" + m.total_checks + "</td>" +
+      "<td>" + m.down_incidents + "</td>" +
+      "<td>" + fmtDur(m.total_downtime_sec) + "</td>" +
+      "<td>" + (m.met ? "达标" : "未达标") + "</td>" +
+      "</tr>";
+  }
+  rowsEl.innerHTML = html;
+}
+function initSiteSLA() {
+const _now = new Date();
+const _month = _now.getFullYear() + "-" + String(_now.getMonth() + 1).padStart(2, "0");
+document.getElementById("month-input").value = _month;
+document.getElementById("load-btn").addEventListener("click", loadSiteSLA);
+loadSiteSLA();
+}
+</script>
+</body>
+</html>

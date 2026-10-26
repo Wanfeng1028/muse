@@ -22,6 +22,7 @@
 
 - **站点健康档案** `/profile?id=N`：7/30 天可用性、延迟分位、30 天每日柱状图、月度 SLA 一页看全
 - **月度 SLA**：选月份，看可用性、检查数、宕机时长、是否达标 99.9%
+- **全站月度 SLA 总报** `/sla-report`：全部监控按月聚合，一页看全站可用性、最差监控与逐监控表，可导出中文 HTML 月报
 - **公开状态页** `/status/{slug}`：对外展示，无需登录，客户直接看
 - **状态页主题**：每页可配浅色/深色/自定义主色，`PUT /api/status-pages/{id}/theme`，访客可在页面上切换预览
 - **订阅通知**：访客在状态页留邮箱订阅，宕机/恢复时收邮件；订阅需点确认链接（含退订），防滥用
@@ -94,6 +95,8 @@ open http://localhost:8200
 | GET | `/api/monitors/{id}/profile` | 是 | 站点健康档案（可用性、延迟分位、30 天每日数据、抖动评分、故障时间线） |
 | GET | `/api/monitors/{id}/sla?month=YYYY-MM` | 是 | 月度 SLA 报告 |
 | GET | `/api/monitors/{id}/sla.html?month=YYYY-MM` | 是 | 月度 SLA 报告（中文 HTML，可存档） |
+| GET | `/api/sla?month=YYYY-MM` | 是 | 全站月度 SLA 总报（全部监控聚合） |
+| GET | `/api/sla.html?month=YYYY-MM` | 是 | 全站月度 SLA 总报（中文 HTML，可存档） |
 | PUT | `/api/monitors/{id}/public` | 是 | 设置是否公开，body `{"is_public":0|1}` |
 | POST | `/api/status-pages` | 是 | 新建状态页，body `{"slug":"...","title":"..."}` |
 | GET | `/api/status-pages` | 是 | 状态页列表 |

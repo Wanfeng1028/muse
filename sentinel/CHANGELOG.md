@@ -3,6 +3,28 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.21.0] - 2026-10-27
+
+### 新增
+
+- 全站月度 SLA 总报：`GET /api/sla?month=YYYY-MM`（需鉴权）聚合全部监控：检查加权可用性（零检查监控不计入加权分母、全部零检查时为 100）、检查总数、事件总数、宕机时长、目标 99.9、是否达标、最差监控、归因合计与占比；`GET /api/sla.html?month=YYYY-MM` 中文 HTML 导出；控制台页 `/sla-report`（月份选择、总览卡片、逐监控表、导出 HTML 链接），各控制台页导航末尾加 SLA总报链。
+- Store 层 `SiteMonthlySLA` 复用单监控 `MonthlySLA`；无 schema 变更、无新环境变量。
+
+### 测试
+
+- 新增 `internal/store/site_sla_test.go`（空库与非法月份、90 正常+10 失败对 100 全正常加权得 95 与最差监控）与 `internal/handlers/site_sla_test.go`（JSON 的 month/monitor_count、非法月份 400、HTML 200 与“全站”字样）；`go test ./...` 16 包全绿；`go vet` 全洁。
+- 真实服务冒烟（隔离库 18491 端口）：种子 2 监控 + 新建 1 up（本地 200 服务）+ 1 down（127.0.0.1:9 拒绝），各 CheckNow 2 次后 `/api/sla?month=2026-10` 返回 total_checks 8、uptime 75、最差为死端口、met false、归因 connection 100%；HTML 含两监控名与未达标；无鉴权 401、非法月份 400；`/sla-report` 页 200 且含 month-input/load-btn/report-rows。
+
+### 已知限制
+
+- `/sla-report` 页的浏览器内目视截图验收未在本轮完成（子智能体无 live browser 权限），需主 agent 以浏览器实测一遍真实数据页后再算终验；curl 层面的页面标记与 API 数据已实证。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行，调用器为本轮现写最小新文件 night_sentinel_call.py，令牌经 SSH 现取不落盘、未读任何现成调用脚本；Go 代码与测试为规格生成稿，页面 HTML 片段因自由生成一通编造了假数据仪表盘而整通废弃，改走微片段逐字输出口径后落仓；另有 9 通 reasoning-only 空响应作废（均计入用量）。
+
+
+
 ## [0.20.12] - 2026-10-26
 
 ### 改动
