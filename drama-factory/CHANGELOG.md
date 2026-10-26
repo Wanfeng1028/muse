@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-26 深耕轮：用量明细接口参数收紧）
+- 现象：GET /api/usage/requests 的 limit 与 days 此前无范围校验：limit 小于等于 0 时 service 侧按不限条数返回全部结果，调用方传错参数无法发现；days 为负数时 service 侧按全部历史处理，同样静默容忍；超大 limit/days 无上限。
+- 修法：UsageController.requests 开头先校验再调 service：limit 小于 1 或大于 500 抛 IllegalArgumentException("limit 参数非法")，days 小于 0 或大于 365 抛 IllegalArgumentException("days 参数非法")；days 等于 0 保持原有全部历史语义不拦截；方法签名、默认值（limit 50、days 30）、provider/model 参数、返回映射一字不动；不新增异常类，GlobalExceptionHandler 已把 IllegalArgumentException 与参数类型不匹配映射为 400（非数字 limit/days 本就由 Spring 类型转换返回 400）。
+- 测试：新增 UsageRequestsValidationTest 10 例全绿（limit 0/-1/501/abc、days -1/366/abc 均 400；无参、limit=1&days=0、limit=500&days=365 均 200）；既有 UsageControllerDeepTest 20/20 全绿，无回归；前端 usage.js 恒发 limit 50、days 取 7/30/90，均在合法范围内，不受影响。
+- 无版本号变更、无 schema 变更、无 UI 改动。
+
 ### Fixed（2026-10-26 深耕轮：Prompt 模板缺失补种）
 - 根因：老库只有 5 条模板（LYRICS/COMPOSE 加入前已初始化）；旧 `PromptTemplateService.run()` 表里有行就整体跳过，永远不补新项；`GET /api/agents` 逐项 `getByAgent`，LYRICS 查不到抛 `IllegalStateException`，全局 handler 转 409，整页失败（此前多轮截图里 /api/agents 的 409 即此缺口）。
 - 修法：`run()` 改为逐项 `findByAgentType` 检查，已存在的一字不改（不覆盖用户改过的模板），不存在才新建保存（名称 = 标签 + “默认模板”）；日志记补种条数或无需补种；类级 Javadoc 同步修正（旧文案“表为空则写入 5 个”已错）。无 schema 变更、无版本号变更。

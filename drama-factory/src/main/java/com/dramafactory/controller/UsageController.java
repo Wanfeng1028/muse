@@ -67,6 +67,12 @@ public List<RequestDto> requests(@RequestParam(defaultValue = "50") int limit,
                                  @RequestParam(required = false) String provider,
                                  @RequestParam(required = false) String model,
                                  @RequestParam(defaultValue = "30") int days) {
+    if (limit < 1 || limit > 500) {
+        throw new IllegalArgumentException("limit 参数非法");
+    }
+    if (days < 0 || days > 365) {
+        throw new IllegalArgumentException("days 参数非法");
+    }
     return usageService.requests(limit, provider, model, days).stream()
             .map(r -> new RequestDto(r.id(), r.kind(), r.time(), r.provider(), r.model(),
                     r.tokensUsed(), r.promptTokens(), r.completionTokens(), r.cachedTokens(),
