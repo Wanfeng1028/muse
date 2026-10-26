@@ -323,6 +323,82 @@ public List<CreatorFeedItem> feed(int limit) {
     }
 
     /**
+     * 返回推荐创作者列表:排除当前用户已关注的创作者与自己的主页,按粉丝数倒序、技能数倒序、创建时间倒序排列并截断至 limit;不含任何收益字段。
+     */
+@Transactional(readOnly = true)
+public List<CreatorRecommendedItem> recommended(int limit) {
+    if (limit < 1 || limit > 50) {
+        throw new IllegalArgumentException("limit 参数非法");
+    }
+    String currentUserId = currentUser.currentUserId();
+
+    Map<Long, Boolean> followedCreatorIds = new LinkedHashMap<>();
+    for (CreatorFollow follow : followRepository.findByFollowerId(currentUserId)) {
+        followedCreatorIds.put(follow.getCreatorId(), Boolean.TRUE);
+    }
+
+    List<CreatorRecommendedItem> candidates = new ArrayList<>();
+    for (CreatorProfile profile : profileRepository.findAllByOrderByCreatedAtDesc()) {
+        if (currentUserId.equals(profile.getOwnerId())) {
+            continue;
+        }
+        if (followedCreatorIds.containsKey(profile.getId())) {
+            continue;
+        }
+
+        Map<Long, Skill> skillById = new LinkedHashMap<>();
+        for (Skill skill : skillRepository.findByAuthor(profile.getHandle())) {
+            skillById.putIfAbsent(skill.getId(), skill);
+        }
+        if (profile.getDisplayName() != null) {
+            for (Skill skill : skillRepository.findByAuthor(profile.getDisplayName())) {
+                skillById.putIfAbsent(skill.getId(), skill);
+            }
+        }
+
+        Skill latestSkill = null;
+        for (Skill skill : skillById.values()) {
+            if (skill.getCreatedAt() == null) {
+                continue;
+            }
+            if (latestSkill == null || skill.getCreatedAt().isAfter(latestSkill.getCreatedAt())) {
+                latestSkill = skill;
+            }
+        }
+
+        candidates.add(new CreatorRecommendedItem(
+                profile.getId(),
+                profile.getHandle(),
+                profile.getDisplayName(),
+                profile.getBio(),
+                skillById.size(),
+                followRepository.countByCreatorId(profile.getId()),
+                latestSkill == null ? null : latestSkill.getName(),
+                latestSkill == null ? null : latestSkill.getCreatedAt(),
+                profile.getCreatedAt()));
+    }
+
+    Comparator<CreatorRecommendedItem> followerCountDesc =
+            Comparator.comparingLong(CreatorRecommendedItem::followerCount).reversed();
+    Comparator<CreatorRecommendedItem> skillCountDesc =
+            Comparator.comparingLong(CreatorRecommendedItem::skillCount).reversed();
+    Comparator<CreatorRecommendedItem> createdAtDescNullsLast =
+            Comparator.comparing(CreatorRecommendedItem::createdAt,
+                    Comparator.nullsLast(Comparator.reverseOrder()));
+    candidates.sort(followerCountDesc.thenComparing(skillCountDesc).thenComparing(createdAtDescNullsLast));
+
+    List<CreatorRecommendedItem> result = new ArrayList<>();
+    for (CreatorRecommendedItem item : candidates) {
+        if (result.size() >= limit) {
+            break;
+        }
+        result.add(item);
+    }
+    return result;
+}
+
+
+    /**
      * 基于去重后的技能列表与关注数计算创作者统计。
      *
      * <p>安装量与评分字段为 null 时按 0 处理；评分总数为 0 时不计算平均分（返回 null），
@@ -414,5 +490,10 @@ public static record CreatorFeedItem(String handle, String displayName, Long ski
     public static record CreatorFollowingItem(Long creatorId, String handle, String displayName, String bio,
             long skillCount, long followerCount, String latestSkillName, LocalDateTime latestSkillCreatedAt,
             LocalDateTime followedAt) {
+    }
+    /** 单个推荐创作者的概要:基础资料、技能数、粉丝数、最新技能与创建时间,不含收益字段。 */
+    public static record CreatorRecommendedItem(Long creatorId, String handle, String displayName, String bio,
+            long skillCount, long followerCount, String latestSkillName, LocalDateTime latestSkillCreatedAt,
+            LocalDateTime createdAt) {
     }
 }

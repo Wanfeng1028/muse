@@ -43,6 +43,9 @@
     'cr.followingRefresh': { 'zh-CN': '刷新关注', 'en': 'Refresh following' },
     'cr.followingLatest': { 'zh-CN': '最新 Skill', 'en': 'Latest Skill' },
     'cr.followingNoSkill': { 'zh-CN': '暂无 Skill', 'en': 'No Skills yet' },
+    'cr.recommendedTitle': { 'zh-CN': '为你推荐', 'en': 'Recommended for you' },
+    'cr.recommendedEmpty': { 'zh-CN': '还没有可推荐的创作者：可推荐的创作者已全部关注，或暂无其他创作者', 'en': 'No creators to recommend yet: all recommendable creators are already followed, or there are no other creators' },
+    'cr.recommendedRefresh': { 'zh-CN': '刷新推荐', 'en': 'Refresh recommendations' },
   };
 
   if (window.DFI18N && typeof window.DFI18N.register === 'function') { window.DFI18N.register(PAGE_I18N); }
@@ -180,6 +183,7 @@ async function toggleFollow() {
     showToast(method === 'POST' ? _t('cr.followed', '已关注') : _t('cr.unfollowed', '已取消关注'));
     loadFeed();
     loadFollowing();
+    loadRecommended();
   } catch (err) {
     showToast(_t('cr.saveFailed', '保存失败'));
   }
@@ -284,11 +288,52 @@ async function loadFeed() {
       showToast(_t('cr.unfollowed', '已取消关注'));
       await loadFollowing();
       await loadFeed();
+      await loadRecommended();
       await loadCreators();
     } catch (err) {
       showToast(_t('cr.loadFailed', '加载失败'));
     }
   }
+
+async function loadRecommended() {
+  let creators = [];
+  try {
+    creators = await api('/api/creators/recommended') || [];
+  } catch (err) {
+    showToast(_t('cr.loadFailed', '加载失败'));
+    return;
+  }
+  const list = document.getElementById('creatorRecommended');
+  const empty = document.getElementById('creatorRecommendedEmpty');
+  if (empty) empty.hidden = creators.length > 0;
+  if (!list) return;
+  list.innerHTML = creators.map((creator) => `
+    <div class="col-12"><div class="card">
+      <div class="card-body">
+        <div class="fw-bold">${esc(creator.displayName)}</div>
+        <div class="text-secondary">@${esc(creator.handle)}</div>
+        <p class="text-secondary mb-2">${esc(creator.bio || '')}</p>
+        <div class="text-secondary mb-2">Skill ${creator.skillCount || 0} · 关注 ${creator.followerCount || 0}</div>
+        <div class="text-secondary mb-3">${creator.latestSkillName ? `${esc(_t('cr.followingLatest', '最新 Skill'))} ${esc(creator.latestSkillName)} · ${esc(fmtDateTime(creator.latestSkillCreatedAt))}` : esc(_t('cr.followingNoSkill', '暂无 Skill'))}</div>
+        <button type="button" class="btn btn-outline-primary btn-sm creator-recommended-follow-btn" data-follow-handle="${esc(creator.handle)}">${esc(_t('cr.follow', '关注'))}</button>
+      </div>
+    </div></div>
+  `).join('');
+}
+
+async function followRecommended(handle) {
+  if (!handle) return;
+  try {
+    await api('/api/creators/' + encodeURIComponent(handle) + '/follow', { method: 'POST' });
+    showToast(_t('cr.followed', '已关注'));
+    await loadRecommended();
+    await loadFollowing();
+    await loadFeed();
+    await loadCreators();
+  } catch (err) {
+    showToast(_t('cr.loadFailed', '加载失败'));
+  }
+}
 
 // 初始化：应用 i18n，绑定搜索防抖/排序/详情/关注/返回/表单事件，并首次加载列表
 document.addEventListener('DOMContentLoaded', function () {
@@ -314,8 +359,14 @@ document.addEventListener('DOMContentLoaded', function () {
     const item = e.target.closest('[data-unfollow-handle]');
     if (item) unfollowFollowing(item.getAttribute('data-unfollow-handle'));
   });
+  document.getElementById('creatorRecommended').addEventListener('click', function (e) {
+    const item = e.target.closest('[data-follow-handle]');
+    if (item) followRecommended(item.getAttribute('data-follow-handle'));
+  });
+  document.getElementById('creatorRecommendedRefresh').addEventListener('click', loadRecommended);
   loadCreators();
   loadFeed();
   loadFollowing();
+  loadRecommended();
 });
 })();

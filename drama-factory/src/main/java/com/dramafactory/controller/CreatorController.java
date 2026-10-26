@@ -92,6 +92,29 @@ public List<CreatorFeedItemDto> feed(@RequestParam(defaultValue = "20") int limi
                 .toList();
     }
 
+/**
+ * 查询推荐创作者列表。
+ * 返回结果排除当前用户已关注的创作者以及当前用户自己的主页，
+ * 默认返回 10 条；limit 参数不合法时由 service 层校验并拒绝。
+ * 不包含任何收益相关字段。
+ */
+@GetMapping("/recommended")
+public List<CreatorRecommendedItemDto> recommended(@RequestParam(defaultValue = "10") int limit) {
+    return creatorService.recommended(limit).stream()
+            .map(item -> new CreatorRecommendedItemDto(
+                    item.creatorId(),
+                    item.handle(),
+                    item.displayName(),
+                    item.bio(),
+                    item.skillCount(),
+                    item.followerCount(),
+                    item.latestSkillName(),
+                    item.latestSkillCreatedAt(),
+                    item.createdAt()))
+            .toList();
+}
+
+
     @GetMapping("/{handle}")
     public CreatorDetailDto detail(@PathVariable String handle) {
         return toDetailDto(creatorService.detail(handle));
@@ -315,4 +338,17 @@ public record CreatorFeedItemDto(String handle, String displayName, Long skillId
             long skillCount, long followerCount, String latestSkillName, LocalDateTime latestSkillCreatedAt,
             LocalDateTime followedAt) {
     }
+
+    /** 推荐创作者列表项 DTO。 */
+    public record CreatorRecommendedItemDto(
+        Long creatorId,
+        String handle,
+        String displayName,
+        String bio,
+        long skillCount,
+        long followerCount,
+        String latestSkillName,
+        java.time.LocalDateTime latestSkillCreatedAt,
+        java.time.LocalDateTime createdAt) {
+}
 }
