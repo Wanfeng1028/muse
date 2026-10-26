@@ -225,7 +225,7 @@
 | --- | --- | --- |
 | GET | /api/plans/summary/by-subject | 需登录 |
 
-返回当前用户的计划分科汇总（全量，不按日期过滤）。
+返回当前用户的计划分科汇总。可选查询参数 days：合法数字时只统计最近 N 天（含今天，按计划 date 界定），N 按 1~31 钳制；不传或非法时统计全部历史（与 GET /api/focus/summary/by-subject 的 days 口径一致）。
 
 - 仅返回有计划的科目。
 - 按 SUBJECTS 顺序排列：math、english、politics、major。

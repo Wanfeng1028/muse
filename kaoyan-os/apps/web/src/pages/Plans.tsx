@@ -39,6 +39,7 @@ export default function Plans() {
   const [summary, setSummary] = useState<PlanSummary | null>(null);
   const [overdue, setOverdue] = useState<OverduePlansResponse | null>(null);
   const [bySubject, setBySubject] = useState<PlansBySubjectResponse | null>(null);
+  const [bySubjectWindow, setBySubjectWindow] = useState<'all' | '7' | '1'>('all');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
 
@@ -122,7 +123,7 @@ export default function Plans() {
         api.listPlans(params),
         api.planSummary(date),
         api.overduePlans(),
-        api.plansBySubject(),
+        api.plansBySubject(bySubjectWindow === 'all' ? undefined : Number(bySubjectWindow)),
       ]);
       setPlans(list);
       setSummary(sum);
@@ -133,7 +134,7 @@ export default function Plans() {
     } finally {
       setLoading(false);
     }
-  }, [date, subjectFilter]);
+  }, [date, subjectFilter, bySubjectWindow]);
 
   useEffect(() => {
     void loadList();
@@ -300,6 +301,29 @@ export default function Plans() {
       {bySubject && bySubject.subjects.length > 0 && (
         <div className="card plans-bysubject-card">
           <h2>各科汇总</h2>
+          <div className="form-row">
+            <button
+              type="button"
+              className={bySubjectWindow === 'all' ? 'btn btn-primary' : 'btn btn-ghost'}
+              onClick={() => setBySubjectWindow('all')}
+            >
+              全部
+            </button>
+            <button
+              type="button"
+              className={bySubjectWindow === '7' ? 'btn btn-primary' : 'btn btn-ghost'}
+              onClick={() => setBySubjectWindow('7')}
+            >
+              近 7 天
+            </button>
+            <button
+              type="button"
+              className={bySubjectWindow === '1' ? 'btn btn-primary' : 'btn btn-ghost'}
+              onClick={() => setBySubjectWindow('1')}
+            >
+              今日
+            </button>
+          </div>
           <ul className="list plans-bysubject-list">
             {bySubject.subjects.map((s) => (
               <li className="list-item plans-bysubject-item" key={s.subject}>

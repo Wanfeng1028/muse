@@ -227,14 +227,29 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
   });
 
   // 计划分科汇总：仅返回有计划的科目，按 SUBJECTS 顺序排列
+  // 可选 days：合法数字时仅统计最近 N 天（含今天，按计划 date 界定），N 钳制到 1~31；不传或非法时统计全部历史
   app.get('/api/plans/summary/by-subject', async (req, reply) => {
+    const rawDays = (req.query as { days?: string }).days;
+    const parsedDays = Number(rawDays);
+    const days =
+      rawDays !== undefined && rawDays !== '' && Number.isFinite(parsedDays)
+        ? Math.max(1, Math.min(31, Math.trunc(parsedDays)))
+        : null;
+    const today = todayStr();
+    const rangeStart = days === null ? null : addDays(today, -(days - 1));
+    const planDateCond = rangeStart === null ? '' : ' AND date >= ?';
+    const focusDateCond = rangeStart === null ? '' : ' AND p.date >= ?';
+    const bindParams: unknown[] = [req.user!.id];
+    if (rangeStart !== null) bindParams.push(rangeStart);
     const planRows = db
       .prepare(
         'SELECT subject, COUNT(*) AS total, COALESCE(SUM(done), 0) AS done, ' +
           'COALESCE(SUM(planned_minutes), 0) AS planned_minutes ' +
-          'FROM plans WHERE user_id = ? GROUP BY subject',
+          'FROM plans WHERE user_id = ?' +
+          planDateCond +
+          ' GROUP BY subject',
       )
-      .all(req.user!.id) as unknown as Array<{
+      .all(...(bindParams as never[])) as unknown as Array<{
       subject: string;
       total: number;
       done: number;
@@ -244,9 +259,11 @@ export function registerPlansRoutes(app: FastifyInstance, db: DatabaseSync): voi
       .prepare(
         'SELECT p.subject AS subject, COALESCE(SUM(f.minutes), 0) AS actual_minutes ' +
           'FROM plans p LEFT JOIN focus_sessions f ON f.plan_id = p.id AND f.user_id = p.user_id ' +
-          'WHERE p.user_id = ? GROUP BY p.subject',
+          'WHERE p.user_id = ?' +
+          focusDateCond +
+          ' GROUP BY p.subject',
       )
-      .all(req.user!.id) as unknown as Array<{ subject: string; actual_minutes: number }>;
+      .all(...(bindParams as never[])) as unknown as Array<{ subject: string; actual_minutes: number }>;
     const planMap = new Map(planRows.map((r) => [r.subject, r]));
     const focusMap = new Map(focusRows.map((r) => [r.subject, Number(r.actual_minutes)]));
     const subjects: PlanSubjectSummary[] = [];

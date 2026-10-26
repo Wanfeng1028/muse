@@ -4,6 +4,14 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.12.10] - 2026-10-26
+
+### Added
+
+- 后端 GET /api/plans/summary/by-subject 新增可选 days 参数：合法数字时只统计最近 N 天（含今天，按计划 date 界定），N 按 1~31 钳制；不传或非法时统计全部历史，与专注分科汇总 days 口径一致；专注分钟随计划走（窗口内计划的专注分钟计入，不另按专注开始时间过滤）。
+- 前端计划页「各科汇总」卡片新增范围切换：全部 / 近 7 天 / 今日，切换即按窗口重拉分科汇总（复用既有 card/form-row/btn 样式，无新增 CSS；api 方法仍为同一个 plansBySubject，数量快照 54 不变）。
+- 新增 tests/plans-summary-by-subject-days.test.ts 5 例：days=7 排除 7 天前及更早、days=1 只含今天、days 超 31 钳制且 days=100 与 days=31 结果相同、非法 days 视为全部历史、未登录 401。
+
 ## [1.12.9] - 2026-10-26
 
 ### Added

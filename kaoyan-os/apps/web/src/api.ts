@@ -164,8 +164,8 @@ export const api = {
     request<PlanSummary>(`/plans/summary${qs({ date })}`),
   overduePlans: () =>
     request<OverduePlansResponse>('/plans/overdue'),
-  plansBySubject: () =>
-    request<PlansBySubjectResponse>('/plans/summary/by-subject'),
+  plansBySubject: (days?: number) =>
+    request<PlansBySubjectResponse>(`/plans/summary/by-subject${qs({ days })}`),
   createPlan: (input: CreatePlanInput) =>
     request<Plan>('/plans', { method: 'POST', body: JSON.stringify(input) }),
   updatePlan: (id: number, patch: UpdatePlanInput) =>
