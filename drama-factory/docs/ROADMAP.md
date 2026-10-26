@@ -46,6 +46,7 @@
 8. **创作者计划**：创作者主页、分成/激励（需商业方案先行，技术后置）。
    - [x] 2026-10-27 落地主页 v1：`CreatorProfile`/`CreatorFollow` 实体 + V25 迁移；`/api/creators` 列表（搜索/最新/关注最多/Skill 最多排序）/详情（真实 Skill 统计 + 技能列表）/创建（201）/编辑（仅所有者，否则 403）/关注与取消关注（幂等）；`creators.html` + `creators.js`（侧边栏运行分组注册，中英双语）；文档见 docs/creator-program.md。分成/激励仍待商业方案，v1 不含任何收益数字（页面仅诚实提示规则待公布）。
    - [x] 2026-10-27 落地关注动态 v2（非收益后续）：`GET /api/creators/feed`（limit 1–50 默认 20，已关注创作者的 Skill 按发布时间倒序、按 id 去重）；`creators.html` 关注动态卡片 + `creators.js` 的 `loadFeed()`（加载与关注切换后自动刷新 + 手动刷新，诚实空态，中英双语）；无 schema 变更、无收益数字。文档见 docs/creator-program.md 第 5 节。
+   - [x] 2026-10-27 落地我的关注列表 v3（非收益后续）：`GET /api/creators/following`（按关注时间倒序、含技能数/粉丝数/最新 Skill、缺失档案跳过）；`creators.html`「我的关注」卡片 + `creators.js` 的 `loadFollowing()`/`unfollowFollowing()`（卡片内取消关注后关注列表、关注动态、创作者列表三处刷新）；无 schema 变更、无收益数字。文档见 docs/creator-program.md 第 6 节。
 
 ## 差异化（超越 pix6 的点，本项目独有）
 

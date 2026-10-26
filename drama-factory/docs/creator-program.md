@@ -18,6 +18,7 @@
 | POST | `/api/creators/{handle}/follow` | 关注该创作者 |
 | DELETE | `/api/creators/{handle}/follow` | 取消关注该创作者 |
 | GET | `/api/creators/feed?limit=20` | 关注动态：当前用户关注的创作者新发布的 Skill，按发布时间倒序 |
+| GET | `/api/creators/following` | 我的关注列表：当前用户已关注的创作者，按关注时间倒序 |
 
 ## 3. 统计口径
 
@@ -31,6 +32,13 @@
 - **口径**：只含当前用户已关注的创作者名下 Skill；匹配规则与详情统计一致（Skill.author 等于 handle 或 displayName，同一 Skill 按 id 去重）；按 Skill 发布时间倒序，发布时间为空排最后；关注关系指向的档案已删除时跳过该关系。
 - **前端**：创作者页「关注动态」卡片展示动态列表（创作者 + Skill 名 + 安装数 + 评分 + 描述 + 发布时间），无动态时显示诚实空态（未关注，或关注的创作者暂未发布新 Skill）；页面加载与关注/取消关注成功后自动刷新，另有刷新按钮可手动刷新。
 - **收益数据**：v2 同样不提供任何收益、分成数字。
+
+## 6. 我的关注列表（v3）
+
+- **接口**：`GET /api/creators/following`，无分页参数；当前用户已关注的创作者按关注时间倒序（关注时间为空排最后）；关注关系指向的档案已删除时跳过该关系。
+- **条目**：handle/displayName/bio + 技能数（与详情统计一致：Skill.author 等于 handle 或 displayName，按 id 去重）+ 粉丝数（真实 follow 行数）+ 最新 Skill 名称与发布时间（名下 Skill 中发布时间最晚的一条，无发布时间的 Skill 不计入最新；名下无 Skill 时两项均为 null）+ 关注时间 followedAt。
+- **前端**：创作者页「我的关注」卡片（`#creatorFollowing` 列表 + `#creatorFollowingEmpty` 诚实空态 + `#creatorFollowingRefresh` 刷新按钮）；每条含取消关注按钮（调 `DELETE /api/creators/{handle}/follow`，成功后同时刷新关注列表、关注动态与创作者列表）；页面加载与详情卡关注/取消关注成功后自动刷新。
+- **收益数据**：v3 同样不提供任何收益、分成数字。
 
 ## 4. 校验规则
 

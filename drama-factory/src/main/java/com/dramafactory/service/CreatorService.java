@@ -279,6 +279,50 @@ public List<CreatorFeedItem> feed(int limit) {
 }
 
     /**
+     * 返回当前用户关注的创作者列表,按关注时间从新到旧排序;档案缺失的跳过,不包含任何收益字段。
+     */
+    @Transactional(readOnly = true)
+    public List<CreatorFollowingItem> following() {
+        List<CreatorFollowingItem> result = new ArrayList<>();
+        List<CreatorFollow> follows = followRepository.findByFollowerId(currentUser.currentUserId());
+        for (CreatorFollow follow : follows) {
+            CreatorProfile profile = profileRepository.findById(follow.getCreatorId()).orElse(null);
+            if (profile == null) {
+                continue;
+            }
+            Map<Long, Skill> skills = new LinkedHashMap<>();
+            for (Skill skill : skillRepository.findByAuthor(profile.getHandle())) {
+                skills.putIfAbsent(skill.getId(), skill);
+            }
+            if (profile.getDisplayName() != null) {
+                for (Skill skill : skillRepository.findByAuthor(profile.getDisplayName())) {
+                    skills.putIfAbsent(skill.getId(), skill);
+                }
+            }
+            Skill latest = null;
+            for (Skill skill : skills.values()) {
+                if (skill.getCreatedAt() != null
+                        && (latest == null || skill.getCreatedAt().isAfter(latest.getCreatedAt()))) {
+                    latest = skill;
+                }
+            }
+            result.add(new CreatorFollowingItem(
+                    profile.getId(),
+                    profile.getHandle(),
+                    profile.getDisplayName(),
+                    profile.getBio(),
+                    skillCountFor(profile),
+                    followRepository.countByCreatorId(profile.getId()),
+                    latest == null ? null : latest.getName(),
+                    latest == null ? null : latest.getCreatedAt(),
+                    follow.getCreatedAt()));
+        }
+        result.sort(Comparator.comparing(CreatorFollowingItem::followedAt,
+                Comparator.nullsLast(Comparator.reverseOrder())));
+        return result;
+    }
+
+    /**
      * 基于去重后的技能列表与关注数计算创作者统计。
      *
      * <p>安装量与评分字段为 null 时按 0 处理；评分总数为 0 时不计算平均分（返回 null），
@@ -365,4 +409,10 @@ public List<CreatorFeedItem> feed(int limit) {
  */
 public static record CreatorFeedItem(String handle, String displayName, Long skillId, String skillName, String skillSlug, String skillDescription, String category, Long installCount, Double avgRating, LocalDateTime createdAt) {
 }
+
+    /** 单个已关注创作者的概要:基础资料、技能数、粉丝数、最新技能与关注时间,不含收益字段。 */
+    public static record CreatorFollowingItem(Long creatorId, String handle, String displayName, String bio,
+            long skillCount, long followerCount, String latestSkillName, LocalDateTime latestSkillCreatedAt,
+            LocalDateTime followedAt) {
+    }
 }

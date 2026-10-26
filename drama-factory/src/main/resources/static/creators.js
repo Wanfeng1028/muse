@@ -38,6 +38,11 @@
     'cr.feedTitle': { 'zh-CN': '关注动态', 'en': 'Following feed' },
     'cr.feedEmpty': { 'zh-CN': '还没有关注动态：先关注创作者，或关注的创作者暂未发布新 Skill', 'en': 'No following feed yet: follow creators first, or followed creators have not published new Skills' },
     'cr.feedRefresh': { 'zh-CN': '刷新动态', 'en': 'Refresh feed' },
+    'cr.followingTitle': { 'zh-CN': '我的关注', 'en': 'My following' },
+    'cr.followingEmpty': { 'zh-CN': '还没有关注任何创作者', 'en': 'You are not following any creators yet' },
+    'cr.followingRefresh': { 'zh-CN': '刷新关注', 'en': 'Refresh following' },
+    'cr.followingLatest': { 'zh-CN': '最新 Skill', 'en': 'Latest Skill' },
+    'cr.followingNoSkill': { 'zh-CN': '暂无 Skill', 'en': 'No Skills yet' },
   };
 
   if (window.DFI18N && typeof window.DFI18N.register === 'function') { window.DFI18N.register(PAGE_I18N); }
@@ -174,6 +179,7 @@ async function toggleFollow() {
     if (res.followerCount != null) document.getElementById('creatorStatFollowers').textContent = res.followerCount;
     showToast(method === 'POST' ? _t('cr.followed', '已关注') : _t('cr.unfollowed', '已取消关注'));
     loadFeed();
+    loadFollowing();
   } catch (err) {
     showToast(_t('cr.saveFailed', '保存失败'));
   }
@@ -225,6 +231,65 @@ async function loadFeed() {
   }
 }
 
+  async function loadFollowing() {
+    const list = document.getElementById('creatorFollowing');
+    if (!list) return;
+    try {
+      const data = await api('/api/creators/following');
+      const items = Array.isArray(data)
+        ? data
+        : ((data && data.items) || []);
+      list.innerHTML = items.map(function (it) {
+        const name = esc(it.displayName || '');
+        const handle = esc(it.handle || '');
+        const bio = it.bio ? esc(it.bio) : '';
+        const stats = 'Skill ' + (it.skillCount ?? 0) +
+          ' · 关注 ' + (it.followerCount ?? 0);
+        const latest = it.latestSkillName
+          ? _t('cr.followingLatest', '最新 Skill') + '：' +
+            esc(it.latestSkillName) + ' · ' +
+            fmtDateTime(it.latestSkillCreatedAt)
+          : _t('cr.followingNoSkill', '暂无 Skill');
+        const followed = it.followedAt
+          ? '<div>关注于 ' + fmtDateTime(it.followedAt) + '</div>'
+          : '';
+        return '<div class="col-12"><div class="card">' +
+          '<div class="card-body">' +
+          '<div class="fw-bold">' + name +
+          ' @' + handle + '</div>' +
+          '<div>' + bio + '</div>' +
+          '<div>' + stats + '</div>' +
+          '<div>' + latest + '</div>' +
+          followed +
+          '<button type="button" ' +
+          'class="btn btn-outline-primary ' +
+          'creator-following-unfollow-btn" ' +
+          'data-unfollow-handle="' + handle + '">' +
+          _t('cr.unfollow', '取消关注') +
+          '</button>' +
+          '</div></div></div>';
+      }).join('');
+      const empty = document.getElementById('creatorFollowingEmpty');
+      if (empty) empty.hidden = items.length > 0;
+    } catch (err) {
+      showToast(_t('cr.loadFailed', '加载失败'));
+    }
+  }
+
+  async function unfollowFollowing(handle) {
+    if (!handle) return;
+    try {
+      await api('/api/creators/' + encodeURIComponent(handle) +
+        '/follow', { method: 'DELETE' });
+      showToast(_t('cr.unfollowed', '已取消关注'));
+      await loadFollowing();
+      await loadFeed();
+      await loadCreators();
+    } catch (err) {
+      showToast(_t('cr.loadFailed', '加载失败'));
+    }
+  }
+
 // 初始化：应用 i18n，绑定搜索防抖/排序/详情/关注/返回/表单事件，并首次加载列表
 document.addEventListener('DOMContentLoaded', function () {
   if (typeof DFI18N !== 'undefined' && DFI18N) DFI18N.applyI18n(document);
@@ -244,7 +309,13 @@ document.addEventListener('DOMContentLoaded', function () {
   });
   document.getElementById('creatorForm').addEventListener('submit', submitForm);
   document.getElementById('creatorFeedRefresh').addEventListener('click', loadFeed);
+  document.getElementById('creatorFollowingRefresh').addEventListener('click', loadFollowing);
+  document.getElementById('creatorFollowing').addEventListener('click', function (e) {
+    const item = e.target.closest('[data-unfollow-handle]');
+    if (item) unfollowFollowing(item.getAttribute('data-unfollow-handle'));
+  });
   loadCreators();
   loadFeed();
+  loadFollowing();
 });
 })();

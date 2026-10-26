@@ -80,6 +80,18 @@ public List<CreatorFeedItemDto> feed(@RequestParam(defaultValue = "20") int limi
             .toList();
 }
 
+    /**
+     * 查询当前用户关注的创作者列表。
+     */
+    @GetMapping("/following")
+    public List<CreatorFollowingItemDto> following() {
+        return creatorService.following().stream()
+                .map(item -> new CreatorFollowingItemDto(item.creatorId(), item.handle(), item.displayName(),
+                        item.bio(), item.skillCount(), item.followerCount(), item.latestSkillName(),
+                        item.latestSkillCreatedAt(), item.followedAt()))
+                .toList();
+    }
+
     @GetMapping("/{handle}")
     public CreatorDetailDto detail(@PathVariable String handle) {
         return toDetailDto(creatorService.detail(handle));
@@ -297,4 +309,10 @@ private CreatorDetailDto toDetailDto(CreatorService.CreatorDetail detail) {
  */
 public record CreatorFeedItemDto(String handle, String displayName, Long skillId, String skillName, String skillSlug, String skillDescription, String category, Long installCount, Double avgRating, LocalDateTime createdAt) {
 }
+
+    /** 关注列表条目视图对象。 */
+    public record CreatorFollowingItemDto(Long creatorId, String handle, String displayName, String bio,
+            long skillCount, long followerCount, String latestSkillName, LocalDateTime latestSkillCreatedAt,
+            LocalDateTime followedAt) {
+    }
 }
