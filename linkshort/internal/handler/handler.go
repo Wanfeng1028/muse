@@ -937,7 +937,16 @@ func handleLinkDaily(w http.ResponseWriter, r *http.Request, st *store.Store) {
 		writeError(w, http.StatusBadRequest, "id 非法")
 		return
 	}
-	days := parseIntDefault(r.URL.Query().Get("days"), 30)
+	daysStr := r.URL.Query().Get("days")
+	days := 30
+	if daysStr != "" {
+		d, err := strconv.Atoi(daysStr)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "days 非法")
+			return
+		}
+		days = d
+	}
 	if days <= 0 || days > 365 {
 		days = 30
 	}

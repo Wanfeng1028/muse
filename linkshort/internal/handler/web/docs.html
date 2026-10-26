@@ -188,7 +188,7 @@
         <tr><td><span class="method">PATCH</span></td><td class="path">/api/links/{id}</td><td class="auth">需要 API Key</td><td>更新短链（标题、开关、过期、限次、密码）</td></tr>
         <tr><td><span class="method">DELETE</span></td><td class="path">/api/links/{id}</td><td class="auth">需要 API Key</td><td>删除短链（访问日志级联删除）</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/links/{id}/qrcode.png</td><td class="auth">需要 API Key</td><td>短链二维码 PNG</td></tr>
-        <tr><td><span class="method">GET</span></td><td class="path">/api/links/{id}/daily</td><td class="auth">需要 API Key</td><td>单条短链每日点击统计</td></tr>
+        <tr><td><span class="method">GET</span></td><td class="path">/api/links/{id}/daily</td><td class="auth">需要 API Key</td><td>单条短链每日点击统计（days 缺省 30，非数字返回 400）</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/stats/overview</td><td class="auth">需要 API Key</td><td>统计总览：短链数、点击数</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/stats/daily</td><td class="auth">需要 API Key</td><td>全站每日点击曲线</td></tr>
         <tr><td><span class="method">GET</span></td><td class="path">/api/stats/top-links</td><td class="auth">需要 API Key</td><td>点击最多的短链</td></tr>

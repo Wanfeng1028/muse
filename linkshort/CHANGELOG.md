@@ -5,6 +5,14 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.27.0] - 2026-10-27
+
+### 新增
+- `GET /api/links/{id}/daily` 的 `days` 参数校验收紧：非数字值返回 400，错误体为 `{"error": "days 非法"}`；此前非数字值经默认值回落静默按 30 天统计。缺参或空串仍默认 30；合法数字小于等于 0 或大于 365 时仍回落为 30（既有口径不变）。
+
+### 测试
+- 新增 internal/handler/link_daily_days_validation_test.go 6 例全绿（days=abc/1.5/1x 返回 400 且体含“days 非法”、不带 days 返回 200、days=0 返回 200、days=7 返回 200）；既有 TestAnalyticsParamClamp 同跑通过。
+
 ## [v1.26.0] - 2026-10-27
 
 ### 新增
