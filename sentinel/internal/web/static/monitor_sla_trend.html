@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>单监控SLA趋势 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+<style>
+.bar-row { display: flex; align-items: center; margin: 6px 0; }
+.bar-month { width: 96px; flex: none; font-size: 13px; color: var(--muted, #667); }
+.bar-outer { flex: 1; height: 18px; background: rgba(127,127,127,.15); border-radius: 4px; overflow: hidden; }
+.bar-inner { height: 100%; background: var(--accent, #2563eb); border-radius: 4px 0 0 4px; }
+.bar-text { width: 72px; flex: none; text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body onload="initMonitorSLATrend()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">总览</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/sms-log">短信记录</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend">SLA趋势</a>
+<a href="/maintenance">维护窗口</a>
+<a href="/groups">监控分组</a>
+<a href="/group-sla">分组SLA</a>
+<a href="/group-sla-trend">分组SLA趋势</a>
+<a href="/monitor-sla-trend" class="active">单监控SLA趋势</a>
+</nav>
+</header>
+<main class="container">
+<h1>单监控 SLA 趋势</h1>
+<p class="sub">最近 N 个月单监控逐月对比：可用性按该监控检查记录聚合，目标 99.9%。</p>
+<div class="ctrl-row">
+<select id="monitor-trend-select"></select>
+<input type="month" id="monitor-trend-end-input">
+<select id="monitor-trend-months-select">
+<option value="3">3 个月</option>
+<option value="6">6 个月</option>
+<option value="12">12 个月</option>
+</select>
+<button id="monitor-trend-load-btn">查看</button>
+<a id="monitor-trend-export-link" href="#">导出 HTML 版</a>
+</div>
+<div id="monitor-trend-cards"></div>
+<table class="snap-table">
+<thead>
+<tr><th>月份</th><th>可用性</th><th>检查数</th><th>事件数</th><th>宕机时长</th><th>达标</th></tr>
+</thead>
+<tbody id="monitor-trend-rows"></tbody>
+</table>
+<h2>可用性条形</h2>
+<div id="monitor-trend-bars"></div>
+<p id="monitor-trend-status"></p>
+</main>
+<script>
+function fmtDur(sec) {
+  if (!sec) return '0 秒';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const parts = [];
+  if (d) parts.push(d + ' 天');
+  if (h) parts.push(h + ' 小时');
+  if (m) parts.push(m + ' 分');
+  if (d === 0 && h === 0) parts.push(s + ' 秒');
+  return parts.join(' ');
+}
+
+async function loadMonitorSLATrend() {
+  const cards = document.getElementById('monitor-trend-cards');
+  const status = document.getElementById('monitor-trend-status');
+  const select = document.getElementById('monitor-trend-select');
+  const endInput = document.getElementById('monitor-trend-end-input');
+  const monthsSelect = document.getElementById('monitor-trend-months-select');
+  const exportLink = document.getElementById('monitor-trend-export-link');
+  const mid = select.value, end = endInput.value, months = monthsSelect.value;
+  if (!mid) { status.textContent = '请先选择监控'; return; }
+  exportLink.href = '/api/monitors/' + mid + '/sla/trend.html?end=' + end + '&months=' + months;
+  try {
+    const rep = await api('/api/monitors/' + mid + '/sla/trend?end=' + end + '&months=' + months);
+    document.getElementById('monitor-trend-rows').innerHTML = rep.items.map(it =>
+      '<tr><td>' + it.month + '</td><td>' + it.uptime_pct.toFixed(2) + '%</td><td>' + it.total_checks +
+      '</td><td>' + it.down_incidents + '</td><td>' + fmtDur(it.total_downtime_sec) + '</td><td>' + (it.met ? '达标' : '未达标') + '</td></tr>').join('');
+    document.getElementById('monitor-trend-bars').innerHTML = rep.items.map(it =>
+      '<div class="bar-row"><div class="bar-month">' + it.month + '</div><div class="bar-outer"><div class="bar-inner" style="width:' + it.uptime_pct +
+      '%"></div></div><div class="bar-text">' + it.uptime_pct.toFixed(2) + '%</div></div>').join('');
+    cards.innerHTML = '<div class="card"><div class="card-title">监控名</div><div class="card-value">' + rep.monitor_name + '</div></div>' +
+      '<div class="card"><div class="card-title">截止月份</div><div class="card-value">' + rep.end_month + '</div></div>' +
+      '<div class="card"><div class="card-title">目标</div><div class="card-value">' + rep.sla_target.toFixed(1) + '%</div></div>';
+    status.textContent = '';
+  } catch (e) { status.textContent = "加载失败"; }
+}
+async function loadMonitorSLATrendOptions() {
+  const select = document.getElementById('monitor-trend-select');
+  const status = document.getElementById('monitor-trend-status');
+  try {
+    const data = await api('/api/monitors');
+    const items = Array.isArray(data) ? data : (data.items || []);
+    select.innerHTML = '';
+    for (const item of items) {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.name;
+      select.appendChild(opt);
+    }
+    if (items.length) await loadMonitorSLATrend();
+    else status.textContent = '暂无监控，请先在监控管理页新建监控';
+  } catch (e) { status.textContent = '加载失败'; }
+}
+function initMonitorSLATrend() {
+  if (window.monitorSLATrendInited) return;
+  window.monitorSLATrendInited = true;
+  const now = new Date();
+  document.getElementById('monitor-trend-end-input').value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+  document.getElementById('monitor-trend-months-select').value = '6';
+  document.getElementById('monitor-trend-load-btn').addEventListener('click', loadMonitorSLATrend);
+  ['monitor-trend-select', 'monitor-trend-months-select', 'monitor-trend-end-input'].forEach(id => document.getElementById(id).addEventListener('change', loadMonitorSLATrend));
+  loadMonitorSLATrendOptions();
+}
+initMonitorSLATrend();
+</script>
+</body>
+</html>

@@ -3,6 +3,29 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.27.0] - 2026-10-27
+
+### 新增
+
+- 单监控 SLA 趋势：Store 层 MonitorSLATrend（复用单月 MonthlySLA 逐月聚合，月份按时间顺序排列；months 取值 1~12、非法 endMonth/months 报错；先 GetMonitor，不存在的监控返回“监控不存在”错误）；API（均需鉴权）GET /api/monitors/{id}/sla/trend?end=YYYY-MM&months=N（end 缺省当月、months 缺省 6、非法 end/months 返回 400、不存在的监控 404）、GET /api/monitors/{id}/sla/trend.html（中文 HTML 导出：单监控趋势标题、逐月表、可用性条形）；控制台页 /monitor-sla-trend（监控下拉、截止月份选择、3/6/12 个月选择、逐月表、可用性条形、导出 HTML 链接），13 个既有控制台页导航末尾加单监控SLA趋势链，/monitor-sla-trend 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：单监控 SLA 趋势只统计该监控，不含其他监控；空月可用性记 100（沿用 MonthlySLA 单月报告口径）。
+
+### 测试
+
+- 新增 internal/store/monitor_sla_trend_test.go（空监控 3 个月：起止月份与目标 99.9、空月可用性 100；非法 months/endMonth 与不存在监控报错；双月：2 月 10 全成功、3 月 9 成功 1 失败得 90%）、internal/handlers/monitor_sla_trend_test.go（JSON 的 monitor_id/monitor_name/end_month/months 与不存在监控 404 与非法 months/end 的 400、HTML 的 200 与“单监控 SLA 趋势/监控名/可用性条形”字样与不存在监控 404）、internal/web/monitor_sla_trend_test.go（单监控SLA趋势页 16 个标记与标记顺序、失败路径定义顺序、13 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（16 包，notify 包 238.5 秒为既存最慢包）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18497 端口，SENTINEL_TICK_SEC=60；隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建 UP 监控 3 号（本地 200 服务）与 DOWN 监控 4 号（127.0.0.1:9 拒绝）；各 CheckNow 2 次后 GET /api/monitors/4/sla/trend?end=2026-10&months=2 返回 9 月空月 100%/0 检查、10 月 0%/2 检查/1 事件/未达标，GET /api/monitors/3/sla/trend?end=2026-10&months=2 返回 10 月 100%/2 检查/达标；不存在的监控返回 404、months=0/abc 与 end=2026-13 均为 400、趋势接口无鉴权 401；sla/trend.html 含“单监控 SLA 趋势 组内DOWN 2026-10”与可用性条形；/monitor-sla-trend 页 200 且含全部标记；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 视觉验收：截图 docs/screenshots/monitor-sla-trend-v027.png 亲眼核对——导航 13 链齐全且单监控SLA趋势 active、监控下拉选中组内DOWN、月份 October 2026、6 个月、查看与导出 HTML 版齐全、卡片（监控组内DOWN、截止月份 2026-10、目标 99.9%）与逐月行（5–9 月 100% 达标、10 月 0.00% 未达标）及可用性条形（5–9 月蓝色满格、10 月空轨）均与 API 返回一致、无“加载失败”。截图重拍时 10 月检查数由 2 变 3、宕机时长由 57 秒变 1 分 45 秒，系 60 秒调度 tick 对已启用 DOWN 监控又执行一次失败检查、以及未恢复事件的既有开放估算口径，非本轮新口径。
+- 截图 harness 说明：Playwright setContent 下相对 /api 解析失败且无 CORS 头，截图脚本按 shoot2.js 模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 在截图环境内桩化为空串（鉴权由截图代理在服务端注入冒烟 stub token）、页面脚本的 /api 经 base 改写为绝对地址并经 route 代理回真实服务，该改写仅限截图环境，产品代码未动。首版截图发现可用性条形未着色（条形内外层误用 span，行内元素宽度不生效），改 div 后复拍通过。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 night7_sentinel_call.py（令牌经 SSH 现取不落盘、未读任何现成调用脚本；显式流式解析 + include_usage，首个探活用量已捕获记账）；Go 代码、测试、页面均为微片段逐字输出口径；编排侧机械工作：Handler 接收者与 s.store/s.serveStaticFile 补齐、parsePathID 返回值修正、截断稿续尾字段名修正（Availability/items 改为 UptimePct/rep.Items）、条形 span 改 div、13 页导航链机械追加、路由与鉴权名单接线、README/CHANGELOG 事实性文字。
+- 调用统计（batch 目录 usage.log 全量记录，含空响应；成功计 token 与空响应分开标明）：成功调用 13 次，prompt 合计 310867、completion 合计 29540、合计 340407；空响应 2 次（Handler HTML 整稿、页面 load 稿，均为 reasoning-only，改拆小稿后均成功），其上报口径 prompt 合计 47948、completion 合计 8000；错误行 0 条；全量 15 条，prompt 合计 358815、completion 合计 37540、合计 396355；本轮无 429、无 HTTP 错误行。另有一稿因 4000 token 上限截断在半行（计入成功合计），经贴断点原文向 API 要续尾补全后通过测试。
+
 ## [0.26.0] - 2026-10-27
 
 ### 新增
@@ -20,7 +43,6 @@
 - 真实服务冒烟（隔离库 18496 端口，SENTINEL_TICK_SEC=60；隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建分组 1 号“核心业务”返回 201；新建组内 UP 监控 3 号（本地 200 服务）与组内 DOWN 监控 4 号（127.0.0.1:9 拒绝）加入分组；各 CheckNow 2 次后 GET /api/groups/1/sla/trend?end=2026-10&months=2 返回 9 月空月 100%/0 检查、10 月 50%/4 检查/1 事件/监控数 2/最差为组内DOWN/未达标；不存在的分组返回 404、months=0/abc 与 end=2026-13 均为 400、趋势接口无鉴权 401；sla/trend.html 含“分组 SLA 趋势 核心业务 2026-10”与可用性条形；/group-sla-trend 页 200 且含全部标记；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
 - 视觉验收：截图 docs/screenshots/group-sla-trend-v026.png 亲眼核对——导航 12 链齐全且分组SLA趋势 active、分组下拉选中核心业务、月份 October 2026、6 个月、查看与导出 HTML 版齐全、卡片（分组核心业务、截止月份 2026-10、目标 99.9%）与逐月行（5–9 月 100% 达标、10 月 50.00% 4 检查 1 事件 最差组内DOWN 未达标）及可用性条形（10 月半格 + 灰底余量）均与 API 返回一致、无“加载失败”。宕机时长在截图时为 7 秒（冒烟断言时为 4 秒），系 MonthlySLA 对未恢复事件的既有开放估算口径，非本轮新口径。
 - 截图 harness 说明：Playwright setContent 下相对 /api 解析失败且无 CORS 头，截图脚本按 shoot2.js 模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 在截图环境内桩化为冒烟 stub token、页面脚本的 /api 改写为绝对地址并经 route 代理回真实服务，该改写仅限截图环境，产品代码未动。
-- 冒烟驱动初版曾断言页面壳无鉴权应为 401，实测为 200：经查 middleware 的 exact 名单是鉴权白名单（命中即跳过鉴权），页面壳公开、数据接口仍需鉴权是既有口径，非本轮回归；驱动已按此修正并重跑全绿。
 
 ### 模型稿
 
