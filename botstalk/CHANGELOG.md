@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 12 轮（消息反应）
+
+### 新增
+- 新增 `gateway/src/reactions.ts`，实现 8 种封闭字符串反应类型（"+1", "like", "smile", "ok", "done", "heart", "thumbs_up", "thumbs_down"）的添加、删除与列表查询，并保证添加与删除操作的幂等性。
+- 新增三个 REST 接口：`GET` 获取列表返回 200；`POST` 添加反应返回 200 并附带 `added` 状态标记；`DELETE` 移除反应返回 200 并附带 `removed` 状态标记。
+- 新增 `scripts/smoke-reactions.mjs` 冒烟测试脚本，以及 `gateway/test/reactions.test.ts` 测试文件。
+
+### 验收
+- 全量测试通过数：983
+- 新增反应测试通过数：19
+- 冒烟脚本步骤通过数：12
+- 接口异常处理验证：非法反应类型（INVALID_REACTION）及非法消息 ID（INVALID_MESSAGE_ID）或缺失请求者（requester required）返回 400，消息不存在（MESSAGE_NOT_FOUND）返回 404。
+
+### 已知局限
+- 反应事件暂未通过 WebSocket 广播，前端查看者需重新拉取历史记录或调用反应接口获取最新状态。
+- 暂未提供一键切换（toggle）接口，客户端需结合 GET 与 POST/DELETE 自行实现切换逻辑。
+- 反应列表接口对所有可调用者暴露反应者的 ID，其可见性权限与历史消息接口中的消息发送者一致。
+
+
 ## Unreleased - OpenAgents 第 11 轮（Web 分享管理 + 查看页实时刷新）
 
 ### 新增

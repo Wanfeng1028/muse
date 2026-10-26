@@ -9,6 +9,9 @@ import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgres
 import { issueShareLink, getShareLinkByHash, getShareLinkById, listShareLinks, revokeShareLink } from "./db.js";
 import { generatePairingCode, normalizePairingCode, hashPairingCode, clampPairingTtlMinutes } from "./pairing.js";
 import { generateShareToken, normalizeShareToken, hashShareToken, clampShareTtlHours, isShareExpired, isShareRevoked } from "./share.js";
+import { isSupportedReaction, addMessageReaction, removeMessageReaction, listMessageReactions, getMessageRoom } from "./reactions.js";
+
+
 
 // 房主恒为 admin，其余情况查成员权限列
 function managePerm(db: Db, roomOwner: string | null, roomId: string, requester: string): string | undefined {
@@ -177,6 +180,65 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       return;
     }
 
+    // Message reactions (OpenAgents round 12): GET list, POST add, DELETE remove.
+    const reactionMatch = url.match(/^\/api\/rooms\/([^/?]+)\/messages\/([^/?]+)\/reactions(?:\?|$)/);
+    if (reactionMatch && (method === "GET" || method === "POST" || method === "DELETE")) {
+      res.setHeader("access-control-allow-origin", "*");
+      const reactRoom = decodeURIComponent(reactionMatch[1]);
+      const reactMessageId = Number.parseInt(decodeURIComponent(reactionMatch[2]), 10);
+      if (!reactRoom) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end('{"error":"room required"}');
+        return;
+      }
+      if (!Number.isInteger(reactMessageId) || reactMessageId <= 0) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "INVALID_MESSAGE_ID" }));
+        return;
+      }
+      const reactTargetRoom = getMessageRoom(db, reactMessageId);
+      if (reactTargetRoom === undefined || reactTargetRoom !== reactRoom) {
+        res.writeHead(404, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "MESSAGE_NOT_FOUND" }));
+        return;
+      }
+      if (method === "GET") {
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ message_id: reactMessageId, room: reactRoom, reactions: listMessageReactions(db, reactMessageId) }));
+        return;
+      }
+      let reactReaction: unknown;
+      let reactRequester = "";
+      if (method === "POST") {
+        const reactBody = (await readJsonBody(req)) as { reaction?: unknown; requester?: unknown } | undefined;
+        reactReaction = reactBody?.reaction;
+        reactRequester = typeof reactBody?.requester === "string" ? reactBody.requester : "";
+      } else {
+        const reactParsed = new URL(url, "http://localhost");
+        reactReaction = reactParsed.searchParams.get("reaction");
+        reactRequester = reactParsed.searchParams.get("requester") ?? "";
+      }
+      if (!reactRequester) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "requester required" }));
+        return;
+      }
+      if (!isSupportedReaction(reactReaction)) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "INVALID_REACTION" }));
+        return;
+      }
+      if (method === "POST") {
+        const reactAdded = addMessageReaction(db, reactMessageId, reactRoom, reactRequester, reactReaction);
+        res.writeHead(200, { "content-type": "application/json" });
+        res.end(JSON.stringify({ message_id: reactMessageId, room: reactRoom, reaction: reactReaction, added: reactAdded, reactions: listMessageReactions(db, reactMessageId) }));
+        return;
+      }
+      const reactRemoved = removeMessageReaction(db, reactMessageId, reactRequester, reactReaction);
+      res.writeHead(200, { "content-type": "application/json" });
+      res.end(JSON.stringify({ message_id: reactMessageId, room: reactRoom, reaction: reactReaction, removed: reactRemoved, reactions: listMessageReactions(db, reactMessageId) }));
+      return;
+    }
     // GET /api/rooms/:room/presence
     const presenceMatch = url.match(/^\/api\/rooms\/([^/?]+)\/presence(?:\?|$)/);
     if (presenceMatch && method === "GET") {
