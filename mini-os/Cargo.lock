@@ -654,7 +654,7 @@ dependencies = [
 
 [[package]]
 name = "mini-os"
-version = "1.19.7"
+version = "1.19.8"
 dependencies = [
  "aes-gcm",
  "argon2",

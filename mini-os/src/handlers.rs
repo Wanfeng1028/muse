@@ -1282,6 +1282,7 @@ fn term_err_msg(e: crate::terminal::TermError) -> &'static str {
         TermError::Forbidden => "无权操作该会话",
         TermError::LimitReached => "终端标签页已达上限（8 个）",
         TermError::Io => "终端内部错误",
+        TermError::InvalidSize => "终端尺寸非法（列 2–500、行 2–500）",
     }
 }
 

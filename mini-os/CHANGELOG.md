@@ -1,3 +1,15 @@
+## [1.19.8] - 2026-10-26
+
+### Changed
+
+- TerminalManager::open/resize 的 cols/rows 越界不再静默钳制到 2–500：超出范围返回 TermError::InvalidSize；WS 层 term_error 文案为“终端尺寸非法（列 2–500、行 2–500）”。
+- 校验优先于会话查找：坏尺寸对不存在的会话也返回 InvalidSize，而不是 NotFound。
+- 范围内行为不变；现有前端发送的尺寸不小于 20 列 8 行，不受影响。
+- 真实服务冒烟：term_open cols=0 与 term_resize cols=501 均返回 term_error“终端尺寸非法”，80x24 正常建会话、100x30 正常调整。
+
+### Added
+
+- tests/term_size_validation_test.rs 新增 8 例；tests/terminal_read_edge_r2.rs 的 2 个旧钳制测试同步改写为新语义（open/resize 越界返回 InvalidSize）。（坏尺寸 open、坏尺寸 resize、校验优先于会话查找、边界 2/500、坏尺寸后会话仍可用），8/8 通过。
 ## [1.19.7] - 2026-10-26
 
 - GET /api/fs/search 的 limit 参数：缺失或空串默认 50；非整数、小于 1 或大于 200 时返回 400，错误体 {"error": "limit 参数非法"}；此前为静默钳制到 1 到 200。

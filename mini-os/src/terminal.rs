@@ -23,6 +23,15 @@ pub enum TermError {
     Forbidden,
     LimitReached,
     Io,
+    InvalidSize,
+}
+
+fn validate_term_size(cols: u16, rows: u16) -> Result<(), TermError> {
+    if (2..=500).contains(&cols) && (2..=500).contains(&rows) {
+        Ok(())
+    } else {
+        Err(TermError::InvalidSize)
+    }
 }
 
 struct TermSession {
@@ -68,8 +77,7 @@ impl TerminalManager {
     }
 
     pub fn open(&self, user_id: i64, cols: u16, rows: u16) -> Result<String, TermError> {
-        let cols = cols.clamp(2, 500);
-        let rows = rows.clamp(2, 500);
+        validate_term_size(cols, rows)?;
 
         // 先做容量检查；持有 sessions 锁期间不进行任何可能阻塞的 PTY 操作，
         // 避免 openpty/spawn 的耗时把其他用户的 open 全部卡住。
@@ -175,8 +183,7 @@ impl TerminalManager {
         cols: u16,
         rows: u16,
     ) -> Result<(), TermError> {
-        let cols = cols.clamp(2, 500);
-        let rows = rows.clamp(2, 500);
+        validate_term_size(cols, rows)?;
         let session = self.get_session(user_id, session_id)?;
         session
             .pty

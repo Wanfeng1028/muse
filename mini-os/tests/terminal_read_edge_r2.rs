@@ -29,39 +29,37 @@ fn read_empty_buf_returns_zero() {
     m.close(1, &sid).expect("close session should succeed");
 }
 
-// 测什么：open 对极端 cols/rows 做 clamp(2, 500)，0/0 与 9999/9999 均返回 Ok。
-// 为什么：前端传入非法窗口尺寸不能导致 open 报错或 PTY 崩溃，必须被钳位为合法值。
+// 测什么：open 遇到越界 cols/rows 返回 Err(TermError::InvalidSize)，合法范围 2..=500。
+// 为什么：调用方必须传合法尺寸；坏尺寸不建会话。
 #[test]
-fn open_clamps_dimensions() {
+fn open_rejects_invalid_dimensions() {
     let m = mgr("open-clamp", 8, 3600);
 
-    let sid1 = m
-        .open(1, 0, 0)
-        .expect("open with 0x0 must clamp and succeed");
-    assert!(!sid1.is_empty(), "session id should be non-empty");
-    m.close(1, &sid1).expect("close session1 should succeed");
+    assert_eq!(m.open(1, 0, 0), Err(TermError::InvalidSize));
+    assert_eq!(m.open(1, 9999, 9999), Err(TermError::InvalidSize));
+    assert_eq!(
+        m.session_count(1),
+        0,
+        "invalid dimensions must not create sessions"
+    );
 
-    let sid2 = m
-        .open(1, 9999, 9999)
-        .expect("open with 9999x9999 must clamp and succeed");
-    assert!(!sid2.is_empty(), "session id should be non-empty");
-    m.close(1, &sid2).expect("close session2 should succeed");
-
-    assert_eq!(m.session_count(1), 0, "all sessions should be closed");
+    let sid = m
+        .open(1, 2, 2)
+        .expect("open with boundary 2x2 should succeed");
+    assert!(!sid.is_empty(), "session id should be non-empty");
+    m.close(1, &sid).expect("close session should succeed");
 }
 
-// 测什么：resize 对极端 cols/rows 同样做 clamp(2, 500)，0/0 与 60000/60000 均返回 Ok(())。
-// 为什么：resize 底层走 PTY ioctl，非法尺寸若直透可能返回系统错误；钳位保证语义稳定可预期。
+// 测什么：resize 遇到越界 cols/rows 返回 Err(TermError::InvalidSize)，合法范围 2..=500。
+// 为什么：调用方必须传合法尺寸；坏尺寸不改会话尺寸。
 #[test]
-fn resize_clamps_dimensions() {
+fn resize_rejects_invalid_dimensions() {
     let m = mgr("resize-clamp", 4, 3600);
     let sid = m.open(1, 80, 24).expect("open session should succeed");
 
-    let r1 = m.resize(1, &sid, 0, 0);
-    assert_eq!(r1, Ok(()), "resize with 0x0 must clamp and succeed");
-
-    let r2 = m.resize(1, &sid, 60000, 60000);
-    assert_eq!(r2, Ok(()), "resize with 60000x60000 must clamp and succeed");
+    assert_eq!(m.resize(1, &sid, 0, 0), Err(TermError::InvalidSize));
+    assert_eq!(m.resize(1, &sid, 60000, 60000), Err(TermError::InvalidSize));
+    assert_eq!(m.resize(1, &sid, 500, 500), Ok(()));
 
     m.close(1, &sid).expect("close session should succeed");
     assert_eq!(m.session_count(1), 0, "session should be closed");
