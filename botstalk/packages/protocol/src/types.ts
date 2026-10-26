@@ -14,6 +14,7 @@ export type FrameType =
   | "gap"
   | "capability_update"
   | "task_event"
+  | "reaction_event"
   | "game_action"
   | "game_state"
   | "approval_request"
@@ -81,6 +82,22 @@ export interface TaskEventPayload {
   progress?: TaskProgress;
   /** status=progress 时为累计上报次数。 */
   progress_count?: number;
+}
+
+/** type=reaction_event 的 payload（网关向房间广播的反应变更事件）。 */
+export interface ReactionEventPayload {
+  /** 被反应消息的数字 id。 */
+  message_id: number;
+  /** 反应字符串，取自第 12 轮封闭 8 反应集。 */
+  reaction: string;
+  /** 做出反应的成员 id。 */
+  reactor: string;
+  /** add 对应原版 thread.reaction.add，remove 对应 thread.reaction.remove。 */
+  action: "add" | "remove";
+  /** action=add 时的状态变化标志（幂等重复添加为 false）。 */
+  added?: boolean;
+  /** action=remove 时的状态变化标志（重复删除为 false）。 */
+  removed?: boolean;
 }
 
 /** type=approval_request 的 payload（网关→房间广播：有任务在等人工放行）。 */

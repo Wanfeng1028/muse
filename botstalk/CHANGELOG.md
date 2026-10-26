@@ -1,5 +1,10 @@
 # Changelog
 
+## OpenAgents 第 13 轮：消息反应 WebSocket 广播
+- 协议帧 reaction_event 落地
+- 网关 REST 反应变更广播
+- 测试 4 例
+
 ## Unreleased - OpenAgents 第 12 轮（消息反应）
 
 ### 新增
@@ -14,7 +19,7 @@
 - 接口异常处理验证：非法反应类型（INVALID_REACTION）及非法消息 ID（INVALID_MESSAGE_ID）或缺失请求者（requester required）返回 400，消息不存在（MESSAGE_NOT_FOUND）返回 404。
 
 ### 已知局限
-- 反应事件暂未通过 WebSocket 广播，前端查看者需重新拉取历史记录或调用反应接口获取最新状态。
+- 反应事件暂未通过 WebSocket 广播，前端查看者需重新拉取历史记录或调用反应接口获取最新状态。（第 13 轮已改为 WebSocket 广播，见上节）
 - 暂未提供一键切换（toggle）接口，客户端需结合 GET 与 POST/DELETE 自行实现切换逻辑。
 - 反应列表接口对所有可调用者暴露反应者的 ID，其可见性权限与历史消息接口中的消息发送者一致。
 

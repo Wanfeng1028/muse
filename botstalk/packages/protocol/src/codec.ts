@@ -29,6 +29,7 @@ const FRAME_TYPES: readonly FrameType[] = [
   "gap",
   "capability_update",
   "task_event",
+  "reaction_event",
   "game_action",
   "game_state",
   "approval_request",
@@ -220,6 +221,9 @@ export function validateEnvelope(env: Envelope): string[] {
     case "task_event":
       errors.push(...validateTaskEventPayload(payload));
       break;
+    case "reaction_event":
+      errors.push(...validateReactionEventPayload(payload));
+      break;
     case "approval_request":
       errors.push(...validateApprovalRequestPayload(payload));
       break;
@@ -248,6 +252,18 @@ function validateTaskEventPayload(payload: unknown): string[] {
   } else if (payload["progress"] !== undefined) {
     errors.push("payload.progress: only allowed when status is 'progress'");
   }
+  return errors;
+}
+
+function validateReactionEventPayload(payload: unknown): string[] {
+  const errors: string[] = [];
+  if (!isPlainObject(payload)) { errors.push("payload: expected object"); return errors; }
+  if (!isFiniteInteger(payload["message_id"])) errors.push("payload.message_id: must be an integer");
+  if (!isNonEmptyString(payload["reaction"])) errors.push("payload.reaction: must be a non-empty string");
+  if (!isNonEmptyString(payload["reactor"])) errors.push("payload.reactor: must be a non-empty string");
+  if (payload["action"] !== "add" && payload["action"] !== "remove") errors.push("payload.action: must be 'add' or 'remove'");
+  if (payload["added"] !== undefined && typeof payload["added"] !== "boolean") errors.push("payload.added: must be a boolean");
+  if (payload["removed"] !== undefined && typeof payload["removed"] !== "boolean") errors.push("payload.removed: must be a boolean");
   return errors;
 }
 

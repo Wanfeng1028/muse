@@ -230,11 +230,17 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       }
       if (method === "POST") {
         const reactAdded = addMessageReaction(db, reactMessageId, reactRoom, reactRequester, reactReaction);
+        if (reactAdded) {
+          hub.broadcastReactionEvent(reactRoom, { message_id: reactMessageId, reaction: reactReaction, reactor: reactRequester, action: "add", added: true });
+        }
         res.writeHead(200, { "content-type": "application/json" });
         res.end(JSON.stringify({ message_id: reactMessageId, room: reactRoom, reaction: reactReaction, added: reactAdded, reactions: listMessageReactions(db, reactMessageId) }));
         return;
       }
       const reactRemoved = removeMessageReaction(db, reactMessageId, reactRequester, reactReaction);
+      if (reactRemoved) {
+        hub.broadcastReactionEvent(reactRoom, { message_id: reactMessageId, reaction: reactReaction, reactor: reactRequester, action: "remove", removed: true });
+      }
       res.writeHead(200, { "content-type": "application/json" });
       res.end(JSON.stringify({ message_id: reactMessageId, room: reactRoom, reaction: reactReaction, removed: reactRemoved, reactions: listMessageReactions(db, reactMessageId) }));
       return;

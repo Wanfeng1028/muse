@@ -26,6 +26,7 @@ import type {
   GapPayload,
   CapabilityUpdatePayload,
   TaskEventPayload,
+  ReactionEventPayload,
   GameActionPayload,
   GameStatePayload,
   ApprovalDecisionPayload,
@@ -455,6 +456,19 @@ export class Hub {
   broadcastTaskEvent(room: string, payload: TaskEventPayload): void {
     const env = makeEnvelope<TaskEventPayload>(
       "task_event",
+      "gateway",
+      room,
+      this.nextSeq(),
+      0,
+      payload,
+    );
+    this.broadcast(room, env);
+  }
+
+  /** 向房间广播反应变更事件（type=reaction_event）。sender 固定为 "gateway"，与 task_event 同款广播语义。 */
+  broadcastReactionEvent(room: string, payload: ReactionEventPayload): void {
+    const env = makeEnvelope<ReactionEventPayload>(
+      "reaction_event",
       "gateway",
       room,
       this.nextSeq(),
