@@ -1,5 +1,27 @@
 # 更新日志
 
+## v2.17.18 - 2026-10-26
+
+### 新增
+- 新增测试文件 tests/test_dashboard_design_v21718.py，包含一个测试函数 test_dashboard_topbar_single_line。
+- 测试断言：
+  - GET /static/dashboard.css 返回 200 且 CSS 内容中括号平衡。
+  - CSS 包含 .topbar .nav 与 flex-wrap: nowrap、overflow-x: auto、scrollbar-width: none。
+  - CSS 包含 .topbar .nav a 与 padding: 7px 8px、font-size: 13px、white-space: nowrap。
+  - GET / 返回 200，页面 HTML 中 /static/style.css 出现在 /static/dashboard.css 之前。
+- 系列收官：v2.17.0–v2.17.14 已覆盖其余 14 页，仪表盘页是最后一页；本轮之后 15 个页面全部有顶栏单行设计层测试锁死，系列收官。
+
+### 说明
+- 产品代码未动，dashboard.css 的顶栏单行规则是此前仪表盘美化时已落地的既有规则。
+- 设计层测试只断言结构，不依赖任何种子数据。
+
+### 测试
+- 新测试 tests/test_dashboard_design_v21718.py 1/1 通过；设计层合跑 19/19 通过（含本轮新测试、其余 14 页设计测试、transactions 两版测试、版本一致性测试）。
+- 新文件 ruff check 全洁、ruff format 全洁（模型稿首版 1 处 E501 超长行与 1 处格式缺空行由编排机械修正后全洁）。
+- 全量 pytest 1451 通过、1 跳过、0 失败（较 v2.17.17 的 1450 通过恰好 +1，即本轮新测试）。
+- 真实服务冒烟（8120 端口，demo.db 复制库）：GET / 200、GET /static/dashboard.css 200、页面含 dashboard.css 引用且在 style.css 之后、css 含 flex-wrap: nowrap；冒烟后服务已停、复制库已删。
+
+
 ## v2.17.17 - 2026-10-26
 ### 修复
 修正两处过期测试断言（实现一字未动，判定依据见下；此前全量 2 失败 wlfl t14/t15 自此清零）：
