@@ -324,3 +324,54 @@ export async function fetchShareView(token: string): Promise<ShareViewData> {
   }
   return (await res.json()) as ShareViewData;
 }
+
+export interface ShareLinkMeta {
+    id: string;
+    room: string;
+    created_at_ms: number;
+    expires_at_ms: number;
+    revoked_at_ms: number | null;
+}
+
+export interface IssuedShareLink {
+    id: string;
+    room: string;
+    share_token: string;
+    share_url: string;
+    expires_at_ms: number;
+}
+
+export async function listShareLinks(room: string, requester: string): Promise<ShareLinkMeta[]> {
+    const url = `${BASE}/api/rooms/${encodeURIComponent(room)}/share-links?requester=${encodeURIComponent(requester)}`;
+    const data = await apiJson<{ links: ShareLinkMeta[] }>(url);
+    return Array.isArray(data?.links) ? data.links : [];
+}
+
+export async function issueShareLink(room: string, requester: string, ttlHours?: number): Promise<IssuedShareLink> {
+    const url = `${BASE}/api/rooms/${encodeURIComponent(room)}/share-links`;
+    const body: { requester: string; ttl_hours?: number } = { requester };
+    if (ttlHours !== undefined) {
+        body.ttl_hours = ttlHours;
+    }
+    return apiJson<IssuedShareLink>(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+}
+
+export async function revokeShareLink(room: string, id: string, requester: string): Promise<void> {
+    const url = `${BASE}/api/rooms/${encodeURIComponent(room)}/share-links/${encodeURIComponent(id)}`;
+    const res = await fetch(url, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requester }),
+    });
+    if (res.ok) {
+        return;
+    }
+    let message = '';
+    try {
+        const parsed = (await res.json()) as { error?: string } | null;
+        message = parsed?.error ?? '';
+    } catch {
+        // ignore parse failure
+    }
+    throw new Error(message || `Failed to revoke share link (HTTP ${res.status})`);
+}

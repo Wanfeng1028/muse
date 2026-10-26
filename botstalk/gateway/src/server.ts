@@ -98,6 +98,17 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     const url = req.url ?? "";
     const method = req.method ?? "GET";
 
+    if (method === "OPTIONS") {
+      res.writeHead(204, {
+        "access-control-allow-origin": "*",
+        "access-control-allow-methods": "GET, POST, PATCH, DELETE, OPTIONS",
+        "access-control-allow-headers": "content-type",
+        "access-control-max-age": "86400"
+      });
+      res.end();
+      return;
+    }
+
     // 静态文件（publicDir 未配置时直接跳过，不影响 /api/* 与探针）
     if (method === "GET" && !url.startsWith("/api/") && url !== "/healthz") {
       if (serveStatic(config.publicDir, url, res)) return;

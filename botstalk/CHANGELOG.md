@@ -1,5 +1,29 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 11 轮（Web 分享管理 + 查看页实时刷新）
+
+### 新增
+
+- Web 分享管理面板：components/ShareManager.tsx（房主/管理员签发只读分享链接、列表、撤销；签发有效期默认 168 小时、钳制 1–720 小时；签发成功后一次性链接区块只存组件 state、不写 localStorage；列表只含元数据、不含令牌；非管理员显示“只有房主或管理员能管理分享链接”）。
+- Web api.ts 新增 ShareLinkMeta / IssuedShareLink 类型与 listShareLinks / issueShareLink / revokeShareLink（DELETE 204 空 body 不解析 JSON）。
+- Chat 顶栏与底部模块条各加“分享”入口，打开分享管理面板。
+- ShareView 每 15 秒轮询刷新（token 变化重建定时器、卸载清除、alive 守卫）+ 底部“每 15 秒自动刷新”一行；原有文案与类名不变。
+- 网关全局 OPTIONS 预检处理（204 + Access-Control-Allow-Origin *，Allow-Methods 含 GET/POST/PATCH/DELETE/OPTIONS，Allow-Headers content-type，Max-Age 86400），此前缺预检致跨域 POST 签发被浏览器挡住。
+- 冒烟脚本 scripts/smoke-share-manage.mjs（11 步）与网关预检测试 cors-preflight.test.ts（2 例）。
+
+### 验收
+
+- Web tsc -b 与 vite build 通过；网关全量 74 文件 964 例全绿（含新增预检 2 例，此前 962 例）。
+- 真实网关冒烟 11 步全过（建房、非房主签发 403、房主签发 201、列表无令牌泄露、只读查看、重复查看、非房主撤销 403、房主撤销 204、列表已撤销、已撤销查看 410）。
+- 3 张真实截图亲眼验收（docs/screenshots/share/：share-manage.png、share-manage-issued.png、share-view.png，控制台零错误）；分享查看页底部两行以 DOM 实测与文本断言验证。
+- 验收修真问题 2 个：网关缺 OPTIONS 预检（已修，见上）；冒烟脚本 Node fetch 未设 Content-Length 致 DELETE 体无帧界定被回 400（测试脚本 bug，已修，Web 撤销不受影响，浏览器 fetch 自带 Content-Length）。
+- 模型链：全部调用走 BotsRouter；智谱 glm-4.7 撞上游周/月上限（重置 2026-10-30）后切讯飞星辰 spark-x2.6；旧 lane 未用。
+
+### 已知局限
+
+- 分享链接仍只读，不能凭链接入群或发消息；查看页靠 15 秒轮询刷新（不用 WebSocket）；Chat 顶栏按钮过多时窄视口横向溢出（既存布局问题，本轮未改）；opaque origin 下完整链接显示为相对路径 /share/…（ShareManager 已做回退）。
+
+
 ## Unreleased - OpenAgents 第 10 轮（只读分享链接）
 
 ### 新增

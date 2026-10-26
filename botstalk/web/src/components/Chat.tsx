@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { CalendarClock, ClipboardList, Gamepad2, LogOut, Moon, Settings, ShieldCheck, Spade } from 'lucide-react';
+import { CalendarClock, ClipboardList, Gamepad2, LogOut, Moon, Settings, Share2, ShieldCheck, Spade } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
 import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload, fetchPendingApprovals } from '../api';
 import MessageList, { ChatItem } from './MessageList';
@@ -7,6 +7,7 @@ import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
 import TaskPanel from './TaskPanel';
 import ApprovalQueue, { ApprovalRequest } from './ApprovalQueue';
+import ShareManager from './ShareManager';
 import Workflows from './Workflows';
 import GamePanel from './GamePanel';
 import DoudizhuPanel, { isDoudizhuState } from '../doudizhu/DoudizhuPanel';
@@ -38,6 +39,7 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [showTasks, setShowTasks] = useState(false);
   const [showApprovals, setShowApprovals] = useState(false);
   const [showWorkflows, setShowWorkflows] = useState(false);
+  const [showShares, setShowShares] = useState(false);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
   const [pendingReply, setPendingReply] = useState<{ msgId: string; sender: string; text: string } | null>(null);
   const [showGame, setShowGame] = useState(false);
@@ -309,6 +311,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
           <CalendarClock size={16} strokeWidth={2} />
           <span>工作流</span>
         </button>
+        <button className="btn-ghost" type="button" onClick={() => setShowShares((v) => !v)} title="分享管理">
+          <Share2 size={16} strokeWidth={2} />
+          <span>分享</span>
+        </button>
         <button className="btn-ghost" type="button" onClick={onLeave} title="退出">
           <LogOut size={16} strokeWidth={2} />
           <span>退出</span>
@@ -348,6 +354,10 @@ export default function Chat({ nick, room, onLeave }: Props) {
             <button className="module-bar-btn" type="button" onClick={() => setShowWorkflows((v) => !v)}>
               <CalendarClock size={14} strokeWidth={2} />
               <span>工作流</span>
+            </button>
+            <button className="module-bar-btn" type="button" onClick={() => setShowShares((v) => !v)}>
+              <Share2 size={14} strokeWidth={2} />
+              <span>分享</span>
             </button>
             <button className="module-bar-btn" type="button" onClick={() => setShowGame((v) => !v)}>
               <Gamepad2 size={14} strokeWidth={2} />
@@ -498,6 +508,9 @@ export default function Chat({ nick, room, onLeave }: Props) {
       )}
       {showWorkflows && (
         <Workflows room={room} onClose={() => setShowWorkflows(false)} />
+      )}
+      {showShares && (
+        <ShareManager room={room} nick={nick} onClose={() => setShowShares(false)} />
       )}
     </div>
   );

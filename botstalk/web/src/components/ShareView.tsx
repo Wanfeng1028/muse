@@ -9,15 +9,26 @@ export default function ShareView({ token }: { token: string }) {
     let alive = true;
     setData(null);
     setError(null);
-    fetchShareView(token)
-      .then((d) => {
-        if (alive) setData(d);
-      })
-      .catch((e: unknown) => {
+  
+    const load = async () => {
+      try {
+        const res = await fetchShareView(token);
+        if (alive) setData(res);
+      } catch (e) {
         if (alive) setError(e instanceof Error ? e : new Error(String(e)));
-      });
+      }
+    };
+  
+    load();
+  
+    const timer = setInterval(() => {
+      if (!alive) return;
+      load();
+    }, 15000);
+  
     return () => {
       alive = false;
+      clearInterval(timer);
     };
   }, [token]);
 
@@ -69,6 +80,7 @@ export default function ShareView({ token }: { token: string }) {
       </div>
       <div className="room-list-panel">
         <p className="room-list-sub">只读：不能在这里发消息、派活或改房间</p>
+        <p className="room-list-sub">每 15 秒自动刷新</p>
       </div>
     </section>
   );
