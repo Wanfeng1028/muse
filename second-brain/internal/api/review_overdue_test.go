@@ -88,7 +88,7 @@ func TestReviewOverdue_LimitAndMethod(t *testing.T) {
 	seedOverdueReview(t, st, "o1", now.AddDate(0, 0, -3), store.DefaultUser)
 	seedOverdueReview(t, st, "o2", now.AddDate(0, 0, -4), store.DefaultUser)
 
-	for _, q := range []string{"limit=1", "limit=0", "limit=999", "limit=abc"} {
+	for _, q := range []string{"limit=1", "limit=0", "limit=999"} {
 		resp := doReviewJSON(t, http.MethodGet, srv.URL+"/api/review/overdue?"+q, nil)
 		var got []overdueItem
 		decodeReviewJSON(t, resp, &got)
@@ -99,6 +99,12 @@ func TestReviewOverdue_LimitAndMethod(t *testing.T) {
 		if resp.StatusCode != http.StatusOK || len(got) != want {
 			t.Errorf("query %s: status %d, items %d, want 200 / %d", q, resp.StatusCode, len(got), want)
 		}
+	}
+
+	respAbc := doReviewJSON(t, http.MethodGet, srv.URL+"/api/review/overdue?limit=abc", nil)
+	defer respAbc.Body.Close()
+	if respAbc.StatusCode != http.StatusBadRequest {
+		t.Errorf("query limit=abc: status %d, want 400", respAbc.StatusCode)
 	}
 
 	resp := doReviewJSON(t, http.MethodPost, srv.URL+"/api/review/overdue", nil)

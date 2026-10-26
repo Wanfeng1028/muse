@@ -7,6 +7,17 @@
 
 ## [Unreleased]
 
+## [0.22.0] - 2026-10-26
+
+### 新增
+- GET /api/review/overdue 的 limit 参数校验收紧——缺省或空仍默认 50；非整数（如 abc、1.5、1x）返回 400，错误文案“limit 参数非法”；解析成功后的钳制不变（<=0 置 50、>200 置 200）。属有意的合同变更：此前 limit=abc 会静默按默认值处理。
+
+### 测试
+- 新增 internal/api/review_overdue_validation_test.go（8 个子用例）；旧 TestReviewOverdue_LimitAndMethod 的 limit=abc 期望由 200 改为 400；go test ./... 全量 822 通过、0 失败，go vet 全洁。
+
+### 已知限制
+- 本轮只收紧 limit 一个参数；forecast 的 days、heatmap 的 days 等参数仍沿用静默钳制/回落口径，未动；store 层钳制保留作兜底；前端本轮未动。
+
 ## [0.21.0] - 2026-10-25
 ### 前端美化
 ### 新增

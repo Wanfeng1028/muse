@@ -2,6 +2,7 @@ package api
 
 import (
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/Wanfeng1028/muse/second-brain/internal/store"
@@ -23,7 +24,16 @@ type overdueReviewItem struct {
 
 func registerReviewOverdueRoutes(mux *http.ServeMux, st *store.Store) {
 	mux.HandleFunc("GET /api/review/overdue", func(w http.ResponseWriter, r *http.Request) {
-		limit := parseIntDefault(r.URL.Query().Get("limit"), 50)
+		rawLimit := r.URL.Query().Get("limit")
+		limit := 50
+		if rawLimit != "" {
+			parsed, err := strconv.Atoi(rawLimit)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "limit 参数非法")
+				return
+			}
+			limit = parsed
+		}
 		if limit <= 0 {
 			limit = 50
 		}
