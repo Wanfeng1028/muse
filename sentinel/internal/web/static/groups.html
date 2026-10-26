@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>监控分组 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body onload="initGroups()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">总览</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/sms-log">短信记录</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend">SLA趋势</a>
+<a href="/maintenance">维护窗口</a>
+<a href="/groups" class="active">监控分组</a>
+</nav>
+</header>
+<main class="container">
+<h1>监控分组</h1>
+<p>把监控按业务线归组：分组只做归类与筛选，不影响检查调度与告警。</p>
+<div class="ctrl-row">
+<input type="text" id="group-name-input" placeholder="分组名，例如：核心业务">
+<button id="group-create-btn">新建分组</button>
+</div>
+<p id="group-status"></p>
+<table class="snap-table">
+<thead>
+<tr><th>分组名</th><th>监控数</th><th>创建时间</th><th>操作</th></tr>
+</thead>
+<tbody id="group-rows"></tbody>
+</table>
+<h2>分组成员</h2>
+<div class="ctrl-row">
+<select id="group-select"></select>
+<input type="number" id="member-monitor-input" placeholder="监控 ID">
+<button id="member-add-btn">加入分组</button>
+</div>
+<p id="member-status"></p>
+<table class="snap-table">
+<thead>
+<tr><th>监控名</th><th>目标</th><th>类型</th><th>操作</th></tr>
+</thead>
+<tbody id="member-rows"></tbody>
+</table>
+</main>
+<script>
+const groupNameInput = document.getElementById('group-name-input');
+const groupCreateBtn = document.getElementById('group-create-btn');
+const groupRows = document.getElementById('group-rows');
+const groupStatus = document.getElementById('group-status');
+const groupSelect = document.getElementById('group-select');
+const memberMonitorInput = document.getElementById('member-monitor-input');
+const memberAddBtn = document.getElementById('member-add-btn');
+const memberRows = document.getElementById('member-rows');
+const memberStatus = document.getElementById('member-status');
+
+function renderGroups(items) {
+  groupRows.textContent = '';
+  groupSelect.textContent = '';
+  items.forEach(function (item) {
+    const row = document.createElement('tr');
+    [item.name, item.monitor_count, item.created_at].forEach(function (val) {
+      const cell = document.createElement('td');
+      cell.textContent = val === null || val === undefined ? '' : String(val);
+      row.appendChild(cell);
+    });
+    const actionCell = document.createElement('td');
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.textContent = '删除';
+    delBtn.addEventListener('click', function () { deleteGroup(item.id); });
+    actionCell.appendChild(delBtn);
+    row.appendChild(actionCell);
+    groupRows.appendChild(row);
+    const opt = document.createElement('option');
+    opt.value = item.id;
+    opt.textContent = item.name;
+    groupSelect.appendChild(opt);
+  });
+}
+async function loadGroups() {
+  try {
+    const data = await api('/api/groups');
+    const items = data && Array.isArray(data.items) ? data.items : [];
+    renderGroups(items);
+    groupStatus.textContent = '';
+  } catch (err) {
+    groupStatus.textContent = '加载失败';
+  }
+}
+
+function renderMembers(items) {
+  memberRows.textContent = '';
+  items.forEach(function (item) {
+    const row = document.createElement('tr');
+    [item.name, item.target, item.kind].forEach(function (val) {
+      const cell = document.createElement('td');
+      cell.textContent = val === null || val === undefined ? '' : String(val);
+      row.appendChild(cell);
+    });
+    const actionCell = document.createElement('td');
+    const rmBtn = document.createElement('button');
+    rmBtn.type = 'button';
+    rmBtn.textContent = '移出';
+    rmBtn.addEventListener('click', function () { removeMember(groupSelect.value, item.id); });
+    actionCell.appendChild(rmBtn);
+    row.appendChild(actionCell);
+    memberRows.appendChild(row);
+  });
+}
+
+async function loadMembers() {
+  const gid = groupSelect.value;
+  if (!gid) { memberRows.textContent = ''; return; }
+  try {
+    const data = await api('/api/groups/' + gid + '/monitors');
+    const items = data && Array.isArray(data.items) ? data.items : [];
+    renderMembers(items);
+    memberStatus.textContent = '';
+  } catch (err) {
+    memberStatus.textContent = '加载失败';
+  }
+}
+async function createGroup() {
+  const name = groupNameInput.value.trim();
+  if (!name) { groupStatus.textContent = '分组名不能为空'; return; }
+  try {
+    await api('/api/groups', { method: 'POST', body: JSON.stringify({ name: name }) });
+    groupNameInput.value = '';
+    groupStatus.textContent = '';
+    await loadGroups();
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    groupStatus.textContent = '新建失败：' + msg;
+  }
+}
+
+async function deleteGroup(id) {
+  try {
+    await api('/api/groups/' + id, { method: 'DELETE' });
+    await loadGroups();
+    await loadMembers();
+  } catch (err) {
+    groupStatus.textContent = '删除失败';
+  }
+}
+
+async function addMember() {
+  const gid = groupSelect.value;
+  const mid = Number(memberMonitorInput.value);
+  if (!gid) { memberStatus.textContent = '请先选择分组'; return; }
+  if (!Number.isFinite(mid) || mid <= 0) { memberStatus.textContent = '监控 ID 非法'; return; }
+  try {
+    await api('/api/groups/' + gid + '/monitors', { method: 'POST', body: JSON.stringify({ monitor_id: mid }) });
+    memberStatus.textContent = '';
+    await loadGroups();
+    await loadMembers();
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    memberStatus.textContent = '加入失败：' + msg;
+  }
+}
+
+async function removeMember(gid, mid) {
+  try {
+    await api('/api/groups/' + gid + '/monitors/' + mid, { method: 'DELETE' });
+    await loadGroups();
+    await loadMembers();
+  } catch (err) {
+    memberStatus.textContent = '移出失败';
+  }
+}
+
+let groupsInited = false;
+function initGroups() {
+  if (groupsInited) return;
+  groupsInited = true;
+  groupCreateBtn.addEventListener('click', function () { createGroup(); });
+  memberAddBtn.addEventListener('click', function () { addMember(); });
+  groupSelect.addEventListener('change', function () { loadMembers(); });
+  loadGroups();
+}
+
+initGroups();</script>
+</body>
+</html>

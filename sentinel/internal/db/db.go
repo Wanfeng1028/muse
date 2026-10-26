@@ -255,6 +255,22 @@ updated_at TEXT NOT NULL
 			`CREATE INDEX IF NOT EXISTS idx_maintenance_windows_monitor_time ON maintenance_windows(monitor_id, starts_at, ends_at)`,
 		},
 	},
+	{
+		version: 16,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS monitor_groups (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL UNIQUE,
+            created_at TEXT NOT NULL
+        )`,
+			`CREATE TABLE IF NOT EXISTS monitor_group_members (
+            group_id INTEGER NOT NULL REFERENCES monitor_groups(id) ON DELETE CASCADE,
+            monitor_id INTEGER NOT NULL REFERENCES monitors(id) ON DELETE CASCADE,
+            PRIMARY KEY (group_id, monitor_id)
+        )`,
+			`CREATE INDEX IF NOT EXISTS idx_monitor_group_members_monitor ON monitor_group_members(monitor_id)`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

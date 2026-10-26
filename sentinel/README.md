@@ -30,6 +30,7 @@
 - **告警投递队列**：webhook 告警先入 SQLite 队列表，后台 worker 按指数退避重投（默认最多 8 次），`/deliveries` 页可看投递状态、手动重投，失败不再丢告警
 - **短信告警**：mock/阿里云/腾讯云三通道，监控可配短信渠道与接收号码，发送记录持久化到 sms_log 表，`/sms-log` 页可查每条短信的发送结果
 - **维护窗口**：窗口内调度检查整段跳过，不产生检查记录与新事件；手动检查不受影响，`/maintenance` 页可新建/删除（监控 ID 为 0 表示全部监控）
+- **监控分组**：监控按业务线归组（新建/删除分组、监控加入/移出分组、按组查看成员），只做归类与筛选，不影响检查调度与告警，`/groups` 页管理
 ## 截图
 
 > 以下为真实运行抓屏，非设计稿。
@@ -44,6 +45,7 @@
 - 一键发布的公开状态页静态站：`docs/screenshots/status-published-20261020.png`
 - 快照归档管理页（定时计划/立即生成/下载/删除）：`docs/screenshots/snapshots-20261024.png`
 - 维护窗口：`docs/screenshots/maintenance-v023.png`
+- 监控分组：`docs/screenshots/groups-v024.png`
 - 事件页状态筛选（全部/仅进行中）：`docs/screenshots/incidents-status-all.png`、`docs/screenshots/incidents-status-open.png`
 - 事件页点击行展开详情（事件 ID、监控、开始时间、恢复时间、持续、状态、触发原因）：`docs/screenshots/incidents-detail-collapsed.png`、`docs/screenshots/incidents-detail-expanded.png`
 
@@ -120,6 +122,12 @@ open http://localhost:8200
 | POST | `/api/maintenance` | 是 | 新建维护窗口，body `{"monitor_id":0,"title":"...","starts_at":"...","ends_at":"..."}`（monitor_id 为 0 表示全部监控） |
 | GET | `/api/maintenance` | 是 | 维护窗口列表 |
 | DELETE | `/api/maintenance/{id}` | 是 | 删除维护窗口 |
+| POST | `/api/groups` | 是 | 新建分组，body `{"name":"..."}`，空名/重名返回 400 |
+| GET | `/api/groups` | 是 | 分组列表（含各组监控数） |
+| DELETE | `/api/groups/{id}` | 是 | 删除分组（成员关联一并清除） |
+| POST | `/api/groups/{id}/monitors` | 是 | 监控加入分组，body `{"monitor_id":N}` |
+| DELETE | `/api/groups/{id}/monitors/{mid}` | 是 | 监控移出分组 |
+| GET | `/api/groups/{id}/monitors` | 是 | 分组成员列表 |
 | GET | `/healthz` | 否 | 存活探针 |
 | GET | `/readyz` | 否 | 就绪探针 |
 | GET | `/api/metrics` | 否 | Prometheus 指标 |

@@ -3,6 +3,25 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.24.0] - 2026-10-27
+
+### 新增
+
+- 监控分组：DB 迁移 v16 新建 monitor_groups 表（id/name UNIQUE/created_at）与 monitor_group_members 关联表（group_id/monitor_id 复合主键、双外键级联）；Store 层 CreateGroup（空名与重名均报错）、ListGroups（含各组监控数）、DeleteGroup（先清成员再删组）、AddMonitorToGroup（分组与监控不存在均报错、重复加入幂等）、RemoveMonitorFromGroup、ListGroupMonitors；API（均需鉴权）POST /api/groups（非法 JSON/空名/重名均 400）、GET /api/groups、DELETE /api/groups/{id}、POST /api/groups/{id}/monitors、DELETE /api/groups/{id}/monitors/{mid}、GET /api/groups/{id}/monitors；控制台页 /groups（新建分组表单、分组列表与删除、按分组选成员加入/移出），10 个既有控制台页导航末尾加监控分组链，/groups 加进鉴权精确名单。
+- 语义界定：分组只做归类与筛选，不影响检查调度、事件与告警。
+
+### 测试
+
+- 新增 internal/store/groups_test.go（创建与列表字段、空名与重名拒绝、成员加入幂等与不存在的分组/监控拒绝、移出与删组清成员）、internal/handlers/groups_test.go（创建 201 与重名/空名 400、成员加入/不存在监控 400/成员列表/移出/删组后列表为空）、internal/web/groups_test.go（分组页 18 个标记、失败路径定义顺序、10 页导航链）；db_deep2 全新库版本期望同步到 1~16。
+- go vet 全洁；go test ./... 16 包全绿（notify 包 240.1 秒为既存最慢包）。
+
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18494 端口，SENTINEL_TICK_SEC=60）：种子监控占 1/2 号（已禁用）；新建分组返回 201，重名返回 400“分组名已存在”、空名返回 400“name 不能为空”；种子监控 1 号加入分组后成员列表含示例站点、分组列表监控数由 0 变 1；移出后成员列表为空，删组后分组列表为空；/groups 页 200 且无鉴权 401；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 视觉验收：截图 docs/screenshots/groups-v024.png 亲眼核对——导航 10 链齐全且监控分组 active、新建分组表单齐全、真实分组行（核心业务、监控数 1、创建时间、删除按钮）与 API 返回一致、成员区下拉选中核心业务后真实成员行（示例站点、https://example.com、http、移出按钮）与 API 返回一致、无“加载失败”。
+- 截图 harness 说明：Playwright setContent 下相对 /api 解析失败，截图脚本按 shoot2.js 模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 在截图环境内桩化为冒烟 stub token、/api 经 route 代理回真实服务，该改写仅限截图环境，产品代码未动。
+
 ## [0.23.0] - 2026-10-27
 
 ### 新增
