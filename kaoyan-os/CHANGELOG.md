@@ -4,6 +4,23 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.15.0] - 2026-10-27
+
+### Added
+
+- 后端新增 `GET /api/focus/export`：按科目筛选导出专注会话 CSV，表头 id,subject,subject_name,minutes,started_at,note,plan_id，按 started_at 升序、id 升序，note/plan_id 为空输出空串，非法 subject 返回 400；口径同其他导出（UTF-8 BOM、RFC4180 转义、Content-Type text/csv; charset=utf-8、Content-Disposition 附件下载，无筛选 kaoyan-focus.csv、有筛选 kaoyan-focus-加 subject 加 .csv），用户隔离与未登录 401 由全局认证钩子保证。
+- 后端新增 `POST /api/import/focus`：专注会话 CSV 导入，必需列 subject/minutes/started_at，可选 note（缺省 null，超过 500 字记错）/plan_id（缺省 null，非空时须为正整数且为当前用户的计划，否则记错）；minutes 取整后须在 1 到 1440 之间，started_at 须以 YYYY-MM-DD 开头、长度 10 到 40、Date.parse 可解析；逐行校验与错误口径同计划导入（errors 最多 50 条、errorRows 为错误行总数、行号从 1 计含表头行），响应 200 { imported, errors, errorRows }；复用备份导入的 CSV 解析（BOM、引号转义、CRLF、表头大小写不敏感，取值一律用 Map.get）。
+- 前端 api.ts 新增 exportFocusCsv / importFocusCsv 与 FocusImportResult 类型；番茄专注页页头新增「导出 CSV」按钮（按当前全部专注记录导出 kaoyan-focus.csv，Firefox 下先挂 DOM 再点击）；数据导入导出页（/data）新增「专注 CSV 导入」卡片（模板下载、文件选择、导入结果与错误列表，复用计划卡片样式与 ErrorList）。
+- 新增测试 focus-export.test.ts / focus-import.test.ts，各 6 例：空库表头+BOM+text/csv、排序与中文名与空列、RFC4180 转义、筛选与非法参数 400、用户隔离、未登录 401；空 csv 400、缺列 400、混合行导入与错误行号、缺省值（note/plan_id 为 null）、非法 subject、未登录 401。
+- API 文档第 3 章新增专注导出一节、第 8 章新增专注导入一节；前后端对照快照（api-route-parity）同步：调用数 59→61，计入本轮两条新路由。
+- 截图：docs/screenshots/data-transfer-focus.png（真实服务 + 演示数据，/data 页专注导入卡片可见，console 零错误）、docs/screenshots/pomodoro-export.png（番茄专注页页头导出按钮可见，console 零错误）。
+
+### Notes
+
+- 本轮模型调用只走 BotsRouter 大写 GLM-5.3-Flash（令牌 id=5）；专注导入稿首通 16000 预算被推理吃光、正文 0 字，改 32000 预算后出正文。
+- 编排修正（非模型稿）：导入稿两块代码间的围栏行已清、import 路径由 ./backup.js 改回 ./backup、fastify.post 改回 app.post、表头处理由 map(normalizeHeader) 改回 normalizeHeader 整行（前者会把单格字符串当数组调 map 而崩溃）、行号由跳过空白行才递增改回真实行号 i+1；导出稿 req.user 改 req.user!、科目名查询改 find、查询结果断言加 as unknown 中转；导出测试的编造点已修正（new DatabaseSync 加 createDb(db) 改回 createDb(':memory:')）；前端模型稿的 Pomodoro 页头 JSX 与 DataTransfer 卡片样式按既有页面改回（计划卡片同款 dt-row/btn-ghost/btn-primary/muted 结构）。
+- 上游 usage 回包里每通 prompt_tokens 约 24000，其中约 23936 为网关侧 cached_tokens（与 v1.13.0/v1.14.0 同口径），非本轮提示词本身长度；记账按回包原值汇总。
+
 ## [1.14.0] - 2026-10-27
 
 ### Added

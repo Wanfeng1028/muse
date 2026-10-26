@@ -788,6 +788,35 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | --- | --- | --- |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
+### `GET /api/focus/export`
+
+导出专注计时记录为 CSV 文本。
+
+| 项目 | 说明 |
+| --- | --- |
+| 方法 | `GET` |
+| 路径 | `/api/focus/export` |
+| 认证 | 需要登录 |
+
+**查询参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| subject | string | 否 | 按科目筛选，须为合法 SubjectKey（`math` / `english` / `politics` / `major`）；非法值返回 `400 { error: 'subject 非法' }` |
+
+**成功响应**
+
+返回 CSV 文本，表头依次为 `id,subject,subject_name,minutes,started_at,note,plan_id`，按 `started_at` 升序、`id` 升序排列。`subject_name` 为科目中文名；`note` 或 `plan_id` 为空时输出空串。
+
+导出口径与其他导出一致：UTF-8 BOM、RFC 4180 转义、`Content-Type: text/csv; charset=utf-8`、`Content-Disposition` 附件下载；无筛选时文件名为 `kaoyan-focus.csv`，有筛选时为 `kaoyan-focus-<subject>.csv`。
+
+**错误码**
+
+| 状态码 | 说明 |
+| --- | --- |
+| 400 | `subject 非法` |
+| 401 | 未登录 |
+
 ## 4. 错题本
 
 ### `GET /api/mistakes/summary`
@@ -2354,6 +2383,36 @@ CSV 列：
 | 400 | `{ "error": "csv 不能为空" }` | csv 缺失或空白 | csv 不是 string 或 trim 后为空 |
 | 400 | `{ "error": "缺少必需列：date / subject / title" }` | 无表头或缺少必需列 | 全部行为空白行，或表头中不存在必需列 |
 | 401 | 未登录 | 需要登录 | 未携带有效登录凭据 |
+
+### `POST /api/import/focus`
+
+从 CSV 文本导入专注计时记录，合法行写入 `focus_sessions`。
+
+| 项目 | 说明 |
+| --- | --- |
+| 方法 | `POST` |
+| 路径 | `/api/import/focus` |
+| 认证 | 需要登录 |
+
+请求体上限 5 MiB。
+
+**Body 参数**
+
+| 参数 | 类型 | 必填 | 说明 |
+| --- | --- | --- | --- |
+| csv | string | 是 | CSV 文本，trim 后不能为空；解析规则同其他导入（UTF-8 BOM、引号转义、CRLF、表头大小写不敏感） |
+
+**列说明**
+
+| 列 | 必填 | 说明 |
+| --- | --- | --- |
+| subject | 是 | 须为合法 SubjectKey（`math` / `english` / `politics` / `major`），否则记错 |
+| minutes | 是 | 取整后须在 1 到 1440 之间，否则记错 |
+| started_at | 是 | 须以 `YYYY-MM-DD` 开头、长度 10 到 40，且可被 `Date.parse` 解析，否则记错 |
+| note | 否 | 缺省 `null`；超过 500 字记错 |
+| plan_id | 否 | 缺省 `null`；非空时须为正整数且为当前用户的计划，否则记错 |
+
+**成功响应**
 
 ## 9. 设置
 

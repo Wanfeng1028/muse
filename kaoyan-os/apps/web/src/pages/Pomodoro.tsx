@@ -55,6 +55,8 @@ export default function Pomodoro() {
   const [subjectWindow, setSubjectWindow] = useState<'all' | '7' | '1'>('all');
   const [todayPlans, setTodayPlans] = useState<Plan[]>([]);
   const [planId, setPlanId] = useState<number | ''>('');
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState('');
 
   // 记录目标结束时间戳，用于防漂移
   const endAtRef = useRef<number | null>(null);
@@ -233,11 +235,40 @@ export default function Pomodoro() {
     setRemaining(mode === 'focus' ? s.pomodoroMinutes * 60 : s.breakMinutes * 60);
   };
 
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError('');
+    try {
+      const blob = await api.exportFocusCsv();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'kaoyan-focus.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setExportError(err instanceof Error ? err.message : '导出失败');
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="page">
       <div className="page-header">
         <h1>番茄专注</h1>
+        <button
+          className="btn btn-ghost"
+          type="button"
+          onClick={handleExport}
+          disabled={exporting}
+        >
+          {exporting ? '导出中…' : '导出 CSV'}
+        </button>
       </div>
+      {exportError && <p className="muted">导出失败：{exportError}</p>}
 
       <div className="timer-wrap pomo-timer-wrap">
         <div className="timer-mode pomo-mode">{mode === 'focus' ? '专注' : '休息'}</div>

@@ -107,6 +107,16 @@ export default function DataTransfer() {
     errors: RowError[];
     errorRows: number;
   } | null>(null);
+  // 专注导入
+  const focusInputRef = useRef<HTMLInputElement>(null);
+  const [focusFile, setFocusFile] = useState<File | null>(null);
+  const [focusImporting, setFocusImporting] = useState(false);
+  const [focusError, setFocusError] = useState('');
+  const [focusResult, setFocusResult] = useState<{
+    imported: number;
+    errors: RowError[];
+    errorRows: number;
+  } | null>(null);
 
   const handleExport = useCallback(async () => {
     setExporting(true);
@@ -250,6 +260,29 @@ export default function DataTransfer() {
       setPlansImporting(false);
     }
   }, [plansFile]);
+  const handleFocusTemplate = useCallback(() => {
+    const csv =
+      'subject,minutes,started_at,note,plan_id\n' +
+      'math,25,2026-10-27,阅读,\n' +
+      'english,45,2026-10-27,,\n';
+    downloadText('focus-template.csv', csv, 'text/csv');
+  }, []);
+
+  const handleFocusImport = useCallback(async () => {
+    if (!focusFile) return;
+    setFocusImporting(true);
+    setFocusError('');
+    setFocusResult(null);
+    try {
+      const csv = await focusFile.text();
+      const res = await api.importFocusCsv(csv);
+      setFocusResult({ imported: res.imported, errors: res.errors, errorRows: res.errorRows });
+    } catch (e) {
+      setFocusError(e instanceof Error ? e.message : '导入失败');
+    } finally {
+      setFocusImporting(false);
+    }
+  }, [focusFile]);
 
   useEffect(() => {
     return () => {
@@ -494,6 +527,49 @@ export default function DataTransfer() {
             <ErrorList errors={plansResult.errors} />
           </div>
         )}
+      <div className="card stack">
+        <h2>专注 CSV 导入</h2>
+        <p className="muted">
+          表头必须是 subject,minutes,started_at，可加 note,plan_id。subject 用 math/english/politics/major，minutes 为 1 到 1440 的整数，started_at 为日期或日期时间，note 可选，plan_id 可选且须为本人计划。
+        </p>
+        <div className="row dt-row">
+          <button className="btn btn-ghost" onClick={handleFocusTemplate}>
+            下载模板
+          </button>
+        </div>
+        <div className="row dt-row dt-row-file">
+          <input
+            ref={focusInputRef}
+            type="file"
+            accept=".csv"
+            onChange={(e) => {
+              const f = e.target.files?.[0] ?? null;
+              setFocusFile(f);
+              setFocusError('');
+              setFocusResult(null);
+            }}
+          />
+          {focusFile && <span className="muted">{focusFile.name}</span>}
+        </div>
+        <div className="row dt-row">
+          <button
+            className="btn btn-primary"
+            onClick={handleFocusImport}
+            disabled={focusImporting || !focusFile}
+          >
+            {focusImporting ? '处理中…' : '开始导入'}
+          </button>
+        </div>
+        {focusError && <p className="muted">导入失败：{focusError}</p>}
+        {focusResult && (
+          <div className="stack">
+            <p>
+              导入 {focusResult.imported} 条，错误 {focusResult.errorRows} 行
+            </p>
+            <ErrorList errors={focusResult.errors} />
+          </div>
+        )}
+      </div>
       </div>
     </div>
   );

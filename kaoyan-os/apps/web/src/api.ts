@@ -73,6 +73,11 @@ export interface PlansImportResult {
   errors: Array<{ row: number; message: string }>;
   errorRows: number;
 }
+export interface FocusImportResult {
+  imported: number;
+  errors: Array<{ row: number; message: string }>;
+  errorRows: number;
+}
 export interface VocabSeedResult {
   imported: number;
   skippedExisting: number;
@@ -309,6 +314,18 @@ export const api = {
       return await res.blob();
     },
 
+  exportFocusCsv: async (subject?: string): Promise<Blob> => {
+      const res = await fetch(BASE + `/focus/export${qs({ subject })}`, {
+        credentials: 'same-origin',
+      });
+      if (res.status === 401) {
+        handleUnauthorized('/focus/export');
+        throw new Error('登录已过期，请重新登录。');
+      }
+      if (!res.ok) throw new Error(`导出失败（${res.status}）`);
+      return await res.blob();
+    },
+
 
   // 设置
   getSettings: () => request<Settings>('/settings'),
@@ -341,6 +358,12 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ csv }),
     }),
+  importFocusCsv: (csv: string) =>
+    request<FocusImportResult>('/import/focus', {
+      method: 'POST',
+      body: JSON.stringify({ csv }),
+    }),
+
 
   // 热力图
   heatmapStats: (months?: number) =>

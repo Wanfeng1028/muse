@@ -28,6 +28,7 @@ describe('api route parity deep5', () => {
     'GET /api/exams/summary/by-subject',
     'GET /api/exams/trend',
     'GET /api/focus',
+    'GET /api/focus/export',
     'GET /api/focus/stats',
     'GET /api/focus/summary/by-subject',
     'GET /api/health',
@@ -61,6 +62,7 @@ describe('api route parity deep5', () => {
     'POST /api/exams',
     'POST /api/focus',
     'POST /api/import/exams',
+    'POST /api/import/focus',
   'POST /api/import/mistakes',
   'POST /api/import/plans',
     'POST /api/import/words',
@@ -101,8 +103,8 @@ describe('api route parity deep5', () => {
     await app.close();
   });
 
-  it('解析出 59 个前端 api 调用（数量快照）', () => {
-    expect(pairs.length).toBe(59);
+  it('解析出 61 个前端 api 调用（数量快照）', () => {
+    expect(pairs.length).toBe(61);
   });
 
   it('解析结果与 EXPECTED 快照完全一致', () => {
