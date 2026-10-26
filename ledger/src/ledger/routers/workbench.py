@@ -34,6 +34,9 @@ router = APIRouter(prefix="/api/workbench", tags=["workbench"])
 # 允许的处理动作集合
 _ALLOWED_ACTIONS = {"confirm", "ignore", "learn", "transfer"}
 
+# 批次条目列表允许的 status 取值
+_ALLOWED_ITEM_STATUSES = {"pending", "claimed", "skipped", "all"}
+
 # page_size 上限
 _MAX_PAGE_SIZE = 200
 
@@ -325,6 +328,9 @@ async def list_batch_items(
 ) -> dict[str, Any]:
     """分页返回批次内条目，支持状态过滤与关键词搜索。"""
     await _get_batch_or_404(session, batch_id)
+
+    if status not in _ALLOWED_ITEM_STATUSES:
+        raise HTTPException(status_code=400, detail="status 参数非法，应为 pending、claimed、skipped 或 all")
 
     filters = [StatementItem.batch_id == batch_id]
     if status != "all":

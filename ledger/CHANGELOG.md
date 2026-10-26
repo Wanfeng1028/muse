@@ -1,5 +1,20 @@
 # 更新日志
 
+## v2.17.19 - 2026-10-26
+
+### 新增
+- `src/ledger/routers/workbench.py` 新增 `_ALLOWED_ITEM_STATUSES = {"pending", "claimed", "skipped", "all"}`；`GET /api/workbench/batches/{batch_id}/items` 在批次 404 检查之后、过滤之前校验 `status`，非法值返回 400，detail 为“status 参数非法，应为 pending、claimed、skipped 或 all”；此前非法 `status` 会静默按 `status` 过滤、返回空列表。
+
+### 不变
+- `status=all` 时仍不过滤；`page`/`page_size`/`q`/排序逻辑一字未动；其余端点未动。
+
+### 版本同步
+- `src/ledger/__init__.py`、`pyproject.toml`、`tests/test_version_consistency_v21715.py` 的 `EXPECTED_VERSION` 同步为 2.17.19。
+
+### 测试
+- `tests/test_workbench_api.py` 末尾追加 6 个用例（bogus 返回 400、空串返回 400、all 返回全部、pending 正常、claimed 无数据返回空、不存在的批次加 bogus 返回 404）。
+- 新测试 6/6 通过；全量 pytest 1457 通过、1 跳过、0 失败；真实服务冒烟 6/6 通过（8129 端口隔离库）。
+
 ## v2.17.18 - 2026-10-26
 
 ### 新增

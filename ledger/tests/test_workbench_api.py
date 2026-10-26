@@ -371,3 +371,56 @@ async def test_resolve_missing_item(client, seed):
         json={"action": "ignore"},
     )
     assert resp.status_code == 404
+
+
+async def test_workbench_items_invalid_status_returns_400_v21719(client, seed):
+    resp = await client.get(
+        f"/api/workbench/batches/{seed['batch'].id}/items",
+        params={"status": "bogus"},
+    )
+    assert resp.status_code == 400
+    assert "status 参数非法" in resp.json()["detail"]
+
+
+async def test_workbench_items_empty_status_returns_400_v21719(client, seed):
+    resp = await client.get(
+        f"/api/workbench/batches/{seed['batch'].id}/items",
+        params={"status": ""},
+    )
+    assert resp.status_code == 400
+    assert "status 参数非法" in resp.json()["detail"]
+
+
+async def test_workbench_items_all_status_returns_all_v21719(client, seed):
+    resp = await client.get(
+        f"/api/workbench/batches/{seed['batch'].id}/items",
+        params={"status": "all"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 3
+
+
+async def test_workbench_items_pending_status_still_works_v21719(client, seed):
+    resp = await client.get(
+        f"/api/workbench/batches/{seed['batch'].id}/items",
+        params={"status": "pending"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 3
+
+
+async def test_workbench_items_claimed_status_empty_v21719(client, seed):
+    resp = await client.get(
+        f"/api/workbench/batches/{seed['batch'].id}/items",
+        params={"status": "claimed"},
+    )
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 0
+
+
+async def test_workbench_items_invalid_status_missing_batch_404_v21719(client, seed):
+    resp = await client.get(
+        "/api/workbench/batches/99999999/items",
+        params={"status": "bogus"},
+    )
+    assert resp.status_code == 404
