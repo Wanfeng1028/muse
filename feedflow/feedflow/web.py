@@ -411,6 +411,39 @@ def archived_unarchive():
     store.set_archived(db_path, article_id, 0)
     return redirect(url_for("web.archived_page", removed=1))
 
+@bp.get("/saved-searches")
+def saved_searches_page():
+    db_path = _cfg()["db_path"]
+    items = store.list_saved_searches(db_path)
+    for item in items:
+        item["display_time"] = _display_time(item["created_at"])
+    return render_template("saved_searches.html", items=items)
+
+
+@bp.post("/saved-searches/save")
+def saved_searches_save():
+    q = request.form.get("q", "")
+    if not q.strip():
+        return redirect(url_for("web.saved_searches_page", err="bad"))
+    db_path = _cfg()["db_path"]
+    try:
+        store.save_search(db_path, q)
+    except ValueError:
+        return redirect(url_for("web.saved_searches_page", err="bad"))
+    return redirect(url_for("web.saved_searches_page", saved=1))
+
+
+@bp.post("/saved-searches/delete")
+def saved_searches_delete():
+    search_id = request.form.get("search_id", type=int)
+    if not search_id:
+        return redirect(url_for("web.saved_searches_page", err="bad"))
+    db_path = _cfg()["db_path"]
+    if not store.delete_saved_search(db_path, search_id):
+        return redirect(url_for("web.saved_searches_page", err="bad"))
+    return redirect(url_for("web.saved_searches_page", removed=1))
+
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

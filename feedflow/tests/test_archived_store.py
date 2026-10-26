@@ -74,7 +74,7 @@ def test_store_archived_migration(tmp_db):
     conn = sqlite3.connect(tmp_db)
     try:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
-        assert version == 12
+        assert version == 13
         columns = {row[1] for row in conn.execute("PRAGMA table_info(articles)")}
         assert "is_archived" in columns
         assert "archived_at" in columns

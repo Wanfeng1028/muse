@@ -1,6 +1,33 @@
 
 # 更新日志
 
+## v1.30.0 — 2026-10-27
+
+### Added
+
+- 保存的搜索
+  - 迁移 v13 新建 saved_searches 表（id、query 唯一、created_at）与索引 idx_saved_searches_created
+  - store 层：save_search（折叠空白、不转小写、空词抛错、重复复用已有行）、list_saved_searches（按保存时间倒序、limit 钳制 1–200）、delete_saved_search（返回 True/False）
+  - API：GET /api/saved-searches；POST /api/saved-searches（空词返回 400“搜索词为空”）；DELETE /api/saved-searches/<id>（不存在返回 404）
+  - Web：新增 /saved-searches 页（每行查询词链接回站内搜索页、保存时间与“删除”按钮，空态文案）与 POST /saved-searches/save（成功带 saved=1）/ POST /saved-searches/delete（成功带 removed=1）；新增模板 templates/saved_searches.html
+  - 搜索页有结果时新增“保存这次搜索”按钮；阅读器左侧树底栏新增“保存的搜索”入口；顶栏不加入口（与星标/归档先例一致）
+
+### 测试
+
+- tests/test_saved_searches_store.py（6 例：规范化、重复复用、空词抛错、倒序、limit 钳制、迁移 v13 与索引断言）
+- tests/test_saved_searches_api.py（6 例：创建与列表、重复复用、空词 400、删除、未知 404、行字段形状）
+- tests/test_saved_searches_web.py（5 例：空态、列表含查询词与“删除”、保存表单重定向、删除表单重定向、搜索页与阅读器入口）
+- 靶向 17/17 通过；ruff check 改动文件全洁
+- 全量 pytest：1137 通过、2 失败（1027.34 秒），2 处失败均为 v1.21 旧契约既有失败（`test_api_deep.py::test_pagination_limit_clamped`、`test_api_deep2.py::test_articles_pagination_edge_cases`），本轮未动分页逻辑，零回归
+- 视觉验收：真实服务（18430 端口，应用自带种子库，先存 2 条真实保存记录），截图 `docs/screenshots/saved-searches-v130.png`（保存页两行真实数据、删除按钮、保存时间）与 `docs/screenshots/reader-foot-v130.png`（三栏阅读器、树底栏“保存的搜索”入口、真实种子文章列表），两路 console 零错误；冒烟服务与演示库已删，截图脚本在 `muse-build/batches-feedflow-20261026-night8/ff_n8_willow_shot.js`（首轮保存页截图因未内联 base CSS 致顶栏无样式，属 harness artifact，重跑内联版后顶栏样式正常，定稿图为内联版）
+- 模型稿（只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行，prompt 首行禁思考过程，调用器为本轮现写的最小新文件 ff_n8_willow_call.py，令牌经 SSH 现取不落盘、未读任何现成调用脚本）：见记账；编排修正均已披露：① store 模型稿未给 re 导入，编排补 import re；② 模板模型稿用了未定义 class，编排按星标页内联样式重排；③ store 测试模型稿导入了未用的 delete_saved_search，编排删去；④ 旧测试 test_store_starred_migration 与 test_store_archived_migration 的 user_version 期望由 12 改为 13（迁移版本耦合断言，本轮迁移 v13 直接导致，非 v1.21 旧契约）；⑤ README 模型稿称“重复保存时提示已存在”，与实现（静默复用、不提示）不符，编排校回“重复保存不重复建行”；⑥ 文档稿在 max_tokens 4000 下连续 6 通推理耗尽为空响应，改用 16000 后一次成功（小稿帽不适用文档稿）
+
+### 已知限制
+
+- 保存的搜索只记查询词，不记结果快照；重搜时结果随新文章变化。
+- 同一查询词只存一条，重复保存不重复建行。
+- 顶栏无“保存的搜索”入口，只在搜索页按钮与阅读器树底栏。
+
 ## v1.29.0 — 2026-10-27
 
 ### Added

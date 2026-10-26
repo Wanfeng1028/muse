@@ -352,6 +352,14 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
         "CREATE INDEX IF NOT EXISTS idx_articles_archived_at ON articles(archived_at DESC)",
     ],
 ),
+(
+    13,
+    "保存的搜索表（v1.30 保存的搜索用）",
+    [
+        "CREATE TABLE IF NOT EXISTS saved_searches (id INTEGER PRIMARY KEY AUTOINCREMENT, query TEXT NOT NULL UNIQUE, created_at TEXT NOT NULL)",
+        "CREATE INDEX IF NOT EXISTS idx_saved_searches_created ON saved_searches(created_at DESC)",
+    ],
+),
 ]
 
 

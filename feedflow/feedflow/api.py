@@ -614,6 +614,36 @@ def list_archived_api():
     """列出归档文章。"""
     return jsonify({"archived": store.list_archived(_db())})
 
+
+# ---------------------------------------------------------------------------
+# 保存的搜索
+# ---------------------------------------------------------------------------
+
+
+@bp.get("/saved-searches")
+def list_saved_searches():
+    return jsonify({"saved_searches": store.list_saved_searches(_db())})
+
+
+@bp.post("/saved-searches")
+def add_saved_search():
+    body = _json_body()
+    query = body.get("query")
+    if not isinstance(query, str) or not query.strip():
+        return _err("搜索词为空", 400)
+    try:
+        row = store.save_search(_db(), query)
+    except ValueError:
+        return _err("搜索词为空", 400)
+    return jsonify(row)
+
+
+@bp.delete("/saved-searches/<int:search_id>")
+def remove_saved_search(search_id):
+    if not store.delete_saved_search(_db(), search_id):
+        return _err("保存的搜索不存在", 404)
+    return jsonify({"id": search_id, "removed": True})
+
 # ---------------------------------------------------------------------------
 # 统计
 # ---------------------------------------------------------------------------

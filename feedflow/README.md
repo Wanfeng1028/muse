@@ -107,6 +107,16 @@ OPML：导入导出订阅清单。
 
 注意 `/archived` 页的标题链接与 `/later`、`/history` 页一样指向原文外链，不会跳回站内阅读器。
 
+### 保存的搜索
+
+在搜索页搜出结果后，点“保存这次搜索”，当前查询词即存入保存列表；阅读器左侧树底栏的“保存的搜索”入口可打开 `/saved-searches` 页集中查看。
+
+`/saved-searches` 页每行显示查询词、保存时间与“删除”按钮，点查询词立刻按该词重搜；列表按保存时间倒序，空态文案为“还没有保存的搜索，去搜索页搜一次并点“保存这次搜索”吧。”。
+
+相关接口包括 `GET /api/saved-searches`、`POST /api/saved-searches` 与 `DELETE /api/saved-searches/<id>`。
+
+注意 `/saved-searches` 页的查询词链接跳回站内搜索页（不是原文外链）；同一查询词只存一条，重复保存不重复建行。
+
 ## Fever API（第三方客户端同步）
 
 想在手机或别的阅读器里看？FeedFlow 兼容 Fever 协议，Reeder、Unread 这类支持 Fever 的客户端可以直接连上来同步，

@@ -1,5 +1,6 @@
 """数据访问层：所有函数首参为 db_path，返回 dict 或 dict 列表。"""
 import html
+import re
 import sqlite3
 from datetime import UTC, datetime, timedelta
 
@@ -1286,3 +1287,58 @@ def list_archived(db_path, limit=50):
         ]
     finally:
         conn.close()
+
+
+def save_search(db_path, query):
+    query = re.sub(r"\s+", " ", query.strip())
+    if not query:
+        raise ValueError("搜索词为空")
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            row = conn.execute(
+                "SELECT id, query, created_at FROM saved_searches WHERE query = ?",
+                (query,),
+            ).fetchone()
+            if row is not None:
+                return {"id": row[0], "query": row[1], "created_at": row[2]}
+            created_at = _now_iso()
+            cur = conn.execute(
+                "INSERT INTO saved_searches (query, created_at) VALUES (?, ?)",
+                (query, created_at),
+            )
+            conn.commit()
+            return {"id": cur.lastrowid, "query": query, "created_at": created_at}
+        finally:
+            conn.close()
+
+
+def list_saved_searches(db_path, limit=50):
+    limit = max(1, min(200, limit))
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            "SELECT id, query, created_at FROM saved_searches "
+            "ORDER BY created_at DESC, id DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return [
+        {"id": row[0], "query": row[1], "created_at": row[2]}
+        for row in rows
+    ]
+
+
+def delete_saved_search(db_path, search_id):
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            cur = conn.execute(
+                "DELETE FROM saved_searches WHERE id = ?",
+                (search_id,),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+        finally:
+            conn.close()
