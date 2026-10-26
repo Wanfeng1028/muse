@@ -134,7 +134,7 @@ def list_articles():
     """按 scope/feed/folder 分页列出文章。"""
     scope = request.args.get("scope") or "unread"
     if scope not in ("unread", "starred", "all"):
-        scope = "unread"
+        return _err("scope 非法", 400)
     feed_id = _int_arg("feed_id")
     folder_id = _int_arg("folder_id")
     raw_limit = request.args.get("limit")

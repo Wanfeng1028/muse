@@ -1,6 +1,12 @@
 
 # 更新日志
 
+## v1.22.0 — 2026-10-26
+
+- **接口行为调整**：收紧 `GET /api/articles` 的 `scope` 参数校验。改动前，当 `scope` 取值非法时，系统会静默回落至 `unread`；改动后，若 `scope` 非法，接口将直接返回 HTTP 400 状态码，且响应体中的错误信息（`error` 字段）为 "scope 非法"。当请求中缺失 `scope` 参数或其值为空字符串时，仍默认按 `unread` 处理。
+- **测试同步更新**：`test_api_pagination_search_deep2.py` 中的原有回落测试已重命名为 `test_invalid_scope_returns_400`，断言已相应更新，以校验接口返回 400 状态码且错误信息包含 "scope 非法"。
+- **未改动说明**：合法 `scope`（`unread`/`starred`/`all`）以及 `limit`、`offset`、`feed_id`、`folder_id` 的行为一字不动。前端仅发送合法值，不受影响。本次改动无 schema 变更、无 UI 改动；版本号：CHANGELOG 新增 v1.22.0 一节（pyproject 的 0.1.0 为陈旧占位，与本项目 CHANGELOG 版本线无关）。
+
 ## v1.21.0 — 2026-10-26
 
 ### 改动

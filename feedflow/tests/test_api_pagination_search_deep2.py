@@ -98,7 +98,7 @@ def test_pagination_negative_offset_returns_400(client, seeded):
     assert "offset 参数非法" in resp.get_json()["error"]
 
 
-def test_invalid_scope_falls_back_to_unread(client, tmp_db):
+def test_invalid_scope_returns_400(client, tmp_db):
     conn = sqlite3.connect(tmp_db)
     try:
         conn.execute("DELETE FROM articles")
@@ -111,10 +111,8 @@ def test_invalid_scope_falls_back_to_unread(client, tmp_db):
     _seed_article(tmp_db, fid, guid="u1", title="Unread One", is_read=0)
 
     resp = client.get("/api/articles?scope=illegal")
-    data = resp.get_json()
-    assert data["total"] == 1
-    titles = [a["title"] for a in data["articles"]]
-    assert titles == ["Unread One"]
+    assert resp.status_code == 400
+    assert "scope 非法" in resp.get_json()["error"]
 
 
 def test_scope_unread_all_starred(client, tmp_db):
