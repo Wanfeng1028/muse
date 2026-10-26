@@ -29,6 +29,7 @@
 - **订阅通知**：访客在状态页留邮箱订阅，宕机/恢复时收邮件；订阅需点确认链接（含退订），防滥用
 - **告警投递队列**：webhook 告警先入 SQLite 队列表，后台 worker 按指数退避重投（默认最多 8 次），`/deliveries` 页可看投递状态、手动重投，失败不再丢告警
 - **短信告警**：mock/阿里云/腾讯云三通道，监控可配短信渠道与接收号码，发送记录持久化到 sms_log 表，`/sms-log` 页可查每条短信的发送结果
+- **维护窗口**：窗口内调度检查整段跳过，不产生检查记录与新事件；手动检查不受影响，`/maintenance` 页可新建/删除（监控 ID 为 0 表示全部监控）
 ## 截图
 
 > 以下为真实运行抓屏，非设计稿。
@@ -42,6 +43,7 @@
 - SLA 月报 HTML 导出：`docs/screenshots/sla-html-20261020.png`
 - 一键发布的公开状态页静态站：`docs/screenshots/status-published-20261020.png`
 - 快照归档管理页（定时计划/立即生成/下载/删除）：`docs/screenshots/snapshots-20261024.png`
+- 维护窗口：`docs/screenshots/maintenance-v023.png`
 - 事件页状态筛选（全部/仅进行中）：`docs/screenshots/incidents-status-all.png`、`docs/screenshots/incidents-status-open.png`
 - 事件页点击行展开详情（事件 ID、监控、开始时间、恢复时间、持续、状态、触发原因）：`docs/screenshots/incidents-detail-collapsed.png`、`docs/screenshots/incidents-detail-expanded.png`
 
@@ -115,6 +117,9 @@ open http://localhost:8200
 | POST | `/api/status/{slug}/unsubscribe` | 否 | 执行退订，body `{"token":"..."}` |
 | GET | `/api/alerts/deliveries` | 是 | 投递队列列表（status/monitor_id/limit 过滤） |
 | POST | `/api/alerts/deliveries/{id}/retry` | 是 | 手动重投（仅失败/重试中） |
+| POST | `/api/maintenance` | 是 | 新建维护窗口，body `{"monitor_id":0,"title":"...","starts_at":"...","ends_at":"..."}`（monitor_id 为 0 表示全部监控） |
+| GET | `/api/maintenance` | 是 | 维护窗口列表 |
+| DELETE | `/api/maintenance/{id}` | 是 | 删除维护窗口 |
 | GET | `/healthz` | 否 | 存活探针 |
 | GET | `/readyz` | 否 | 就绪探针 |
 | GET | `/api/metrics` | 否 | Prometheus 指标 |

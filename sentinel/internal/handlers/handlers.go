@@ -76,6 +76,9 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("POST /api/silences", s.handleCreateSilence)
 	mux.HandleFunc("GET /api/silences", s.handleListSilences)
 	mux.HandleFunc("DELETE /api/silences/{id}", s.handleDeleteSilence)
+	mux.HandleFunc("POST /api/maintenance", s.handleCreateMaintenanceWindow)
+	mux.HandleFunc("GET /api/maintenance", s.handleListMaintenanceWindows)
+	mux.HandleFunc("DELETE /api/maintenance/{id}", s.handleDeleteMaintenanceWindow)
 	// 静态页面与资源
 	mux.HandleFunc("GET /{$}", s.handleIndex)
 	mux.HandleFunc("GET /monitors", s.handleMonitorsPage)
@@ -85,6 +88,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /snapshots", s.handleSnapshotsPage)
 	mux.HandleFunc("GET /sla-report", s.handleSiteSLAReportPage)
 	mux.HandleFunc("GET /sla-trend", s.handleSiteSLATrendPage)
+	mux.HandleFunc("GET /maintenance", s.handleMaintenancePage)
 	mux.HandleFunc("GET /profile", s.handleProfilePage)
 	mux.HandleFunc("GET /status/{slug}", s.handleStatusPage)
 	subStatic, err := fs.Sub(web.FS, "static")
@@ -97,7 +101,7 @@ func (s *Server) Routes() http.Handler {
 
 	// 中间件链：RequestID -> Logging -> Auth -> mux
 	exact := []string{"/healthz", "/readyz", "/api/healthz", "/api/readyz", "/api/health",
-		"/", "/monitors", "/incidents", "/profile", "/deliveries", "/snapshots", "/sms-log", "/sla-report", "/sla-trend"}
+		"/", "/monitors", "/incidents", "/profile", "/deliveries", "/snapshots", "/sms-log", "/sla-report", "/sla-trend", "/maintenance"}
 	prefix := []string{"/api/status/", "/status/", "/static/"}
 	return middleware.RequestID(middleware.Logging(s.auth.Middleware(exact, prefix)(mux)))
 }

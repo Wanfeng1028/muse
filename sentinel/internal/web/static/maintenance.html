@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>维护窗口 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+</head>
+<body onload="initMaintenance()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">总览</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/sms-log">短信记录</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend">SLA趋势</a>
+<a href="/maintenance" class="active">维护窗口</a>
+</nav>
+</header>
+<main class="container">
+<h1>维护窗口</h1>
+<p>窗口内调度检查会整段跳过，不产生检查记录与新事件；手动检查不受影响。监控 ID 为 0 表示全部监控。</p>
+<div class="ctrl-row">
+<input type="text" id="title-input" placeholder="标题，例如：机房割接">
+<input type="number" id="monitor-input" placeholder="监控 ID（0=全部）" value="0">
+<input type="datetime-local" id="starts-input">
+<input type="datetime-local" id="ends-input">
+<button id="create-btn">新建维护窗口</button>
+</div>
+<p id="maint-status"></p>
+<table class="snap-table">
+<thead>
+<tr><th>标题</th><th>监控 ID</th><th>开始</th><th>结束</th><th>创建时间</th><th>操作</th></tr>
+</thead>
+<tbody id="maint-rows"></tbody>
+</table>
+</main>
+<script>
+const titleInput = document.getElementById('title-input');
+const monitorInput = document.getElementById('monitor-input');
+const startsInput = document.getElementById('starts-input');
+const endsInput = document.getElementById('ends-input');
+const createBtn = document.getElementById('create-btn');
+const maintRows = document.getElementById('maint-rows');
+const maintStatus = document.getElementById('maint-status');
+
+function toRFC3339(value) {
+  const v = (value || '').trim();
+  if (!v) return '';
+  if (/[zZ]$/.test(v) || /[+-]\d{2}:?\d{2}$/.test(v)) return v;
+  if (/^\d{4}-\d{2}-\d{2}$/.test(v)) return v + 'T00:00:00Z';
+  let out = v;
+  if (out.length === 16) out += ':00';
+  return out + 'Z';
+}
+
+function renderRows(items) {
+  maintRows.textContent = '';
+  const tag = maintRows.tagName;
+  const isTable = tag === 'TABLE' || tag === 'TBODY' || tag === 'THEAD' || tag === 'TFOOT';
+  const rowTag = isTable ? 'tr' : 'div';
+  const cellTag = isTable ? 'td' : 'span';
+  items.forEach(function (item) {
+    const row = document.createElement(rowTag);
+    const cells = [item.title, item.monitor_id, item.starts_at, item.ends_at, item.created_at];
+    cells.forEach(function (val) {
+      const cell = document.createElement(cellTag);
+      cell.textContent = val === null || val === undefined ? '' : String(val);
+      row.appendChild(cell);
+    });
+    const actionCell = document.createElement(cellTag);
+    const delBtn = document.createElement('button');
+    delBtn.type = 'button';
+    delBtn.textContent = '删除';
+    delBtn.addEventListener('click', function () { deleteMaintenance(item.id); });
+    actionCell.appendChild(delBtn);
+    row.appendChild(actionCell);
+    maintRows.appendChild(row);
+  });
+}
+
+async function loadMaintenance() {
+  try {
+    const data = await api('/api/maintenance');
+    const items = data && Array.isArray(data.items) ? data.items : [];
+    renderRows(items);
+    maintStatus.textContent = '';
+  } catch (err) {
+    maintStatus.textContent = '加载失败';
+  }
+}
+
+async function deleteMaintenance(id) {
+  try {
+    await api('/api/maintenance/' + id, { method: 'DELETE' });
+    await loadMaintenance();
+  } catch (err) {
+    maintStatus.textContent = '删除失败';
+  }
+}
+
+async function createMaintenance() {
+  const title = titleInput.value.trim();
+  if (!title) {
+    maintStatus.textContent = '标题不能为空';
+    return;
+  }
+  const parsedId = Number(monitorInput.value.trim());
+  const monitor_id = Number.isFinite(parsedId) ? parsedId : 0;
+  const starts_at = toRFC3339(startsInput.value);
+  const ends_at = toRFC3339(endsInput.value);
+  try {
+    await api('/api/maintenance', {
+      method: 'POST',
+      body: JSON.stringify({ monitor_id: monitor_id, title: title, starts_at: starts_at, ends_at: ends_at })
+    });
+    titleInput.value = '';
+    maintStatus.textContent = '';
+    await loadMaintenance();
+  } catch (err) {
+    const msg = err && err.message ? err.message : String(err);
+    maintStatus.textContent = '新建失败：' + msg;
+  }
+}
+
+let maintenanceInited = false;
+function initMaintenance() {
+  if (maintenanceInited) return;
+  maintenanceInited = true;
+  createBtn.addEventListener('click', function () { createMaintenance(); });
+  loadMaintenance();
+}
+
+initMaintenance();
+</script>
+</body>
+</html>

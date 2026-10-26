@@ -3,6 +3,33 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.23.0] - 2026-10-27
+
+### 新增
+
+- 维护窗口：调度检查在窗口内整段跳过，不产生检查记录、不开新事件、不发通知；与静默（只压通知、检查照常记）不同。DB 迁移 v15 新建 maintenance_windows 表（monitor_id/title/starts_at/ends_at/created_at，monitor_id 为 0 表示全部监控）；Store 层 CreateMaintenanceWindow（标题非空、RFC3339 时间、开始早于结束、monitor_id 小于 0 或不存在均报错）、ListMaintenanceWindows、DeleteMaintenanceWindow、ActiveMaintenanceWindow（多条命中取 id 最小、端点 inclusive）；调度器 runOne 入口命中窗口时记日志并直接返回（信号量与 inflight 均由既有 defer 释放）；API（均需鉴权）POST /api/maintenance（非法 JSON/不存在的监控/非法窗口均 400）、GET /api/maintenance、DELETE /api/maintenance/{id}；控制台页 /maintenance（标题/监控 ID/开始/结束表单、新建、列表、删除），9 个既有控制台页导航末尾加维护窗口链，/maintenance 加进鉴权精确名单。
+- 语义界定：手动检查 POST /api/monitors/{id}/check 不受维护窗口影响（显式人工操作照常执行并记检查）；窗口开始前已 open 的事件不会被窗口自动关闭，窗口只阻止新检查与新事件；窗口内跳过的检查不计入 SLA 检查数（SLA 按实际检查记录聚合）。
+
+### 测试
+
+- 新增 internal/store/maintenance_test.go（创建与列表字段、空标题/倒置时间/非法时间/不存在监控/负 ID 五种拒绝、专属窗口优先命中、未来与过期窗口不命中、90 分钟后全局窗口生效）、internal/handlers/maintenance_test.go（创建 201 与正 id、倒置窗口 400、不存在监控 400、列表与删除后为空）、internal/scheduler/maintenance_test.go（窗口内 runOne 零检查记录零通知、删窗后 runOne 产生 1 条失败检查记录）、internal/web/maintenance_test.go（维护页 13 个标记、失败路径定义顺序、9 页导航链）；db_deep2 全新库版本期望同步到 1~15。
+- go vet 全洁；go test ./... 16 包全绿（notify 包 238.9 秒为既存最慢包）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18493 端口，SENTINEL_TICK_SEC=60）：种子监控占 1/2 号（已禁用），新建 up 监控 3 号（本地 200 服务）与 down 监控 4 号（127.0.0.1:9 拒绝），各 CheckNow 1 次后基线均为 1 条；建全局窗口（覆盖当前时刻）后等 75 秒（含一次调度 tick，到期检查本应执行），两监控检查数仍为 1/1，证明 tick 检查被窗口跳过；窗口内手动 CheckNow 4 号仍执行并新增 1 条失败记录，证明手动检查不受影响；倒置窗口返回 400“starts_at 必须早于 ends_at”；删除窗口后列表为空；/maintenance 页 200 且含全部标记；无鉴权 401；冒烟完二进制、隔离库、端口均已清理。
+- 视觉验收：截图 docs/screenshots/maintenance-v023.png 亲眼核对——导航 9 链齐全且维护窗口 active、表单（标题/监控 ID/开始/结束/新建按钮）齐全、真实窗口行（机房割接、监控 0、开始/结束/创建时间、删除按钮）与 API 返回一致、无“加载失败”。
+
+### 已知限制
+
+- 窗口开始前已 open 的事件在窗口内不会自动关闭（恢复仍需窗口结束后的一次成功检查）；如需“窗口开始即挂起事件”须另做事件状态机改动。
+- 截图 harness 说明：Playwright setContent 下相对 /api 解析失败且无 CORS 头，截图脚本按 shoot2.js 模式把页面 /api 改写为绝对地址并经 route 代理回真实服务（token 在截图环境内桩化），该改写仅限截图环境，产品代码未动。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器先为本轮现写最小新文件 night3_sentinel_call.py，后因本机 python 写文件间歇报 EPERM（同机 shell/node 写间歇亦失败，属平台层瞬时故障，与模型无关）改走同口径 node 新文件 night3_sentinel_call.js，模型与通道全程未变；Go 代码、测试、页面、脚本均为微片段逐字输出口径；编排侧机械工作：SQL 引号统一为反引号、H1 创建调用改为结构体实参、T3 删除改捕获的 winID 并补删窗后对照、db 深度测试期望同步到 v15、导航链机械追加、README/CHANGELOG 事实性文字；另有平台层事故复盘：中途两次把既有文件截成 0 字节（导航脚本与 README 写操作撞上 EPERM），均用 git loose 对象解压精确恢复并以 hash-object 验明与 HEAD 一致，仓内无残留损坏。
+- 调用统计（batch 目录 usage.log 全量记录，含重试与空响应；成功计 token 与空响应分开标明）：成功调用 20 次，prompt 合计 478973、completion 合计 43120、合计 522093；空响应 5 次（F1 一次、H2 两次、T1 两次，均为 reasoning-only），其上报口径 prompt 合计 119798、completion 合计 6148；错误行 5 条（写文件 EPERM 4 条、远端断连 1 条，不计用量；本轮无 429）；总记录 30 条。其中 P2 脚本稿曾三次生成成功均因写文件 EPERM 未落盘（3 次成功调用的 token 已计入上述成功合计），第 4 次经 node 调用器重试后落盘。
+
 ## [0.22.0] - 2026-10-27
 
 ### 新增

@@ -241,6 +241,20 @@ updated_at TEXT NOT NULL
 			`CREATE INDEX IF NOT EXISTS idx_sms_log_monitor ON sms_log(monitor_id)`,
 		},
 	},
+	{
+		version: 15,
+		stmts: []string{
+			`CREATE TABLE IF NOT EXISTS maintenance_windows (
+				id INTEGER PRIMARY KEY AUTOINCREMENT,
+				monitor_id INTEGER NOT NULL DEFAULT 0,
+				title TEXT NOT NULL DEFAULT '',
+				starts_at TEXT NOT NULL,
+				ends_at TEXT NOT NULL,
+				created_at TEXT NOT NULL
+			)`,
+			`CREATE INDEX IF NOT EXISTS idx_maintenance_windows_monitor_time ON maintenance_windows(monitor_id, starts_at, ends_at)`,
+		},
+	},
 }
 
 // quoteNow 返回一个包含当前 UTC 时间的 SQL 字符串字面量（带引号）。

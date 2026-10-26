@@ -146,6 +146,13 @@ func (s *Scheduler) runOne(ctx context.Context, m store.Monitor, prevOk, hasPrev
 		return
 	}
 
+	if active, mw, err := s.store.ActiveMaintenanceWindow(m.ID, time.Now()); err != nil {
+		log.Logger().Warn("查询维护窗口失败", "monitorID", m.ID, "err", err)
+	} else if active {
+		log.Logger().Info("检查被维护窗口跳过", "monitorID", m.ID, "windowID", mw.ID, "title", mw.Title)
+		return
+	}
+
 	// 重读上次检查：tick 扫描时刻传入的 prevOk/hasPrev 快照在 goroutine
 	// 排队等待 sem 期间可能过期（其间可插入完整的 CheckNow 开/关事件周期），
 	// 此处用最新状态覆盖，避免基于陈旧状态误开/漏关 incident。
