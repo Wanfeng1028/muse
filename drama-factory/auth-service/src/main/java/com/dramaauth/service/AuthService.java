@@ -50,7 +50,7 @@ public class AuthService {
 
     /* ==================== DTO ==================== */
 
-    public record UserDto(Long id, String email, String nickname, String avatarUrl, String role, String language) {
+    public record UserDto(Long id, String email, String nickname, String avatarUrl, String role, String language, String theme) {
     }
 
     public record TokenPair(String accessToken, String refreshToken, long expiresIn) {
@@ -151,8 +151,10 @@ public class AuthService {
 
     private static final Set<String> SUPPORTED_LANGUAGES = Set.of("zh-CN", "en");
 
+    private static final Set<String> SUPPORTED_THEMES = Set.of("system", "light", "dark");
+
     @Transactional
-    public UserDto updateProfile(Long userId, String nickname, String avatarUrl, String language) {
+    public UserDto updateProfile(Long userId, String nickname, String avatarUrl, String language, String theme) {
         User u = requireUser(userId);
         if (nickname != null && !nickname.trim().isEmpty()) {
             u.setNickname(nickname.trim());
@@ -172,11 +174,22 @@ public class AuthService {
             }
             u.setLanguage(lang);
         }
+        if (theme != null) {
+            String th = theme.trim();
+            if (!SUPPORTED_THEMES.contains(th)) {
+                throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_REQUEST", "不支持的主题");
+            }
+            u.setTheme(th);
+        }
         return toDto(userRepository.save(u));
     }
 
     private String normalizeLanguage(String language) {
         return language == null ? "zh-CN" : language;
+    }
+
+    private String normalizeTheme(String theme) {
+        return theme == null ? "system" : theme;
     }
 
     /* ==================== 改密码（敏感操作） ==================== */
@@ -264,7 +277,7 @@ public class AuthService {
 
     private UserDto toDto(User u) {
         return new UserDto(u.getId(), u.getEmail(), u.getNickname(), u.getAvatarUrl(), u.getRole(),
-                normalizeLanguage(u.getLanguage()));
+                normalizeLanguage(u.getLanguage()), normalizeTheme(u.getTheme()));
     }
 
     private String norm(String s) {

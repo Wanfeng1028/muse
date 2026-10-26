@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Added（Flash 路 2026-10-26 夜烧：账号个性化主题偏好服务端持久化，后端部分）
+
+- auth-service 用户档案新增 theme 偏好：值域 system/light/dark，默认 system；User 实体加 theme 列（可空，沿 language 口径，null 回退 system），Flyway V2__user_theme.sql；UserDto 加 theme，PUT /api/auth/profile 接受 theme（非法值 400“不支持的主题”，null 不改动），GET /api/auth/me 回显 theme。
+- 测试：AuthServiceTest 新增 profile_theme* 4 例（改 dark 生效、非法值 400、null 不改动、新注册默认 system），既有 4 参调用补第 5 参；隔离构建全量 29/29 全绿；隔离服务 HTTP 冒烟：注册回 system、PUT dark 后 me 回 dark、PUT blue 回 400、缺 theme 时 dark 不变。
+- 未做（待续）：账号页前端主题与服务端同步（account.js 主题单选目前只写 localStorage，auth.js updateProfile 尚未加 theme 参）；本轮因 BotsRouter 连续 429 触发硬停规则而停手，未再发模型调用。模型稿由 GLM-5.3-Flash（BotsRouter，大写，令牌 id=5，单路串行，调用器为本轮现写最小新文件 batches-drama-20261026-night/night26_flash_call.py、令牌经 SSH 现取不落盘）产出：大稿与 PATCH 式微稿连空（只交思考过程），改走纯代码微稿后逐段产出；用量见该目录 usage.log。
+
 ### Fixed（2026-10-26 深耕轮：按运行聚合接口参数收紧）
 
 收紧 GET /api/usage/by-run 的 limit 参数校验。改动前：limit ≤ 0 时 service 侧静默回落默认 20，超大 limit 无上限，调用方传错参数无法发现。改动后：UsageController.byRun 开头先校验再调 service，limit 小于 1 或大于 500 时抛 IllegalArgumentException("limit 参数非法")，全局 handler 转 400；非数字 limit 本就由 Spring 类型转换返回 400。方法签名、默认值 20、前端 usage.js 恒发的 limit=20、service 层回落逻辑均保持不变。无版本号变更、无 schema 变更、无 UI 改动。

@@ -47,6 +47,13 @@ public class User {
     @Column(name = "language", length = 16)
     private String language = "zh-CN";
 
+    /**
+     * 主题偏好，DB 列可空（老库加列不设 NOT NULL，沿用 language 口径）。
+     * Java 字段默认 "system"，toDto 对 null 回退 "system"，API 契约保证返回非空。
+     */
+    @Column(name = "theme", length = 16)
+    private String theme = "system";
+
     /** 角色：USER/ADMIN，首个注册用户为 ADMIN */
     @Column(nullable = false, length = 16)
     private String role = "USER";
@@ -84,6 +91,8 @@ public class User {
     public void setAvatarUrl(String avatarUrl) { this.avatarUrl = avatarUrl; }
     public String getLanguage() { return language; }
     public void setLanguage(String language) { this.language = language; }
+    public String getTheme() { return theme; }
+    public void setTheme(String theme) { this.theme = theme; }
     public String getRole() { return role; }
     public void setRole(String role) { this.role = role; }
     public String getStatus() { return status; }
