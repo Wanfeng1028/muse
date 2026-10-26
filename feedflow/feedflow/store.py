@@ -1109,3 +1109,81 @@ def move_later(db_path, article_id, direction):
             return True
     finally:
         conn.close()
+
+# ---------------- 阅读历史 ----------------
+
+def record_history(db_path, article_id):
+    """记录一次阅读，文章不存在返回 None。"""
+    conn = get_conn(db_path)
+    try:
+        cur = conn.execute("SELECT 1 FROM articles WHERE id = ?", (article_id,))
+        if cur.fetchone() is None:
+            return None
+        with write_lock:
+            conn.execute(
+                """
+                INSERT INTO read_history (article_id, read_count, last_read_at)
+                VALUES (?, 1, ?)
+                ON CONFLICT(article_id) DO UPDATE SET
+                    read_count = read_count + 1,
+                    last_read_at = excluded.last_read_at
+                """,
+                (article_id, _now_iso()),
+            )
+            conn.commit()
+            cur = conn.execute(
+                "SELECT read_count, last_read_at FROM read_history WHERE article_id = ?",
+                (article_id,),
+            )
+            read_count, last_read_at = cur.fetchone()
+        return {"article_id": article_id, "read_count": read_count, "last_read_at": last_read_at}
+    finally:
+        conn.close()
+
+
+def list_history(db_path, limit=50):
+    """按最近阅读时间倒序返回阅读历史列表。"""
+    limit = max(1, min(int(limit), 200))
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            """
+            SELECT h.article_id, a.title, a.link, f.title AS feed_title,
+                   a.published_at, a.is_read, a.is_starred, h.last_read_at,
+                   h.read_count
+            FROM read_history h
+            JOIN articles a ON a.id = h.article_id
+            JOIN feeds f ON f.id = a.feed_id
+            ORDER BY h.last_read_at DESC, h.article_id ASC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [
+            {
+                "article_id": r["article_id"],
+                "title": r["title"],
+                "link": r["link"],
+                "feed_title": r["feed_title"],
+                "published_at": r["published_at"],
+                "is_read": bool(r["is_read"]),
+                "is_starred": bool(r["is_starred"]),
+                "last_read_at": r["last_read_at"],
+                "read_count": r["read_count"],
+            }
+            for r in rows
+        ]
+    finally:
+        conn.close()
+
+
+def clear_history(db_path):
+    """清空阅读历史并返回清除的条数。"""
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            cur = conn.execute("DELETE FROM read_history")
+            conn.commit()
+            return cur.rowcount
+        finally:
+            conn.close()

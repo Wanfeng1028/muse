@@ -321,6 +321,20 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "CREATE INDEX IF NOT EXISTS idx_read_later_position ON read_later(position ASC)",
         ],
     ),
+(
+    10,
+    "阅读历史：一篇文章一条记录，记最后阅读时间与累计阅读次数",
+    [
+        """
+        CREATE TABLE IF NOT EXISTS read_history (
+            article_id INTEGER PRIMARY KEY REFERENCES articles(id) ON DELETE CASCADE,
+            last_read_at TEXT NOT NULL,
+            read_count INTEGER NOT NULL DEFAULT 1
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_read_history_last ON read_history(last_read_at DESC)",
+    ],
+),
 ]
 
 

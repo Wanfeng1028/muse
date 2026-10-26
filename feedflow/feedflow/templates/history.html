@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}阅读历史 · 信流{% endblock %}
+
+{% block content %}
+<div style="max-width: 640px; margin: 0 auto; padding: 32px 20px 64px; background: #FAFAF7; color: #1C1A17;">
+
+  <header style="margin-bottom: 24px;">
+    <h1 style="margin: 0 0 8px; font-size: 26px; font-weight: 700; letter-spacing: 0.02em; color: #1C1A17;">阅读历史</h1>
+    <p style="margin: 0; color: #6B655A; font-size: 14px;">最近打开过的文章都在这里，按最后阅读时间倒序排列。</p>
+  </header>
+
+  {% if request.args.get('cleared') %}
+  <div style="margin-bottom: 20px; padding: 10px 14px; border: 1px solid #E7E2D6; border-left: 3px solid #C2410C; border-radius: 4px; background: #FAFAF7; color: #C2410C; font-size: 14px;">
+    阅读历史已清空。
+  </div>
+  {% endif %}
+
+  {% if items %}
+  <ul style="list-style: none; margin: 0; padding: 0; border-top: 1px solid #E7E2D6;">
+    {% for item in items %}
+    <li style="display: flex; align-items: baseline; gap: 12px; padding: 14px 4px; border-bottom: 1px solid #E7E2D6;">
+      <span style="flex: none; width: 28px; color: #6B655A; font-size: 13px; font-variant-numeric: tabular-nums;">{{ loop.index }}</span>
+      <span style="flex: 1; min-width: 0;">
+        {% if item.link %}
+        <a href="{{ item.link }}" target="_blank" rel="noopener" style="color: #1C1A17; font-size: 16px; font-weight: 600; text-decoration: none; border-bottom: 1px solid #E7E2D6;">{{ item.title }}</a>
+        {% else %}
+        <span style="color: #1C1A17; font-size: 16px; font-weight: 600;">{{ item.title }}</span>
+        {% endif %}
+        <span style="display: block; margin-top: 4px; color: #6B655A; font-size: 13px;">{{ item.feed_title }} · {{ item.display_time }}{% if item.is_read %} <span style="margin-left: 6px; font-size: 12px; color: #6B655A;">已读</span>{% endif %}</span>
+      </span>
+      <span style="flex: none; color: #6B655A; font-size: 13px;">读过 {{ item.read_count }} 次</span>
+    </li>
+    {% endfor %}
+  </ul>
+
+  <form method="post" action="/history/clear" style="margin-top: 28px;">
+    <button type="submit" style="padding: 8px 18px; background: transparent; color: #C2410C; border: 1px solid #C2410C; border-radius: 4px; font-size: 14px; cursor: pointer;">清空历史</button>
+  </form>
+  {% else %}
+  <div style="padding: 48px 16px; text-align: center; color: #6B655A; font-size: 14px; border: 1px dashed #E7E2D6; border-radius: 8px; background: #FAFAF7;">
+    还没有阅读历史，去阅读器打开一篇文章吧。
+  </div>
+  {% endif %}
+
+  <p style="margin-top: 32px; text-align: center;">
+    <a href="/" style="color: #C2410C; font-size: 14px; text-decoration: none; border-bottom: 1px solid #E7E2D6;">去阅读器</a>
+  </p>
+
+</div>
+{% endblock %}

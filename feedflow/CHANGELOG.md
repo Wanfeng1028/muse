@@ -1,6 +1,34 @@
 
 # 更新日志
 
+## v1.27.0 — 2026-10-27
+
+### Added
+
+- 阅读历史
+  - 迁移 v10 新增 `read_history` 表（一篇文章一条记录，记 `last_read_at` 最后阅读时间与 `read_count` 累计阅读次数，删除文章时级联删除）及 `last_read_at` 倒序索引
+  - store 层新增 `record_history`（文章不存在返回 None，否则 upsert：新行计数 1、已有行计数加 1 并刷新时间，返回计数与时间）/ `list_history`（按最后阅读时间倒序，limit 钳制 1–200）/ `clear_history`（返回清除条数）
+  - API：`GET /api/history`、`POST /api/articles/<id>/history`（文章不存在返回 404，返回 `recorded`/`read_count`/`last_read_at`）、`DELETE /api/history`（返回 `cleared`）
+  - Web：新增 `/history` 页（按最后阅读时间倒序、每行显示“读过 N 次”与来源时间、有数据时提供“清空历史”表单、空态文案），`POST /history/clear` 清空后重定向回 `/history?cleared=1`
+  - 阅读器：左侧树底栏新增“阅读历史”入口；打开文章时（`openArticle`）除原有标已读外，另以 fire-and-forget 方式 POST 一次阅读历史，失败静默、不改 UI
+  - 顶栏未加入口（树底栏入口与笔记一致），翻转点与导航计数不受影响
+
+### 测试
+
+- `tests/test_history_store.py`（6 例：新建、重复计数加 1、不存在返回 None、按最近排序、limit 钳制、清空）
+- `tests/test_history_api.py`（5 例：空列表、不存在 404、计数递增、按最近排序、DELETE 清空）
+- `tests/test_history_web.py`（4 例：空态、列表含标题与“读过 1 次”、清空表单重定向、阅读器底栏链接）
+- 靶向 15/15 通过；`ruff check` 改动文件全洁（`ruff format` 差异为既有漂移：未动文件同样不通过，本轮未动）
+- 视觉验收：真实服务（18427 端口，应用自带种子库 33 篇）+ 种子历史（1 篇读过 2 次、1 篇读过 1 次），截图 `docs/screenshots/history-v127.png`（历史页两行真实数据、清空按钮）与 `docs/screenshots/reader-foot-v127.png`（树底栏“阅读历史”入口），两路 console 零错误；冒烟服务与演示库已删，截图脚本在 `muse-build/shot/ff-v127-shot.js`
+- 模型稿（只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行，prompt 首行禁思考过程，max_tokens 4000，调用器为本轮现写的最小新文件 `ff_n5_aurora_call.py`，令牌经 SSH 现取不落盘、未读任何现成调用脚本）：12 通全部一次成功、零空响应；编排修正 2 处（均已披露）：① `list_history` 模型稿把 `is_read`/`is_starred` 写成 `read_history` 表的列（该表无此二列），改回 `articles` 表的列；② API 测试模型稿用 `resp.json()` 调用（本栈 Response.json 是 dict 属性），改回 `resp.get_json()`（4 处）
+
+### 已知限制
+
+- 历史只在阅读器打开文章时记录；直接调标已读接口或一键已读不记历史。
+- `/history` 页标题链接指向原文外链，与 `/later` 页已知限制同款，不跳回站内阅读器。
+- 历史按最后阅读时间展示，同一文章多次打开只占一行（计数累加），不保留每次打开的明细时间线。
+
+
 ## v1.26.0 — 2026-10-27
 
 ### Added

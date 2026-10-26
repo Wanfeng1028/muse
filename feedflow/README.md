@@ -87,6 +87,10 @@ OPML：导入导出订阅清单。
 
 在阅读器打开文章后，点击正文区的“稍后读”按钮即可把文章排进队列。`/later` 页按入队顺序列出队列，支持上移、下移和移出。相关接口包括 `GET /api/later`、针对单篇文章的 `POST/GET/DELETE /api/articles/<id>/later` 以及调整顺序的 `POST /api/articles/<id>/later/move`。注意队列与星标是两套东西：星标是收藏，队列是待读顺序。
 
+### 阅读历史
+
+在阅读器打开一篇文章，就会在阅读历史里留下一条记录：同一文章多次打开只占一行，旁边标着“读过 N 次”，按最后阅读时间倒序排列。左侧树底栏的“阅读历史”入口可打开 `/history` 页集中查看，不想要了可以一键“清空历史”。相关接口包括 `GET /api/history`、针对单篇文章的 `POST /api/articles/<id>/history` 以及 `DELETE /api/history`。
+
 ## Fever API（第三方客户端同步）
 
 想在手机或别的阅读器里看？FeedFlow 兼容 Fever 协议，Reeder、Unread 这类支持 Fever 的客户端可以直接连上来同步，

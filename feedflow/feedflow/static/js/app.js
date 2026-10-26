@@ -183,6 +183,7 @@ function initReader() {
     if (!a.is_read) {
       try { await api("/api/articles/" + id + "/read", { method: "POST", body: JSON.stringify({ is_read: 1 }) }); } catch (e) {}
     }
+    try { await api("/api/articles/" + id + "/history", { method: "POST" }); } catch (e) {}
   }
 
   function renderReader(a) {

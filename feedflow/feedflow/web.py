@@ -352,6 +352,22 @@ def later_move():
     return redirect(url_for("web.later_page", moved=1))
 
 
+@bp.get("/history")
+def history_page():
+    db_path = _cfg()["db_path"]
+    items = store.list_history(db_path)
+    for item in items:
+        item["display_time"] = _display_time(item["last_read_at"])
+    return render_template("history.html", items=items)
+
+
+@bp.post("/history/clear")
+def history_clear():
+    db_path = _cfg()["db_path"]
+    store.clear_history(db_path)
+    return redirect(url_for("web.history_page", cleared=1))
+
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

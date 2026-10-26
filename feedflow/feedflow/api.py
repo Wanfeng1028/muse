@@ -549,6 +549,26 @@ def move_later(article_id):
     return jsonify({"article_id": article_id, "moved": store.move_later(_db(), article_id, direction)})
 
 
+# ---------------- 阅读历史 ----------------
+
+@bp.get("/history")
+def list_history():
+    return jsonify({"history": store.list_history(_db())})
+
+
+@bp.post("/articles/<int:article_id>/history")
+def record_article_history(article_id):
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    entry = store.record_history(_db(), article_id)
+    return jsonify({"article_id": article_id, "recorded": True, "read_count": entry["read_count"], "last_read_at": entry["last_read_at"]})
+
+
+@bp.delete("/history")
+def clear_history_api():
+    return jsonify({"cleared": store.clear_history(_db())})
+
+
 # ---------------------------------------------------------------------------
 # 统计
 # ---------------------------------------------------------------------------
