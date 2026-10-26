@@ -499,6 +499,57 @@ def delete_article_note(article_id):
     return jsonify({"article_id": article_id, "removed": store.delete_note(_db(), article_id)})
 
 # ---------------------------------------------------------------------------
+# 稍后读队列
+# ---------------------------------------------------------------------------
+
+# ---- 稍后读队列 ----
+
+
+@bp.get("/later")
+def list_later():
+    """获取稍后读队列中的全部文章。"""
+    return jsonify({"later": store.list_later(_db())})
+
+
+@bp.route("/articles/<int:article_id>/later", methods=["GET"])
+def get_article_later(article_id):
+    """查询文章是否在稍后读队列中。
+
+    文章不存在时返回 404 错误；否则返回该文章的排队状态。
+    """
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    return jsonify({"article_id": article_id, "queued": store.is_queued(_db(), article_id)})
+
+
+@bp.post("/articles/<int:article_id>/later")
+def queue_later(article_id):
+    """将文章加入稍后读队列；已在队列中时 queued 为 False，仍返回 200。"""
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    return jsonify({"article_id": article_id, "queued": store.queue_article(_db(), article_id)})
+
+
+@bp.delete("/articles/<int:article_id>/later")
+def remove_later(article_id):
+    """将文章移出稍后读队列。"""
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    return jsonify({"article_id": article_id, "removed": store.dequeue_article(_db(), article_id)})
+
+
+@bp.post("/articles/<int:article_id>/later/move")
+def move_later(article_id):
+    """在稍后读队列中上移或下移指定文章，direction 取值限 up/down。"""
+    if store.get_article(_db(), article_id) is None:
+        return _err("文章不存在", 404)
+    direction = _json_body().get("direction")
+    if direction not in ("up", "down"):
+        return _err("direction 非法", 400)
+    return jsonify({"article_id": article_id, "moved": store.move_later(_db(), article_id, direction)})
+
+
+# ---------------------------------------------------------------------------
 # 统计
 # ---------------------------------------------------------------------------
 

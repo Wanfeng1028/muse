@@ -1,6 +1,28 @@
 
 # 更新日志
 
+## v1.26.0 — 2026-10-27
+
+### Added
+
+- 稍后读队列
+  - 迁移 v9 新增 `read_later` 表（一篇文章一条、删除文章时级联删除、按 `position` 排序）
+  - store 层新增 `queue_article` / `is_queued` / `list_later` / `dequeue_article` / `move_later`
+  - API：`GET /api/later`、`POST/GET/DELETE /api/articles/<id>/later`、`POST /api/articles/<id>/later/move`（`direction` 非法返回 400、文章不存在返回 404）
+  - Web：新增 `/later` 页（按队列顺序展示、上移/下移/移出队列表单、空态文案），顶栏新增“稍后读”入口，阅读器左侧树底栏新增入口
+  - 阅读器正文区新增“稍后读”按钮（已入队时显示“已在稍后读”，点按切换入队/移出）
+
+### 测试
+
+- `tests/test_later_store.py`（6 例）
+- `tests/test_later_api.py`（8 例）
+- `tests/test_later_web.py`（5 例）
+
+### 已知限制
+
+- 队列不自动剔除已读文章，需手动移出。
+- `/later` 页标题链接指向原文外链，不跳回站内阅读器。
+
 ## v1.25.0 — 2026-10-27
 
 ### Added

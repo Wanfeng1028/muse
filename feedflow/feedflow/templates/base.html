@@ -24,6 +24,7 @@
       <a href="{{ url_for('web.digest_page') }}" class="{% if request.path == '/digest' %}active{% endif %}">今日必读</a>
       <a href="{{ url_for('web.digest_clusters_page') }}" class="{% if request.path == '/digest/clusters' %}active{% endif %}">聚类 Top</a>
       <a href="{{ url_for('web.tags_page') }}" class="{% if request.path.startswith('/tags') %}active{% endif %}">标签</a>
+      <a href="{{ url_for('web.later_page') }}" class="{% if request.path.startswith('/later') %}active{% endif %}">稍后读</a>
 
       <a href="{{ url_for('web.feeds_page') }}" class="{% if request.path.startswith('/feeds') %}active{% endif %}">订阅管理</a>
       <a href="{{ url_for('web.stats_page') }}" class="{% if request.path.startswith('/stats') %}active{% endif %}">统计</a>

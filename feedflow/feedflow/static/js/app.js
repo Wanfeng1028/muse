@@ -20,7 +20,7 @@ async function api(path, opts) {
 
 // ---------------- 阅读器页 ----------------
 function initReader() {
-  const state = { scope: "unread", feedId: null, folderId: null, selectedId: null, tagId: null, tagName: "" };
+  const state = { scope: "unread", feedId: null, folderId: null, selectedId: null, tagId: null, tagName: "", laterQueued: false };
   const elTree = document.getElementById("feed-tree");
   const elList = document.getElementById("article-list");
   const elReader = document.getElementById("reader-pane");
@@ -173,6 +173,7 @@ function initReader() {
     loadScoreCard(id);
     loadArticleTags(id);
     loadArticleNote(id);
+    loadLaterState(id);
     requestAnimationFrame(() => {
       if (elScroller) elScroller.scrollTop = a.scroll_pos || 0;
     });
@@ -193,6 +194,7 @@ function initReader() {
     html += `<div class="reader-actions">`;
     html += `<button id="btn-read" class="btn">${readBtn}</button>`;
     html += `<button id="btn-star" class="btn">${star}</button>`;
+    html += `<button id="btn-later" class="btn">稍后读</button>`;
     if (a.link) html += `<a class="btn" href="${escapeAttr(a.link)}" target="_blank" rel="noopener">查看原文</a>`;
     html += `</div></div>`;
     html += `<div id="article-tags" class="article-tags"></div>`;
@@ -205,6 +207,8 @@ function initReader() {
     const btnStar = document.getElementById("btn-star");
     if (btnRead) btnRead.addEventListener("click", () => markRead(a.id, a.is_read ? 0 : 1));
     if (btnStar) btnStar.addEventListener("click", () => toggleStar(a.id, a.is_starred ? 0 : 1));
+    const btnLater = document.getElementById("btn-later");
+    if (btnLater) btnLater.addEventListener("click", () => toggleLater(a.id));
     loadTagOptions();
     bindTagEditor(a.id);
     bindNoteEditor(a.id);
@@ -393,7 +397,7 @@ function bindNoteEditor(articleId) {
   async function markRead(id, v) {
     try { await api("/api/articles/" + id + "/read", { method: "POST", body: JSON.stringify({ is_read: v }) }); } catch (e) { return; }
     if (state.selectedId === id) {
-      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); } catch (e) {}
+      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); loadLaterState(a.id); } catch (e) {}
     }
     loadArticles();
   }
@@ -402,9 +406,38 @@ function bindNoteEditor(articleId) {
   async function toggleStar(id, v) {
     try { await api("/api/articles/" + id + "/star", { method: "POST", body: JSON.stringify({ is_starred: v }) }); } catch (e) { return; }
     if (state.selectedId === id) {
-      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); } catch (e) {}
+      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); loadLaterState(a.id); } catch (e) {}
     }
     loadArticles();
+  }
+
+  async function loadLaterState(id) {
+    try {
+      const data = await api('/api/articles/' + id + '/later');
+      state.laterQueued = !!data.queued;
+      const btn = document.getElementById('btn-later');
+      if (!btn) return;
+      btn.textContent = state.laterQueued ? '已在稍后读' : '稍后读';
+    } catch (err) {
+      // 静默返回
+    }
+  }
+
+  async function toggleLater(id) {
+    try {
+      const url = '/api/articles/' + id + '/later';
+      const current = await api(url);
+      if (current.queued) {
+        await api(url, { method: 'DELETE' });
+      } else {
+        await api(url, { method: 'POST', body: JSON.stringify({}) });
+      }
+      state.laterQueued = !current.queued;
+      const btn = document.getElementById('btn-later');
+      if (btn) btn.textContent = state.laterQueued ? '已在稍后读' : '稍后读';
+    } catch (err) {
+      // 静默返回
+    }
   }
 
   // 全部标已读

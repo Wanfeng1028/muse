@@ -307,6 +307,20 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
             "CREATE INDEX IF NOT EXISTS idx_article_notes_updated ON article_notes(updated_at DESC)",
         ],
     ),
+    (
+        9,
+        "一篇文章一条稍后读队列记录，按 position 排序",
+        [
+            """
+            CREATE TABLE IF NOT EXISTS read_later (
+                article_id INTEGER PRIMARY KEY REFERENCES articles(id) ON DELETE CASCADE,
+                position INTEGER NOT NULL DEFAULT 0,
+                queued_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_read_later_position ON read_later(position ASC)",
+        ],
+    ),
 ]
 
 

@@ -931,3 +931,181 @@ def list_notes(db_path, limit=50):
         ]
     finally:
         conn.close()
+
+
+# ---------------- read later ----------------
+
+def queue_article(db_path, article_id):
+    """将文章加入稍后阅读队列。
+
+    文章不存在或已在队列中时返回 False；
+    否则追加到队尾（position 取现有 MAX(position)+1，空队为 0）并返回 True。
+    """
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            exists = conn.execute(
+                "SELECT 1 FROM articles WHERE id = ?",
+                (article_id,),
+            ).fetchone()
+            if exists is None:
+                return False
+            dup = conn.execute(
+                "SELECT 1 FROM read_later WHERE article_id = ?",
+                (article_id,),
+            ).fetchone()
+            if dup is not None:
+                return False
+            row = conn.execute(
+                "SELECT MAX(position) FROM read_later"
+            ).fetchone()
+            position = row[0] + 1 if row is not None and row[0] is not None else 0
+            conn.execute(
+                "INSERT INTO read_later (article_id, position, queued_at) VALUES (?, ?, ?)",
+                (article_id, position, _now_iso()),
+            )
+            conn.commit()
+            return True
+        finally:
+            conn.close()
+
+
+def is_queued(db_path, article_id):
+    """判断文章是否已在稍后阅读队列中。"""
+    conn = get_conn(db_path)
+    try:
+        row = conn.execute(
+            "SELECT 1 FROM read_later WHERE article_id = ?",
+            (article_id,),
+        ).fetchone()
+        return row is not None
+    finally:
+        conn.close()
+
+
+def list_later(db_path, limit=50):
+    """按队列顺序返回稍后阅读的文章列表。
+
+    limit 被限制在 1 到 200 之间；每行包含文章及其所属订阅源的信息，
+    is_read / is_starred 以布尔值返回。
+    """
+    safe_limit = max(1, min(int(limit), 200))
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            """
+            SELECT rl.article_id AS article_id,
+                   rl.position AS position,
+                   rl.queued_at AS queued_at,
+                   a.title AS title,
+                   a.author AS author,
+                   a.link AS link,
+                   f.title AS feed_title,
+                   a.published_at AS published_at,
+                   a.is_read AS is_read,
+                   a.is_starred AS is_starred
+            FROM read_later AS rl
+            JOIN articles AS a ON a.id = rl.article_id
+            JOIN feeds AS f ON f.id = a.feed_id
+            ORDER BY rl.position ASC, rl.article_id ASC
+            LIMIT ?
+            """,
+            (safe_limit,),
+        ).fetchall()
+    finally:
+        conn.close()
+    return [
+        {
+            "article_id": r["article_id"],
+            "position": r["position"],
+            "queued_at": r["queued_at"],
+            "title": r["title"],
+            "author": r["author"],
+            "link": r["link"],
+            "feed_title": r["feed_title"],
+            "published_at": r["published_at"],
+            "is_read": bool(r["is_read"]),
+            "is_starred": bool(r["is_starred"]),
+        }
+        for r in rows
+    ]
+
+
+def dequeue_article(db_path, article_id):
+    """从稍后阅读队列中移除一篇文章。
+
+    根据 article_id 从 read_later 表中删除对应行。确实删除了一行时返回
+    True；文章本来就不在队列中时返回 False。删除后不重排剩余行的
+    position，留下的空缺不影响按 position ASC、article_id ASC 确定的
+    队列顺序。
+    """
+    conn = get_conn(db_path)
+    try:
+        with write_lock:
+            cur = conn.execute(
+                "DELETE FROM read_later WHERE article_id = ?",
+                (article_id,),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def move_later(db_path, article_id, direction):
+    """在稍后阅读队列中把一篇文章上移或下移一位。
+
+    direction 为 "up" 时文章向队首方向移动一位，为 "down" 时向队尾方向
+    移动一位，其他值抛出 ValueError。文章不在队列中返回 False；已在
+    队首时请求上移或已在队尾时请求下移，返回 False 且不改动任何数据。
+    移动通过与相邻行交换 position 值实现，相邻行按与 list_later 一致的
+    队列顺序（position ASC、article_id ASC）确定，交换只改动这两行的
+    position，不影响其他行。移动成功时提交事务并返回 True。
+    """
+    if direction not in ("up", "down"):
+        raise ValueError('direction 只能是 "up" 或 "down"')
+
+    conn = get_conn(db_path)
+    try:
+        with write_lock:
+            cur = conn.execute(
+                "SELECT position FROM read_later WHERE article_id = ?",
+                (article_id,),
+            )
+            row = cur.fetchone()
+            if row is None:
+                return False
+            pos = row[0]
+
+            if direction == "up":
+                neighbor_cur = conn.execute(
+                    "SELECT article_id, position FROM read_later "
+                    "WHERE position < ? OR (position = ? AND article_id < ?) "
+                    "ORDER BY position DESC, article_id DESC LIMIT 1",
+                    (pos, pos, article_id),
+                )
+            else:
+                neighbor_cur = conn.execute(
+                    "SELECT article_id, position FROM read_later "
+                    "WHERE position > ? OR (position = ? AND article_id > ?) "
+                    "ORDER BY position ASC, article_id ASC LIMIT 1",
+                    (pos, pos, article_id),
+                )
+            neighbor = neighbor_cur.fetchone()
+            if neighbor is None:
+                return False
+
+            neighbor_id = neighbor[0]
+            neighbor_pos = neighbor[1]
+            conn.execute(
+                "UPDATE read_later SET position = ? WHERE article_id = ?",
+                (neighbor_pos, article_id),
+            )
+            conn.execute(
+                "UPDATE read_later SET position = ? WHERE article_id = ?",
+                (pos, neighbor_id),
+            )
+            conn.commit()
+            return True
+    finally:
+        conn.close()

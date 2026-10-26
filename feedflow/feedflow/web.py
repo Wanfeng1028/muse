@@ -319,6 +319,39 @@ def notes_page():
     return render_template("notes.html", notes=notes)
 
 
+@bp.get("/later")
+def later_page():
+    """稍后读页面：按入队顺序展示队列中的文章。"""
+    db_path = _cfg()["db_path"]
+    items = store.list_later(db_path)
+    for item in items:
+        item["display_time"] = _display_time(item["queued_at"])
+    return render_template("later.html", items=items)
+
+
+@bp.post("/later/remove")
+def later_remove():
+    """将指定文章移出稍后读队列。"""
+    article_id = request.form.get("article_id", type=int)
+    if not article_id:
+        return redirect(url_for("web.later_page", err="bad"))
+    db_path = _cfg()["db_path"]
+    store.dequeue_article(db_path, article_id)
+    return redirect(url_for("web.later_page", removed=1))
+
+
+@bp.post("/later/move")
+def later_move():
+    """调整指定文章在稍后读队列中的位置（up 上移 / down 下移）。"""
+    article_id = request.form.get("article_id", type=int)
+    direction = request.form.get("direction", "")
+    if not article_id or direction not in ("up", "down"):
+        return redirect(url_for("web.later_page", err="bad"))
+    db_path = _cfg()["db_path"]
+    store.move_later(db_path, article_id, direction)
+    return redirect(url_for("web.later_page", moved=1))
+
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

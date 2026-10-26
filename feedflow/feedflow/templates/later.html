@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block title %}稍后读 · 信流{% endblock %}
+
+{% block content %}
+<div class="later-page" style="background:#FAFAF7;color:#1C1A17;padding:28px 24px;">
+  <h1 style="margin:0 0 6px 0;font-size:26px;color:#1C1A17;">稍后读</h1>
+  <p style="margin:0 0 18px 0;color:#6B655A;font-size:14px;">在阅读器里点“稍后读”的文章都在这里，按入队顺序排列。</p>
+
+  {% if request.args.get('removed') %}
+  <div style="background:#FBEADF;color:#C2410C;border:1px solid #E7C9B4;padding:8px 12px;font-size:14px;margin-bottom:14px;">已移出队列。</div>
+  {% endif %}
+  {% if request.args.get('moved') %}
+  <div style="background:#FBEADF;color:#C2410C;border:1px solid #E7C9B4;padding:8px 12px;font-size:14px;margin-bottom:14px;">顺序已调整。</div>
+  {% endif %}
+  {% if request.args.get('err') == 'bad' %}
+  <div style="background:#FBEADF;color:#C2410C;border:1px solid #E7C9B4;padding:8px 12px;font-size:14px;margin-bottom:14px;">文章或方向不对。</div>
+  {% endif %}
+
+  {% if items %}
+  <div>
+    {% for item in items %}
+    <div class="later-row" style="display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0;border-bottom:1px solid #E7E2D6;">
+      <div style="min-width:0;">
+        <div style="display:flex;align-items:baseline;gap:8px;">
+          <span style="color:#C2410C;font-size:14px;min-width:22px;">{{ loop.index }}</span>
+          {% if item.link %}
+          <a href="{{ item.link }}" target="_blank" rel="noopener" style="color:#1C1A17;text-decoration:none;font-size:16px;">{{ item.title }}</a>
+          {% else %}
+          <span style="font-size:16px;color:#1C1A17;">{{ item.title }}</span>
+          {% endif %}
+          {% if item.is_read %}
+          <span style="color:#6B655A;font-size:12px;">已读</span>
+          {% endif %}
+        </div>
+        <div style="margin-top:4px;padding-left:30px;color:#6B655A;font-size:12px;">{{ item.feed_title }} · {{ item.display_time }}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <form method="post" action="/later/move" style="display:inline;margin:0;">
+          <input type="hidden" name="article_id" value="{{ item.article_id }}">
+          <input type="hidden" name="direction" value="up">
+          <button type="submit" style="background:#FAFAF7;color:#C2410C;border:1px solid #E7C9B4;padding:4px 10px;font-size:13px;cursor:pointer;">上移</button>
+        </form>
+        <form method="post" action="/later/move" style="display:inline;margin:0;">
+          <input type="hidden" name="article_id" value="{{ item.article_id }}">
+          <input type="hidden" name="direction" value="down">
+          <button type="submit" style="background:#FAFAF7;color:#C2410C;border:1px solid #E7C9B4;padding:4px 10px;font-size:13px;cursor:pointer;">下移</button>
+        </form>
+        <form method="post" action="/later/remove" style="display:inline;margin:0;">
+          <input type="hidden" name="article_id" value="{{ item.article_id }}">
+          <button type="submit" style="background:#FAFAF7;color:#6B655A;border:1px solid #E7E2D6;padding:4px 10px;font-size:13px;cursor:pointer;">移出队列</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div style="padding:32px 0;color:#6B655A;font-size:15px;">还没有稍后读的文章，去阅读器打开一篇文章点“稍后读”吧。</div>
+  {% endif %}
+
+  <div style="margin-top:24px;">
+    <a href="/" style="color:#C2410C;text-decoration:none;font-size:14px;">去阅读器</a>
+  </div>
+</div>
+{% endblock %}
