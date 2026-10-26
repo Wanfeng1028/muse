@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>分组SLA趋势 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+<style>
+.bar-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; margin-bottom: 4px; }
+.bar-month { width: 80px; }
+.bar-outer { flex: 1; background: #e5e7eb; height: 12px; }
+.bar-inner { background: #10b981; height: 12px; }
+.bar-text { width: 70px; text-align: right; }
+</style>
+</head>
+<body onload="initGroupSLATrend()">
+<header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">总览</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/sms-log">短信记录</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend">SLA趋势</a>
+<a href="/maintenance">维护窗口</a>
+<a href="/groups">监控分组</a>
+<a href="/group-sla">分组SLA</a>
+<a href="/group-sla-trend" class="active">分组SLA趋势</a>
+</nav>
+</header>
+<main class="container">
+<h1>分组 SLA 趋势</h1>
+<p>最近 N 个月按分组聚合逐月对比：可用性按检查数加权，目标 99.9%，只统计组内监控。</p>
+<div class="ctrl-row">
+<select id="group-trend-select"></select>
+<input type="month" id="group-trend-end-input">
+<select id="group-trend-months-select">
+<option value="3">3 个月</option>
+<option value="6">6 个月</option>
+<option value="12">12 个月</option>
+</select>
+<button id="group-trend-load-btn">查看</button>
+<a id="group-trend-export-link" href="#">导出 HTML 版</a>
+</div>
+<div id="group-trend-cards"></div>
+<table class="snap-table">
+<thead><tr><th>月份</th><th>可用性</th><th>检查数</th><th>事件数</th><th>宕机时长</th><th>监控数</th><th>最差监控</th><th>达标</th></tr></thead>
+<tbody id="group-trend-rows"></tbody>
+</table>
+<h2>可用性条形</h2>
+<div id="group-trend-bars"></div>
+<p id="group-trend-status"></p>
+</main>
+<script>
+function fmtDur(sec) {
+  if (!sec) return '0 秒';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = Math.floor(sec % 60);
+  const parts = [];
+  if (d) parts.push(d + ' 天');
+  if (h) parts.push(h + ' 小时');
+  if (m) parts.push(m + ' 分');
+  if (d === 0 && h === 0) parts.push(s + ' 秒');
+  return parts.join(' ');
+}
+
+async function loadGroupSLATrend() {
+  const cards = document.getElementById('group-trend-cards');
+  const status = document.getElementById('group-trend-status');
+  const select = document.getElementById('group-trend-select');
+  const endInput = document.getElementById('group-trend-end-input');
+  const monthsSelect = document.getElementById('group-trend-months-select');
+  const exportLink = document.getElementById('group-trend-export-link');
+  const gid = select.value;
+  const end = endInput.value;
+  const months = monthsSelect.value;
+  if (!gid) { status.textContent = '请先选择分组'; return; }
+  exportLink.href = '/api/groups/' + gid + '/sla/trend.html?end=' + end + '&months=' + months;
+  try {
+    const rep = await api('/api/groups/' + gid + '/sla/trend?end=' + end + '&months=' + months);
+    document.getElementById("group-trend-rows").innerHTML = rep.items.map((item) =>
+      `<tr>` +
+      `<td>${item.month}</td>` +
+      `<td>${item.uptime_pct.toFixed(2)}%</td>` +
+      `<td>${item.total_checks}</td>` +
+      `<td>${item.down_incidents}</td>` +
+      `<td>${fmtDur(item.total_downtime_sec)}</td>` +
+      `<td>${item.monitor_count}</td>` +
+      `<td>${item.worst_monitor_name || "—"}</td>` +
+      `<td>${item.met ? "达标" : "未达标"}</td>` +
+      `</tr>`
+    ).join("");
+    document.getElementById("group-trend-bars").innerHTML = rep.items.map((item) =>
+      `<div class="bar-row">` +
+      `<span class="bar-month">${item.month}</span>` +
+      `<div class="bar-outer"><div class="bar-inner" style="width:${item.uptime_pct}%"></div></div>` +
+      `<span class="bar-text">${item.uptime_pct.toFixed(2)}%</span>` +
+      `</div>`
+    ).join("");
+    cards.innerHTML =
+      `<div class="card-row"><span class="card-label">分组</span><span class="card-value">${rep.group_name}</span></div>` +
+      `<div class="card-row"><span class="card-label">截止月份</span><span class="card-value">${rep.end_month}</span></div>` +
+      `<div class="card-row"><span class="card-label">目标</span><span class="card-value">${rep.sla_target.toFixed(1)}%</span></div>`;
+    status.textContent = '';
+  } catch (err) {
+    status.textContent = "加载失败";
+  }
+}async function loadGroupSLATrendOptions() {
+  const select = document.getElementById('group-trend-select');
+  const status = document.getElementById('group-trend-status');
+  try {
+    const data = await api('/api/groups');
+    const items = data && Array.isArray(data.items) ? data.items : [];
+    select.textContent = '';
+    items.forEach(function (item) {
+      const opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.name;
+      select.appendChild(opt);
+    });
+    if (items.length > 0) {
+      await loadGroupSLATrend();
+    } else {
+      status.textContent = '暂无分组，请先在监控分组页新建分组';
+    }
+  } catch (err) {
+    status.textContent = '加载失败';
+  }
+}
+
+let groupSLATrendInited = false;
+
+function initGroupSLATrend() {
+  if (groupSLATrendInited) return;
+  groupSLATrendInited = true;
+  const now = new Date();
+  document.getElementById("group-trend-end-input").value = now.getFullYear() + "-" + String(now.getMonth() + 1).padStart(2, "0");
+  document.getElementById("group-trend-months-select").value = "6";
+  document.getElementById("group-trend-load-btn").addEventListener("click", function () { loadGroupSLATrend(); });
+  document.getElementById("group-trend-select").addEventListener("change", function () { loadGroupSLATrend(); });
+  document.getElementById("group-trend-months-select").addEventListener("change", function () { loadGroupSLATrend(); });
+  document.getElementById("group-trend-end-input").addEventListener("change", function () { loadGroupSLATrend(); });
+  loadGroupSLATrendOptions();
+}
+
+initGroupSLATrend();</script>
+</body>
+</html>

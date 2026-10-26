@@ -3,6 +3,30 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.26.0] - 2026-10-27
+
+### 新增
+
+- 分组 SLA 趋势：Store 层 GroupSLATrend（复用 v0.25.0 的 GroupMonthlySLA 逐月聚合，月份按时间顺序排列；months 取值 1~12、非法 endMonth/months 报错；分组不存在时由首月月报返回“分组不存在”错误）；API（均需鉴权）GET /api/groups/{id}/sla/trend?end=YYYY-MM&months=N（end 缺省当月、months 缺省 6、非法 end/months 返回 400、不存在的分组 404）、GET /api/groups/{id}/sla/trend.html（中文 HTML 导出：分组趋势标题、逐月表、可用性条形）；控制台页 /group-sla-trend（分组下拉、截止月份选择、3/6/12 个月选择、逐月表、可用性条形、导出 HTML 链接），12 个既有控制台页导航末尾加分组SLA趋势链，/group-sla-trend 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：分组 SLA 趋势只统计组内监控，不在组内的监控不计入；空月可用性记 100、监控数为组内成员数（沿用 v0.25.0 单月报告口径，空月最差监控仍显示首个 100% 监控名）。
+
+### 测试
+
+- 新增 internal/store/group_sla_trend_test.go（空组 3 个月：起止月份与目标 99.9、空月可用性 100；非法 months/endMonth 与不存在分组报错；双月：2 月 10 全成功、3 月 9 成功 1 失败得 90%）、internal/handlers/group_sla_trend_test.go（JSON 的 group_id/group_name/end_month/months 与不存在分组 404 与非法 months/end 的 400、HTML 的 200 与“分组 SLA 趋势/组名/可用性条形”字样与不存在分组 404）、internal/web/group_sla_trend_test.go（分组SLA趋势页 16 个标记与标记顺序、失败路径定义顺序、12 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（16 包，notify 包 239.2 秒为既存最慢包）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18496 端口，SENTINEL_TICK_SEC=60；隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建分组 1 号“核心业务”返回 201；新建组内 UP 监控 3 号（本地 200 服务）与组内 DOWN 监控 4 号（127.0.0.1:9 拒绝）加入分组；各 CheckNow 2 次后 GET /api/groups/1/sla/trend?end=2026-10&months=2 返回 9 月空月 100%/0 检查、10 月 50%/4 检查/1 事件/监控数 2/最差为组内DOWN/未达标；不存在的分组返回 404、months=0/abc 与 end=2026-13 均为 400、趋势接口无鉴权 401；sla/trend.html 含“分组 SLA 趋势 核心业务 2026-10”与可用性条形；/group-sla-trend 页 200 且含全部标记；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 视觉验收：截图 docs/screenshots/group-sla-trend-v026.png 亲眼核对——导航 12 链齐全且分组SLA趋势 active、分组下拉选中核心业务、月份 October 2026、6 个月、查看与导出 HTML 版齐全、卡片（分组核心业务、截止月份 2026-10、目标 99.9%）与逐月行（5–9 月 100% 达标、10 月 50.00% 4 检查 1 事件 最差组内DOWN 未达标）及可用性条形（10 月半格 + 灰底余量）均与 API 返回一致、无“加载失败”。宕机时长在截图时为 7 秒（冒烟断言时为 4 秒），系 MonthlySLA 对未恢复事件的既有开放估算口径，非本轮新口径。
+- 截图 harness 说明：Playwright setContent 下相对 /api 解析失败且无 CORS 头，截图脚本按 shoot2.js 模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 在截图环境内桩化为冒烟 stub token、页面脚本的 /api 改写为绝对地址并经 route 代理回真实服务，该改写仅限截图环境，产品代码未动。
+- 冒烟驱动初版曾断言页面壳无鉴权应为 401，实测为 200：经查 middleware 的 exact 名单是鉴权白名单（命中即跳过鉴权），页面壳公开、数据接口仍需鉴权是既有口径，非本轮回归；驱动已按此修正并重跑全绿。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 night6_sentinel_call.py（令牌经 SSH 现取不落盘、未读任何现成调用脚本；取令牌走 SSH 远程 python 读 /home/azureuser 绝对路径库）；Go 代码、测试、页面均为微片段逐字输出口径；编排侧机械工作：片段拼接与 gofmt、12 页导航链机械追加、路由与鉴权名单接线、README/CHANGELOG 事实性文字；另有平台层现象：首个探活用量因 SSE 用量未捕获而漏记一行（修解析器改显式流式 + include_usage 后重探成功，该行仍保留在日志中、用量未知）；三通 reasoning-only 空响应（Store 初稿、Store 测试二稿、Handlers HTML 初稿，改拆小稿/骨架照抄后均成功）。
+- 调用统计（batch 目录 usage.log 全量记录，含重试与空响应；成功计 token 与空响应分开标明）：成功计 token 的调用 13 次，prompt 合计 312913、completion 合计 14134、合计 327047；空响应 3 次（均为 reasoning-only），其上报口径 prompt 合计 72334、completion 合计 12000；另有首个探活成功行 1 条因解析器 bug 用量未捕获（prompt/completion 均为空，不计入合计）；全量已知 token 行 16 条，prompt 合计 385247、completion 合计 26134、合计 411381；本轮无 429、无 HTTP 错误行。
+
 ## [0.25.0] - 2026-10-27
 
 ### 新增

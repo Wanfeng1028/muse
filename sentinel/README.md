@@ -32,6 +32,7 @@
 - **维护窗口**：窗口内调度检查整段跳过，不产生检查记录与新事件；手动检查不受影响，`/maintenance` 页可新建/删除（监控 ID 为 0 表示全部监控）
 - **监控分组**：监控按业务线归组（新建/删除分组、监控加入/移出分组、按组查看成员），只做归类与筛选，不影响检查调度与告警，`/groups` 页管理
 - **分组 SLA 月报**：按分组聚合当月可用性（检查加权、最差监控、故障归因），只统计组内监控，`/group-sla` 页按分组与月份查看，可导出中文 HTML 月报
+- **分组 SLA 趋势**：按分组聚合最近 N 个月（3/6/12）逐月可用性（检查加权、最差监控、宕机时长），只统计组内监控，`/group-sla-trend` 页按分组与截止月份查看，可导出中文 HTML 趋势
 ## 截图
 
 > 以下为真实运行抓屏，非设计稿。
@@ -48,6 +49,7 @@
 - 维护窗口：`docs/screenshots/maintenance-v023.png`
 - 监控分组：`docs/screenshots/groups-v024.png`
 - 分组 SLA 月报：`docs/screenshots/group-sla-v025.png`
+- 分组 SLA 趋势：`docs/screenshots/group-sla-trend-v026.png`
 - 事件页状态筛选（全部/仅进行中）：`docs/screenshots/incidents-status-all.png`、`docs/screenshots/incidents-status-open.png`
 - 事件页点击行展开详情（事件 ID、监控、开始时间、恢复时间、持续、状态、触发原因）：`docs/screenshots/incidents-detail-collapsed.png`、`docs/screenshots/incidents-detail-expanded.png`
 
@@ -132,6 +134,8 @@ open http://localhost:8200
 | GET | `/api/groups/{id}/monitors` | 是 | 分组成员列表 |
 | GET | `/api/groups/{id}/sla?month=YYYY-MM` | 是 | 分组月度 SLA 报告（只统计组内监控） |
 | GET | `/api/groups/{id}/sla.html?month=YYYY-MM` | 是 | 分组月度 SLA 报告（中文 HTML，可存档） |
+| GET | `/api/groups/{id}/sla/trend?end=YYYY-MM&months=N` | 是 | 分组 SLA 趋势（最近 N 个月逐月聚合，N=1~12，默认 end=当月、months=6，只统计组内监控） |
+| GET | `/api/groups/{id}/sla/trend.html?end=YYYY-MM&months=N` | 是 | 分组 SLA 趋势（中文 HTML，含逐月表与可用性条形） |
 | GET | `/healthz` | 否 | 存活探针 |
 | GET | `/readyz` | 否 | 就绪探针 |
 | GET | `/api/metrics` | 否 | Prometheus 指标 |
