@@ -1,5 +1,19 @@
 # 更新日志
 
+## v2.17.22 - 2026-10-27
+
+### 新增
+- `GET /api/transactions` 新增 date_from/date_to 参数校验：非法值返回 400，detail 分别为“date_from 参数非法”与“date_to 参数非法”；此前非法值会静默按字符串比较过滤、返回空列表。合法格式为严格 YYYY-MM-DD（恰好 10 字符、短横线在第 4 与第 7 位、真实日历日期）；None 或空串表示不过滤；其余过滤条件与分页一字未动。
+
+### 不变
+- limit/offset 默认值与范围、total 计数口径、条目字段一字未动；不做 date_from 大于 date_to 的顺序校验（超出本轮范围）；创建/更新路径的校验一字未动；前端只发日期输入框的 YYYY-MM-DD，不受影响。
+
+### 版本同步
+- `src/ledger/__init__.py`、`pyproject.toml`、`tests/test_version_consistency_v21715.py` 的版本同步为 2.17.22。
+
+### 测试
+- 新增 tests/test_transactions_date_validation.py 9 例全绿（date_from bogus 返回 400、date_to bogus 返回 400、月份 13 返回 400、2 月 30 日返回 400、短格式 2024-1-1 返回 400、合法范围过滤为恰好 1 条、空串 date_from 不过滤、缺参不过滤、仅 date_to 合法返回 200）；新测与类型校验测、版本一致性测靶向合跑 15/15；ruff check 与 ruff format 在两处改动文件上全洁。
+
 ## v2.17.21 - 2026-10-27
 
 ### 新增

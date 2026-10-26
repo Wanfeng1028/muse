@@ -115,6 +115,16 @@ async def list_transactions(
     if type is not None and type != "":
         if type not in VALID_TYPES:
             raise HTTPException(status_code=400, detail="type 参数非法")
+    for value, name in ((date_from, "date_from"), (date_to, "date_to")):
+        if value in (None, ""):
+            continue
+        try:
+            datetime.strptime(value, "%Y-%m-%d")
+            valid = len(value) == 10 and value[4] == "-" and value[7] == "-"
+        except (ValueError, TypeError):
+            valid = False
+        if not valid:
+            raise HTTPException(status_code=400, detail=f"{name} 参数非法")
     async with get_session_factory()() as s:
         conds = []
         if account_id is not None:
@@ -129,9 +139,9 @@ async def list_transactions(
             conds.append(Transaction.category_id == category_id)
         if type:
             conds.append(Transaction.type == type)
-        if date_from is not None:
+        if date_from:
             conds.append(Transaction.occurred_on >= date_from)
-        if date_to is not None:
+        if date_to:
             conds.append(Transaction.occurred_on <= date_to)
         if q:
             conds.append(Transaction.note.like(f"%{q}%"))
