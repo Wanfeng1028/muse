@@ -72,6 +72,8 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /api/sla.html", s.handleSiteSLAHTML)
 	mux.HandleFunc("GET /api/sla/trend", s.handleSiteSLATrendJSON)
 	mux.HandleFunc("GET /api/sla/trend.html", s.handleSiteSLATrendHTML)
+	mux.HandleFunc("GET /api/sla/year", s.handleSiteYearlySLAJSON)
+	mux.HandleFunc("GET /api/sla/year.html", s.handleSiteYearlySLAHTML)
 	mux.HandleFunc("GET /api/alerts/deliveries", s.handleListDeliveries)
 	mux.HandleFunc("GET /api/sms/log", s.handleSMSLogAPI)
 	mux.HandleFunc("POST /api/alerts/deliveries/{id}/retry", s.handleRetryDelivery)
@@ -100,6 +102,7 @@ func (s *Server) Routes() http.Handler {
 	mux.HandleFunc("GET /snapshots", s.handleSnapshotsPage)
 	mux.HandleFunc("GET /sla-report", s.handleSiteSLAReportPage)
 	mux.HandleFunc("GET /sla-trend", s.handleSiteSLATrendPage)
+	mux.HandleFunc("GET /sla-year", s.handleSiteYearlySLAPage)
 	mux.HandleFunc("GET /maintenance", s.handleMaintenancePage)
 	mux.HandleFunc("GET /groups", s.handleGroupsPage)
 	mux.HandleFunc("GET /group-sla", s.handleGroupSLAPage)
@@ -117,7 +120,7 @@ func (s *Server) Routes() http.Handler {
 
 	// 中间件链：RequestID -> Logging -> Auth -> mux
 	exact := []string{"/healthz", "/readyz", "/api/healthz", "/api/readyz", "/api/health",
-		"/", "/monitors", "/incidents", "/profile", "/deliveries", "/snapshots", "/sms-log", "/sla-report", "/sla-trend", "/maintenance", "/groups", "/group-sla", "/group-sla-trend", "/monitor-sla-trend"}
+		"/", "/monitors", "/incidents", "/profile", "/deliveries", "/snapshots", "/sms-log", "/sla-report", "/sla-trend", "/maintenance", "/groups", "/group-sla", "/group-sla-trend", "/monitor-sla-trend", "/sla-year"}
 	prefix := []string{"/api/status/", "/status/", "/static/"}
 	return middleware.RequestID(middleware.Logging(s.auth.Middleware(exact, prefix)(mux)))
 }

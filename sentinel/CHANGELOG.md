@@ -3,6 +3,34 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.28.0] - 2026-10-27
+
+### 新增
+
+- 全站年度 SLA 报告：Store 层 SiteYearlySLA（复用 v0.21.0 的 SiteMonthlySLA 聚合全年 12 个月，月份按时间顺序排列；年份取值 1970~9999、非法年份报错；年度可用性按检查数加权、零检查月份不计入加权分母、全部零检查时为 100；监控数为各月监控数最大值；最佳与最差月份只在有检查的月份中评选、全年无检查时回落首月；故障归因合计与占比与全站口径一致）；API（均需鉴权）GET /api/sla/year?year=YYYY（缺省当年、非法年份返回 400）、GET /api/sla/year.html（中文 HTML 导出：年度总览、逐月表、可用性条形）；控制台页 /sla-year（年份选择、总览卡片、逐月表、可用性条形、导出 HTML 链接），14 个既有控制台页导航末尾加年度SLA链，/sla-year 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：全站年度 SLA 只聚合全站月报，不改变任何单月口径；空月可用性记 100（沿用单月报告口径），但空月不参与最佳与最差月份评选；年度监控数为峰值口径（各月监控数最大值），因单月监控数取当前监控列表、各月实际相等。
+- 既有口径说明（本轮调试实证，非新改动）：handlers 既有 insertChecks 测试 helper 用空格格式日期，月首日记录会因空格小于 RFC3339 的 T 而落入上月桶；本轮新增的 insertYearChecks helper 改用 RFC3339 格式，月份归属无此漂移。
+
+### 测试
+
+- 新增 internal/store/site_sla_year_test.go（空年 12 个月：首末月份与目标 99.9、空年可用性 100 与达标、最佳与最差回落首月、非法年份报错；双月：2 月 10 全成功、3 月 9 成功 1 失败得年度加权 95、最佳 2 月、最差 3 月、未达标）、internal/handlers/site_sla_year_test.go（JSON 的 year/uptime_pct/total_checks/best_month/worst_month 与 12 项、非法年份 400、HTML 的 200 与“全站年度 SLA 报告/年份/可用性条形”字样与非法年份 400）、internal/web/sla_year_test.go（年度SLA页 12 个标记与标记顺序、失败路径定义顺序、14 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（16 包，notify 包 238.9 秒为既存最慢包）。
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18498 端口，SENTINEL_TICK_SEC=60；隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建 UP 监控 3 号（本地 200 服务）与 DOWN 监控 4 号（127.0.0.1:9 拒绝）；各 CheckNow 2 次后 GET /api/sla/year?year=2026 返回年度可用性 50%/检查总数 4/事件数 1/归因 connection 100%/未达标、最佳与最差月份均为 2026-10（全年唯一有检查的月份）、空月 100%/0 检查/最差为示例站点（沿用单月口径）；缺省 year 返回当年 2026 且数值一致；非法年份 abc/1969/10000 均为 400、年度接口无鉴权 401；sla/year.html 含“全站年度 SLA 报告 2026”与可用性条形与年报DOWN；/sla-year 页 200 且含全部标记、无鉴权时页面壳仍 200（既有白名单口径、数据接口仍需鉴权）；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 宕机时长在截图时为 1 分 49 秒（冒烟断言时为 4 秒），系 MonthlySLA 对未恢复事件的既有开放估算口径，非本轮新口径。
+
+### 视觉验收
+
+- 截图 docs/screenshots/sla-year-v028.png 亲眼核对——导航 14 链齐全且年度SLA active、年份输入 2026、查看与导出 HTML 版齐全、卡片（年度 2026、年度可用性 50.00%、检查总数 4、最佳月份 2026-10、最差月份 2026-10、是否达标未达标）与逐月行（1–9 月与 11–12 月 100% 达标、10 月 50.00% 4 检查 1 事件 最差年报DOWN 未达标）及可用性条形（10 月半格 + 灰底余量）均与 API 返回一致、无“加载失败”。
+- 截图 harness 说明：Playwright setContent 会忽略 url 选项（文档基址为 about:blank，相对 /api 解析失败），首拍因此“加载失败”；截图脚本按 shoot2.js 模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 在截图环境内桩化为空串（鉴权由截图代理在服务端注入冒烟 stub token）、页面脚本的 /api 改写为绝对地址并经 route 代理回真实服务，该改写仅限截图环境，产品代码未动。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 sentinel_night8_wave_call.py（令牌经 SSH 现取、只进子进程环境变量、不落盘、未读任何现成调用脚本；显式流式解析 + include_usage，探活用量已捕获记账）；Go 代码、测试、页面均为微片段逐字输出口径；编排侧机械工作：Store 稿 Attribution map 类型修正、Handler 稿 slaDur 入参补 float64 转换、页面脚本稿字段名按 API 合同修正（months/down_sec/worst_monitor/meets_sla 改为 items/total_downtime_sec/worst_monitor_name/met）、测试稿签名修正（insertCheckAt 补 latency、SiteYearlySLA 去 monitorID 入参、newSLATestServer 三返回值补齐）、14 页导航链与路由/鉴权名单机械接线、README/CHANGELOG 事实性文字；另有语义修正一处：测试揪出空月 100% 会抢走最佳月份，改口径为最佳与最差只在有检查月份中评选、全年无检查回落首月（API 补丁稿 + 测试双绿验证）。
+- 平台层现象：Store 双月测试稿两次 reasoning-only 空响应（改 max_tokens 16000 后出正文）；其后一通 ok 正文因本机写文件瞬时 EPERM 未落盘（token 已计入 ok 合计），重取一通后落盘；页面脚本稿一次 reasoning-only 空响应（改 max_tokens 16000 后出正文）；Handlers 调试中发现既有 insertChecks 空格日期格式的月首漂移，本轮 helper 改 RFC3339 规避（见上文既有口径说明）。
+- 调用统计（batch 目录 usage.log 全量记录，含空响应；成功计 token 与空响应分开标明）：成功调用 16 次，prompt 合计 382242、completion 合计 32306、合计 414548（其中 1 通 ok 正文因 EPERM 丢失、token 2951 仍计入该合计，重取通另计）；空响应 3 次（均为 reasoning-only，4000 token 上限占满），其上报口径 prompt 合计 71686、completion 合计 12000、合计 83686；错误行 0 条；全量 19 条，prompt 合计 453928、completion 合计 44306、合计 498234；本轮无 429、无 HTTP 错误行。
+
 ## [0.27.0] - 2026-10-27
 
 ### 新增

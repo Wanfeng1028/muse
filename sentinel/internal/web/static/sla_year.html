@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>年度SLA · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+<style>
+.bar-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.bar-month{flex:0 0 64px;font-size:13px;color:#374151;text-align:right;}
+.bar-outer{flex:1;background:#e5e7eb;height:18px;border-radius:4px;overflow:hidden;}
+.bar-inner{height:100%;background:#22c55e;}
+.bar-text{flex:0 0 72px;font-size:13px;color:#374151;text-align:right;font-variant-numeric:tabular-nums;}
+.trend-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.trend-month{flex:0 0 64px;font-size:13px;color:#374151;text-align:right;}
+.trend-bar{flex:1;background:#e5e7eb;height:18px;border-radius:4px;overflow:hidden;}
+.trend-fill{height:100%;background:#22c55e;}
+.trend-pct{flex:0 0 72px;font-size:13px;color:#374151;text-align:right;font-variant-numeric:tabular-nums;}
+</style>
+</head>
+<body onload="initSiteYearlySLA()">
+<header class="topbar">
+  <span class="brand">哨兵 Sentinel</span>
+  <nav class="nav">
+    <a href="/">仪表盘</a>
+    <a href="/monitors">监控管理</a>
+    <a href="/incidents">事件</a>
+    <a href="/deliveries">投递队列</a>
+    <a href="/snapshots">快照归档</a>
+    <a href="/sms-log">短信记录</a>
+    <a href="/sla-report">SLA总报</a>
+    <a href="/sla-trend">SLA趋势</a>
+    <a href="/maintenance">维护窗口</a>
+    <a href="/groups">监控分组</a>
+    <a href="/group-sla">分组SLA</a>
+    <a href="/group-sla-trend">分组SLA趋势</a>
+    <a href="/monitor-sla-trend">单监控SLA趋势</a>
+    <a href="/sla-year" class="active">年度SLA</a>
+  </nav>
+</header>
+<main class="container">
+  <h1>年度SLA</h1>
+  <p>全年 12 个月全站聚合：可用性按检查数加权，目标 99.9%，最佳与最差月份只在有检查的月份中评选。</p>
+  <div class="ctrl-row">
+    <input type="number" id="year-input" min="2000" max="2100">
+    <button id="year-load-btn">查看</button>
+    <a id="year-export-link" href="/api/sla/year.html">导出 HTML 版</a>
+  </div>
+  <div id="year-cards"></div>
+  <table class="snap-table">
+    <thead>
+      <tr>
+        <th>月份</th>
+        <th>可用性</th>
+        <th>检查数</th>
+        <th>事件数</th>
+        <th>宕机时长</th>
+        <th>监控数</th>
+        <th>最差监控</th>
+        <th>达标</th>
+      </tr>
+    </thead>
+    <tbody id="year-rows"></tbody>
+  </table>
+  <h2>可用性条形</h2>
+  <div id="year-bars"></div>
+  <p id="year-status"></p>
+</main>
+<script>
+function fmtDur(sec) {
+  sec = Math.floor(Number(sec) || 0);
+  if (sec <= 0) return '0 秒';
+  const d = Math.floor(sec / 86400);
+  const h = Math.floor((sec % 86400) / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  const parts = [];
+  if (d > 0) parts.push(d + ' 天');
+  if (h > 0) parts.push(h + ' 小时');
+  if (m > 0) parts.push(m + ' 分');
+  if (s > 0 && d === 0 && h === 0) parts.push(s + ' 秒');
+  return parts.length ? parts.join(' ') : '0 秒';
+}
+
+async function loadSiteYearlySLA() {
+  const year = document.getElementById('year-input').value.trim() || String(new Date().getFullYear());
+  document.getElementById('year-export-link').href = '/api/sla/year.html?year=' + year;
+  const cards = document.getElementById('year-cards');
+  const status = document.getElementById('year-status');
+  const rowsEl = document.getElementById('year-rows');
+  const barsEl = document.getElementById('year-bars');
+  const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+  const monthLabel = (v) => (typeof v === 'number' ? v + '月' : String(v));
+  const monthText = (mo) => {
+    if (mo == null) return '-';
+    if (typeof mo === 'object') {
+      let t = mo.month != null ? monthLabel(mo.month) : '-';
+      if (mo.uptime_pct != null) t += '（' + Number(mo.uptime_pct).toFixed(2) + '%）';
+      return t;
+    }
+    return monthLabel(mo);
+  };
+  status.textContent = '加载中…';
+  try {
+    const d = await api('/api/sla/year?year=' + year);
+    const months = Array.isArray(d.items) ? d.items : [];
+    if (!months.length) {
+      rowsEl.innerHTML = '<tr><td colspan="8">暂无数据</td></tr>';
+      barsEl.innerHTML = '';
+    } else {
+      rowsEl.innerHTML = months.map((mo) => {
+        const pct = Number(mo.uptime_pct) || 0;
+        return '<tr>' +
+          '<td>' + esc(monthLabel(mo.month)) + '</td>' +
+          '<td>' + pct.toFixed(2) + '%</td>' +
+          '<td>' + esc(mo.total_checks ?? 0) + '</td>' +
+          '<td>' + esc(mo.down_incidents ?? 0) + '</td>' +
+          '<td>' + esc(fmtDur(mo.total_downtime_sec)) + '</td>' +
+          '<td>' + esc(mo.monitor_count ?? 0) + '</td>' +
+          '<td>' + esc(mo.worst_monitor_name || '-') + '</td>' +
+          '<td>' + (mo.met ? '达标' : '未达标') + '</td>' +
+          '</tr>';
+      }).join('');
+      barsEl.innerHTML = months.map((mo) => {
+        const pct = Number(mo.uptime_pct) || 0;
+        return '<div class="bar-row">' +
+          '<span class="bar-month">' + esc(monthLabel(mo.month)) + '</span>' +
+          '<div class="bar-outer"><div class="bar-inner" style="width:' + pct.toFixed(2) + '%"></div></div>' +
+          '<span class="bar-text">' + pct.toFixed(2) + '%</span>' +
+          '</div>';
+      }).join('');
+    }
+    cards.innerHTML =
+      '<div class="card"><div class="card-label">年度</div><div class="card-value">' + esc(d.year ?? year) + '</div></div>' +
+      '<div class="card"><div class="card-label">年度可用性</div><div class="card-value">' + (Number(d.uptime_pct) || 0).toFixed(2) + '%</div></div>' +
+      '<div class="card"><div class="card-label">检查总数</div><div class="card-value">' + esc(d.total_checks ?? 0) + '</div></div>' +
+      '<div class="card"><div class="card-label">最佳月份</div><div class="card-value">' + esc(monthText(d.best_month)) + '</div></div>' +
+      '<div class="card"><div class="card-label">最差月份</div><div class="card-value">' + esc(monthText(d.worst_month)) + '</div></div>' +
+      '<div class="card"><div class="card-label">是否达标</div><div class="card-value">' + (d.met ? '达标' : '未达标') + '</div></div>';
+    status.textContent = '';
+  } catch (e) {
+    status.textContent = '加载失败';
+  }
+}
+
+function initSiteYearlySLA() {
+  const yearInput = document.getElementById('year-input');
+  if (!yearInput.value) yearInput.value = new Date().getFullYear();
+  loadSiteYearlySLA();
+  document.getElementById('year-load-btn').addEventListener('click', loadSiteYearlySLA);
+  yearInput.addEventListener('change', loadSiteYearlySLA);
+}
+</script>
+</body>
+</html>
