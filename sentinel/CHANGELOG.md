@@ -3,6 +3,34 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.29.0] - 2026-10-27
+
+### 新增
+
+- 分组年度 SLA 报告：Store 层 GroupYearlySLA（复用 v0.25.0 的 GroupMonthlySLA 聚合全年 12 个月，月份按时间顺序排列；年份取值 1970~9999、非法年份报错；年度可用性按检查数加权、零检查月份不计入加权分母、全部零检查时为 100；监控数为各月监控数最大值；最佳与最差月份只在有检查的月份中评选、全年无检查时回落首月；故障归因合计与占比与分组月报口径一致）；API（均需鉴权）GET /api/groups/{id}/sla/year?year=YYYY（缺省当年、非法年份返回 400、不存在的分组返回 404）、GET /api/groups/{id}/sla/year.html（中文 HTML 导出：分组年度标题、逐月表、可用性条形）；控制台页 /group-sla-year（分组下拉、年份选择、总览卡片、逐月表、可用性条形、导出 HTML 链接），15 个既有控制台页导航末尾加分组年度SLA链，/group-sla-year 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：分组年度 SLA 只聚合组内监控的月报，不在组内的监控不计入；空月可用性记 100（沿用分组月报口径），但空月不参与最佳与最差月份评选；空月最差监控沿用分组月报的既有语义（取组内首个 100% 监控名）；年度监控数为峰值口径（各月监控数最大值，成员不变时与组内成员数相等）。
+
+### 测试
+
+- 新增 internal/store/group_sla_year_test.go（空组年 12 个月：首末月份与目标 99.9、空年可用性 100 与达标、最佳与最差回落首月、非法年份与不存在分组报错；双月单监控：2 月 10 全成功、3 月 9 成功 1 失败得年度加权 95、最佳 2 月、最差 3 月、未达标、监控数 1）、internal/handlers/group_sla_year_test.go（JSON 的 group_id/group_name/year 与 12 项与不存在分组 404 与非法年份 400、HTML 的 200 与“分组年度 SLA 报告/组名/可用性条形”字样与不存在分组 404 与非法年份 400）、internal/web/group_sla_year_test.go（分组年度SLA页 15 个标记与标记顺序、失败路径定义顺序、15 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（16 包，notify 包为既存最慢包）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18499 端口，SENTINEL_TICK_SEC=60；隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建分组 1 号“核心业务”返回 201；新建组内 UP 监控 3 号（本地 200 服务）与组内 DOWN 监控 4 号（127.0.0.1:9 拒绝）加入分组，另建组外 DOWN 监控 5 号不加入；各 CheckNow 2 次后 GET /api/groups/1/sla/year?year=2026 返回年度可用性 50%/检查总数 4（组外监控未计入）/事件数 1/归因 connection 100%/未达标、最佳与最差月份均为 2026-10（全年唯一有检查的月份）、空月 100%/0 检查/最差为组内 UP（沿用分组月报口径）；缺省 year 返回当年 2026 且数值一致；非法年份 abc/1969/10000 均为 400、不存在的分组 404、年度接口无鉴权 401；sla/year.html 含“分组年度 SLA 报告 核心业务 2026”与可用性条形；/group-sla-year 页 200 且含全部标记、无鉴权时页面壳仍 200（既有白名单口径、数据接口仍需鉴权）；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 宕机时长在截图时为 21 秒，系 MonthlySLA 对未恢复事件的既有开放估算口径，非本轮新口径。
+
+### 视觉验收
+
+- 截图 docs/screenshots/group-sla-year-v029.png 亲眼核对——导航 16 链齐全且分组年度SLA active、分组下拉选中核心业务、年份输入 2026、查看与导出 HTML 版齐全、卡片（年度 2026、年度可用性 50.00%、检查总数 4、最佳月份 2026-10、最差月份 2026-10、是否达标未达标）与逐月行（1–9 月与 11–12 月 100% 达标、10 月 50.00% 4 检查 1 事件 最差组内DOWN 未达标）及可用性条形（10 月半格 + 灰底余量）均与 API 返回一致、无“加载失败”。
+- 截图 harness 说明：Playwright setContent 下相对 /api 解析失败；截图脚本按既往模式把样式与 app.js 内联、app.js 的 sessionStorage 取 token 在截图环境内桩化为空串（about:blank 不透明源下直接读 sessionStorage 会抛 SecurityError，api 在 fetch 前即失败）、页面脚本的 /api 改写为绝对地址并经 route 代理回真实服务（路由层注入冒烟 stub token、OPTIONS 预检直接回 200 并补 CORS 头），该改写仅限截图环境，产品代码未动。另实证：page.goto 直连 127.0.0.1 会被 ERR_BLOCKED_BY_LOCAL_NETWORK_ACCESS_CHECKS 拦掉，加 disable-features 旗标亦未解封，故未走直连路线。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 night9_wave9_call.py（令牌经 SSH 现取、只进子进程环境变量、不落盘、未读任何现成调用脚本；显式流式解析 + include_usage，探活用量已捕获记账）；Go 代码、测试、页面均为微片段逐字输出口径；编排侧机械工作：类型稿 Year 字段 string 改 int、Store 稿 Month 字段 m 改 mr.Month 与拼接处多余循环闭合括号删除、测试稿虚构的 seedGroup 辅助改 CreateGroup、Handlers 测试稿 doJSON 入参改字符串 body 与建组断言 201、Web 测试稿 static.ReadFile 改 fs.ReadFile(FS, ...) 与失败路径空值补全、页面稿 nav class 补齐与年度可用性两位小数与 const status 独立声明与双重 init 去重、15 页导航链与路由/鉴权名单机械接线、README/CHANGELOG 事实性文字；另有语义说明一处：空月最差监控为组内首个 100% 监控名是分组月报既有语义，非本轮新口径。
+- 平台层现象：Handlers 处理器稿一次 reasoning-only 空响应（改 max_tokens 16000 后出正文）；Store 双月测试稿连续 4 次 reasoning-only 空响应（4000 与 16000 均空，改骨架照抄 + 16000 后出正文）；截图调试中发现 about:blank 下 sessionStorage 抛 SecurityError（见视觉验收 harness 说明）。
+- 调用统计（batch 目录 usage.log 全量记录，含空响应；成功计 token 与空响应分开标明）：成功调用 14 次，prompt 合计 335590、completion 合计 52227、合计 387817；空响应 5 次（均为 reasoning-only），其上报口径 prompt 合计 119771、completion 合计 32000、合计 151771；错误行 0 条；本轮无 429、无 HTTP 错误行；全量 19 条，prompt 合计 455361、completion 合计 84227、合计 539588。
+
 ## [0.28.0] - 2026-10-27
 
 ### 新增

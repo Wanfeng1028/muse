@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>分组年度SLA · 哨兵 Sentinel</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/design-v015.css">
+    <style>
+    .bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+    .bar-month { width: 72px; flex-shrink: 0; font-size: 12px; color: #64748b; text-align: right; }
+    .bar-outer { flex: 1; height: 16px; background: #e2e8f0; border-radius: 4px; overflow: hidden; }
+    .bar-inner { height: 100%; background: #22c55e; border-radius: 4px; }
+    .bar-text { width: 76px; flex-shrink: 0; font-size: 12px; color: #334155; }
+    </style>
+    <script src="/static/app.js" defer></script>
+</head>
+<body onload="initGroupYearlySLA()">
+<header class="topbar">
+    <span class="brand">哨兵 Sentinel</span>
+    <nav class="nav">
+        <a href="/">仪表盘</a><a href="/monitors">监控管理</a><a href="/incidents">事件</a><a href="/deliveries">投递队列</a><a href="/snapshots">快照归档</a>
+        <a href="/sms-log">短信记录</a><a href="/sla-report">SLA总报</a><a href="/sla-trend">SLA趋势</a><a href="/maintenance">维护窗口</a><a href="/groups">监控分组</a>
+        <a href="/group-sla">分组SLA</a><a href="/group-sla-trend">分组SLA趋势</a><a href="/monitor-sla-trend">单监控SLA趋势</a><a href="/sla-year">年度SLA</a>
+        <a href="/group-sla-year" class="active">分组年度SLA</a>
+    </nav>
+</header>
+<main class="container">
+    <h1>分组年度SLA</h1>
+    <p>全年 12 个月按分组聚合：可用性按检查数加权，目标 99.9%，最佳与最差月份只在有检查的月份中评选，只统计组内监控。</p>
+    <div class="ctrl-row">
+        <select id="group-year-select"></select>
+        <input type="number" id="year-input" min="2000" max="2100">
+        <button id="year-load-btn">查看</button>
+        <a id="year-export-link" href="/api/groups/1/sla/year.html">导出 HTML 版</a>
+    </div>
+    <div id="year-cards" class="cards"></div>
+    <table class="snap-table">
+        <thead><tr><th>月份</th><th>可用性</th><th>检查数</th><th>事件数</th><th>宕机时长</th><th>监控数</th><th>最差监控</th><th>达标</th></tr></thead>
+        <tbody id="year-rows"></tbody>
+    </table>
+    <h2>可用性条形</h2>
+    <div id="year-bars" class="bars"></div>
+    <p id="year-status"></p>
+</main>
+<script>
+function fmtDur(sec) {
+  sec = Math.round(Number(sec) || 0);
+  if (sec <= 0) return '0 秒';
+  const d = Math.floor(sec / 86400), h = Math.floor(sec % 86400 / 3600), m = Math.floor(sec % 3600 / 60), s = sec % 60, p = [];
+  if (d) p.push(d + ' 天');
+  if (h) p.push(h + ' 小时');
+  if (m) p.push(m + ' 分');
+  if (!d && !h) p.push(s + ' 秒');
+  return p.join(' ');
+}
+async function loadGroupYearlySLA() {
+  const year = (document.getElementById('year-input').value || '').trim() || String(new Date().getFullYear()), gid = document.getElementById('group-year-select').value;
+  const cards = document.getElementById('year-cards');
+  const status = document.getElementById('year-status');
+  const rowsEl = document.getElementById('year-rows');
+  const barsEl = document.getElementById('year-bars');
+  if (!gid) { status.textContent = '请先选择分组'; return; }
+  document.getElementById('year-export-link').href = '/api/groups/' + gid + '/sla/year.html?year=' + year;
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  status.textContent = '加载中…';
+  try {
+    const d = await api('/api/groups/' + gid + '/sla/year?year=' + year), items = d.items || [];
+    if (!items.length) { rowsEl.innerHTML = '<tr><td colspan="8">暂无数据</td></tr>'; barsEl.innerHTML = ''; }
+    else {
+      rowsEl.innerHTML = items.map(it => '<tr><td>' + it.month + '</td><td>' + Number(it.uptime_pct).toFixed(2) + '%</td><td>' + it.total_checks + '</td><td>' + it.down_incidents + '</td><td>' + fmtDur(it.total_downtime_sec) + '</td><td>' + it.monitor_count + '</td><td>' + (it.worst_monitor_name ? esc(it.worst_monitor_name) : '-') + '</td><td>' + (it.met ? '达标' : '未达标') + '</td></tr>').join('');
+      barsEl.innerHTML = items.map(it => '<div class="bar-row"><span class="bar-month">' + it.month + '</span><div class="bar-outer"><div class="bar-inner" style="width:' + Number(it.uptime_pct) + '%"></div></div><span class="bar-text">' + Number(it.uptime_pct).toFixed(2) + '%</span></div>').join('');
+    }
+    const card = (t, v) => '<div class="card"><div class="card-title">' + t + '</div><div class="card-value">' + v + '</div></div>';
+    cards.innerHTML = card('年度', esc(d.year)) + card('年度可用性', (Number(d.uptime_pct) || 0).toFixed(2) + '%') + card('检查总数', esc(d.total_checks)) + card('最佳月份', esc(d.best_month || '-')) + card('最差月份', esc(d.worst_month || '-')) + card('是否达标', esc(d.met ? '达标' : '未达标'));
+    status.textContent = '';
+  } catch (e) { status.textContent = '加载失败'; }
+}
+async function loadGroupYearlyOptions() {
+  const select = document.getElementById('group-year-select');
+  const status = document.getElementById('year-status');
+  try {
+    const res = await api('/api/groups');
+    const items = res && res.items;
+    if (Array.isArray(items)) {
+      select.innerHTML = '';
+      items.forEach(g => {
+        const opt = document.createElement('option');
+        opt.value = g.id;
+        opt.textContent = g.name;
+        select.appendChild(opt);
+      });
+    }
+    if (items && items.length) {
+      loadGroupYearlySLA();
+    } else {
+      status.textContent = '暂无分组，请先在监控分组页新建分组';
+    }
+  } catch (e) {
+    status.textContent = '加载失败';
+  }
+}
+
+function initGroupYearlySLA() {
+  const yearInput = document.getElementById('year-input');
+  if (!yearInput.value) yearInput.value = new Date().getFullYear();
+  document.getElementById('year-load-btn').addEventListener('click', loadGroupYearlySLA);
+  document.getElementById('group-year-select').addEventListener('change', loadGroupYearlySLA);
+  yearInput.addEventListener('change', loadGroupYearlySLA);
+  loadGroupYearlyOptions();
+}
+</script>
+</body>
+</html>
