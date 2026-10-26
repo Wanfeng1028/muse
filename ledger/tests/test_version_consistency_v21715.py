@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-EXPECTED_VERSION = "2.17.20"
+EXPECTED_VERSION = "2.17.21"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 

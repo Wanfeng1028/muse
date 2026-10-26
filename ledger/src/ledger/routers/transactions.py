@@ -112,6 +112,9 @@ async def list_transactions(
     offset: int = Query(0, ge=0),
 ) -> dict[str, Any]:
     """分页查询交易列表，返回 {items, total}。"""
+    if type is not None and type != "":
+        if type not in VALID_TYPES:
+            raise HTTPException(status_code=400, detail="type 参数非法")
     async with get_session_factory()() as s:
         conds = []
         if account_id is not None:
@@ -124,7 +127,7 @@ async def list_transactions(
             )
         if category_id is not None:
             conds.append(Transaction.category_id == category_id)
-        if type is not None:
+        if type:
             conds.append(Transaction.type == type)
         if date_from is not None:
             conds.append(Transaction.occurred_on >= date_from)

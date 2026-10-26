@@ -1,5 +1,19 @@
 # 更新日志
 
+## v2.17.21 - 2026-10-27
+
+### 新增
+- `GET /api/transactions` 新增 type 参数校验：非法值返回 400，detail 为“type 参数非法”；此前非法值会静默按该值过滤、返回空列表。合法值：income、expense、transfer（复用同文件已有的 VALID_TYPES）；None 或空串表示不过滤（行为不变）；其余过滤条件与分页一字未动。
+
+### 不变
+- limit/offset 默认值与范围、total 计数口径、条目字段一字未动；创建/更新路径的“非法的交易类型”校验一字未动；前端不受影响。
+
+### 版本同步
+- `src/ledger/__init__.py`、`pyproject.toml`、`tests/test_version_consistency_v21715.py` 的版本同步为 2.17.21。
+
+### 测试
+- 新增 tests/test_transactions_type_validation.py 5 例全绿（bogus 返回 400、空串不过滤、expense 过滤、income/transfer 返回 200、不带 type 不过滤）；ruff check 与 ruff format 全洁；版本一致性测试通过。
+
 ## v2.17.20 - 2026-10-27
 
 ### 新增
