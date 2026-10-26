@@ -86,7 +86,7 @@ def test_store_starred_limit_clamp(tmp_db):
 def test_store_starred_migration(tmp_db):
     conn = sqlite3.connect(tmp_db)
     try:
-        assert conn.execute("PRAGMA user_version").fetchone()[0] == 11
+        assert conn.execute("PRAGMA user_version").fetchone()[0] == 12
         columns = [row[1] for row in conn.execute("PRAGMA table_info(articles)").fetchall()]
         assert "starred_at" in columns
         indexes = [row[1] for row in conn.execute("PRAGMA index_list(articles)").fetchall()]

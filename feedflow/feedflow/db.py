@@ -343,6 +343,15 @@ MIGRATIONS: list[tuple[int, str, list[str]]] = [
         "CREATE INDEX IF NOT EXISTS idx_articles_starred_at ON articles(starred_at DESC)",
     ],
 ),
+(
+    12,
+    "articles 新增 is_archived/archived_at（归档，v1.29 文章归档用）",
+    [
+        "ALTER TABLE articles ADD COLUMN is_archived INTEGER NOT NULL DEFAULT 0",
+        "ALTER TABLE articles ADD COLUMN archived_at TEXT",
+        "CREATE INDEX IF NOT EXISTS idx_articles_archived_at ON articles(archived_at DESC)",
+    ],
+),
 ]
 
 

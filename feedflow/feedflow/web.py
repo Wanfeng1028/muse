@@ -389,6 +389,28 @@ def starred_unstar():
     return redirect(url_for("web.starred_page", removed=1))
 
 
+
+@bp.get("/archived")
+def archived_page():
+    db_path = _cfg()["db_path"]
+    items = store.list_archived(db_path)
+    for item in items:
+        item["display_time"] = _display_time(item["archived_at"])
+    return render_template("archived.html", items=items)
+
+
+@bp.post("/archived/unarchive")
+def archived_unarchive():
+    """将指定文章取消归档。"""
+    db_path = _cfg()["db_path"]
+    article_id = request.form.get("article_id", type=int)
+    if not article_id:
+        return redirect(url_for("web.archived_page", err="bad"))
+    if store.get_article(db_path, article_id) is None:
+        return redirect(url_for("web.archived_page", err="bad"))
+    store.set_archived(db_path, article_id, 0)
+    return redirect(url_for("web.archived_page", removed=1))
+
 @bp.get("/settings/interests")
 def interests_page():
     """兴趣设置页：关键词、源权重、摘要篇数。"""

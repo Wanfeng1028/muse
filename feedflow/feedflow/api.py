@@ -272,6 +272,29 @@ def set_article_star(article_id: int):
     })
 
 
+
+@bp.post("/articles/<int:article_id>/archive")
+def set_article_archive(article_id: int):
+    """设置文章归档。"""
+    db = _db()
+    if store.get_article(db, article_id) is None:
+        return _err("文章不存在", 404)
+    data = _json_body()
+    if "is_archived" not in data:
+        return _err("is_archived 必填", 400)
+    try:
+        value = 1 if int(data["is_archived"]) else 0
+    except (TypeError, ValueError):
+        return _err("is_archived 非法", 400)
+    store.set_archived(db, article_id, value)
+    article = store.get_article(db, article_id)
+    return jsonify({
+        "id": article_id,
+        "is_archived": value,
+        "archived_at": article["archived_at"] if article is not None else None,
+    })
+
+
 @bp.post("/articles/<int:article_id>/progress")
 def set_article_progress(article_id: int):
     """记录阅读进度。body: {"scroll_pos": 数字}。"""
@@ -581,6 +604,15 @@ def list_starred_api():
     """列出星标文章。"""
     return jsonify({"starred": store.list_starred(_db())})
 
+
+
+
+# ---------------- 文章归档 ----------------
+
+@bp.get("/archived")
+def list_archived_api():
+    """列出归档文章。"""
+    return jsonify({"archived": store.list_archived(_db())})
 
 # ---------------------------------------------------------------------------
 # 统计

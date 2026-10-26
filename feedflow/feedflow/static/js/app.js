@@ -188,6 +188,7 @@ function initReader() {
 
   function renderReader(a) {
     const star = a.is_starred ? "★ 取消星标" : "☆ 星标";
+    const archive = a.is_archived ? "取消归档" : "归档";
     const readBtn = a.is_read ? "标为未读" : "标为已读";
     let html = `<div class="reader-head">`;
     html += `<h1>${escapeHtml(a.title || "(无标题)")}</h1>`;
@@ -195,6 +196,7 @@ function initReader() {
     html += `<div class="reader-actions">`;
     html += `<button id="btn-read" class="btn">${readBtn}</button>`;
     html += `<button id="btn-star" class="btn">${star}</button>`;
+    html += `<button id="btn-archive" class="btn">${archive}</button>`;
     html += `<button id="btn-later" class="btn">稍后读</button>`;
     if (a.link) html += `<a class="btn" href="${escapeAttr(a.link)}" target="_blank" rel="noopener">查看原文</a>`;
     html += `</div></div>`;
@@ -208,6 +210,8 @@ function initReader() {
     const btnStar = document.getElementById("btn-star");
     if (btnRead) btnRead.addEventListener("click", () => markRead(a.id, a.is_read ? 0 : 1));
     if (btnStar) btnStar.addEventListener("click", () => toggleStar(a.id, a.is_starred ? 0 : 1));
+    const btnArchive = document.getElementById("btn-archive");
+    if (btnArchive) btnArchive.addEventListener("click", () => toggleArchive(a.id, a.is_archived ? 0 : 1));
     const btnLater = document.getElementById("btn-later");
     if (btnLater) btnLater.addEventListener("click", () => toggleLater(a.id));
     loadTagOptions();
@@ -406,6 +410,13 @@ function bindNoteEditor(articleId) {
   // 星标切换
   async function toggleStar(id, v) {
     try { await api("/api/articles/" + id + "/star", { method: "POST", body: JSON.stringify({ is_starred: v }) }); } catch (e) { return; }
+    if (state.selectedId === id) {
+      try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); loadLaterState(a.id); } catch (e) {}
+    }
+    loadArticles();
+  }
+  async function toggleArchive(id, v) {
+    try { await api("/api/articles/" + id + "/archive", { method: "POST", body: JSON.stringify({ is_archived: v }) }); } catch (e) { return; }
     if (state.selectedId === id) {
       try { const a = await api("/api/articles/" + id); renderReader(a); loadArticleTags(a.id); loadArticleNote(a.id); loadLaterState(a.id); } catch (e) {}
     }

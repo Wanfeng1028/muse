@@ -416,6 +416,26 @@ def set_starred(db_path, article_id, is_starred):
             conn.close()
 
 
+
+def set_archived(db_path, article_id, is_archived):
+    """设置归档状态。"""
+    with write_lock:
+        conn = get_conn(db_path)
+        try:
+            if is_archived:
+                conn.execute(
+                    "UPDATE articles SET is_archived = 1, archived_at = ? WHERE id = ?",
+                    (_now_iso(), article_id),
+                )
+            else:
+                conn.execute(
+                    "UPDATE articles SET is_archived = 0, archived_at = NULL WHERE id = ?",
+                    (article_id,),
+                )
+            conn.commit()
+        finally:
+            conn.close()
+
 def set_scroll_pos(db_path, article_id, pos):
     """记录文章阅读滚动位置（像素）。pos 非法（负数/非数字）时钳制为 0。"""
     try:
@@ -1225,6 +1245,42 @@ def list_starred(db_path, limit=50):
                 "is_read": bool(r["is_read"]),
                 "is_starred": bool(r["is_starred"]),
                 "starred_at": r["starred_at"],
+            }
+            for r in rows
+        ]
+    finally:
+        conn.close()
+
+
+def list_archived(db_path, limit=50):
+    """按归档时间倒序返回归档文章列表；未记 archived_at 的老归档排在最后。"""
+    limit = max(1, min(int(limit), 200))
+    conn = get_conn(db_path)
+    try:
+        rows = conn.execute(
+            """
+            SELECT a.id AS article_id, a.title, a.link, f.title AS feed_title,
+                   a.published_at, a.is_read, a.is_starred, a.is_archived, a.archived_at
+            FROM articles a
+            JOIN feeds f ON f.id = a.feed_id
+            WHERE a.is_archived = 1
+            ORDER BY (a.archived_at IS NULL) ASC, a.archived_at DESC,
+                     a.published_at DESC, a.id ASC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+        return [
+            {
+                "article_id": r["article_id"],
+                "title": r["title"],
+                "link": r["link"],
+                "feed_title": r["feed_title"],
+                "published_at": r["published_at"],
+                "is_read": bool(r["is_read"]),
+                "is_starred": bool(r["is_starred"]),
+                "is_archived": bool(r["is_archived"]),
+                "archived_at": r["archived_at"],
             }
             for r in rows
         ]

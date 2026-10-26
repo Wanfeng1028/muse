@@ -1,6 +1,33 @@
 
 # 更新日志
 
+## v1.29.0 — 2026-10-27
+
+### Added
+
+- 文章归档
+  - 迁移 v12 给 `articles` 表新增 `is_archived` 列（归档标志，默认 0）与 `archived_at` 列（归档时间，可为空）及 `idx_articles_archived_at` 索引
+  - store 层：`set_archived` 归档时写当前时间、取消归档时清空 `archived_at`；新增 `list_archived`（只取 `is_archived = 1`，按归档时间倒序、空时间老归档排最后，limit 钳制 1–200）
+  - API：`GET /api/archived`（返回 `archived` 列表）；`POST /api/articles/<id>/archive` 返回结果新增 `archived_at` 字段（归档为时间、取消为 null），404/必填/非法校验与星标接口一致
+  - Web：新增 `/archived` 页（每行显示标题、来源与归档时间，已读标“已读”，右侧“取消归档”按钮，空态文案）与 `POST /archived/unarchive`（文章不存在或参数非法重定向带 `err=bad`，成功带 `removed=1`）；新增模板 `templates/archived.html`
+  - 阅读器左侧树底栏新增“文章归档”入口；正文区新增“归档”按钮（已归档时显示“取消归档”）；顶栏不加入口（与星标先例一致）
+
+### 测试
+
+- `tests/test_archived_store.py`（6 例：归档写时间、取消清空、只列归档、按归档时间倒序、limit 钳制、迁移 v12 与索引断言）
+- `tests/test_archived_api.py`（7 例：只列归档、归档返回时间、取消后移出列表、按归档时间倒序、行字段形状、缺字段 400、未知文章 404）
+- `tests/test_archived_web.py`（4 例：空态、列表含标题与“取消归档”、取消表单重定向、阅读器底栏链接）
+- 靶向 17/17 通过；`ruff check` 改动 Python 文件全洁（`ruff format` 差异为既有漂移，本轮未动；app.js 不走 ruff）
+- 全量 pytest：1120 通过、2 失败（432.89 秒），2 处失败均为 v1.21 旧契约既有失败（`test_api_deep.py::test_pagination_limit_clamped`、`test_api_deep2.py::test_articles_pagination_edge_cases`），本轮未动分页逻辑，零回归
+- 视觉验收：真实服务（18429 端口，应用自带种子库 33 篇，归档 2 篇真实文章），截图 `docs/screenshots/archived-v129.png`（归档页两行真实数据、取消归档按钮）与 `docs/screenshots/reader-foot-v129.png`（三栏阅读器、已归档文章正文区“取消归档”按钮、树底栏“文章归档”入口），两路 console 零错误；冒烟服务与演示库已删，截图脚本在 `muse-build/batches-feedflow-20261026-night7/ff_n7_pine_shot.js`
+- 模型稿（只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行，prompt 首行禁思考过程，调用器为本轮现写的最小新文件 `ff_n7_pine_call.py`，令牌经 SSH 现取不落盘、未读任何现成调用脚本）：14 通全部一次成功、零空响应、零失败；编排修正均已披露：① Web 测试辅助函数把 /api/archived 的键写成 articles，模型回喂修正为 archived；② Web 测试归档用了不存在的 /archive 端点，模型回喂修正为逐篇 POST /api/articles/<id>/archive（含辅助函数同款 3 处）；③ README 段落模型稿把“归档”写成直引号并把“即可归档”写成“即可收藏”，校回与星标段落一致的中文引号与措辞；④ 旧测试 test_store_starred_migration 的 user_version 期望由 11 改为 12（迁移版本耦合断言，本轮迁移 v12 直接导致，非 v1.21 旧契约）
+
+### 已知限制
+
+- `/archived` 页标题链接指向原文外链，与 `/later`、`/history`、`/starred` 页已知限制同款，不跳回站内阅读器。
+- 归档不影响未读/全部/星标列表，仅作收纳；取消归档即取回。
+- 顶栏无“文章归档”入口，只在阅读器树底栏与正文区，与星标一致。
+
 ## v1.28.0 — 2026-10-27
 
 ### Added
