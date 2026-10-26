@@ -720,11 +720,9 @@ func (s *Server) handleListChecks(w http.ResponseWriter, r *http.Request) {
 		}
 		limit = n
 	}
-	if limit < 1 {
-		limit = 1
-	}
-	if limit > 1000 {
-		limit = 1000
+	if limit < 1 || limit > 1000 {
+		writeErr(w, http.StatusBadRequest, "limit 参数非法")
+		return
 	}
 	checks, err := s.store.ListChecks(id, limit)
 	if err != nil {

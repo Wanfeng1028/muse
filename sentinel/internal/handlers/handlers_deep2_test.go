@@ -286,29 +286,20 @@ func TestHandleListChecksNotFoundDeep3(t *testing.T) {
 	}
 }
 
-// TestHandleListChecksLimitClampDeep3 覆盖 limit 参数的上下界钳制。
-func TestHandleListChecksLimitClampDeep3(t *testing.T) {
+// TestHandleListChecksLimitValidationDeep3 覆盖 limit 参数越界返回 400。
+func TestHandleListChecksLimitValidationDeep3(t *testing.T) {
 	srv, _ := newTestServer(t)
 	h := srv.Routes()
 	id := deep3CreateMonitor(t, h, `{"name":"clamp","kind":"http","target":"https://example.com"}`)
 
-	rec, m := deep3DoJSON(t, h, http.MethodGet, "/api/monitors/"+itoa(id)+"/checks?limit=-5", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200 for negative limit, got %d body=%s", rec.Code, rec.Body.String())
-	}
-	if _, ok := m["items"].([]any); !ok {
-		t.Fatalf("items wrong type: %v", m["items"])
+	rec, _ := deep3DoJSON(t, h, http.MethodGet, "/api/monitors/"+itoa(id)+"/checks?limit=-5", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for negative limit, got %d body=%s", rec.Code, rec.Body.String())
 	}
 
-	rec, m = deep3DoJSON(t, h, http.MethodGet, "/api/monitors/"+itoa(id)+"/checks?limit=99999", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200 for large limit, got %d body=%s", rec.Code, rec.Body.String())
-	}
-	if _, ok := m["items"].([]any); !ok {
-		t.Fatalf("items wrong type: %v", m["items"])
-	}
-	if _, ok := m["total"]; !ok {
-		t.Fatalf("missing total in response: %v", m)
+	rec, _ = deep3DoJSON(t, h, http.MethodGet, "/api/monitors/"+itoa(id)+"/checks?limit=99999", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400 for large limit, got %d body=%s", rec.Code, rec.Body.String())
 	}
 }
 

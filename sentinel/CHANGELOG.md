@@ -3,6 +3,29 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.12] - 2026-10-26
+
+### 改动
+
+**接口行为变更**  
+`GET /api/monitors/{id}/checks` 的 `limit` 参数校验规则收紧：
+- 改动前：`limit < 1` 静默钳制为 1，`limit > 1000` 静默钳制为 1000。
+- 改动后：`limit < 1` 或 `limit > 1000` 返回 HTTP 400，错误文案为 `"limit 参数非法"`。
+
+**未改动行为**  
+- 缺省 `limit` 值保持为 100。
+- `limit` 为非数字字符串时返回 400。
+- 监控不存在时返回 404。
+
+**测试同步**
+- `handlers_deep2_test.go` 中原有针对钳制逻辑的测试重命名为 `TestHandleListChecksLimitValidationDeep3`，其中两处断言由 `200` 改为 `400`。
+- 既有 `checks_limit_validation_test.go` 中非数字 `limit` 返回 400、合法 `limit=10` 返回 200 的用例不受影响。
+
+**影响范围**
+- 版本号：CHANGELOG 新增 [0.20.12] 一节（代码内无版本常量，版本号只记 CHANGELOG，与 0.20.11 轮一致）。
+- 无 schema 变更。
+- 无 UI 改动。
+
 ## [0.20.11] - 2026-10-26
 
 ### 修复
