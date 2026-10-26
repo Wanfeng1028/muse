@@ -1,3 +1,13 @@
+## [1.19.9] - 2026-10-27
+
+### Changed
+- WS 层 term_open/term_resize 的 cols/rows 解析不再静默回落 80/24：字段存在但不是合法 u16（超 u16、字符串、浮点）时不再当成 80x24，改为返回 term_error“终端尺寸非法（列 2–500、行 2–500）”，不创建/不调整会话；字段缺失时仍默认 80/24；合法 u16 但超 2–500 范围的仍由 manager 判 InvalidSize，走同一文案。
+- 实现：src/handlers.rs 新增 term_size_from helper（缺失取默认、存在须为 u16、其余交 manager），term_open/term_resize 两处解析改用它，非法时以 Err(TermError::InvalidSize) 走已有 term_error 通路；manager 范围与文案一字未动。
+
+### Added
+- tests/ws_term_size_invalid_test.rs 新增 4 例：超大 cols 的 open 拒收、字符串 cols 的 open 拒收、缺省尺寸仍建会话（term_ready 且 session_id 32 位 hex）、超大 cols 的 resize 拒收；4/4 通过；关联回归 term_size_validation_test 8/8、ws_term_open_r2 3/3 通过；cargo fmt 干净。
+- 真实服务冒烟：18429 端口隔离库，超大 open、字符串 open、超大 resize 均 term_error 同文案，合法 open 正常 term_ready，冒烟后服务已停、端口复查已关。
+
 ## [1.19.8] - 2026-10-26
 
 ### Changed

@@ -1275,6 +1275,18 @@ impl Drop for WsConnGuard {
 }
 
 /// 将 TermError 映射为对客户端可读的中文提示。
+fn term_size_from(v: &serde_json::Value) -> Option<(u16, u16)> {
+    let cols = match v.get("cols") {
+        None => 80,
+        Some(x) => x.as_u64().and_then(|c| u16::try_from(c).ok())?,
+    };
+    let rows = match v.get("rows") {
+        None => 24,
+        Some(x) => x.as_u64().and_then(|r| u16::try_from(r).ok())?,
+    };
+    Some((cols, rows))
+}
+
 fn term_err_msg(e: crate::terminal::TermError) -> &'static str {
     use crate::terminal::TermError;
     match e {
@@ -1339,18 +1351,10 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: i64, us
 
                         let handled = match parsed.as_ref().and_then(|v| v.get("type")).and_then(|t| t.as_str()) {
                             Some("term_open") => {
-                                let cols = parsed
-                                    .as_ref()
-                                    .and_then(|v| v.get("cols"))
-                                    .and_then(|v| v.as_u64())
-                                    .and_then(|n| u16::try_from(n).ok())
-                                    .unwrap_or(80);
-                                let rows = parsed
-                                    .as_ref()
-                                    .and_then(|v| v.get("rows"))
-                                    .and_then(|v| v.as_u64())
-                                    .and_then(|n| u16::try_from(n).ok())
-                                    .unwrap_or(24);
+                                let (cols, rows, size_valid) = match parsed.as_ref().and_then(|v| term_size_from(v)) {
+                                    Some((c, r)) => (c, r, true),
+                                    None => (80, 24, false),
+                                };
 
                                 let allowed = crate::rbac::Role::parse(&user_role)
                                     .map(|r| {
@@ -1371,7 +1375,12 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: i64, us
                                     }
                                     true
                                 } else {
-                                    match state.terminals.open(user_id, cols, rows) {
+                                    let open_result = if size_valid {
+                                        state.terminals.open(user_id, cols, rows)
+                                    } else {
+                                        Err(crate::terminal::TermError::InvalidSize)
+                                    };
+                                    match open_result {
                                         Ok(session_id) => {
                                             state.metrics.term_session_inc();
                                             state.metrics.term_opened();
@@ -1488,19 +1497,16 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, user_id: i64, us
                                     .and_then(|v| v.as_str())
                                     .unwrap_or("")
                                     .to_string();
-                                let cols = parsed
-                                    .as_ref()
-                                    .and_then(|v| v.get("cols"))
-                                    .and_then(|v| v.as_u64())
-                                    .and_then(|n| u16::try_from(n).ok())
-                                    .unwrap_or(80);
-                                let rows = parsed
-                                    .as_ref()
-                                    .and_then(|v| v.get("rows"))
-                                    .and_then(|v| v.as_u64())
-                                    .and_then(|n| u16::try_from(n).ok())
-                                    .unwrap_or(24);
-                                if let Err(e) = state.terminals.resize(user_id, &sid, cols, rows) {
+                                let (cols, rows, size_valid) = match parsed.as_ref().and_then(|v| term_size_from(v)) {
+                                    Some((c, r)) => (c, r, true),
+                                    None => (80, 24, false),
+                                };
+                                let resize_result = if size_valid {
+                                        state.terminals.resize(user_id, &sid, cols, rows)
+                                    } else {
+                                        Err(crate::terminal::TermError::InvalidSize)
+                                    };
+                                if let Err(e) = resize_result {
                                     let msg = json!({
                                         "type": "term_error",
                                         "session_id": sid,
