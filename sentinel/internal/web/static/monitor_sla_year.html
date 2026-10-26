@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>单监控年度SLA · 哨兵 Sentinel</title>
+  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="/static/design-v015.css">
+  <style>
+    .bar-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; }
+    .bar-month { width: 80px; flex: none; text-align: right; }
+    .bar-outer { flex: 1; height: 18px; background: rgba(127, 127, 127, 0.15); border-radius: 4px; overflow: hidden; }
+    .bar-inner { height: 100%; background: #2f9e44; }
+    .bar-text { width: 80px; flex: none; }
+  </style>
+  <script src="/static/app.js" defer></script>
+</head>
+<body onload="initMonitorYearlySLA()">
+  <header class="topbar">
+    <span class="brand">哨兵 Sentinel</span>
+    <nav class="nav">
+      <a href="/">仪表盘</a>
+      <a href="/monitors">监控管理</a>
+      <a href="/incidents">事件</a>
+      <a href="/deliveries">投递队列</a>
+      <a href="/snapshots">快照归档</a>
+      <a href="/sms-log">短信记录</a>
+      <a href="/sla-report">SLA总报</a>
+      <a href="/sla-trend">SLA趋势</a>
+      <a href="/maintenance">维护窗口</a>
+      <a href="/groups">监控分组</a>
+      <a href="/group-sla">分组SLA</a>
+      <a href="/group-sla-trend">分组SLA趋势</a>
+      <a href="/monitor-sla-trend">单监控SLA趋势</a>
+      <a href="/sla-year">年度SLA</a>
+      <a href="/group-sla-year">分组年度SLA</a>
+      <a href="/monitor-sla-year" class="active">单监控年度SLA</a>
+    </nav>
+  </header>
+  <main class="container">
+    <h1>单监控年度SLA</h1>
+    <p>全年 12 个月按单监控聚合：可用性按检查数加权，目标 99.9%，最佳与最差月份只在有检查的月份中评选。</p>
+    <div class="ctrl-row">
+      <select id="monitor-year-select"></select>
+      <input type="number" id="year-input" min="2000" max="2100">
+      <button id="year-load-btn">查看</button>
+      <a id="year-export-link" href="#">导出 HTML 版</a>
+    </div>
+    <div id="year-cards" class="cards"></div>
+    <table class="snap-table">
+      <thead>
+        <tr>
+          <th>月份</th>
+          <th>可用性</th>
+          <th>检查数</th>
+          <th>事件数</th>
+          <th>宕机时长</th>
+          <th>达标</th>
+        </tr>
+      </thead>
+      <tbody id="year-rows"></tbody>
+    </table>
+    <h2>可用性条形</h2>
+    <div id="year-bars" class="bars"></div>
+    <p id="year-status"></p>
+  </main>
+  <script>
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+
+    function fmtDur(sec) {
+      sec = Math.round(Number(sec) || 0);
+      if (sec <= 0) return '0秒';
+      const days = Math.floor(sec / 86400);
+      const hours = Math.floor((sec % 86400) / 3600);
+      const mins = Math.floor((sec % 3600) / 60);
+      const secs = sec % 60;
+      let out = '';
+      if (days) out += days + '天';
+      if (hours) out += hours + '小时';
+      if (mins) out += mins + '分';
+      if (secs || !out) out += secs + '秒';
+      return out;
+    }
+
+    async function loadMonitorYearlySLA() {
+      const status = document.getElementById('year-status');
+      let year = document.getElementById('year-input').value;
+      if (!year) year = new Date().getFullYear();
+      const mid = document.getElementById('monitor-year-select').value;
+      if (!mid) {
+        status.textContent = '请先选择监控';
+        return;
+      }
+      document.getElementById('year-export-link').href = '/api/monitors/' + mid + '/sla/year.html?year=' + year;
+      try {
+        const d = await api('/api/monitors/' + mid + '/sla/year?year=' + year);
+        const items = d.items || [];
+        const rows = document.getElementById('year-rows');
+        const bars = document.getElementById('year-bars');
+        const cards = document.getElementById('year-cards');
+        if (!items.length) {
+          rows.innerHTML = '<tr><td colspan="6">暂无数据</td></tr>';
+          bars.innerHTML = '';
+          cards.innerHTML = '';
+          status.textContent = '';
+          return;
+        }
+        let totalChecks = 0;
+        let weighted = 0;
+        let best = null;
+        let worst = null;
+        let rowHtml = '';
+        let barHtml = '';
+        items.forEach(function (it) {
+          const checks = Number(it.total_checks) || 0;
+          const avail = Number(it.uptime_pct) || 0;
+          const month = escapeHtml(it.month == null ? '' : it.month);
+          rowHtml += '<tr>' +
+            '<td>' + month + '</td>' +
+            '<td>' + avail.toFixed(2) + '%</td>' +
+            '<td>' + checks + '</td>' +
+            '<td>' + (Number(it.down_incidents) || 0) + '</td>' +
+            '<td>' + fmtDur(it.total_downtime_sec) + '</td>' +
+            '<td>' + (it.met ? '达标' : '未达标') + '</td>' +
+            '</tr>';
+          barHtml += '<div class="bar-row">' +
+            '<div class="bar-month">' + month + '</div>' +
+            '<div class="bar-outer"><div class="bar-inner" style="width:' + avail + '%"></div></div>' +
+            '<div class="bar-text">' + avail.toFixed(2) + '%</div>' +
+            '</div>';
+          if (checks > 0) {
+            totalChecks += checks;
+            weighted += avail * checks;
+            if (best === null || avail > best.avail) best = { month: month, avail: avail };
+            if (worst === null || avail < worst.avail) worst = { month: month, avail: avail };
+          }
+        });
+        rows.innerHTML = rowHtml;
+        bars.innerHTML = barHtml;
+        const yearAvail = Number(d.uptime_pct) || 0;
+        cards.innerHTML =
+          '<div class="card"><div class="card-label">年度</div><div class="card-value">' + escapeHtml(String(d.year)) + '</div></div>' +
+          '<div class="card"><div class="card-label">年度可用性</div><div class="card-value">' + yearAvail.toFixed(2) + '%</div></div>' +
+          '<div class="card"><div class="card-label">检查总数</div><div class="card-value">' + (Number(d.total_checks) || 0) + '</div></div>' +
+          '<div class="card"><div class="card-label">最佳月份</div><div class="card-value">' + escapeHtml(d.best_month || '-') + '</div></div>' +
+          '<div class="card"><div class="card-label">最差月份</div><div class="card-value">' + escapeHtml(d.worst_month || '-') + '</div></div>' +
+          '<div class="card"><div class="card-label">是否达标</div><div class="card-value">' + (d.met ? '达标' : '未达标') + '</div></div>';
+        status.textContent = '';
+      } catch (e) {
+        status.textContent = '加载失败';
+      }
+    }
+
+    async function loadMonitorYearlyOptions() {
+      const status = document.getElementById('year-status');
+      try {
+        const d = await api('/api/monitors');
+        const list = Array.isArray(d) ? d : (d.items || []);
+        const sel = document.getElementById('monitor-year-select');
+        sel.innerHTML = '';
+        list.forEach(function (m) {
+          const opt = document.createElement('option');
+          opt.value = m.id;
+          opt.textContent = m.name;
+          sel.appendChild(opt);
+        });
+        if (list.length) {
+          loadMonitorYearlySLA();
+        } else {
+          status.textContent = '暂无监控，请先在监控管理页新建监控';
+        }
+      } catch (e) {
+        status.textContent = '加载失败';
+      }
+    }
+
+    function initMonitorYearlySLA() {
+      const yearInput = document.getElementById('year-input');
+      if (!yearInput.value) yearInput.value = new Date().getFullYear();
+      document.getElementById('year-load-btn').addEventListener('click', loadMonitorYearlySLA);
+      document.getElementById('monitor-year-select').addEventListener('change', loadMonitorYearlySLA);
+      yearInput.addEventListener('change', loadMonitorYearlySLA);
+      loadMonitorYearlyOptions();
+    }
+  </script>
+</body>
+</html>

@@ -3,6 +3,35 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.30.0] - 2026-10-27
+
+### 新增
+
+- 单监控年度 SLA 报告：Store 层 MonitorYearlySLA（复用单监控月报 MonthlySLA 聚合全年 12 个月，月份按时间顺序排列；年份取值 1970~9999、非法年份报错；先查 GetMonitor，不存在的监控返回“监控不存在”；年度可用性按检查数加权、零检查月份不计入加权分母、全部零检查时为 100；最佳与最差月份只在有检查的月份中评选、全年无检查时回落首月；故障归因合计与占比与单监控月报口径一致）；API（均需鉴权）GET /api/monitors/{id}/sla/year?year=YYYY（缺省当年、非法年份返回 400、不存在的监控返回 404）、GET /api/monitors/{id}/sla/year.html（中文 HTML 导出：单监控年度标题、逐月表、可用性条形）；控制台页 /monitor-sla-year（监控下拉、年份选择、总览卡片、逐月表、可用性条形、导出 HTML 链接），16 个既有控制台页导航末尾加单监控年度SLA链，/monitor-sla-year 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：单监控年度 SLA 只聚合该监控的月报，其他监控不计入；空月可用性记 100（沿用单监控月报口径），但空月不参与最佳与最差月份评选；不存在监控的 404 依赖 Store 层先查 GetMonitor，因为单监控月报本身对不存在的监控不会报错。
+
+### 测试
+
+- 新增 internal/store/monitor_sla_year_test.go（空年 12 个月：首末月份与目标 99.9、空年可用性 100 与达标、最佳与最差回落首月、非法年份与不存在监控报错；双月：2 月 10 全成功、3 月 9 成功 1 失败得年度加权 95、最佳 2 月、最差 3 月、未达标）、internal/handlers/monitor_sla_year_test.go（JSON 的 monitor_id/monitor_name/year 与 12 项与不存在监控 404 与非法年份 400、HTML 的 200 与“单监控年度 SLA 报告/监控名/可用性条形”字样与不存在监控 404 与非法年份 400）、internal/web/monitor_sla_year_test.go（单监控年度SLA页 14 个标记与标记顺序、失败路径定义顺序、16 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（16 包，notify 包为既存最慢包，239.583 秒）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18500 端口，SENTINEL_TICK_SEC=60；隔离库与隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建 UP 监控 3 号（本地 200 服务）与 DOWN 监控 4 号（127.0.0.1:9 拒绝）；各 CheckNow 2 次后 GET /api/monitors/4/sla/year?year=2026 返回年度可用性 0%/检查总数 2/事件数 1/归因 connection 100%/未达标、最佳与最差月份均为 2026-10（全年唯一有检查的月份）、空月 100%/0 检查；GET /api/monitors/3/sla/year?year=2026 返回年度可用性 100%/检查总数 2/未达标为否（达标）、最佳与最差月份均为 2026-10；缺省 year 返回当年 2026 且数值一致；非法年份 abc/1969/10000 均为 400、不存在的监控 404、年度接口无鉴权 401；sla/year.html 含“单监控年度 SLA 报告 年报DOWN 2026”与可用性条形，HTML 的不存在监控 404 与非法年份 400 均通过；/monitor-sla-year 页 200 且含全部标记、无鉴权时页面壳仍 200（既有白名单口径、数据接口仍需鉴权）；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+
+### 视觉验收
+
+- 截图目视未完成：本轮未产出 docs/screenshots/monitor-sla-year-v030.png，页面未经过真实数据截图亲眼核对，原因如下（非页面代码问题）：约 22:21 UTC 起本机执行环境突变，Go 与 Python 二进制的文件写操作一律报 EPERM（SQLite 新库 WAL 报 disk I/O error，Python 写盘报 Operation not permitted，Shell/Perl/Node 写盘仍正常），Chromium 启动亦报 SIGTRAP 崩溃；为截图重启的隔离服务两次均因上述原因无法打开新库而退出，未能重建可截图的真实服务。截图脚本已留在本轮 batch 目录（shot_monitor_year.js，按既往模式：setContent 内联样式与 app.js、app.js 的 sessionStorage 取 token 桩化为空串、路由层注入冒烟 stub token 并处理 OPTIONS 预检与 CORS 头），待环境恢复后重跑即可补图。本条为已知限制，绝不视为已视觉验收。
+
+### 办结状态
+
+- 本轮代码、测试、冒烟、文档均已完成，但 commit 与 push 未完成：约 22:21 UTC 起本机执行环境突变，git 二进制写对象一律报 Operation not permitted（git add 与 git hash-object 均失败，index 未被改动、无半截暂存），工作树 25 个 sentinel 文件保持未提交状态；待环境恢复后按本节文件清单执行 git add、核对 diff --cached --stat、commit、push origin main 并用 git branch -r --contains 核实即可，不需重做代码与测试。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 night10_sentinel_call.py（令牌经 SSH 现取、只进子进程内存、不落盘、未读任何现成调用脚本；显式流式解析 + include_usage，每次调用用量均已捕获记账）；Go 代码、测试、页面均为单文件逐字输出口径；编排侧机械工作：Handlers 测试稿 CreateMonitor 单变量赋值改双返回值加 err 断言、页面稿 API 字段名改 total_checks/uptime_pct/down_incidents/total_downtime_sec 且卡片改用服务端 best_month/worst_month/uptime_pct/met（不再由页面自行重算）、16 页导航链每页只多一行且保留原行首缩进、路由与鉴权精确名单接线、README/CHANGELOG 事实性文字。
+- 调用统计（batch 目录 usage.log 全量记录）：成功调用 6 次，空响应 0 次，错误 0 条；成功计 token：prompt 合计 145267、completion 合计 41520、合计 186787；全量与成功一致（无空响应与错误行）；本轮无 429、无 HTTP 错误行；全部调用模型均为大写 GLM-5.3-Flash。
+
 ## [0.29.0] - 2026-10-27
 
 ### 新增
