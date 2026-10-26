@@ -1,3 +1,17 @@
+## Unreleased（2026-10-26）——serve 检索接口 limit 非法返回 400
+### 动机
+同文件内 title_boost/phrase_boost 对非法值早已返回 400，唯独 /api/search 与 /api/locate 的 limit 解析静默回落默认值（非数字回默认、超范围回默认），调用方传错参数无法发现；三个测试文件还把旧回落口径锁死为 200。
+### 变更
+- src/service.cpp：两处 limit 解析改用 stoi 带 pos 的整串合法判定：缺参或空串仍默认（搜索 20、定位 5），非数字、小于 1、大于 100 均返回 400（error 文案“limit 参数无效”，与 title_boost 分支同形）；1..100 范围、默认值、q 缺失 400、title_boost/phrase_boost 均不动；Web UI 只发合法整数（search 侧 parseInt 兜底 20、locate 侧兜底 5），不受影响。
+- 测试期望同步：tests/test_serve_r2_limit.cpp 两处（limit=0、abc）改 400；tests/test_serve_r2_locatelimit.cpp 两处（limit=200、abc）改 400；tests/test_http_contract.cpp 一处（SearchBadLimit，limit=abc）改 400；测试名中 Fallback 改为 Returns400（SearchBadLimit 名不变）；其余用例不动。
+### 测试
+- 构建：cmake 增量构建成功（含 service.cpp 与三个测试文件重编）。
+- gtest：SearchBadLimit 1/1 通过；其余 4 个改动用例在当前单测二进制里因多文件同名 ServeFixture 类冲突（gtest 在注册期即判不同 fixture 类、0ms 失败，与改动无关，v0.36 轮已记 ServeFixture 夹具装配失败为既存失败）无法通过二进制跑通，未冒充为通过。
+- 真实服务冒烟（本轮新建 2 文档小库、18461 端口真 serve 进程，冒烟后已停服、端口已关）：search limit=0/abc/101 均 400 且体为 limit 参数无效，limit=1 与缺参均 200；locate limit=200/abc 均 400，limit=1 200 且 anchors 非空；8/8 通过。
+- 无版本号变更、无 schema 变更、无 UI 改动。
+### 诚实记录
+- gtest 夹具同名冲突为既存结构问题（多个测试文件各自定义 ServeFixture 类），非本轮引入；后续轮次若要让这 4 例在二进制里跑通，需先给各文件夹具改名或分二进制，本轮不扩范围。
+- 全量 ctest 与全量 1440 对评测本轮未跑（v0.37 全量对比仍排期）。
 ## v0.37.0（2026-10-26）——专节标题精确命中
 ### 动机
 为实现专节标题精确命中，加成逻辑新增：当 searchDetailed 中 token 字节全等 trim 后节标题时得 0.5，每互异 token +0.5，每文档封顶 1.0；跳过与文档标题全等的标题行；不以 titleDegraded 为门控；计入 finalScore 与 structuralBonus。

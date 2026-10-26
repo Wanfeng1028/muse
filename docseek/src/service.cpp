@@ -289,12 +289,19 @@ public:
                 int limit = 20;
                 auto lit = req.query.find("limit");
                 if (lit != req.query.end() && !lit->second.empty()) {
+                    bool ok = false;
+                    int parsed = 0;
                     try {
-                        int parsed = std::stoi(lit->second);
-                        if (parsed >= 1 && parsed <= 100) limit = parsed;
+                        size_t pos = 0;
+                        parsed = std::stoi(lit->second, &pos);
+                        ok = (pos == lit->second.size());
                     } catch (...) {
-                        limit = 20;
+                        ok = false;
                     }
+                    if (!ok || parsed < 1 || parsed > 100) {
+                        return HttpResponse::json("{\"error\":\"limit 参数无效\"}", 400);
+                    }
+                    limit = parsed;
                 }
                 SearchWeights weights;
                 auto tbit = req.query.find("title_boost");
@@ -385,12 +392,19 @@ public:
                 int limit = 5;
                 auto lit = req.query.find("limit");
                 if (lit != req.query.end() && !lit->second.empty()) {
+                    bool ok = false;
+                    int parsed = 0;
                     try {
-                        int parsed = std::stoi(lit->second);
-                        if (parsed >= 1 && parsed <= 100) limit = parsed;
+                        size_t pos = 0;
+                        parsed = std::stoi(lit->second, &pos);
+                        ok = (pos == lit->second.size());
                     } catch (...) {
-                        limit = 5;
+                        ok = false;
                     }
+                    if (!ok || parsed < 1 || parsed > 100) {
+                        return HttpResponse::json("{\"error\":\"limit 参数无效\"}", 400);
+                    }
+                    limit = parsed;
                 }
                 ParsedQuery pq = parseNaturalQuery(q);
                 Searcher searcher(db_);

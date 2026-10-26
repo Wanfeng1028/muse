@@ -263,18 +263,18 @@ TEST_F(ServeFixture, LimitOne) {
     EXPECT_EQ(countOccurrences(resp, "doc_id"), static_cast<size_t>(1)) << resp;
 }
 
-// 3. limit=0：非法，按源码回退为 20，断言 200 且 hits 非空。
-TEST_F(ServeFixture, LimitZeroFallback) {
+// 3. limit=0：新口径：非法 limit 返回 400。
+TEST_F(ServeFixture, LimitZeroReturns400) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&limit=0");
-    EXPECT_EQ(statusCode(resp), 200) << resp;
-    expectContains(resp, "hits");
-    expectContains(resp, "\"hits\":[{");
+    EXPECT_EQ(statusCode(resp), 400) << resp;
+    expectContains(resp, "error");
 }
 
-// 4. limit=abc：非法，按源码回退为 20，断言 200。
-TEST_F(ServeFixture, LimitNonNumericFallback) {
+// 4. limit=abc：新口径：非法 limit 返回 400。
+TEST_F(ServeFixture, LimitNonNumericReturns400) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&limit=abc");
-    EXPECT_EQ(statusCode(resp), 200) << resp;
+    EXPECT_EQ(statusCode(resp), 400) << resp;
+    expectContains(resp, "error");
 }
 
 }  // namespace

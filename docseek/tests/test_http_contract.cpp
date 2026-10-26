@@ -265,10 +265,11 @@ TEST_F(ServeFixture, SearchExplain) {
     expectContains(resp, "final");
 }
 
-// 5. /api/search?q=退款&limit=abc → 200（非法 limit 回退默认值）。
+// 5. /api/search?q=退款&limit=abc → 400（新口径：非法 limit 返回 400）。
 TEST_F(ServeFixture, SearchBadLimit) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&limit=abc");
-    EXPECT_EQ(statusCode(resp), 200) << resp;
+    EXPECT_EQ(statusCode(resp), 400) << resp;
+    expectContains(resp, "error");
 }
 
 // 6. /api/search?q=退款&unknown=xyz → 200（多余参数不影响）。

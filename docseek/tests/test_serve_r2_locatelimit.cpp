@@ -246,22 +246,18 @@ class ServeFixture : public ::testing::Test {
     pid_t pid_ = -1;
 };
 
-// 1. limit=200 超上限，源码回退默认 5。
-TEST_F(ServeFixture, LocateLimitOverMaxFallsBack) {
+// 1. limit=200 超上限：新口径：非法 limit 返回 400。
+TEST_F(ServeFixture, LocateLimitOverMaxReturns400) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策在哪一段") + "&limit=200");
-    EXPECT_EQ(statusCode(resp), 200) << resp;
-    expectContains(resp, "anchors");
-    size_t n = countOccurrences(resp, "line_start");
-    EXPECT_LE(n, static_cast<size_t>(5)) << "line_start 出现次数超过默认 5: " << n << "\n响应体: " << resp;
+    EXPECT_EQ(statusCode(resp), 400) << resp;
+    expectContains(resp, "error");
 }
 
-// 2. limit=abc 非法，源码回退默认 5。
-TEST_F(ServeFixture, LocateLimitNonNumericFallsBack) {
+// 2. limit=abc 非法：新口径：非法 limit 返回 400。
+TEST_F(ServeFixture, LocateLimitNonNumericReturns400) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策在哪一段") + "&limit=abc");
-    EXPECT_EQ(statusCode(resp), 200) << resp;
-    expectContains(resp, "anchors");
-    size_t n = countOccurrences(resp, "line_start");
-    EXPECT_LE(n, static_cast<size_t>(5)) << "line_start 出现次数超过默认 5: " << n << "\n响应体: " << resp;
+    EXPECT_EQ(statusCode(resp), 400) << resp;
+    expectContains(resp, "error");
 }
 
 // 3. limit=1 有效，恰好 1 个 anchor。
