@@ -300,3 +300,27 @@ export async function updateTrigger(room: string, id: string, patch: TriggerRule
 export async function deleteTrigger(room: string, id: string): Promise<void> {
   await apiJson<{ ok: boolean }>(`${BASE}/api/rooms/${encodeURIComponent(room)}/triggers/${encodeURIComponent(id)}`, { method: 'DELETE' });
 }
+
+// ===== append to web/src/api.ts =====
+export interface ShareViewData {
+  room: RoomInfo;
+  share: { id: string; expires_at_ms: number };
+  messages: HistoryMessage[];
+}
+
+export async function fetchShareView(token: string): Promise<ShareViewData> {
+  const res = await fetch(`${BASE}/api/share/${encodeURIComponent(token)}`);
+  if (!res.ok) {
+    let error = String(res.status);
+    try {
+      const body = await res.json();
+      if (body && typeof body.error === "string" && body.error) {
+        error = body.error;
+      }
+    } catch {
+      // keep status code
+    }
+    throw new Error(`share ${res.status} ${error}`);
+  }
+  return (await res.json()) as ShareViewData;
+}

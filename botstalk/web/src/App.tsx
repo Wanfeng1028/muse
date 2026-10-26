@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import Join from './components/Join';
 import RoomList from './components/RoomList';
 import Chat from './components/Chat';
+import ShareView from './components/ShareView';
 
 export default function App() {
   const [nick, setNick] = useState<string | null>(null);
@@ -28,6 +29,9 @@ export default function App() {
     setRoomId(null);
   }, []);
 
+  const _shareHash = typeof window !== 'undefined' ? window.location.hash : '';
+  const _shareMatch = _shareHash.match(/^#\/share\/([A-Za-z0-9]{32})$/);
+  if (_shareMatch) return <ShareView token={_shareMatch[1]} />;
   if (!nick) return <Join onJoin={handleJoin} />;
   if (!roomId) return <RoomList nick={nick} onSelect={handleSelectRoom} onLogout={handleLeave} />;
   return <Chat key={`${sessionKey}-${roomId}`} nick={nick} room={roomId} onLeave={handleBackToRooms} />;

@@ -1,5 +1,24 @@
 # Changelog
 
+## Unreleased - OpenAgents 第 10 轮（只读分享链接）
+
+### 新增
+
+- 只读分享链接（清单第 12 项“邀请链接 + 免安装只读查看”）：Workspace 可签发邀请链接，查看方免安装、浏览器打开即只读围观。
+- 网关：share.ts + db.ts share_links 表（含 5 个函数）+ server.ts 4 个端点（签发/列表/吊销/只读查看）。
+- 令牌 32 位字母数字，库中只存 sha256 哈希，明文仅签发响应返回一次；有效期默认 168 小时、钳制 1–720 小时。
+- 签发与吊销仅限房主/管理员（canManageRoom）；查看端点只读：不写库、不加成员、不发广播。
+- 错误码：INVALID_SHARE_TOKEN 400 / SHARE_LINK_NOT_FOUND 404 / SHARE_LINK_REVOKED 410 / SHARE_LINK_EXPIRED 410。
+- Web：components/ShareView.tsx + api.ts fetchShareView + App.tsx #/share/<token> 分支。
+
+### 验收
+
+- share.test.ts 20/20；网关全量 73 文件 962 例全绿；网关源码 tsc 全洁；Web tsc -b 与 vite build 通过。
+- 真实网关冒烟：建房 201、签发 201、WS 发 2 条消息、GET /api/share 200 且 messages 2 条。
+- 截图 docs/screenshots/share-view.png 亲眼验收：房间名/话题/只读横条/2 条消息，无输入框，控制台零错误。
+- 修复验收抓出的真 bug：snake_case 行直传驼峰判定致 410（服务端映射 ShareLinkRecord）、B4 编造签名、searchParams 误用、RoomRow 误传 getRoomHistory、B2 漏建表 DDL；截图 harness 以 setContent + replaceState 写 hash 解决。
+- 已知局限：链接只读、不能入群/发消息（有意为之）；Web 签发/管理 UI 未做（仅 REST）；查看页不实时刷新；test tsc 既存错误（未动文件）不影响 vitest 全绿。
+
 ## Unreleased - OpenAgents 第 9 轮（配对码入驻，后端 + 设备侧兑码客户端）
 ### 新增
 - 配对码入驻（抄清单 9 第一期）：网关 gateway/src/pairing.ts（XXXX-XXXX 码生成/归一化/哈希/TTL 钳制）+ pairing_codes 表与 issue/get/redeem 存取；POST /api/rooms/:room/pairing-codes（房主/管理员签发，默认 10 分钟、钳制 1–60 分钟，码只在响应返回一次、库里只存哈希）与 POST /api/pairing-codes/redeem（格式非法 400、未知码 404、已兑 409、过期 410；兑码成功即入房成员）；byo-bridge 新增 pairing.ts 兑码客户端（PairingError 原样透传服务端错误码）。

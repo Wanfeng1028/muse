@@ -141,6 +141,17 @@ export function openDb(dataDir: string): DatabaseSync {
     );
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_pairing_codes_room ON pairing_codes(room);");
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS share_links (
+      id TEXT PRIMARY KEY,
+      token_hash TEXT UNIQUE NOT NULL,
+      room TEXT NOT NULL,
+      created_at_ms INTEGER NOT NULL,
+      expires_at_ms INTEGER NOT NULL,
+      revoked_at_ms INTEGER
+    );
+  `);
+  db.exec("CREATE INDEX IF NOT EXISTS idx_share_links_room ON share_links(room);");
   ensureScheduledTaskTable(db);
   ensureTriggerRuleTable(db);
   return db;
@@ -189,6 +200,55 @@ export function redeemPairingCode(
   );
   const info = stmt.run(nowMs, adapterId, codeHash);
   return Number(info.changes) === 1 ? "ok" : "already";
+}
+
+export interface ShareLinkRow {
+  id: string;
+  token_hash: string;
+  room: string;
+  created_at_ms: number;
+  expires_at_ms: number;
+  revoked_at_ms: number | null;
+}
+
+export function issueShareLink(
+  db: Db,
+  row: { id: string; tokenHash: string; room: string; createdAtMs: number; expiresAtMs: number }
+): void {
+  const stmt = db.prepare(
+    `INSERT INTO share_links (id, token_hash, room, created_at_ms, expires_at_ms, revoked_at_ms) VALUES (?, ?, ?, ?, ?, NULL)`
+  );
+  stmt.run(row.id, row.tokenHash, row.room, row.createdAtMs, row.expiresAtMs);
+}
+
+export function getShareLinkByHash(db: Db, tokenHash: string): ShareLinkRow | undefined {
+  const stmt = db.prepare(
+    `SELECT id, token_hash, room, created_at_ms, expires_at_ms, revoked_at_ms FROM share_links WHERE token_hash = ?`
+  );
+  return stmt.get(tokenHash) as ShareLinkRow | undefined;
+}
+
+export function getShareLinkById(db: Db, id: string): ShareLinkRow | undefined {
+  const stmt = db.prepare(
+    `SELECT id, token_hash, room, created_at_ms, expires_at_ms, revoked_at_ms FROM share_links WHERE id = ?`
+  );
+  return stmt.get(id) as ShareLinkRow | undefined;
+}
+
+export function listShareLinks(db: Db, room: string): ShareLinkRow[] {
+  const stmt = db.prepare(
+    `SELECT id, token_hash, room, created_at_ms, expires_at_ms, revoked_at_ms FROM share_links WHERE room = ? ORDER BY created_at_ms ASC, id ASC`
+  );
+  return stmt.all(room) as unknown as ShareLinkRow[];
+}
+
+export function revokeShareLink(db: Db, id: string, nowMs: number): "ok" | "not_found" {
+  const existing = db.prepare(`SELECT id FROM share_links WHERE id = ?`).get(id);
+  if (!existing) {
+    return "not_found";
+  }
+  db.prepare(`UPDATE share_links SET revoked_at_ms = ? WHERE id = ? AND revoked_at_ms IS NULL`).run(nowMs, id);
+  return "ok";
 }
 
 export function getGatewayState(db: Db, key: string): string | undefined {

@@ -6,7 +6,9 @@ import { WebSocketServer } from "ws";
 import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom, canClearOrKick, canManageRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
 import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, getPermRole, setPermRole, isPermRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession, issuePairingCode, getPairingCode, redeemPairingCode } from "./db.js";
+import { issueShareLink, getShareLinkByHash, getShareLinkById, listShareLinks, revokeShareLink } from "./db.js";
 import { generatePairingCode, normalizePairingCode, hashPairingCode, clampPairingTtlMinutes } from "./pairing.js";
+import { generateShareToken, normalizeShareToken, hashShareToken, clampShareTtlHours, isShareExpired, isShareRevoked } from "./share.js";
 
 // 房主恒为 admin，其余情况查成员权限列
 function managePerm(db: Db, roomOwner: string | null, roomId: string, requester: string): string | undefined {
@@ -1055,6 +1057,160 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       res.end(JSON.stringify({ room: row.room, adapter_id: adapterId, redeemed_at_ms: nowMs }));
       return;
     }
+
+// POST /api/rooms/:room/share-links — 房主/管理员签发只读分享链接，令牌仅此处返回一次
+{
+  const m = url.match(/^\/api\/rooms\/([^/?]+)\/share-links(?:\?|$)/);
+  if (m && method === "POST") {
+    res.setHeader("access-control-allow-origin", "*");
+    const roomId = decodeURIComponent(m[1]);
+    const room = getRoom(db, roomId);
+    if (!room) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "room not found" }));
+      return;
+    }
+    const body = (await readJsonBody(req)) as { requester?: unknown; ttl_hours?: unknown } | undefined;
+    const requester = typeof body?.requester === "string" ? body.requester : "";
+    const isOwner = requester !== "" && requester === room.owner;
+    if (!canManageRoom(room.type, isOwner, managePerm(db, room.owner, roomId, requester))) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+      return;
+    }
+    const token = generateShareToken();
+    const id = randomUUID();
+    const nowMs = Date.now();
+    const ttl = clampShareTtlHours(body?.ttl_hours);
+    const expiresAtMs = nowMs + ttl * 3600000;
+    issueShareLink(db, { id, tokenHash: hashShareToken(token), room: roomId, createdAtMs: nowMs, expiresAtMs });
+    res.writeHead(201, { "content-type": "application/json" });
+    res.end(JSON.stringify({ id, room: roomId, share_token: token, share_url: "/share/" + token, expires_at_ms: expiresAtMs }));
+    return;
+  }
+}
+
+// GET /api/rooms/:room/share-links — 房主/管理员列出链接元数据，绝不返回 token_hash
+{
+  const m = url.match(/^\/api\/rooms\/([^/?]+)\/share-links(?:\?|$)/);
+  if (m && method === "GET") {
+    res.setHeader("access-control-allow-origin", "*");
+    const roomId = decodeURIComponent(m[1]);
+    const room = getRoom(db, roomId);
+    if (!room) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "room not found" }));
+      return;
+    }
+    const requester = new URL(url, "http://localhost").searchParams.get("requester") ?? "";
+    const isOwner = requester !== "" && requester === room.owner;
+    if (!canManageRoom(room.type, isOwner, managePerm(db, room.owner, roomId, requester))) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({
+      links: listShareLinks(db, roomId).map((r) => ({
+        id: r.id,
+        room: r.room,
+        created_at_ms: r.created_at_ms,
+        expires_at_ms: r.expires_at_ms,
+        revoked_at_ms: r.revoked_at_ms,
+      })),
+    }));
+    return;
+  }
+}
+
+// DELETE /api/rooms/:room/share-links/:id — 房主/管理员撤销链接，成功 204 空 body
+{
+  const m = url.match(/^\/api\/rooms\/([^/?]+)\/share-links\/([^/?]+)(?:\?|$)/);
+  if (m && method === "DELETE") {
+    res.setHeader("access-control-allow-origin", "*");
+    const roomId = decodeURIComponent(m[1]);
+    const id = decodeURIComponent(m[2]);
+    const room = getRoom(db, roomId);
+    if (!room) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "room not found" }));
+      return;
+    }
+    const body = (await readJsonBody(req)) as { requester?: unknown; ttl_hours?: unknown } | undefined;
+    const requester = typeof body?.requester === "string" ? body.requester : "";
+    const isOwner = requester !== "" && requester === room.owner;
+    if (!canManageRoom(room.type, isOwner, managePerm(db, room.owner, roomId, requester))) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+      return;
+    }
+    const row = getShareLinkById(db, id);
+    if (!row || row.room !== roomId) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "SHARE_LINK_NOT_FOUND" }));
+      return;
+    }
+    revokeShareLink(db, id, Date.now());
+    res.writeHead(204, { "access-control-allow-origin": "*" });
+    res.end();
+    return;
+  }
+}
+
+// GET /api/share/:token — 只读访问分享链接：不写库、不加成员、不发广播
+{
+  const m = url.match(/^\/api\/share\/([^/?]+)(?:\?|$)/);
+  if (m && method === "GET") {
+    res.setHeader("access-control-allow-origin", "*");
+    const normalized = normalizeShareToken(decodeURIComponent(m[1]));
+    if (normalized === null) {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "INVALID_SHARE_TOKEN" }));
+      return;
+    }
+    const row = getShareLinkByHash(db, hashShareToken(normalized));
+    if (!row) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "SHARE_LINK_NOT_FOUND" }));
+      return;
+    }
+    const record = { id: row.id, tokenHash: row.token_hash, room: row.room, createdAtMs: row.created_at_ms, expiresAtMs: row.expires_at_ms, revokedAtMs: row.revoked_at_ms };
+    if (isShareRevoked(record)) {
+      res.writeHead(410, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "SHARE_LINK_REVOKED" }));
+      return;
+    }
+    if (isShareExpired(record, Date.now())) {
+      res.writeHead(410, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "SHARE_LINK_EXPIRED" }));
+      return;
+    }
+    const room = getRoom(db, row.room);
+    if (!room) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "SHARE_LINK_NOT_FOUND" }));
+      return;
+    }
+    const rows = getRoomHistory(db, row.room, 50);
+    const sorted = rows.slice().sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const messages = sorted.map((r) => {
+      let payload: unknown;
+      try {
+        payload = JSON.parse(r.payload);
+      } catch {
+        payload = r.payload;
+      }
+      return { id: r.id, room: r.room, sender: r.sender, seq: r.seq, type: r.type, payload, ts: r.ts };
+    });
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({
+      room,
+      share: { id: row.id, expires_at_ms: row.expires_at_ms },
+      messages,
+    }));
+    return;
+  }
+}
 
     // POST /api/rooms/:room/games  body: { game, id? }
     // 游戏清单由网关按房间类型强制过滤，不依赖模型。
