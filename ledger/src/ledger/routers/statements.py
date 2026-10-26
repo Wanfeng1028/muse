@@ -803,6 +803,9 @@ async def list_items(
     if batch is None:
         raise HTTPException(status_code=404, detail="批次不存在")
 
+    if status and status not in {"preview", "pending", "auto", "claimed", "skipped", "duplicate"}:
+        raise HTTPException(status_code=400, detail="status 参数非法")
+
     base = select(StatementItem).where(StatementItem.batch_id == batch_id)
     count_stmt = select(func.count(StatementItem.id)).where(StatementItem.batch_id == batch_id)
     if status:

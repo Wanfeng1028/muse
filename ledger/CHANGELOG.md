@@ -1,5 +1,19 @@
 # 更新日志
 
+## v2.17.20 - 2026-10-27
+
+### 新增
+- `GET /api/statements/{batch_id}/items` 新增 status 参数校验：非法值返回 400，detail 为“status 参数非法”；此前非法值会静默按该值过滤、返回空列表。合法值：preview、pending、auto、claimed、skipped、duplicate；None 或空串表示不过滤（行为不变）；不存在的批次仍先返回 404。
+
+### 不变
+- limit/offset 默认值与范围、total 计数口径、条目字段一字未动；前端只发 pending，不受影响。
+
+### 版本同步
+- `src/ledger/__init__.py`、`pyproject.toml`、`tests/test_version_consistency_v21715.py` 的版本同步为 2.17.20。
+
+### 测试
+- 新增 tests/test_statement_items_status_validation.py 5 例全绿（bogus 返回 400、空串不过滤、preview 过滤、全部合法值返回 200、不存在的批次加 bogus 返回 404）。
+
 ## v2.17.19 - 2026-10-26
 
 ### 新增
