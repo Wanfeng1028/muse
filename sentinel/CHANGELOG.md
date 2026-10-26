@@ -3,6 +3,19 @@
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
 
+## [0.20.9] - 2026-10-26
+
+### 修复
+
+- `GET /api/monitors/{id}/stats`(`internal/handlers/handlers.go` 的 `handleStats`)新增 `days` 校验:`days` 存在但不是整数时返回 400,文案为“days 参数非法”,与检查记录、事件、短信记录接口的校验口径一致。
+- 合同变更声明:此前 `days` 非法时静默回退为 7,本版起改为返回 400;数值钳制行为不变(1~90)。
+
+### 测试
+
+- 新增 `internal/handlers/stats_days_validation_test.go` 中的 `TestHandleStatsDaysValidationDeep3`:`days=abc` 期望 400,`days=10` 期望 200 且响应包含 uptime_pct、avg_latency_ms、total_checks、down_incidents。
+- 既有 `TestHandleStatsDaysClampDeep3` 已同步去掉 `days=abc` 的 200 断言(钳制用例 0/-3/9999 不变)。
+
+
 ## [0.20.8] - 2026-10-26
 
 ### 修复

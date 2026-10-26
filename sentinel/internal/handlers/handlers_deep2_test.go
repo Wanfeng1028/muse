@@ -322,13 +322,13 @@ func TestHandleStatsNotFoundDeep3(t *testing.T) {
 	}
 }
 
-// TestHandleStatsDaysClampDeep3 覆盖 days 参数钳制与统计字段存在性。
+// TestHandleStatsDaysClampDeep3 覆盖 days 参数钳制与统计字段存在性（v0.20.9 起 days=abc 改为 400，见 stats_days_validation_test.go）。
 func TestHandleStatsDaysClampDeep3(t *testing.T) {
 	srv, _ := newTestServer(t)
 	h := srv.Routes()
 	id := deep3CreateMonitor(t, h, `{"name":"stats","kind":"http","target":"https://example.com"}`)
 
-	for _, q := range []string{"?days=0", "?days=-3", "?days=9999", "?days=abc"} {
+	for _, q := range []string{"?days=0", "?days=-3", "?days=9999"} {
 		rec, m := deep3DoJSON(t, h, http.MethodGet, "/api/monitors/"+itoa(id)+"/stats"+q, "")
 		if rec.Code != http.StatusOK {
 			t.Fatalf("days=%q expected 200, got %d body=%s", q, rec.Code, rec.Body.String())

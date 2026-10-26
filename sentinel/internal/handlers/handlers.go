@@ -761,9 +761,12 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 	}
 	days := 7
 	if v := r.URL.Query().Get("days"); v != "" {
-		if n, err := strconv.Atoi(v); err == nil {
-			days = n
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			writeErr(w, http.StatusBadRequest, "days 参数非法")
+			return
 		}
+		days = n
 	}
 	if days < 1 {
 		days = 1
