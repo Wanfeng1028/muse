@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 from sqlalchemy.exc import IntegrityError
@@ -23,12 +25,17 @@ class BudgetUpdate(BaseModel):
     year_month: str | None = Field(default=None, min_length=7, max_length=7)
 
 
+_MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
+
+
 @router.get("")
 async def list_budgets(
     month: str = Query(..., description="YYYY-MM"),
     session: AsyncSession = Depends(get_session),
 ):
     """按月份返回预算列表，含 spent/remaining/pct。"""
+    if not _MONTH_RE.match(month):
+        raise HTTPException(status_code=400, detail="month 参数非法")
     return await budget_progress(session, month)
 
 

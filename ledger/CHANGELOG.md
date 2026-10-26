@@ -1,5 +1,19 @@
 # 更新日志
 
+## v2.17.23 - 2026-10-27
+
+### 新增
+- GET /api/budgets 新增 month 参数校验：非法值返回 400，detail 为“month 参数非法”；此前非法值会直传 month_range：month="bogus" 或空串抛 ValueError 走到 500，month="2026-13" 会算出 ("2026-13-01", "2026-14-01") 这种不存在的区间并静默返回结果，month="2026-1" 会被当成 2026-01 但预算过滤按原串匹配不到。合法格式为严格 YYYY-MM（正则 `^\d{4}-(0[1-9]|1[0-2])$`，实现为 budgets.py 模块级 _MONTH_RE）；缺参时 Query(...) 本来就是必填，行为不变。
+
+### 不变
+- yearly 端口的 year 校验（422）、预算创建/更新校验、spent/remaining/pct 计算口径一字未动；页面 /budgets 的 month 未在本轮收紧（仍直传 budget_progress，记为剩余缺口，不谎称全关）。
+
+### 版本同步
+- src/ledger/__init__.py、pyproject.toml、tests/test_version_consistency_v21715.py 的版本同步为 2.17.23。
+
+### 测试
+- 新增 tests/test_budgets_month_validation.py 6 例全绿（bogus/2026-13/2026-00/2026-1/空串 返回 400 且 detail 为“month 参数非法”、2026-10 返回 200 且响应体为列表）；先红后绿验证通过（撤回代码改动后 5 败 1 过，含日志实锤空串 500；恢复后 6/6）；与 test_budgets.py、test_budgets_yearly.py、test_currencies_budgets_deep2.py 合跑 27 通过；ruff check 与 ruff format 在改动文件上全洁；真实服务冒烟 18278 端口隔离库：month=bogus 返回 400、month=2026-10 返回 200 空列表。
+
 ## v2.17.22 - 2026-10-27
 
 ### 新增
