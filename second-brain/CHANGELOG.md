@@ -9,6 +9,8 @@
 
 ### Changed
 
+- **GET /api/review/trend 的 `days` 参数校验收紧**：照搬 forecast 的 `days` 写法，缺省或空仍默认 7；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为"days 参数非法"。解析成功后的钳制逻辑保持不变（小于等于 0 置 7、大于 60 置 60）。新增 `internal/api/review_trend_days_validation_test.go`，8 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`1`/`0`/`1000`/`-5`（均 200）。既有 `TestReviewTrendDaysClamp`（`days=0` 置 7、`days=1000` 置 60）未动且仍通过。
+
 - **GET /api/review/queue 的 `limit` 参数校验收紧**：照搬 forecast 的 `days` 写法，缺省或空仍默认 20；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为"limit 参数非法"。解析成功后的钳制逻辑保持不变（小于等于 0 置 20、大于 200 置 200）。新增 `internal/api/review_queue_limit_validation_test.go`，7 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`2`/`0`/`999`（均 200）。
 
 - **GET /api/review/digest 的 `n` 参数校验收紧**：照搬同级 `/api/digest` 的钳制口径，缺省或空仍默认 5；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为"n 参数非法"；解析成功后的钳制为小于等于 0 置 5、大于 200 置 200（此前无钳制）。新增 `internal/api/review_digest_n_validation_test.go`，2 个测试函数、8 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`1`/`0`/`999`/`-5`（均 200）。同级 `/api/digest` 本轮未动，store 层 `n <= 0` 回退 50 的兜底保留。

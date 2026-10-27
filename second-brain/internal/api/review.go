@@ -186,7 +186,16 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
-		days := parseIntDefault(r.URL.Query().Get("days"), 7)
+		rawDays := r.URL.Query().Get("days")
+		days := 7
+		if rawDays != "" {
+			parsed, err := strconv.Atoi(rawDays)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "days 参数非法")
+				return
+			}
+			days = parsed
+		}
 		if days <= 0 {
 			days = 7
 		}
