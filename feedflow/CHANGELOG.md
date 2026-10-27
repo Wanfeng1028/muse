@@ -1,6 +1,16 @@
 
 # 更新日志
 
+## v1.34.0 — 2026-10-28
+
+### Changed
+- `GET /api/articles` 的 feed_id、folder_id、tag_id 三个过滤参数不再静默回落：缺参或空串时仍不过滤（行为不变），非整数字符串（如 abc、1.5）返回 400，错误文案分别为“feed_id 参数非法”、“folder_id 参数非法”、“tag_id 参数非法”，与既有的 scope/limit/offset 校验口径一致。解析写法照搬同一函数内 limit/offset 分支的 try int() 模式；`_int_arg` 本身未动（仍被其他端点使用），store 层与 Web UI 未动。
+- 测试：新增 tests/test_articles_filter_params_v134.py 8 例（abc/1.5/缺参/空串/合法过滤/双非法组合），靶向 8/8 通过；既有 tests/test_articles_pagination_validation.py 9 例全绿；ruff check 改动文件全洁。
+
+### 已知限制
+- 负整数 id 仍透传（查不到行，返回空列表），与此前行为一致，本轮未收紧。
+- 全量 pytest 本轮未跑（上一轮全量 1166 通过、2 处 v1.21 旧契约既有失败与本轮无关）。
+
 ## v1.33.0 — 2026-10-27
 
 ### Added

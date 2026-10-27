@@ -135,9 +135,30 @@ def list_articles():
     scope = request.args.get("scope") or "unread"
     if scope not in ("unread", "starred", "all"):
         return _err("scope 非法", 400)
-    feed_id = _int_arg("feed_id")
-    folder_id = _int_arg("folder_id")
-    tag_id = _int_arg("tag_id")
+    raw_feed_id = request.args.get("feed_id")
+    if raw_feed_id is None or raw_feed_id == "":
+        feed_id = None
+    else:
+        try:
+            feed_id = int(raw_feed_id)
+        except (TypeError, ValueError):
+            return _err("feed_id 参数非法", 400)
+    raw_folder_id = request.args.get("folder_id")
+    if raw_folder_id is None or raw_folder_id == "":
+        folder_id = None
+    else:
+        try:
+            folder_id = int(raw_folder_id)
+        except (TypeError, ValueError):
+            return _err("folder_id 参数非法", 400)
+    raw_tag_id = request.args.get("tag_id")
+    if raw_tag_id is None or raw_tag_id == "":
+        tag_id = None
+    else:
+        try:
+            tag_id = int(raw_tag_id)
+        except (TypeError, ValueError):
+            return _err("tag_id 参数非法", 400)
     raw_limit = request.args.get("limit")
     if raw_limit is None or raw_limit == "":
         limit = 50
