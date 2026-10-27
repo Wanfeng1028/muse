@@ -2,6 +2,36 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.33.0] - 2026-10-28
+
+### 新增
+
+- 单监控延迟趋势：Store 层 MonitorMonthlyLatency（单月单监控聚合：该监控 ok=1 成功检查的 p50/p95/p99、均值、成功检查数；月份窗口用 RFC3339 起止；空月分位与均值均为 0、成功检查数为 0；不存在的监控报错“监控不存在”）与 MonitorLatencyTrend（复用既有 shiftMonth 逐月聚合，月份按时间顺序排列；months 取值 1~12、非法 endMonth/months 报错）；API（均需鉴权）GET /api/monitors/{id}/latency/trend?end=YYYY-MM&months=N（end 缺省当月、months 缺省 6、非法 end/months 返回 400、不存在的监控返回 404）、GET /api/monitors/{id}/latency/trend.html（中文 HTML 导出：单监控延迟趋势标题、逐月表、p95 延迟条形，条形宽度按窗口内最大 p95 归一化）；控制台页 /monitor-latency-trend（监控下拉、截止月份选择、3/6/12 个月选择、总览卡片、逐月表、p95 延迟条形、导出 HTML 链接），19 个既有控制台页导航末尾加单监控延迟趋势链，/monitor-latency-trend 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：只统计该监控 ok=1 的成功检查，失败检查不计入分位与均值；空月 p50/p95/p99/均值均为 0、成功检查数为 0；月份窗口与分位复用既有口径（RFC3339 起止、percentileLinear 线性插值）。
+- 无 schema 变更、无新环境变量。
+
+### 测试
+
+- 新增 internal/store/monitor_latency_trend_test.go（空监控 3 个月：起止月份与空月零值与非法 months/endMonth/不存在监控报错；单月空值；双月：2 月 [100,200] 得 p50 150、p95 195、p99 199、均值 150、总数 2，3 月 [300,400,500] 加一条 9999 失败检查得 p50 400、p95 490、p99 498、均值 400、总数 3（失败检查已排除））、internal/handlers/monitor_latency_trend_test.go（JSON 的 monitor_id/monitor_name/end_month/months 与不存在监控 404 与非法 months/end 的 400、HTML 的 200 与“单监控延迟趋势/监控名/p95 延迟条形”字样与不存在监控 404 与非法 end 400）、internal/web/monitor_latency_trend_test.go（单监控延迟趋势页 9 个标记与标记顺序、失败路径定义顺序、18 页导航链与新页 active 链接）；页面 JS 经 node --check 通过。
+- go vet 全洁；go build 全过；靶向包全绿（store 全包、handlers 全包、web 全包）；全量 go test ./... 本轮未跑（见对照报告未通过项）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18503 端口，SENTINEL_TICK_SEC=60；隔离库与隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建冒烟UP监控 3 号（本地 200 服务）；CheckNow 1 次后 GET /api/monitors/3/latency/trend?end=2026-10&months=2 返回 9 月空月 0 检查/零延迟、10 月成功检查数 1、p50/p95/p99/均值均为 3.00、监控名冒烟UP；无鉴权 401 未在冒烟脚本内单列（接口复用既有鉴权中间件）；months=0 与 end=2026-13 均为 400、不存在的监控 404（error 均为既有文案）；latency/trend.html 含“单监控延迟趋势”与“p95 延迟条形”；/monitor-latency-trend 页 200 且含全部标记；冒烟完二进制、隔离库、备份文件均已清理，端口已关。冒烟脚本 10/10 全过。
+- 首轮冒烟命令因 shell 的 `&` 切分致 cd 与服务进了后台任务、主 shell 路径错误（health 000、smoke.py 路径不存在），属编排命令失误非产品问题；改 setsid 分离启动后重跑一次通过；另有一次 pkill -f 自杀（命令行含匹配串），改括号技巧后端口复查已关。
+
+### 视觉验收
+
+- 截图 docs/screenshots/monitor-latency-trend-v033.png 亲眼核对——导航 20 链齐全且单监控延迟趋势 active、控件（截图UP、October 2026、6 个月、查看、导出 HTML 版）、卡片（监控截图UP、截止月份 2026-10、成功检查总数 2）与逐月行（5–9 月 0.00、10 月 5.50/5.95/5.99/5.50、2 检查）及 p95 条形（10 月蓝色满格 5.95 ms、空月灰底 0.00 ms）均与 API 返回一致、无“加载失败”。
+- 截图 harness 说明：按 v0.31.0/v0.32.0 模式（setContent 内联样式与 app.js、app.js 的 sessionStorage 取 token 桩化为空串、页面脚本的 /api 改写为绝对地址并经 route 代理回真实服务，路由层注入冒烟 token、OPTIONS 预检直接回 200 并补 CORS 头），该改写仅限截图环境，产品代码未动。首拍两处问题均已修复重拍：①首拍选中的是种子示例站点（空数据）——门面不许用空状态，改显式选中带真实检查的截图UP重拍；②1600 宽下 20 链导航末尾被裁——改 1920 宽复拍后 20 链齐全。
+- 截图调试实证一处产品外事实：导航链随版本增长已满 20 项，1600 宽视口下会溢出裁切，1920 宽可完整显示；是否改导航折叠/滚动属产品决策，本轮未改产品代码。
+
+### 模型稿
+
+- 全程只走 BotsRouter，讯飞星辰 spark-x2.6；调用器为本轮现写最小新文件 sentinel-v033/call.py（令牌经 SSH 现取、只进子进程内存、不落盘、未读任何现成调用脚本；首版 urllib 流式解析在 601KB 处 IncompleteRead 截断后改 curl 非流式 + 配置 stdin 传令牌，令牌不进 argv、不落盘；失败自动重试 1 次）。
+- 调用统计（usage.log 全量记录）：成功 7 通，prompt 合计 17985、completion 合计 43029、合计 61014（含缓存 5504）；失败记录 3 通（页面首通 SSE IncompleteRead 0 记账、store 测试整批 12000 完成帽占满出空正文、store 测试重跑 curl 52 空回复 0 记账）；另有 2 通在服务重启中丢失（store 测试重跑首发与 handlers 测试首发，无用量记录、服务端花费未知）。本轮无 429、无鉴权失败。
+- 平台层现象与拆分：store 测试整批两次失败（12000 帽占满空正文、长调用 curl 52 空回复）后按既往教训拆 A/B 微批（A 空值与非法、B 双月数值）一次成功；A 批首稿含散文与重复稿，取其唯一完整稿机械修正 2 处（createNamedMonitor 补 target 参数、不存监控断言改回组测试口径的仅判错）；web 测试稿链接文案误写“监控延迟趋势”，按产品既有命名机械改回“单监控延迟趋势”并把导航页表扩到 18 页；路由与 19 页导航链为编排机械追加（保留各页原行首缩进）。
+
 ## [0.32.0] - 2026-10-27
 
 ### 新增

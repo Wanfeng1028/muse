@@ -39,6 +39,7 @@
 - **单监控年度 SLA 报告**：全年 12 个月按单监控聚合（检查加权可用性、检查总数、事件总数、宕机时长、最佳与最差月份、故障归因），只统计该监控，最佳与最差月份只在有检查的月份中评选、全年无检查时回落首月，`/monitor-sla-year` 页按监控与年份查看，可导出中文 HTML 年报
 - **全站延迟趋势**：最近 N 个月（3/6/12）全站成功检查延迟逐月对比（p50/p95/p99、均值、成功检查数、监控数、最慢监控），只统计成功检查、失败检查不计入分位与均值，`/latency-trend` 页按截止月份查看，含 p95 延迟条形与中文 HTML 导出
 - **分组延迟趋势**：最近 N 个月（3/6/12）按分组聚合成功检查延迟逐月对比（p50/p95/p99、均值、成功检查数、监控数、最慢监控），只统计组内成员的成功检查、失败检查与组外监控不计入，`/group-latency-trend` 页按分组与截止月份查看，含 p95 延迟条形与中文 HTML 导出
+- **单监控延迟趋势**：最近 N 个月（3/6/12）单个监控成功检查延迟逐月对比（p50/p95/p99、均值、成功检查数），只统计该监控的成功检查、失败检查不计入分位与均值，`/monitor-latency-trend` 页按监控与截止月份查看，含 p95 延迟条形与中文 HTML 导出
 ## 截图
 
 > 以下为真实运行抓屏，非设计稿。
@@ -61,6 +62,7 @@
 - 分组年度 SLA 报告：`docs/screenshots/group-sla-year-v029.png`
 - 全站延迟趋势：`docs/screenshots/latency-trend-v031.png`
 - 分组延迟趋势：`docs/screenshots/group-latency-trend-v032.png`
+- 单监控延迟趋势：`docs/screenshots/monitor-latency-trend-v033.png`
 - 事件页状态筛选（全部/仅进行中）：`docs/screenshots/incidents-status-all.png`、`docs/screenshots/incidents-status-open.png`
 - 事件页点击行展开详情（事件 ID、监控、开始时间、恢复时间、持续、状态、触发原因）：`docs/screenshots/incidents-detail-collapsed.png`、`docs/screenshots/incidents-detail-expanded.png`
 
@@ -159,6 +161,8 @@ open http://localhost:8200
 | GET | `/api/latency/trend.html?end=YYYY-MM&months=N` | 是 | 全站延迟趋势（中文 HTML，含逐月表与 p95 延迟条形） |
 | GET | `/api/groups/{id}/latency/trend?end=YYYY-MM&months=N` | 是 | 分组延迟趋势（最近 N 个月逐月延迟聚合，N=1~12，默认 end=当月、months=6，只统计组内成功检查） |
 | GET | `/api/groups/{id}/latency/trend.html?end=YYYY-MM&months=N` | 是 | 分组延迟趋势（中文 HTML，含逐月表与 p95 延迟条形） |
+| GET | `/api/monitors/{id}/latency/trend?end=YYYY-MM&months=N` | 是 | 单监控延迟趋势（最近 N 个月逐月延迟聚合，N=1~12，默认 end=当月、months=6，只统计该监控成功检查） |
+| GET | `/api/monitors/{id}/latency/trend.html?end=YYYY-MM&months=N` | 是 | 单监控延迟趋势（中文 HTML，含逐月表与 p95 延迟条形） |
 | GET | `/healthz` | 否 | 存活探针 |
 | GET | `/readyz` | 否 | 就绪探针 |
 | GET | `/api/metrics` | 否 | Prometheus 指标 |
