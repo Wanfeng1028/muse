@@ -458,3 +458,35 @@ export async function redeemPairingCode(code: string, adapterId: string): Promis
     body: JSON.stringify({ code, adapter_id: adapterId }),
   });
 }
+
+export interface DeviceMeta {
+  device_id: string;
+  room: string;
+  adapter_id: string;
+  created_at_ms: number;
+  last_seen_ms: number;
+  revoked_at_ms: number | null;
+}
+
+export async function listDevices(room: string, requester: string): Promise<DeviceMeta[]> {
+  const url = `${BASE}/api/rooms/${encodeURIComponent(room)}/devices?requester=${encodeURIComponent(requester)}`;
+  const data = await apiJson<{ devices: DeviceMeta[] }>(url);
+  return Array.isArray(data?.devices) ? data.devices : [];
+}
+
+export async function revokeDevice(room: string, deviceId: string, requester: string): Promise<void> {
+  const url = `${BASE}/api/rooms/${encodeURIComponent(room)}/devices/${encodeURIComponent(deviceId)}`;
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ requester }),
+  });
+  if (res.ok) return;
+  let message: string | undefined;
+  try {
+    message = (await res.json())?.error;
+  } catch {
+    /* ignore non-JSON error body */
+  }
+  throw new Error(message || `Failed to revoke device (HTTP ${res.status})`);
+}
