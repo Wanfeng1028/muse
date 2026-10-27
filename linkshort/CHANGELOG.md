@@ -5,6 +5,17 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.29.0] - 2026-10-27
+
+### 新增
+- 收紧 `GET /api/stats/daily` 接口的 `days` 参数校验：非数字字符将直接返回 HTTP 400 及 `{"error": "days 非法"}` 错误提示。
+- 未传参或传入空字符串时默认维持 30 天；对于合法数值但小于等于 0 或大于 365 的入参，仍维持现有的自动回退为 30 天的钳位策略。
+
+### 测试
+- 新增 `internal/handler/stats_daily_days_validation_test.go` 测试文件，`TestStatsDailyDaysValidation` 的 6 个用例全部通过（`abc`、`1.5`、`1x` 均返回 400 及指定错误；无参数、`0`、`7` 均正常返回 200）。
+- 现有回归测试（`TestLinkReferersNValidation`、`TestLinkDailyDaysValidation`、`TestAnalyticsParamClamp`、`TestAnalyticsReferersTopN`）联合运行全部通过；`go vet` 与 `gofmt` 检查均无异常。
+- 本地真实服务隔离数据库冒烟测试通过：在 `127.0.0.1:18470` 环境下验证，无参数、0、7 均返回 200，`abc` 和 `1.5` 返回 400，且 `readyz` 无鉴权 Key 请求返回 401。测试完成后，服务进程已停止，端口已释放，临时数据库已删除。
+
 ## [v1.28.0] - 2026-10-27
 
 ### 新增

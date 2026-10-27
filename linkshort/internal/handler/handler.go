@@ -1041,7 +1041,15 @@ func handleStatsOverview(w http.ResponseWriter, r *http.Request, st *store.Store
 }
 
 func handleStatsDaily(w http.ResponseWriter, r *http.Request, st *store.Store) {
-	days := parseIntDefault(r.URL.Query().Get("days"), 30)
+	daysStr := r.URL.Query().Get("days")
+	if daysStr == "" {
+		daysStr = "30"
+	}
+	days, err := strconv.Atoi(daysStr)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "days 非法")
+		return
+	}
 	if days <= 0 || days > 365 {
 		days = 30
 	}
