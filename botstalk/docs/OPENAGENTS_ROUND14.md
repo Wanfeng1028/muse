@@ -19,7 +19,7 @@
 - 网关测试：既有测试 reactions 19 例与 reaction-broadcast 4 例，共计 23 例全部通过。
 - UI 截图：截图脚本运行成功并输出 REACTIONS_UI_SHOT_PASS，浏览器 console 零错误。已确认 3 张真实截图：reactions-ui.png（汇总含 +1 1 与高亮 heart 1）、reactions-ui-picker.png（8 项选择器展开，heart 高亮）、reactions-ui-toggled.png（取消 heart 后只剩 +1 1）。
 - 执行记录：原计划 scripts/smoke-reactions-ui.mjs 因中途截断未落地并作废，其契约由截图脚本内的 REST 序列（建房、取整数 id、两次 POST 断言 added、取消断言）覆盖。
-- 模型链：全部调用走 BotsRouter 讯飞星辰 spark-x2.6，合计 23129 真实 token（B1 2386、B2a 2005、B2b 4987、B3 4857、B4 1039、B6 7855）；智谱 glm-4.7 未用（周限额 429 至 2026-10-30 重置），七牛未用，dpsk 未探活仍停用。
+- 模型链：全部调用走 BotsRouter 讯飞星辰 spark-x2.6，合计 22082 真实 token（B1 2386、B2a 2005、B2b 4987、B3 3810、B4 1039、B6 7855）；智谱 glm-4.7 未用（周限额 429 至 2026-10-30 重置），七牛未用，dpsk 未探活仍停用。
 
 ## 已知保留
 - 反应广播不做离线补发：断线期间的反应帧不补，以 REST 列表为准（沿用第 13 轮规则）。
