@@ -102,6 +102,7 @@ function initReader() {
         let h = `<div class="${cls}" data-id="${a.id}">`;
         h += `<div class="title">${escapeHtml(a.title || "(无标题)")}${a.is_starred ? '<span class="star"><svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6 4.2 13.6l.7-4.3-3.1-3 4.3-.6z" fill="currentColor"/></svg></span>' : ""}</div>`;
         h += `<div class="meta">${escapeHtml(a.feed_title || "")} · ${fmtTime(a.published_at || a.fetched_at)}</div>`;
+        h += `<button class="btn row-list-btn" data-row-list="${a.id}">＋清单</button>`;
         h += `</div>`;
 
         return h;
@@ -131,6 +132,10 @@ function initReader() {
     elList.innerHTML = html;
     elList.querySelectorAll("[data-id]").forEach(n => n.addEventListener("click", () => {
       openArticle(parseInt(n.dataset.id, 10));
+    }));
+    elList.querySelectorAll(".row-list-btn").forEach(b => b.addEventListener("click", (e) => {
+      e.stopPropagation();
+      toggleRowListPicker(parseInt(b.dataset.rowList, 10), b);
     }));
     elList.querySelectorAll(".cluster-toggle").forEach(t => t.addEventListener("click", () => {
       const target = document.getElementById(t.dataset.target);
@@ -397,6 +402,99 @@ function bindListEditor(articleId) {
       if (select) select.value = "";
     } catch (err) {
       if (status) status.textContent = "加入失败，请重试";
+    }
+  });
+}
+
+async function toggleRowListPicker(articleId, btn) {
+  const row = btn.closest(".article-item");
+  if (!row) return;
+
+  let picker = row.nextElementSibling;
+  if (picker && picker.classList.contains("row-list-picker")) {
+    picker.remove();
+    return;
+  }
+
+  const elList = document.getElementById("article-list");
+  if (elList) {
+    elList.querySelectorAll(".row-list-picker").forEach(p => p.remove());
+  }
+
+  picker = document.createElement("div");
+  picker.className = "row-list-picker tag-editor";
+  picker.innerHTML =
+    `<select class="row-list-select">` +
+    `<option value="">选已有清单</option>` +
+    `</select>` +
+    `<input class="row-list-new" placeholder="或填新清单名" />` +
+    `<button class="btn row-list-confirm">加入</button>` +
+    `<span class="note-status row-list-status"></span>`;
+  row.parentNode.insertBefore(picker, row.nextSibling);
+
+  const select = picker.querySelector(".row-list-select");
+  const inputNew = picker.querySelector(".row-list-new");
+  const status = picker.querySelector(".note-status");
+
+  (async () => {
+    try {
+      const resp = await api("/api/reading-lists");
+      const lists = resp && resp.reading_lists ? resp.reading_lists : [];
+      lists.forEach(l => {
+        const opt = document.createElement("option");
+        opt.value = String(l.id);
+        opt.textContent = l.name;
+        select.appendChild(opt);
+      });
+    } catch (e) {
+      // 拉不到就只留第一项
+    }
+  })();
+
+  const confirm = picker.querySelector(".row-list-confirm");
+  confirm.addEventListener("click", async (e) => {
+    e.stopPropagation();
+
+    const listId = select.value ? parseInt(select.value, 10) : null;
+    const name = (inputNew.value || "").trim();
+
+    if (!listId && !name) return;
+
+    let targetId = listId;
+    let listName = null;
+
+    if (targetId) {
+      const opt = select.options[select.selectedIndex];
+      listName = opt ? opt.textContent : "";
+    } else {
+      try {
+        const resp = await api("/api/reading-lists", {
+          method: "POST",
+          body: JSON.stringify({ name: name })
+        });
+        targetId = resp && resp.id ? resp.id : null;
+        listName = resp && resp.name ? resp.name : name;
+      } catch (e) {
+        status.textContent = "加入失败，请重试";
+        return;
+      }
+    }
+
+    if (!targetId) {
+      status.textContent = "加入失败，请重试";
+      return;
+    }
+
+    try {
+      await api(`/api/reading-lists/${targetId}/articles`, {
+        method: "POST",
+        body: JSON.stringify({ article_id: articleId })
+      });
+      status.textContent = `已加入清单「${listName}」`;
+      inputNew.value = "";
+      select.value = "";
+    } catch (e) {
+      status.textContent = "加入失败，请重试";
     }
   });
 }

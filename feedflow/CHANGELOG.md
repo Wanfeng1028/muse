@@ -1,6 +1,18 @@
 
 # 更新日志
 
+## v1.33.0 — 2026-10-27
+
+### Added
+- 文章列表行快捷加入清单：不新增迁移、不改 store、不改 API，复用 v1.31.0 的 reading_lists 表与 API。feedflow/static/js/app.js 的 renderItem 在 meta 行后新增“＋清单”按钮（data-row-list，不用 data-id，避免被行点击绑定误绑；点击 stopPropagation，不误打开文章）；点击在该行下方展开/收起选择器（select.row-list-select 首选项“选已有清单”+ input.row-list-new“或填新清单名”+ button.row-list-confirm“加入”+ span.row-list-status 反馈），选已有清单直接加入、填新名先建清单再加入，成功文案“已加入清单「<清单名>」”、失败文案“加入失败，请重试”；feedflow/static/css/design-v119.css 新增 .row-list-btn/.row-list-picker 样式（中栏内不撑爆）。
+- 测试：新增 tests/test_row_list_add_v133.py 4 例（JS token 9+1 项、加入已有清单、重复加入幂等、建新清单再加入）。
+- 编排修正：模型稿确认按钮处理器漏写 async 致 await 语法错误，编排补 async；状态 span 补 row-list-status 类。
+- 视觉验收修正：首版选择器 flex nowrap + 状态省略号致成功文案截断为“已加…”，编排改 flex-wrap + 状态独占一行，复截确认“已加入清单「周末深读」”完整可见。
+
+### 已知限制
+- 选择器展开时不自动关闭阅读器正文区已有的清单编辑器，两处入口独立。
+- 清单页仍需刷新才见新成员（与 v1.32.0 阅读器内加入一致）。
+
 ## v1.32.0 — 2026-10-27
 
 ### Added

@@ -65,3 +65,36 @@
 #clear-tag-filter {
   margin-left: 8px;
 }
+
+.row-list-btn {
+  margin-top: 4px;
+}
+
+.row-list-picker {
+  padding: 2px 8px 10px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.row-list-picker .row-list-select {
+  max-width: 220px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.row-list-picker .row-list-new {
+  max-width: 220px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.row-list-picker .row-list-confirm {
+  flex: 0 0 auto;
+}
+
+.row-list-picker .note-status {
+  flex: 1 1 100%;
+  min-width: 0;
+}
