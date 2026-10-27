@@ -142,7 +142,7 @@ static int statusCode(const std::string& resp) {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureExplain : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -233,7 +233,7 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. explain=true：200，explain 对象含全部计分字段。
-TEST_F(ServeFixture, ExplainTrueFullBreakdown) {
+TEST_F(ServeFixtureExplain, ExplainTrueFullBreakdown) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=true");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "base_bm25");
@@ -244,14 +244,14 @@ TEST_F(ServeFixture, ExplainTrueFullBreakdown) {
 }
 
 // 2. explain=1 同样生效：200，body 含 base_bm25。
-TEST_F(ServeFixture, ExplainOneActivates) {
+TEST_F(ServeFixtureExplain, ExplainOneActivates) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=1");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "base_bm25");
 }
 
 // 3. 不带 explain：200，body 不含 base_bm25。
-TEST_F(ServeFixture, NoExplainOmitsBreakdown) {
+TEST_F(ServeFixtureExplain, NoExplainOmitsBreakdown) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     EXPECT_EQ(resp.find("base_bm25"), std::string::npos)

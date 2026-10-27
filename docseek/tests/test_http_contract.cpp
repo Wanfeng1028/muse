@@ -143,7 +143,7 @@ static int statusCode(const std::string& resp) {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureHttpContract : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -234,7 +234,7 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. /api/health 返回 200，body 含 "ok":true 与 version。
-TEST_F(ServeFixture, HealthContract) {
+TEST_F(ServeFixtureHttpContract, HealthContract) {
     std::string resp = httpGet(port_, "/api/health");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "\"ok\":true");
@@ -242,14 +242,14 @@ TEST_F(ServeFixture, HealthContract) {
 }
 
 // 2. /api/search 缺 q → 400，body 含 error。
-TEST_F(ServeFixture, SearchMissingQ) {
+TEST_F(ServeFixtureHttpContract, SearchMissingQ) {
     std::string resp = httpGet(port_, "/api/search");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "error");
 }
 
 // 3. /api/search?q=退款 → 200，hits 非空。
-TEST_F(ServeFixture, SearchBasic) {
+TEST_F(ServeFixtureHttpContract, SearchBasic) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "hits");
@@ -258,7 +258,7 @@ TEST_F(ServeFixture, SearchBasic) {
 }
 
 // 4. /api/search?q=退款&explain=true → body 含 base_bm25 与 final。
-TEST_F(ServeFixture, SearchExplain) {
+TEST_F(ServeFixtureHttpContract, SearchExplain) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=true");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "base_bm25");
@@ -266,35 +266,35 @@ TEST_F(ServeFixture, SearchExplain) {
 }
 
 // 5. /api/search?q=退款&limit=abc → 400（新口径：非法 limit 返回 400）。
-TEST_F(ServeFixture, SearchBadLimit) {
+TEST_F(ServeFixtureHttpContract, SearchBadLimit) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&limit=abc");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "error");
 }
 
 // 6. /api/search?q=退款&unknown=xyz → 200（多余参数不影响）。
-TEST_F(ServeFixture, SearchUnknownParam) {
+TEST_F(ServeFixtureHttpContract, SearchUnknownParam) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&unknown=xyz");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "hits");
 }
 
 // 7. /api/locate 缺 q → 400。
-TEST_F(ServeFixture, LocateMissingQ) {
+TEST_F(ServeFixtureHttpContract, LocateMissingQ) {
     std::string resp = httpGet(port_, "/api/locate");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "error");
 }
 
 // 8. /api/locate?q=退款政策在哪一段 → 200，含 anchors。
-TEST_F(ServeFixture, LocateBasic) {
+TEST_F(ServeFixtureHttpContract, LocateBasic) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策在哪一段"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "anchors");
 }
 
 // 9. /api/stats → 200，含 documents 与 uptime_sec。
-TEST_F(ServeFixture, StatsContract) {
+TEST_F(ServeFixtureHttpContract, StatsContract) {
     std::string resp = httpGet(port_, "/api/stats");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "documents");
@@ -302,19 +302,19 @@ TEST_F(ServeFixture, StatsContract) {
 }
 
 // 10. /api/metrics → 200。
-TEST_F(ServeFixture, MetricsPresent) {
+TEST_F(ServeFixtureHttpContract, MetricsPresent) {
     std::string resp = httpGet(port_, "/api/metrics");
     EXPECT_EQ(statusCode(resp), 200) << resp;
 }
 
 // 11. 未知路径 → 404。
-TEST_F(ServeFixture, NotFound) {
+TEST_F(ServeFixtureHttpContract, NotFound) {
     std::string resp = httpGet(port_, "/api/nope");
     EXPECT_EQ(statusCode(resp), 404) << resp;
 }
 
 // 12. POST /api/search → 405。
-TEST_F(ServeFixture, MethodNotAllowed) {
+TEST_F(ServeFixtureHttpContract, MethodNotAllowed) {
     std::string req = "POST /api/search HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n"
                       "Content-Length: 0\r\n\r\n";
     std::string resp = httpRaw(port_, req);
@@ -322,7 +322,7 @@ TEST_F(ServeFixture, MethodNotAllowed) {
 }
 
 // 13. 并发冒烟：20 线程同时 GET /api/search?q=退款 全 200，之后 health 仍 200。
-TEST_F(ServeFixture, ConcurrencySmoke) {
+TEST_F(ServeFixtureHttpContract, ConcurrencySmoke) {
     const int kThreads = 20;
     std::vector<std::thread> threads;
     std::atomic<int> okCount{0};

@@ -130,7 +130,7 @@ static int statusCode(const std::string& resp) {
     return std::atoi(resp.c_str() + sp + 1);
 }
 
-class ServeFixture : public ::testing::Test {
+class ServeFixtureLocate : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -226,27 +226,27 @@ static size_t countSubstring(const std::string& hay, const std::string& needle) 
     return count;
 }
 
-TEST_F(ServeFixture, LocateR2BasicAnchors) {
+TEST_F(ServeFixtureLocate, LocateR2BasicAnchors) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "anchors");
     EXPECT_GE(countSubstring(resp, "\"line_start\":"), 1u) << "anchors 非空应至少含 1 个 line_start\n响应体: " << resp;
 }
 
-TEST_F(ServeFixture, LocateR2LineRange) {
+TEST_F(ServeFixtureLocate, LocateR2LineRange) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     EXPECT_EQ(resp.find("\"line_start\":0"), std::string::npos)
         << "line_start 不应为 0（应为 >= 1）\n响应体: " << resp;
 }
 
-TEST_F(ServeFixture, LocateR2MissingQ) {
+TEST_F(ServeFixtureLocate, LocateR2MissingQ) {
     std::string resp = httpGet(port_, "/api/locate");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "缺少查询参数 q");
 }
 
-TEST_F(ServeFixture, LocateR2LimitTwo) {
+TEST_F(ServeFixtureLocate, LocateR2LimitTwo) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策") + "&limit=2");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     EXPECT_LE(countSubstring(resp, "\"line_start\":"), 2u) << "limit=2 时 anchors 数量应不超过 2\n响应体: " << resp;

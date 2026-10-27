@@ -143,7 +143,7 @@ static int statusCode(const std::string& resp) {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureHealth : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -234,20 +234,20 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. /api/health：200，body 非空（保守断言）。
-TEST_F(ServeFixture, HealthOk) {
+TEST_F(ServeFixtureHealth, HealthOk) {
     std::string resp = httpGet(port_, "/api/health");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     EXPECT_FALSE(resp.empty());
 }
 
 // 2. /api/no_such_path_xyz：404。
-TEST_F(ServeFixture, UnknownPathNotFound) {
+TEST_F(ServeFixtureHealth, UnknownPathNotFound) {
     std::string resp = httpGet(port_, "/api/no_such_path_xyz");
     EXPECT_EQ(statusCode(resp), 404) << resp;
 }
 
 // 3. POST /api/search（错误方法）：状态码非 200。
-TEST_F(ServeFixture, PostSearchNotOk) {
+TEST_F(ServeFixtureHealth, PostSearchNotOk) {
     std::string req = "POST /api/search HTTP/1.1\r\nHost: 127.0.0.1\r\nConnection: close\r\n"
                       "Content-Length: 0\r\n\r\n";
     std::string resp = httpRaw(port_, req);

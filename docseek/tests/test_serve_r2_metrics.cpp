@@ -143,7 +143,7 @@ static int statusCode(const std::string& resp) {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureMetrics : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -234,14 +234,14 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. /api/stats：200，body 非空。
-TEST_F(ServeFixture, StatsNonEmpty) {
+TEST_F(ServeFixtureMetrics, StatsNonEmpty) {
     std::string resp = httpGet(port_, "/api/stats");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     EXPECT_FALSE(resp.empty()) << "响应为空";
 }
 
 // 2. 先发一次 /api/search?q=退款 再 GET /api/metrics：200，body 非空。
-TEST_F(ServeFixture, MetricsAfterSearch) {
+TEST_F(ServeFixtureMetrics, MetricsAfterSearch) {
     std::string s = httpGet(port_, "/api/search?q=" + urlEncode("退款"));
     EXPECT_EQ(statusCode(s), 200) << s;
 
@@ -251,7 +251,7 @@ TEST_F(ServeFixture, MetricsAfterSearch) {
 }
 
 // 3. /api/search?q=退款&limit=5 连续发 3 次，每次都 200。
-TEST_F(ServeFixture, SearchLimitRepeated) {
+TEST_F(ServeFixtureMetrics, SearchLimitRepeated) {
     std::string target = "/api/search?q=" + urlEncode("退款") + "&limit=5";
     for (int i = 0; i < 3; ++i) {
         std::string resp = httpGet(port_, target);

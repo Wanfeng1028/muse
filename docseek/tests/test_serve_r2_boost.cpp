@@ -143,7 +143,7 @@ static int statusCode(const std::string& resp) {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureBoost : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -236,7 +236,7 @@ class ServeFixture : public ::testing::Test {
 }  // namespace
 
 // 1. title_boost=5 合法，200 且 hits 非空。
-TEST_F(ServeFixture, TitleBoostPositiveHits) {
+TEST_F(ServeFixtureBoost, TitleBoostPositiveHits) {
     std::string target = "/api/search?q=" + urlEncode("退款") + "&title_boost=5";
     std::string resp = httpGet(port_, target);
     EXPECT_EQ(statusCode(resp), 200) << resp;
@@ -244,7 +244,7 @@ TEST_F(ServeFixture, TitleBoostPositiveHits) {
 }
 
 // 2. title_boost=0 是合法值，不得返回 400。
-TEST_F(ServeFixture, TitleBoostZeroIsValid) {
+TEST_F(ServeFixtureBoost, TitleBoostZeroIsValid) {
     std::string target = "/api/search?q=" + urlEncode("退款") + "&title_boost=0";
     std::string resp = httpGet(port_, target);
     EXPECT_EQ(statusCode(resp), 200) << resp;
@@ -252,7 +252,7 @@ TEST_F(ServeFixture, TitleBoostZeroIsValid) {
 }
 
 // 3. phrase_boost=10 合法，200 且 hits 非空。
-TEST_F(ServeFixture, PhraseBoostPositiveHits) {
+TEST_F(ServeFixtureBoost, PhraseBoostPositiveHits) {
     std::string target = "/api/search?q=" + urlEncode("退款") + "&phrase_boost=10";
     std::string resp = httpGet(port_, target);
     EXPECT_EQ(statusCode(resp), 200) << resp;

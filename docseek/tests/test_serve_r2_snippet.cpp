@@ -212,7 +212,7 @@ static std::string makeLongChinese() {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureSnippet : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -301,7 +301,7 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. /api/search?q=<退款>：200；整个响应 body 是合法 UTF-8。
-TEST_F(ServeFixture, SearchResponseUtf8Valid) {
+TEST_F(ServeFixtureSnippet, SearchResponseUtf8Valid) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     std::string body = responseBody(resp);
@@ -311,7 +311,7 @@ TEST_F(ServeFixture, SearchResponseUtf8Valid) {
 }
 
 // 2. 长中文文档（>2KB 连续中文无空格）搜索，响应 UTF-8 合法。
-TEST_F(ServeFixture, LongChineseSnippetUtf8Valid) {
+TEST_F(ServeFixtureSnippet, LongChineseSnippetUtf8Valid) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("售后流程指南"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     std::string body = responseBody(resp);
@@ -322,7 +322,7 @@ TEST_F(ServeFixture, LongChineseSnippetUtf8Valid) {
 }
 
 // 3. /api/locate?q=<退款政策>&limit=3：200，anchors 非空，text/context 合法 UTF-8。
-TEST_F(ServeFixture, LocateAnchorsUtf8Valid) {
+TEST_F(ServeFixtureSnippet, LocateAnchorsUtf8Valid) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策") + "&limit=3");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     std::string body = responseBody(resp);

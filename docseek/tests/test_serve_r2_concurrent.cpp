@@ -143,7 +143,7 @@ static int statusCode(const std::string& resp) {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureConcurrent : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -234,7 +234,7 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. 16 个线程同时 GET /api/search?q=退款，全部 200 且 body 含 hits。
-TEST_F(ServeFixture, ConcurrentSearchAllOk) {
+TEST_F(ServeFixtureConcurrent, ConcurrentSearchAllOk) {
     const int kThreads = 16;
     const int port = port_;
     std::string target = "/api/search?q=" + urlEncode("退款");
@@ -260,7 +260,7 @@ TEST_F(ServeFixture, ConcurrentSearchAllOk) {
 }
 
 // 2. 8 个线程混合请求 /api/search 与 /api/health，全部 200。
-TEST_F(ServeFixture, ConcurrentMixedEndpoints) {
+TEST_F(ServeFixtureConcurrent, ConcurrentMixedEndpoints) {
     const int kThreads = 8;
     const int port = port_;
     std::string searchTarget = "/api/search?q=" + urlEncode("退款");

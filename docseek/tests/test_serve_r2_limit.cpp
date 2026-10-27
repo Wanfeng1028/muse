@@ -157,7 +157,7 @@ static size_t countOccurrences(const std::string& hay, const std::string& needle
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureLimit : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -248,7 +248,7 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. 无 limit 参数：200，hits 数组非空。
-TEST_F(ServeFixture, DefaultLimitNoParam) {
+TEST_F(ServeFixtureLimit, DefaultLimitNoParam) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款"));
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "hits");
@@ -256,7 +256,7 @@ TEST_F(ServeFixture, DefaultLimitNoParam) {
 }
 
 // 2. limit=1：200，hits 中恰 1 个 doc_id。
-TEST_F(ServeFixture, LimitOne) {
+TEST_F(ServeFixtureLimit, LimitOne) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&limit=1");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "hits");
@@ -264,14 +264,14 @@ TEST_F(ServeFixture, LimitOne) {
 }
 
 // 3. limit=0：新口径：非法 limit 返回 400。
-TEST_F(ServeFixture, LimitZeroReturns400) {
+TEST_F(ServeFixtureLimit, LimitZeroReturns400) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&limit=0");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "error");
 }
 
 // 4. limit=abc：新口径：非法 limit 返回 400。
-TEST_F(ServeFixture, LimitNonNumericReturns400) {
+TEST_F(ServeFixtureLimit, LimitNonNumericReturns400) {
     std::string resp = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&limit=abc");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "error");

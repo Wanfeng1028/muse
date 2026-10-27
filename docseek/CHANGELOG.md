@@ -1,3 +1,11 @@
+## Unreleased（2026-10-28）——ServeFixture 夹具同名重命名
+
+### 修复（2026-10-28 深耕轮：ServeFixture 夹具同名重命名）
+- 问题：11 个测试文件均在全局命名空间定义了同名的 "class ServeFixture : public ::testing::Test"，且全部链接进同一个二进制 docseek_tests。导致 gtest 在注册阶段拒绝运行这些测试（0 ms 失败，提示：同一个测试套件中的所有测试必须使用相同的测试夹具类），阻塞了包括 serve limit 用例在内的测试（此前只能通过真实服务冒烟测试验证）。
+- 修复：仅重命名各文件的夹具类名为唯一名称，其他均未改动。重命名映射如下：test_http_contract.cpp -> ServeFixtureHttpContract；test_serve_r2_limit.cpp -> ServeFixtureLimit；test_serve_r2_locatelimit.cpp -> ServeFixtureLocateLimit；test_serve_r2_errparam.cpp -> ServeFixtureErrParam（其派生类 ServeErrParamR2 名称保持不变，仅修改了基类）；boost -> ServeFixtureBoost；concurrent -> ServeFixtureConcurrent；explain -> ServeFixtureExplain；health -> ServeFixtureHealth；locate -> ServeFixtureLocate；metrics -> ServeFixtureMetrics；snippet -> ServeFixtureSnippet。测试名称、夹具体内容和产品代码均未改动。重命名通过脚本执行，11 个文件共修改 53 行（11 行类声明 + 1 行派生类基类声明 + 41 行 TEST_F）。
+- 验证：修复前，从 docseek 根目录运行旧二进制时，ServeFixture.LimitZeroReturns400、LimitNonNumericReturns400、SearchBadLimit、DefaultLimitNoParam 均在 0 ms 注册阶段失败。重新构建（cmake --build build --target docseek_tests，成功）后，在 build/ 目录下运行（夹具使用相对路径 ./docseek 调用，工作目录必须为 build/）：ServeFixture*.* 套件 41/41 通过，ServeErrParamR2.* 5/5 通过，总计 46/46 通过。本轮未运行完整 ctest 套件。
+- 无变更：产品代码未改动，版本未升级，UI 未变更。
+
 ## Unreleased（2026-10-26）——serve 检索接口 limit 非法返回 400
 ### 动机
 同文件内 title_boost/phrase_boost 对非法值早已返回 400，唯独 /api/search 与 /api/locate 的 limit 解析静默回落默认值（非数字回默认、超范围回默认），调用方传错参数无法发现；三个测试文件还把旧回落口径锁死为 200。

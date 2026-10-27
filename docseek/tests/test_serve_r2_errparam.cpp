@@ -142,7 +142,7 @@ static int statusCode(const std::string& resp) {
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureErrParam : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -232,7 +232,7 @@ class ServeFixture : public ::testing::Test {
     pid_t pid_ = -1;
 };
 
-class ServeErrParamR2 : public ServeFixture {};
+class ServeErrParamR2 : public ServeFixtureErrParam {};
 
 // 1. /api/search 无 q 参数：400，body 含 "缺少查询参数 q"。
 TEST_F(ServeErrParamR2, SearchNoQ) {

@@ -158,7 +158,7 @@ static size_t countOccurrences(const std::string& body, const std::string& needl
 }
 
 // 测试夹具：起真实 serve 进程，跑完回收。
-class ServeFixture : public ::testing::Test {
+class ServeFixtureLocateLimit : public ::testing::Test {
  protected:
     void SetUp() override {
         tmpDir_ = makeTempDir();
@@ -247,21 +247,21 @@ class ServeFixture : public ::testing::Test {
 };
 
 // 1. limit=200 超上限：新口径：非法 limit 返回 400。
-TEST_F(ServeFixture, LocateLimitOverMaxReturns400) {
+TEST_F(ServeFixtureLocateLimit, LocateLimitOverMaxReturns400) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策在哪一段") + "&limit=200");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "error");
 }
 
 // 2. limit=abc 非法：新口径：非法 limit 返回 400。
-TEST_F(ServeFixture, LocateLimitNonNumericReturns400) {
+TEST_F(ServeFixtureLocateLimit, LocateLimitNonNumericReturns400) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策在哪一段") + "&limit=abc");
     EXPECT_EQ(statusCode(resp), 400) << resp;
     expectContains(resp, "error");
 }
 
 // 3. limit=1 有效，恰好 1 个 anchor。
-TEST_F(ServeFixture, LocateLimitOne) {
+TEST_F(ServeFixtureLocateLimit, LocateLimitOne) {
     std::string resp = httpGet(port_, "/api/locate?q=" + urlEncode("退款政策在哪一段") + "&limit=1");
     EXPECT_EQ(statusCode(resp), 200) << resp;
     expectContains(resp, "anchors");
