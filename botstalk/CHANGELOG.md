@@ -1,3 +1,11 @@
+## OpenAgents 第 16 轮：设备信任（稳定 device key + 幂等重兑 + 设备管理）
+- `redeem` 现可颁发稳定的设备密钥（仅返回一次，仅存储哈希）。
+- 使用新配对码对同一设备进行重新兑换时，将轮换密钥并更新原记录（无重复行）。
+- 新增针对 owner/admin 的设备列表与吊销 REST 接口。
+- 已吊销的设备将返回 `403 DEVICE_REVOKED` 且不消耗配对码。
+- 测试 17/17 全部通过 + 冒烟测试 11/11 全部通过。
+- 已知限制：设备密钥暂未用于连接认证，Web 管理 UI 待开发。
+
 ## OpenAgents 第 15 轮：配对码 Web UI
 
 - api.ts 新增配对码封装：issuePairingCode / redeemPairingCode。

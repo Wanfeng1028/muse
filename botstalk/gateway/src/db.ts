@@ -152,6 +152,20 @@ export function openDb(dataDir: string): DatabaseSync {
     );
   `);
   db.exec("CREATE INDEX IF NOT EXISTS idx_share_links_room ON share_links(room);");
+db.exec(`
+  CREATE TABLE IF NOT EXISTS devices (
+    device_id TEXT NOT NULL,
+    room TEXT NOT NULL,
+    device_key_hash TEXT NOT NULL,
+    adapter_id TEXT NOT NULL,
+    created_at_ms INTEGER NOT NULL,
+    last_seen_ms INTEGER NOT NULL,
+    revoked_at_ms INTEGER,
+    PRIMARY KEY (device_id, room)
+  );
+  CREATE INDEX IF NOT EXISTS idx_devices_room ON devices(room);
+`);
+
   ensureScheduledTaskTable(db);
   ensureTriggerRuleTable(db);
   return db;
@@ -200,6 +214,56 @@ export function redeemPairingCode(
   );
   const info = stmt.run(nowMs, adapterId, codeHash);
   return Number(info.changes) === 1 ? "ok" : "already";
+}
+
+export interface DeviceRow {
+  device_id: string;
+  room: string;
+  device_key_hash: string;
+  adapter_id: string;
+  created_at_ms: number;
+  last_seen_ms: number;
+  revoked_at_ms: number | null;
+}
+
+export function upsertDevice(db: Db, row: { deviceId: string; room: string; deviceKeyHash: string; adapterId: string; nowMs: number }): "created" | "updated" | "revoked" {
+  // 查询设备状态
+  const getStmt = db.prepare("SELECT revoked_at_ms FROM devices WHERE device_id = ? AND room = ?");
+  const existing = getStmt.get(row.deviceId, row.room) as { revoked_at_ms: number | null } | undefined;
+  if (existing) {
+    if (existing.revoked_at_ms !== null) return "revoked";
+    // 更新设备信息
+    const updateStmt = db.prepare("UPDATE devices SET device_key_hash = ?, adapter_id = ?, last_seen_ms = ? WHERE device_id = ? AND room = ?");
+    updateStmt.run(row.deviceKeyHash, row.adapterId, row.nowMs, row.deviceId, row.room);
+    return "updated";
+  }
+  // 创建新设备
+  const insertStmt = db.prepare("INSERT INTO devices (device_id, room, device_key_hash, adapter_id, created_at_ms, last_seen_ms, revoked_at_ms) VALUES (?, ?, ?, ?, ?, ?, NULL)");
+  insertStmt.run(row.deviceId, row.room, row.deviceKeyHash, row.adapterId, row.nowMs, row.nowMs);
+  return "created";
+}
+
+export function getDevice(db: Db, deviceId: string, room: string): DeviceRow | undefined {
+  // 获取单个设备
+  const stmt = db.prepare("SELECT * FROM devices WHERE device_id = ? AND room = ?");
+  return stmt.get(deviceId, room) as DeviceRow | undefined;
+}
+
+export function listDevicesByRoom(db: Db, room: string): DeviceRow[] {
+  // 列出房间设备
+  const stmt = db.prepare("SELECT * FROM devices WHERE room = ? ORDER BY created_at_ms ASC");
+  return stmt.all(room) as unknown as DeviceRow[];
+}
+
+export function revokeDevice(db: Db, deviceId: string, room: string, nowMs: number): "ok" | "already" | "not_found" {
+  // 吊销设备
+  const getStmt = db.prepare("SELECT revoked_at_ms FROM devices WHERE device_id = ? AND room = ?");
+  const existing = getStmt.get(deviceId, room) as { revoked_at_ms: number | null } | undefined;
+  if (!existing) return "not_found";
+  if (existing.revoked_at_ms !== null) return "already";
+  const updateStmt = db.prepare("UPDATE devices SET revoked_at_ms = ? WHERE device_id = ? AND room = ?");
+  updateStmt.run(nowMs, deviceId, room);
+  return "ok";
 }
 
 export interface ShareLinkRow {

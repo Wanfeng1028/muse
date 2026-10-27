@@ -5,9 +5,10 @@ import type { ServerResponse } from "node:http";
 import { WebSocketServer } from "ws";
 import { ZOMBIE_SWEEP_MS, isRoomType, isGameAllowed, canUpdateRoom, canClearOrKick, canManageRoom } from "@botstalk/protocol";
 import type { Db } from "./db.js";
-import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, getPermRole, setPermRole, isPermRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession, issuePairingCode, getPairingCode, redeemPairingCode } from "./db.js";
+import { getRoomHistory, listPresenceForRoom, listTasks, getTask, getTaskProgress, updateTaskStatus, countTasksByStatus, createRoom, getRoom, listRooms, setRoomType, updateRoom, getRoomType, addRoomMember, removeRoomMember, listRoomMembers, setPersonaRole, getPermRole, setPermRole, isPermRole, countRoomMembers, createGameSession, getGameSession, listGameSessions, updateGameSessionState, endGameSession, issuePairingCode, getPairingCode, redeemPairingCode, getDevice, upsertDevice, listDevicesByRoom, revokeDevice } from "./db.js";
 import { issueShareLink, getShareLinkByHash, getShareLinkById, listShareLinks, revokeShareLink } from "./db.js";
 import { generatePairingCode, normalizePairingCode, hashPairingCode, clampPairingTtlMinutes } from "./pairing.js";
+import { generateDeviceKey, hashDeviceKey, normalizeDeviceId } from "./devices.js";
 import { generateShareToken, normalizeShareToken, hashShareToken, clampShareTtlHours, isShareExpired, isShareRevoked } from "./share.js";
 import { isSupportedReaction, addMessageReaction, removeMessageReaction, listMessageReactions, getMessageRoom } from "./reactions.js";
 
@@ -1089,53 +1090,76 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       return;
     }
 
-    // POST /api/pairing-codes/redeem  body: { code, adapter_id } —— 设备凭配对码入驻：兑码成功即成为该房成员
-    const pairingRedeemMatch = url.match(/^\/api\/pairing-codes\/redeem(?:\?|$)/);
-    if (pairingRedeemMatch && method === "POST") {
-      res.setHeader("access-control-allow-origin", "*");
-      const body = (await readJsonBody(req)) as { code?: unknown; adapter_id?: unknown } | undefined;
-      const adapterId = typeof body?.adapter_id === "string" ? body.adapter_id : "";
-      if (!adapterId) {
-        res.writeHead(400, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "adapter_id required" }));
-        return;
-      }
-      const normalized = normalizePairingCode(body?.code);
-      if (!normalized) {
-        res.writeHead(400, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "INVALID_PAIRING_CODE" }));
-        return;
-      }
-      const row = getPairingCode(db, hashPairingCode(normalized));
-      if (!row) {
-        res.writeHead(404, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "PAIRING_CODE_NOT_FOUND" }));
-        return;
-      }
-      const nowMs = Date.now();
-      if (row.redeemed_at_ms !== null) {
-        res.writeHead(409, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "PAIRING_CODE_USED" }));
-        return;
-      }
-      if (nowMs > row.expires_at_ms) {
-        res.writeHead(410, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "PAIRING_CODE_EXPIRED" }));
-        return;
-      }
-      const result = redeemPairingCode(db, hashPairingCode(normalized), adapterId, nowMs);
-      if (result !== "ok") {
-        res.writeHead(409, { "content-type": "application/json" });
-        res.end(JSON.stringify({ error: "PAIRING_CODE_USED" }));
-        return;
-      }
-      if (!listRoomMembers(db, row.room).some((m) => m.adapter_id === adapterId)) {
-        addRoomMember(db, row.room, adapterId, null);
-      }
-      res.writeHead(200, { "content-type": "application/json" });
-      res.end(JSON.stringify({ room: row.room, adapter_id: adapterId, redeemed_at_ms: nowMs }));
+    // POST /api/pairing-codes/redeem  body: { code, adapter_id, device_id? } —— 设备凭配对码入驻：兑码成功即成为该房成员并签发设备密钥
+{
+  const pairingRedeemMatch = url.match(/^\/api\/pairing-codes\/redeem(?:\?|$)/);
+  if (pairingRedeemMatch && method === "POST") {
+    res.setHeader("access-control-allow-origin", "*");
+    const body = (await readJsonBody(req)) as { code?: unknown; adapter_id?: unknown; device_id?: unknown } | undefined;
+    const adapterId = typeof body?.adapter_id === "string" ? body.adapter_id : "";
+    if (adapterId === "") {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "adapter_id required" }));
       return;
     }
+    const normalized = normalizePairingCode(typeof body?.code === "string" ? body.code : "");
+    if (normalized === null) {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "INVALID_PAIRING_CODE" }));
+      return;
+    }
+    const row = getPairingCode(db, hashPairingCode(normalized));
+    if (!row) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "PAIRING_CODE_NOT_FOUND" }));
+      return;
+    }
+    const nowMs = Date.now();
+    if (row.redeemed_at_ms !== null) {
+      res.writeHead(409, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "PAIRING_CODE_USED" }));
+      return;
+    }
+    if (nowMs > row.expires_at_ms) {
+      res.writeHead(410, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "PAIRING_CODE_EXPIRED" }));
+      return;
+    }
+    let deviceId: string;
+    if (body?.device_id !== undefined) {
+      const normalizedDeviceId = normalizeDeviceId(body?.device_id);
+      if (normalizedDeviceId === null) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "INVALID_DEVICE_ID" }));
+        return;
+      }
+      deviceId = normalizedDeviceId;
+    } else {
+      deviceId = adapterId;
+    }
+    const existing = getDevice(db, deviceId, row.room);
+    if (existing && existing.revoked_at_ms !== null) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "DEVICE_REVOKED" }));
+      return;
+    }
+    const redeemResult = redeemPairingCode(db, hashPairingCode(normalized), adapterId, nowMs);
+    if (redeemResult !== "ok") {
+      res.writeHead(409, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "PAIRING_CODE_USED" }));
+      return;
+    }
+    const deviceKey = generateDeviceKey();
+    upsertDevice(db, { deviceId, room: row.room, deviceKeyHash: hashDeviceKey(deviceKey), adapterId, nowMs });
+    const members = listRoomMembers(db, row.room);
+    if (!members.some((member) => member.adapter_id === adapterId)) {
+      addRoomMember(db, row.room, adapterId, null);
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ room: row.room, adapter_id: adapterId, redeemed_at_ms: nowMs, device_id: deviceId, device_key: deviceKey }));
+    return;
+  }
+}
 
 // POST /api/rooms/:room/share-links — 房主/管理员签发只读分享链接，令牌仅此处返回一次
 {
@@ -1232,6 +1256,70 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     revokeShareLink(db, id, Date.now());
     res.writeHead(204, { "access-control-allow-origin": "*" });
     res.end();
+    return;
+  }
+}
+
+// GET /api/rooms/:room/devices — 房主/管理员列出设备元数据，绝不返回 device_key_hash
+{
+  const m = url.match(/^\/api\/rooms\/([^/?]+)\/devices(?:\?|$)/);
+  if (m && method === "GET") {
+    res.setHeader("access-control-allow-origin", "*");
+    const roomId = decodeURIComponent(m[1]);
+    const room = getRoom(db, roomId);
+    if (!room) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "room not found" }));
+      return;
+    }
+    const requester = new URL(url, "http://localhost").searchParams.get("requester") ?? "";
+    const isOwner = requester !== "" && requester === room.owner;
+    if (!canManageRoom(room.type, isOwner, managePerm(db, room.owner, roomId, requester))) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+      return;
+    }
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ devices: listDevicesByRoom(db, roomId).map((r) => ({ device_id: r.device_id, room: r.room, adapter_id: r.adapter_id, created_at_ms: r.created_at_ms, last_seen_ms: r.last_seen_ms, revoked_at_ms: r.revoked_at_ms })) }));
+    return;
+  }
+}
+
+// DELETE /api/rooms/:room/devices/:device_id — 房主/管理员吊销设备，成功 204 空 body
+{
+  const m = url.match(/^\/api\/rooms\/([^/?]+)\/devices\/([^/?]+)(?:\?|$)/);
+  if (m && method === "DELETE") {
+    res.setHeader("access-control-allow-origin", "*");
+    const roomId = decodeURIComponent(m[1]);
+    const deviceId = decodeURIComponent(m[2]);
+    const room = getRoom(db, roomId);
+    if (!room) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "room not found" }));
+      return;
+    }
+    const body = (await readJsonBody(req)) as { requester?: unknown } | undefined;
+    const requester = typeof body?.requester === "string" ? body.requester : "";
+    const isOwner = requester !== "" && requester === room.owner;
+    if (!canManageRoom(room.type, isOwner, managePerm(db, room.owner, roomId, requester))) {
+      res.writeHead(403, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
+      return;
+    }
+    const device = getDevice(db, deviceId, roomId);
+    if (!device || device.room !== roomId) {
+      res.writeHead(404, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "DEVICE_NOT_FOUND" }));
+      return;
+    }
+    const revokeResult = revokeDevice(db, deviceId, roomId, Date.now());
+    if (revokeResult === "ok" || revokeResult === "already") {
+      res.writeHead(204);
+      res.end();
+      return;
+    }
+    res.writeHead(404, { "content-type": "application/json" });
+    res.end(JSON.stringify({ error: "DEVICE_NOT_FOUND" }));
     return;
   }
 }
