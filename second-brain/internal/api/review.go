@@ -259,7 +259,20 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			writeError(w, r, http.StatusMethodNotAllowed, "method not allowed")
 			return
 		}
-		n := parseIntDefault(r.URL.Query().Get("n"), 5)
+		n := 5
+		if s := r.URL.Query().Get("n"); s != "" {
+			v, err := strconv.Atoi(s)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "n 参数非法")
+				return
+			}
+			n = v
+		}
+		if n <= 0 {
+			n = 5
+		} else if n > 200 {
+			n = 200
+		}
 		notes, err := st.DigestNotes(time.Now(), n, CurrentUser(r))
 		if err != nil {
 			writeError(w, r, http.StatusInternalServerError, err.Error())
