@@ -15,6 +15,8 @@
 
 - **GET /api/review/digest 的 `n` 参数校验收紧**：照搬同级 `/api/digest` 的钳制口径，缺省或空仍默认 5；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为"n 参数非法"；解析成功后的钳制为小于等于 0 置 5、大于 200 置 200（此前无钳制）。新增 `internal/api/review_digest_n_validation_test.go`，2 个测试函数、8 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`1`/`0`/`999`/`-5`（均 200）。同级 `/api/digest` 本轮未动，store 层 `n <= 0` 回退 50 的兜底保留。
 
+- **GET /api/digest 的 `n` 参数校验收紧**：缺省或空参数仍默认 5，非整数（如 `abc`、`1.5`、`1x`）不再静默回落，而是返回 400 错误，错误文案固定为“n 参数非法”；解析成功后的钳制逻辑保持不变（`n` 小于等于 0 置 5、大于 200 置 200）。新增测试文件 `internal/api/digest_n_validation_test.go`，覆盖非法输入与钳制边界共 8 个子用例。
+
 
 ### 新增
 - **GET /api/review/heatmap 的 `days` 参数校验收紧**：照搬 forecast 的 `days` 写法，缺省或空仍默认 365；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为“days 参数非法”。解析成功后的钳制逻辑保持不变（小于等于 0 置 365、大于 366 置 366）。新增 `internal/api/review_heatmap_validation_test.go`，8 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`1`/`0`/`999`/`-5`（均 200）。既有 `TestReviewHeatmapAPI_Clamp` 的 `days=abc` 期望由 200 同步改为 400。

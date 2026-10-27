@@ -319,7 +319,15 @@ func RegisterReviewRoutes(mux *http.ServeMux, st *store.Store) {
 			return
 		}
 		user := CurrentUser(r)
-		n := parseIntDefault(r.URL.Query().Get("n"), 5)
+		n := 5
+		if rawN := r.URL.Query().Get("n"); rawN != "" {
+			parsedN, err := strconv.Atoi(rawN)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "n 参数非法")
+				return
+			}
+			n = parsedN
+		}
 		if n <= 0 {
 			n = 5
 		}
