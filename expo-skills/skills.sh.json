@@ -1,0 +1,48 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Framework (open source)",
+      "description": "Free, open-source Expo SDK and React Native skills: UI, navigation, styling, data fetching, native modules, DOM, examples, and SDK upgrades.",
+      "skills": [
+        "expo-overview",
+        "expo-project-structure",
+        "expo-router",
+        "expo-animation",
+        "expo-native-ui",
+        "expo-design-system",
+        "expo-ui",
+        "expo-data-fetching",
+        "expo-dom",
+        "expo-web-to-native",
+        "expo-module",
+        "expo-brownfield",
+        "expo-dev-client",
+        "expo-examples",
+        "expo-app-clip",
+        "expo-upgrade"
+      ]
+    },
+    {
+      "title": "Services & paid distribution",
+      "description": "Skills whose core purpose uses paid Expo Application Services (EAS). Each one discloses costs and plan limits up front.",
+      "skills": [
+        "eas-app-stores",
+        "eas-hosting",
+        "eas-workflows",
+        "eas-observe",
+        "eas-update",
+        "eas-update-insights",
+        "eas-simulator"
+      ]
+    },
+    {
+      "title": "Experimental",
+      "description": "Skills for Expo APIs that are not finalized. Content may change or be retired; skills graduate to the groups above when the underlying API stabilizes.",
+      "skills": [
+        "expo-migrate-module"
+      ]
+    }
+  ]
+}
