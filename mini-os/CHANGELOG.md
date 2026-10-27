@@ -1,3 +1,13 @@
+## [1.19.12] - 2026-10-27
+
+### Changed
+
+- GET /api/fs 的 parent_id 参数收紧：此前 parent_id 走 Axum Query 反序列化，非整数直接由框架拒绝（错误体非本项目口径）；现改为 Option<String> 后手工解析，非负整数才放行，""、"abc"、"1.5"、"-1"、超 i64 上限一律返回 400 {"error": "parent_id 参数非法"}，与 fs/search 的 limit 口径一致。不传 parent_id 仍查根目录；合法 id 查不到时返回 200 空数组（列表语义，不 404）。
+
+### Added
+
+- 新增 tests/fs_parent_id_validation_test.rs，6 例：abc 400、1.5 400、-1 400、空串 400、999999 200 空数组、合法文件夹内含文件且无参根目录含该文件夹。
+
 ## [1.19.11] - 2026-10-27
 
 ### Fixed

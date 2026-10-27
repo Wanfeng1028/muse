@@ -337,7 +337,7 @@ pub fn apps_registry() -> Vec<AppInfo> {
 /// GET /api/fs 查询参数。
 #[derive(Deserialize)]
 pub struct FsQuery {
-    pub parent_id: Option<i64>,
+    pub parent_id: Option<String>,
 }
 
 /// GET /api/health
@@ -394,13 +394,21 @@ pub async fn list_fs(
     Extension(user): Extension<auth::CurrentUser>,
     Query(q): Query<FsQuery>,
 ) -> ApiResult {
+    let parent_id: Option<i64> = match q.parent_id.as_deref().map(str::trim) {
+        None => None,
+        Some("") => return Err(err(StatusCode::BAD_REQUEST, "parent_id 参数非法")),
+        Some(raw) => match raw.parse::<i64>() {
+            Ok(v) if v >= 0 => Some(v),
+            _ => return Err(err(StatusCode::BAD_REQUEST, "parent_id 参数非法")),
+        },
+    };
     // 锁中毒直接 unwrap（进程内简单互斥，不做恢复）
     let conn = state.db.lock().unwrap();
 
     // 文件夹优先，再按名称升序
     let mut nodes: Vec<Node> = Vec::new();
 
-    if let Some(pid) = q.parent_id {
+    if let Some(pid) = parent_id {
         let mut stmt = conn
             .prepare(
                 "SELECT id, parent_id, name, kind, content, created_at, updated_at, \
