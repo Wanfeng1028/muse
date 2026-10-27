@@ -37,6 +37,7 @@ import java.util.concurrent.Future;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
@@ -387,31 +388,25 @@ class UsageControllerDeepTest {
     }
 
     @Test
-    void summary_hugeDaysValueStillReturnsRowsInWindow() {
+    void summary_hugeDaysValueThrowsIllegalArgument() {
         // given
         insertVideoTask("openai", "gpt-4", 100L, 10L, VideoTaskStatus.DONE, LocalDateTime.now());
 
-        // when
-        UsageController.SummaryDto body = usageController.summary("openai", null, 100000);
-
-        // then
-        assertNotNull(body);
-        assertEquals(100L, body.tokensTotal());
-        assertEquals(1L, body.taskCount());
+        // when + then: days > 365 is rejected at the controller layer
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> usageController.summary("openai", null, 100000));
+        assertEquals("days 参数非法", ex.getMessage());
     }
 
     @Test
-    void summary_negativeDaysDoesNotThrow() {
+    void summary_negativeDaysThrowsIllegalArgument() {
         // given
         insertVideoTask("openai", "gpt-4", 100L, 10L, VideoTaskStatus.DONE, LocalDateTime.now());
 
-        // when
-        UsageController.SummaryDto body = usageController.summary("openai", null, -1);
-
-        // then
-        assertNotNull(body);
-        assertNotNull(body.tokensTotal());
-        assertNotNull(body.costCentsTotal());
+        // when + then: negative days is rejected at the controller layer
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
+                () -> usageController.summary("openai", null, -1));
+        assertEquals("days 参数非法", ex.getMessage());
     }
 
     @Test

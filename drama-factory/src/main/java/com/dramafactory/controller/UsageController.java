@@ -28,12 +28,15 @@ public class UsageController {
         this.usageService = usageService;
     }
 
-    /** 总量汇总。 */
+    /** 总量汇总。days 小于 0 或大于 365 时返回 400；days=0 表示全部时间。 */
     @GetMapping("/summary")
     @Operation(summary = "用量汇总（支持 provider/model/days 过滤）")
     public SummaryDto summary(@RequestParam(required = false) String provider,
                               @RequestParam(required = false) String model,
                               @RequestParam(required = false, defaultValue = "0") int days) {
+        if (days < 0 || days > 365) {
+            throw new IllegalArgumentException("days 参数非法");
+        }
         UsageService.UsageSummary s = usageService.summary(provider, model, days);
         return new SummaryDto(s.tokensTotal(), s.costCentsTotal(), s.taskCount(), s.runCount(),
                 s.stepCount(), s.requestCount(), s.promptTokensTotal(), s.completionTokensTotal(),
@@ -49,12 +52,15 @@ public class UsageController {
                 .toList();
     }
 
-    /** 按天聚合，默认 30 天。 */
+    /** 按天聚合，默认 30 天。days 小于 0 或大于 365 时返回 400；days=0 时服务层按默认 30 天处理。 */
     @GetMapping("/by-day")
     @Operation(summary = "按天聚合用量（支持 provider/model 过滤）")
     public List<DayDto> byDay(@RequestParam(name = "days", defaultValue = "30") int days,
                               @RequestParam(required = false) String provider,
                               @RequestParam(required = false) String model) {
+        if (days < 0 || days > 365) {
+            throw new IllegalArgumentException("days 参数非法");
+        }
         return usageService.byDay(days, provider, model).stream()
                 .map(d -> new DayDto(d.date(), d.tokens(), d.costCents(), d.videoCount(), d.stepCount()))
                 .toList();

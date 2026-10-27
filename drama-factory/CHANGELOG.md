@@ -5,6 +5,12 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-27 深耕轮：用量汇总与按天接口 days 参数收紧）
+- 现象：GET /api/usage/summary 与 GET /api/usage/by-day 此前无 days 校验，负数静默回落默认（summary 负数等同 0 = 全量，by-day 负数等同 30 天默认），超大值无上限查询，传错参数无法察觉。
+- 修复：UsageController.summary 与 UsageController.byDay 加控制器层校验，days < 0 或 days > 365 抛 IllegalArgumentException("days 参数非法")，由现有全局处理器映射 HTTP 400；days=0 语义不变（summary = 全量，by-day = 服务端默认 30 天）。
+- 测试：新增 UsageDaysValidationTest，10 个 MockMvc 用例（每接口：负数、366、非整数返回 400；0 与 30 返回 200）。
+- 既有测试：UsageControllerDeepTest 两处锁死旧语义的用例（超大值仍返回、负数不抛错）按新口径改为断言抛 IllegalArgumentException；靶向复跑 DeepTest 20/20 与新测试 10/10 合计 30/30 全绿。
+- 无改动：无版本号变更、无 schema 变更、无 UI 变更；前端 usage.js 仅发 7/30/90，保留 0 语义不影响任何前端路径。
 ### Fixed（2026-10-27 深耕轮：创作者列表 sort 参数收紧）
 
 - 现象：GET /api/creators 的 sort 此前无校验：非法值静默回落为创建时间倒序，调用方传错参数无法发现。
