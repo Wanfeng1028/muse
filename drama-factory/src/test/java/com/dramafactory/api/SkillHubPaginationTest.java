@@ -118,34 +118,19 @@ class SkillHubPaginationTest {
         assertEquals(0, length);
     }
     @Test
-    void sizeClampedTo200() throws Exception {
-        MvcResult r = mockMvc.perform(get("/api/skillhub/index").param("size", "500"))
-            .andExpect(status().isOk()).andReturn();
-        String body = r.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        int size = com.jayway.jsonpath.JsonPath.read(body, "$.size");
-        assertEquals(200, size);
+    void sizeOver200Returns400() throws Exception {
+        mockMvc.perform(get("/api/skillhub/index").param("size", "500"))
+            .andExpect(status().isBadRequest());
     }
     @Test
-    void sizeZeroClampedToOne() throws Exception {
-        MvcResult r = mockMvc.perform(get("/api/skillhub/index").param("size", "0"))
-            .andExpect(status().isOk()).andReturn();
-        String body = r.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        int size = com.jayway.jsonpath.JsonPath.read(body, "$.size");
-        assertEquals(1, size);
+    void sizeZeroReturns400() throws Exception {
+        mockMvc.perform(get("/api/skillhub/index").param("size", "0"))
+            .andExpect(status().isBadRequest());
     }
     @Test
-    void negativePageAsZero() throws Exception {
-        MvcResult rNeg = mockMvc.perform(get("/api/skillhub/index").param("page", "-1").param("size", "10"))
-            .andExpect(status().isOk()).andReturn();
-        String bodyNeg = rNeg.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        String firstIdNeg = com.jayway.jsonpath.JsonPath.read(bodyNeg, "$.skills[0].id");
-    
-        MvcResult rZero = mockMvc.perform(get("/api/skillhub/index").param("page", "0").param("size", "10"))
-            .andExpect(status().isOk()).andReturn();
-        String bodyZero = rZero.getResponse().getContentAsString(StandardCharsets.UTF_8);
-        String firstIdZero = com.jayway.jsonpath.JsonPath.read(bodyZero, "$.skills[0].id");
-    
-        assertEquals(firstIdZero, firstIdNeg);
+    void negativePageReturns400() throws Exception {
+        mockMvc.perform(get("/api/skillhub/index").param("page", "-1").param("size", "10"))
+            .andExpect(status().isBadRequest());
     }
     @Test
     void queryFilters() throws Exception {

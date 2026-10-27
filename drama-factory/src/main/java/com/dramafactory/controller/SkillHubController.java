@@ -69,12 +69,20 @@ public class SkillHubController {
     }
 
     @GetMapping("/index")
-    @Operation(summary = "获取自有 SkillHub 索引", description = "返回内置与社区收录的 skills 列表，供软件内一键安装。始终分页，无参默认第 0 页、每页 50 条，total 为过滤后全量。")
+    @Operation(summary = "获取自有 SkillHub 索引", description = "返回内置与社区收录的 skills 列表，供软件内一键安装。始终分页，无参默认第 0 页、每页 50 条，total 为过滤后全量。page 不能为负数，size 必须在 1 到 200 之间，越界返回 400。")
     public ResponseEntity<SkillHubIndex> index(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer size,
             @RequestParam(required = false) String q,
             @RequestParam(required = false) String source) {
+        int pageNum = page == null ? 0 : page;
+        if (pageNum < 0) {
+            throw new IllegalArgumentException("page 参数非法");
+        }
+        int sizeNum = size == null ? 50 : size;
+        if (sizeNum < 1 || sizeNum > 200) {
+            throw new IllegalArgumentException("size 参数非法");
+        }
         Instant loadedAt = registry.bundledLoadedAt();
         String updatedAt = loadedAt == null ? ""
                 : DateTimeFormatter.ISO_INSTANT.format(loadedAt.atOffset(ZoneOffset.UTC));
@@ -138,8 +146,8 @@ public class SkillHubController {
         }
 
         int total = filtered.size();
-        int effectivePage = page == null ? 0 : Math.max(0, page);
-        int effectiveSize = size == null ? 50 : Math.min(200, Math.max(1, size));
+        int effectivePage = pageNum;
+        int effectiveSize = sizeNum;
         int totalPages = total == 0 ? 0 : (int) Math.ceil((double) total / effectiveSize);
         int from = Math.min(effectivePage * effectiveSize, total);
         int to = Math.min(from + effectiveSize, total);

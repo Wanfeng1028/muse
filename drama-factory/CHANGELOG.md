@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-28 深耕轮：SkillHub 索引 page/size 参数收紧）
+- 现象：GET /api/skillhub/index（SkillHubController.index）原先对 page/size 静默钳制（page -1 变 0，size 0 变 1，size 500 变 200），不报错。
+- 修复：改为在 index() 入口校验：page 为 null 时取 0，size 为 null 时取 50；page < 0 抛 IllegalArgumentException("page 参数非法")；size < 1 或 size > 200 抛 IllegalArgumentException("size 参数非法")；由全局异常处理器映射为 HTTP 400。非整数 page/size 原本经 Spring 转换即返回 400。page 远超出范围（如 99999）仍返回 200 且空列表。下游继续使用 effectivePage/effectiveSize。
+- 测试：SkillHubPaginationTest 更新 3 个方法断言 400（sizeOver200Returns400、sizeZeroReturns400、negativePageReturns400）；新增 SkillHubIndexPaginationValidationTest 共 6 例（size 201 -> 400、size 200 -> 200、size 1 -> 200、size -1 -> 400、size abc -> 400、page abc -> 400）。定向运行 mvn -o test -Dtest=SkillHubPaginationTest,SkillHubIndexPaginationValidationTest,SkillHubIndexControllerTest：Tests run 23, Failures 0, Errors 0, Skipped 0, BUILD SUCCESS（Pagination 11 + Validation 6 + IndexController 6）。本轮未运行全量测试套件；未进行真实服务 HTTP 冒烟；验证仅为 MockMvc 全链路。
+- 无变更：无 schema 变更、无版本号升级、无 UI 变更；前端 skillhub.js 仅发送 page >= 0 且 size ∈ {24,48,96}，不受本次影响。
 ### Fixed（2026-10-27 深耕轮：Skill 列表 sort 参数收紧）
 - 现象：GET /api/skills 的 sort 此前无校验：非法值静默回落为 popular 排序，调用方传错参数无法发现。
 - 修复：SkillService.list 开头先校验再过滤排序：sort 为 null、空串、popular、rating、newest、name 时放行，其余值抛 IllegalArgumentException（sort 参数非法），全局 handler 转 400；排序逻辑、默认值 popular、前端 skills.html 下拉框四个选项一字未动。
