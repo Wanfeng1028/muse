@@ -4,6 +4,18 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.17.0] - 2026-10-27
+### Added
+- 已验证：计划与真题分科汇总 days 测试文件 2 个 12/12 全绿；服务端 tsc --noEmit 零错；无前端改动，视觉验收不适用。
+- 后端：`apps/server/src/routes/plans.ts` 的 `GET /api/plans/summary/by-subject` 与 `apps/server/src/routes/exams.ts` 的 `GET /api/exams/summary/by-subject` 统一用正则 `/^-?\d+$/` 校验 days 参数，非整数（`abc`、`1.5`、`1x`、空串）返回 400（错误体 `{ error: 'days 参数无效' }`）；保留原有整数越界钳制（`days` ≤ 0 钳制为 1，> 31 钳制为 31）与缺省语义（不传 `days` 统计全部历史）。此前两接口对非法 days 静默回落为全部历史（并对 `1.5` 做截断），与 v1.16.0 专注三接口口径不一致，本轮对齐。
+- 测试：
+  - `apps/server/tests/plans-summary-by-subject-days.test.ts`：原非法 abc 用例改为非法 400 用例（`abc`/`1.5`/`1x`/空串均返回 400 且错误体为 `days 参数无效`），新增不传 days 用例（统计全部历史，40 天前计划计入）。
+  - `apps/server/tests/exams-summary-by-subject-days.test.ts`：原非法 abc 用例改为非法 400 用例（`abc`/`1.5`/`1x`/空串均返回 400 且错误体为 `days 参数无效`），新增不传 days 用例（统计全部历史）。
+- 文档：`docs/API.md` 同步计划与真题分科汇总两处 days 描述（不传统计全部历史，非法返回 400）。
+
+### Notes
+- 本轮模型调用只走 BotsRouter 讯飞星辰 spark-x2.6。
+
 ## [1.16.0] - 2026-10-27
 ### Added
 - 已验证：4 个专注相关测试文件 38/38 全绿；服务端 tsc --noEmit 零错；无前端改动，视觉验收不适用。

@@ -275,14 +275,16 @@ app.get('/api/plans/export', async (req, reply) => {
   });
 
   // 计划分科汇总：仅返回有计划的科目，按 SUBJECTS 顺序排列
-  // 可选 days：合法数字时仅统计最近 N 天（含今天，按计划 date 界定），N 钳制到 1~31；不传或非法时统计全部历史
+  // 可选 days：只统计最近 N 天（含今天，按计划 date 界定），N 按 1~31 钳制；不传时统计全部历史，非法 days 返回 400
   app.get('/api/plans/summary/by-subject', async (req, reply) => {
     const rawDays = (req.query as { days?: string }).days;
-    const parsedDays = Number(rawDays);
-    const days =
-      rawDays !== undefined && rawDays !== '' && Number.isFinite(parsedDays)
-        ? Math.max(1, Math.min(31, Math.trunc(parsedDays)))
-        : null;
+    let days: number | null = null;
+    if (rawDays !== undefined) {
+      if (!/^-?\d+$/.test(rawDays)) {
+        return reply.code(400).send({ error: 'days 参数无效' });
+      }
+      days = Math.max(1, Math.min(31, Number(rawDays)));
+    }
     const today = todayStr();
     const rangeStart = days === null ? null : addDays(today, -(days - 1));
     const planDateCond = rangeStart === null ? '' : ' AND date >= ?';

@@ -202,10 +202,22 @@ describe('GET /api/exams/summary/by-subject days', () => {
     ]);
   });
 
-  it('days=abc 非法时统计全部历史', async () => {
+  it('days 非法（abc、1.5、1x、空串）时返回 400', async () => {
+    for (const q of ['abc', '1.5', '1x', '']) {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/exams/summary/by-subject?days=${q}`,
+        headers: { cookie },
+      });
+      expect(res.statusCode).toBe(400);
+      expect((res.json() as { error: string }).error).toBe('days 参数无效');
+    }
+  });
+
+  it('days 不传时统计全部历史', async () => {
     const res = await app.inject({
       method: 'GET',
-      url: '/api/exams/summary/by-subject?days=abc',
+      url: '/api/exams/summary/by-subject',
       headers: { cookie },
     });
 

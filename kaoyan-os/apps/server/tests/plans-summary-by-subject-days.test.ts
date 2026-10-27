@@ -138,11 +138,26 @@ describe('GET /api/plans/summary/by-subject days 参数', () => {
     expect(subjects31).toEqual(subjects100);
   });
 
-  it('days 非法（abc）时视为全部历史，40 天前的计划也计入', async () => {
+  it('days 非法（abc、1.5、1x、空串）时返回 400', async () => {
     const cookie = await registerAndLogin(app, 'plansbysubjectdays');
     await seedPlans(cookie);
 
-    const subjects = await fetchSummary(cookie, '?days=abc');
+    for (const q of ['abc', '1.5', '1x', '']) {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/plans/summary/by-subject?days=${q}`,
+        headers: { cookie },
+      });
+      expect(res.statusCode).toBe(400);
+      expect((res.json() as { error: string }).error).toBe('days 参数无效');
+    }
+  });
+
+  it('days 不传时统计全部历史，40 天前的计划也计入', async () => {
+    const cookie = await registerAndLogin(app, 'plansbysubjectdays');
+    await seedPlans(cookie);
+
+    const subjects = await fetchSummary(cookie, '');
 
     expect(subjects).toEqual([
       { subject: 'math', total: 4, done: 3, plannedMinutes: 480 },

@@ -225,7 +225,7 @@
 | --- | --- | --- |
 | GET | /api/plans/summary/by-subject | 需登录 |
 
-返回当前用户的计划分科汇总。可选查询参数 days：合法数字时只统计最近 N 天（含今天，按计划 date 界定），N 按 1~31 钳制；不传或非法时统计全部历史。
+返回当前用户的计划分科汇总。可选查询参数 days：只统计最近 N 天（含今天，按计划 date 界定），N 按 1~31 钳制；不传时统计全部历史，非法 days 返回 400 错误体 { "error": "days 参数无效" }。
 
 - 仅返回有计划的科目。
 - 按 SUBJECTS 顺序排列：math、english、politics、major。
@@ -1774,7 +1774,7 @@ id,word,phonetic,meaning,example,source,source_name,memory_tip,repetitions,due_d
 - 按 SUBJECTS 顺序排列：math、english、politics、major。
 - 若无任何记录（空库），返回 `{ "subjects": [] }`。
 - 计算口径与 `GET /api/exams/summary` 同款：avgScore 保留一位小数；avgRate 为总分之和 / 满分之和保留四位小数；best 并列取最早；first 取 taken_at 最早（并列 id 最小）；latest 取 taken_at 最晚（并列 id 最大）；improvement 在场次小于 2 时为 0，否则为 latest.score - first.score。
-- 可选查询参数 days：合法数字时只统计最近 N 天（含今天，按 taken_at 日期界定），N 按 1~31 钳制；不传或非法时统计全部历史（与 GET /api/plans/summary/by-subject 的 days 口径一致）。
+- 可选查询参数 days：只统计最近 N 天（含今天，按 taken_at 日期界定），N 按 1~31 钳制；不传时统计全部历史，非法 days 返回 400 错误体 { "error": "days 参数无效" }（与 GET /api/plans/summary/by-subject 的 days 口径一致）。
 
 **成功响应示例：**
 
