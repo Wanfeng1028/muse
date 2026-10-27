@@ -1,5 +1,17 @@
 # 更新日志
 
+## v2.17.24 - 2026-10-27
+
+### 新增
+- 收紧 /budgets 页面 month 参数校验：非法格式返回 400，detail 为 "month 参数非法"。
+
+### 不变
+- /api/budgets 路由、budget_progress、month_range 逻辑不变。
+- 页面缺参（None）与空串仍走现有 if not month 默认当月逻辑。
+
+### 测试
+- 新增 tests/test_budgets_page_month_validation.py，覆盖 6 例。
+
 ## v2.17.23 - 2026-10-27
 
 ### 新增

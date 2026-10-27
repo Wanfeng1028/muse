@@ -1,9 +1,10 @@
 """FastAPI 应用入口：创建 app、挂载静态资源、注册路由与页面。"""
 
+import re
 from contextlib import asynccontextmanager
 from decimal import Decimal
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -40,6 +41,8 @@ from ledger.services import (
     trend,
     upcoming_recurring,
 )
+
+_BUDGETS_PAGE_MONTH_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 
 def fmt_money(cents) -> str:
@@ -221,6 +224,8 @@ def create_app() -> FastAPI:
 
         if not month:
             month = datetime.now().strftime("%Y-%m")
+        if not _BUDGETS_PAGE_MONTH_RE.match(month):
+            raise HTTPException(status_code=400, detail="month 参数非法")
         factory = get_session_factory()
         async with factory() as session:
             items = await budget_progress(session, month)
