@@ -1111,7 +1111,7 @@ id,subject,subject_name,title,content,analysis,mastered,created_at
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | path | id | number | 是 | 必须为正整数 |
-| query | windowDays | number | 否 | 时间窗口天数，缺省 7；提供时必须为 0~90 的整数 |
+| query | windowDays | number | 否 | 时间窗口天数，缺省 7；提供时必须为 0~90 的整数（纯数字整数串，正则校验，1.0、0x2、+7、带空格、空串均 400） |
 
 **成功响应**
 
@@ -1946,7 +1946,7 @@ id,subject,subject_name,paper,score,total_score,rate,duration_minutes,taken_at
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | path | id | number | 是 | 考试记录 id，必须为正整数 |
-| query | windowDays | string | 否 | 时间窗口天数，解析为整数后必须位于 0..90；缺省为 7 |
+| query | windowDays | string | 否 | 时间窗口天数，解析为整数后必须位于 0..90；缺省为 7（纯数字整数串，正则校验，1.0、0x2、+7、带空格、空串均 400） |
 
 **成功响应**
 

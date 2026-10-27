@@ -4,6 +4,14 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.19.0] - 2026-10-28
+### Added
+- 后端：`GET /api/mistakes/:id/source-exams` 与 `GET /api/exams/:id/related-mistakes` 的 `windowDays` 由 `Number()` 口径改用正则 `/^-?\d+$/` 校验；非法值返回 400 `{ error: 'windowDays 非法' }`，缺省 7、范围 0~90、错误体、404 顺序、查询与排序逻辑不变，并与 v1.16.0/v1.17.0/v1.18.0 的 days/months 严格口径对齐。
+- 测试：新增 `apps/server/tests/window-days-strict.test.ts`，4 个用例（两路各非法表 10 值与合法表不传/07/0/90），靶向 10/10 全绿（含既有 `mistakes-exams-link.test.ts` 6 例）。
+- 文档：同步 `docs/API.md` 两处 `windowDays` 严格口径说明。
+### Notes
+- 本轮模型调用走 BotsRouter，代码由讯飞星辰 `spark-x2.6` 生成、测试由七牛免费版 `conatus-free` 生成。
+
 ## [1.18.0] - 2026-10-27
 ### Added
 - 后端：`GET /api/stats/heatmap` 的 months 参数改用正则 `/^-?\d+$/` 校验，非纯数字串（`1.0`、`0x2`、带空格、`+2`、空串）返回 400（错误体 `{ error: 'months 参数无效' }`）；此前 Number() 口径下 `1.0` 与 `0x2` 会静默通过返回 200，本轮与 v1.16.0/v1.17.0 的 days 参数口径对齐；范围 1..6 与缺省 3 不变。

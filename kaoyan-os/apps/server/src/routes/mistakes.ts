@@ -347,6 +347,9 @@ app.get('/api/mistakes/export', async (request, reply) => {
       const rawWindow = (request.query as { windowDays?: string }).windowDays;
       let windowDays = 7;
       if (rawWindow !== undefined) {
+        if (!/^-?\d+$/.test(rawWindow)) {
+          return reply.code(400).send({ error: 'windowDays 非法' });
+        }
         const parsed = Number(rawWindow);
         if (!Number.isInteger(parsed) || parsed < 0 || parsed > 90) {
           return reply.code(400).send({ error: 'windowDays 非法' });
