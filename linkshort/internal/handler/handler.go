@@ -1161,9 +1161,18 @@ func handleStatsHourly(w http.ResponseWriter, req *http.Request, st *store.Store
 	if linkID < 0 {
 		linkID = 0
 	}
-	days := parseIntDefault(req.URL.Query().Get("days"), 30)
-	if days != 1 && days != 7 && days != 30 {
-		days = 30
+	rawDays := req.URL.Query().Get("days")
+	days := 30
+	if rawDays != "" {
+		d, err := strconv.Atoi(rawDays)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "days 非法")
+			return
+		}
+		days = d
+		if days != 1 && days != 7 && days != 30 {
+			days = 30
+		}
 	}
 	hs, err := st.HourlyStats(linkID, days)
 	if err != nil {

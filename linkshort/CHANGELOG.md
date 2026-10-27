@@ -5,6 +5,17 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.33.0] - 2026-10-28
+
+### 新增
+- `GET /api/stats/hourly` 的 `days` 参数收紧：缺省或空串仍默认 30；非整数（`abc`、`1.5`、`1x`）返回 400，错误体为 `{"error": "days 非法"}`；合法整数但不在 1、7、30 中时仍回落为 30。
+- 仅改 `handleStatsHourly`；`geo`、`geo.csv` 的 `days` 口径与 `parseIntDefault` 一字未动；文档页与 README 均无 hourly 参数行，本轮不动。
+
+### 测试
+- 新增 `internal/handler/stats_hourly_days_validation_test.go` 6 例：`days=abc`、`1.5`、`1x` 返回 400 且体含“days 非法”；不带 `days`、`days=2`、`days=7` 返回 200。
+- 既有 hourly/geo 边界测试不受影响；全量 `go test ./...` 14 包全过；`go vet` 全洁；改动文件 `gofmt` 全洁。
+- 真实服务冒烟（18481 端口 `:memory:` 库）：`days=abc` 与 `1.5` 均 400 且错误体逐字为 `{"error": "days 非法"}`；不带 `days` 返回 200 且 `days=30`；`days=2` 返回 200 且 `days=30`；`days=7` 返回 200 且 `days=7`；无 key 返回 401；冒烟后服务已停、端口已关、冒烟二进制已删。
+
 ## [v1.32.0] - 2026-10-27
 
 ### 新增
