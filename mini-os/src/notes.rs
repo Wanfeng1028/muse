@@ -393,9 +393,11 @@ pub async fn list_events(
     Extension(user): Extension<CurrentUser>,
     Query(q): Query<EventRangeQuery>,
 ) -> ApiResult {
-    let from_raw = q.from.unwrap_or_else(|| "0000-00-00T00:00:00".to_string());
     let to_raw = q.to.unwrap_or_else(|| "9999-12-31T23:59:59".to_string());
-    let from = validate_dt(&from_raw).map_err(|m| err(StatusCode::BAD_REQUEST, &m))?;
+    let from = match q.from {
+        Some(from_raw) => validate_dt(&from_raw).map_err(|m| err(StatusCode::BAD_REQUEST, &m))?,
+        None => "0000-00-00T00:00:00".to_string(),
+    };
     let to = validate_dt(&to_raw).map_err(|m| err(StatusCode::BAD_REQUEST, &m))?;
 
     if from > to {
