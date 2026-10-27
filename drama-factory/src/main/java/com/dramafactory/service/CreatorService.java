@@ -142,14 +142,19 @@ public class CreatorService {
      *
      * <p>search 非空白时，仅保留 handle 或 displayName 不区分大小写包含关键字的档案；
      * sort 为 {@code followers} 时按关注数倒序、创建时间倒序排列，sort 为 {@code skills}
-     * 时按技能数倒序、创建时间倒序排列，其余情况保持创建时间倒序。
+     * 时按技能数倒序、创建时间倒序排列，sort 为 {@code newest} 或空时保持创建时间倒序；
+     * 其余值抛 IllegalArgumentException（全局 handler 转 400）。
      *
      * @param search 搜索关键字，可为空
-     * @param sort   排序方式，支持 followers、skills，可为空
+     * @param sort   排序方式，支持 newest、followers、skills，可为空
      * @return 列表项携带档案创建时间以及统计出的技能数与关注数
      */
     @Transactional(readOnly = true)
     public List<CreatorListItem> list(String search, String sort) {
+        if (sort != null && !sort.isBlank()
+                && !"newest".equals(sort) && !"followers".equals(sort) && !"skills".equals(sort)) {
+            throw new IllegalArgumentException("sort 参数非法");
+        }
         List<CreatorProfile> profiles = profileRepository.findAllByOrderByCreatedAtDesc();
         if (search != null && !search.isBlank()) {
             String keyword = search.toLowerCase(Locale.ROOT);

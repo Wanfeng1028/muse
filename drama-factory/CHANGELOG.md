@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-27 深耕轮：创作者列表 sort 参数收紧）
+
+- 现象：GET /api/creators 的 sort 此前无校验：非法值静默回落为创建时间倒序，调用方传错参数无法发现。
+- 修法：CreatorService.list 开头先校验再查库：sort 为 null、空串、newest、followers、skills 时放行，其余值抛 IllegalArgumentException（sort 参数非法），全局 handler 转 400；排序逻辑、默认值 newest、前端 creators.html 下拉框三个选项一字未动。
+- 测试：新增 CreatorListSortValidationTest 7 例（bogus 400、NEWEST 400、空串 200、无参 200、newest/followers/skills 均 200），MockMvc 全链路验证。
+- 无版本号变更、无 schema 变更、无 UI 改动。
+
 ### Added（Flash 路 2026-10-27 夜烧第六波：创作者计划 v5，创作者排行榜）
 
 - 创作者排行榜 v1（ROADMAP P2 第 8 项「创作者计划」的后续非收益部分；仍不含任何收益/分成数字）：`CreatorService.leaderboard(limit)`（limit 1–50，非法抛 IllegalArgumentException「limit 参数非法」；覆盖全部创作者，不排除已关注与本人主页；技能按 handle 与 displayName 匹配、按 id 去重；最新 Skill 取去重后发布时间最晚且发布时间非空的一条、名下无此种 Skill 时名称与时间均为 null；按粉丝数倒序、技能数倒序、创建时间倒序排列并截断至 limit，截断后按序赋予从 1 开始的 rank）+ 嵌套记录 `CreatorLeaderboardItem`；`CreatorController` 新增 `GET /api/creators/leaderboard`（limit 默认 10，置于 `/{handle}` 之前避免被当作 handle）与 `CreatorLeaderboardItemDto`（名次 rank + 创作者 id/handle/displayName/bio + 技能数/粉丝数 + 最新 Skill 名称与发布时间 + 创建时间）。无 schema 变更（复用 V25 的 creator_profiles/creator_follows 与 Skill 表），无收益字段。
