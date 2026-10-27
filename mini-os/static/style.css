@@ -27,6 +27,9 @@
   --text: #26221b;
   --text-muted: #6e6555;
   --text-inverse: #fdfaf3;
+  --card-bg: rgba(255, 255, 255, 0.92);
+  --border-color: rgba(0, 0, 0, 0.08);
+  --text-color: #2b2620;
   --border: rgba(64, 52, 32, 0.12);
   --border-strong: rgba(64, 52, 32, 0.22);
 
@@ -1666,13 +1669,13 @@ ul {
   z-index: 1;
 }
 .widget {
-  background: var(--card-bg, rgba(255, 255, 255, 0.92));
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
   border-radius: var(--radius, 10px);
   box-shadow: 0 4px 18px rgba(0, 0, 0, 0.10);
   padding: 12px 14px;
   backdrop-filter: blur(6px);
-  color: var(--text-color, #2b2620);
+  color: var(--text-color);
 }
 .widget-title {
   display: flex;
@@ -1768,7 +1771,7 @@ ul {
   min-width: 0;
   font-size: 12.5px;
   padding: 6px 8px;
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--input-bg, #fff);
   color: inherit;
@@ -1790,7 +1793,7 @@ ul {
   font-size: 13px;
   line-height: 1.6;
   padding: 8px;
-  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.12));
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   background: var(--input-bg, #fff);
   color: inherit;

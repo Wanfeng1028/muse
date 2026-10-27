@@ -1,3 +1,9 @@
+## [1.19.13] - 2026-10-28
+### 变更
+浅色主题在 :root（根元素）中添加了 --card-bg、--border-color 和 --text-color。.widget 规则、.widget-add input 以及 #widget-note-body 移除了 var() 回退。深色主题保持不变。副作用：.widget-add input 和 #widget-note-body 的浅色主题边框从 rgba(0, 0, 0, 0.12) 变为 rgba(0, 0, 0, 0.08)。
+### 验证
+Chromium 截图测试框架渲染了浅色和深色主题下的组件标记。未修改 Rust 代码，因此 cargo test/clippy 均不适用（N/A）。
+
 ## [1.19.12] - 2026-10-27
 
 ### Changed
