@@ -5,6 +5,15 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.30.0] - 2026-10-27
+
+### 新增
+- 收紧 `GET /api/stats/top-links` 接口的 `n` 参数校验，照搬 v1.28.0 referers 的 `n` 写法：缺省或空串仍默认 8；非整数（如 `abc`、`1.5`、`1x`）返回 400，错误体为 `{"error": "n 非法"}`；合法数字小于等于 0 或大于 100 时仍回落为 8（既有钳制口径不变）。仅改 `internal/handler/handler.go` 的 `handleTopLinks`；同级端点（top-referers/geo/hourly）与 `parseIntDefault` 一字未动；docs.html 无 top-links 行，本轮不动。
+
+### 测试
+- 新增 `internal/handler/stats_top_links_n_validation_test.go`，`TestStatsTopLinksNValidation` 6 例全绿（n=abc/1.5/1x 均 400 且体含“n 非法”、不带 n/n=0/n=8 均 200）；go vet 全洁；改动文件 gofmt 全洁；本轮只跑靶向组，全量 handler 套件未跑（耗时数分钟）。
+- 真实服务冒烟（18437 端口 :memory: 隔离库，admin key）：n=abc 与 n=1.5 均 400 且错误体逐字为 `{"error": "n 非法"}`、不带 n 与 n=0 均 200 且 items 为空，冒烟后服务已停、端口复查已关、冒烟二进制与日志已删。
+
 ## [v1.29.0] - 2026-10-27
 
 ### 新增
