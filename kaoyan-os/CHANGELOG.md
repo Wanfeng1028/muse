@@ -4,6 +4,13 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.18.0] - 2026-10-27
+### Added
+- 后端：`GET /api/stats/heatmap` 的 months 参数改用正则 `/^-?\d+$/` 校验，非纯数字串（`1.0`、`0x2`、带空格、`+2`、空串）返回 400（错误体 `{ error: 'months 参数无效' }`）；此前 Number() 口径下 `1.0` 与 `0x2` 会静默通过返回 200，本轮与 v1.16.0/v1.17.0 的 days 参数口径对齐；范围 1..6 与缺省 3 不变。
+- 测试：新增 `apps/server/tests/heatmap-months-strict.test.ts`，3 组用例覆盖 8 个输入值（`02`/`2` 返回 200，缺省返回 3）。
+- 文档：`docs/API.md` 同步热力图 months 描述与错误码触发条件。
+### Notes
+- 本轮模型调用仅通过 BotsRouter 讯飞星辰 spark-x2.6。
 ## [1.17.0] - 2026-10-27
 ### Added
 - 已验证：计划与真题分科汇总 days 测试文件 2 个 12/12 全绿；服务端 tsc --noEmit 零错；无前端改动，视觉验收不适用。

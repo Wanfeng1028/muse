@@ -2031,7 +2031,7 @@ id,subject,subject_name,paper,score,total_score,rate,duration_minutes,taken_at
 
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
-| Query | months | string | 否 | 回溯月数，整数 1..6，缺省 3；每月按 31 天计 |
+| Query | months | string | 否 | 回溯月数，纯数字整数 1..6，缺省 3；每月按 31 天计；非纯数字串（`1.0`、`0x2` 等）返回 400 |
 
 **成功响应**
 
@@ -2062,7 +2062,7 @@ id,subject,subject_name,paper,score,total_score,rate,duration_minutes,taken_at
 
 | 状态码 | 返回体 | 含义 | 触发条件 |
 | --- | --- | --- | --- |
-| 400 | `{ "error": "months 参数无效" }` | months 非 1..6 的整数 | Query months 存在但 `Number.isInteger(n)` 为 false 或 n<1 或 n>6 |
+| 400 | `{ "error": "months 参数无效" }` | months 非 1..6 的整数 | Query months 存在但不匹配 `/^-?\d+$/` 或 n<1 或 n>6 |
 
 ## 8. 备份与导入
 

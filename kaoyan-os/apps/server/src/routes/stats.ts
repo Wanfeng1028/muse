@@ -96,8 +96,11 @@ export function registerStatsRoutes(app: FastifyInstance, db: DatabaseSync): voi
     const q = (request.query ?? {}) as { months?: string };
     let months = 3;
     if (q.months !== undefined) {
+      if (!/^-?\d+$/.test(q.months)) {
+        return reply.status(400).send({ error: 'months 参数无效' });
+      }
       const n = Number(q.months);
-      if (!Number.isInteger(n) || n < 1 || n > 6) {
+      if (n < 1 || n > 6) {
         return reply.status(400).send({ error: 'months 参数无效' });
       }
       months = n;
