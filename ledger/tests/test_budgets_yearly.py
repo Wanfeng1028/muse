@@ -42,14 +42,14 @@ async def test_yearly_missing_year_422(client):
     assert resp.status_code == 422, resp.text
 
 
-async def test_yearly_invalid_year_422(client):
+async def test_yearly_invalid_year_400(client):
     resp = await client.get("/api/budgets/yearly", params={"year": "26"})
-    assert resp.status_code == 422, resp.text
+    assert resp.status_code == 400, resp.text
 
 
-async def test_yearly_non_numeric_year_422(client):
+async def test_yearly_non_numeric_year_400(client):
     resp = await client.get("/api/budgets/yearly", params={"year": "abcd"})
-    assert resp.status_code == 422, resp.text
+    assert resp.status_code == 400, resp.text
 
 
 async def test_yearly_structure_and_order(client):

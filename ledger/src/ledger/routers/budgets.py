@@ -46,7 +46,7 @@ async def get_yearly_overview(
 ):
     """年度总览：逐月汇总预算与支出。"""
     if len(year) != 4 or not year.isdigit():
-        raise HTTPException(status_code=422, detail="year 必须为 4 位年份")
+        raise HTTPException(status_code=400, detail="year 参数非法")
     months = await budget_yearly(session, int(year))
     return {"year": year, "months": months}
 

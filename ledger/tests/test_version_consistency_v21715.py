@@ -5,16 +5,14 @@ from pathlib import Path
 
 import pytest
 
-EXPECTED_VERSION = "2.17.24"
+EXPECTED_VERSION = "2.17.25"
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 def _version_from_init() -> str:
     init_py = PROJECT_ROOT / "src" / "ledger" / "__init__.py"
     content = init_py.read_text(encoding="utf-8")
-    match = re.search(
-        r"^__version__\s*=\s*['\"]([^'\"]+)['\"]", content, re.MULTILINE
-    )
+    match = re.search(r"^__version__\s*=\s*['\"]([^'\"]+)['\"]", content, re.MULTILINE)
     if match is None:
         pytest.fail(f"{init_py} 中未找到 __version__ 定义")
     return match.group(1)

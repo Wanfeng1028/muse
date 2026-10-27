@@ -1,5 +1,17 @@
 # 更新日志
 
+## v2.17.25 - 2026-10-27
+
+### 新增
+- `GET /api/budgets/yearly` 的 `year` 参数非法值由 422 收紧为 400，detail 为「year 参数非法」；缺参仍由 FastAPI 必填校验返回 422；yearly 计算口径未动。
+
+### 不变
+- yearly 计算、月份端点、创建/更新校验一字未动。
+
+### 测试
+- 更新旧测试 2 例（`test_yearly_invalid_year_400`、`test_yearly_non_numeric_year_400`）
+- 新增 `tests/test_budgets_yearly_validation.py` 6 例
+
 ## v2.17.24 - 2026-10-27
 
 ### 新增
