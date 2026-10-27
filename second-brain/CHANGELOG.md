@@ -9,6 +9,8 @@
 
 ### Changed
 
+- **GET /api/push/history 的 `limit` 参数校验收紧**：照搬 review_forecast 的 `days` 写法，缺省或空仍默认 50；非整数（如 `abc`、`1.5`、`1x`）由原先经 `parseIntDefault` 静默按默认值处理改为返回 400，错误文案为“limit 参数非法”。解析成功后直接传给 store，钳制沿用 store 既有逻辑（小于等于 0 置 50、大于 200 置 200），handler 内不新增钳制；`parseIntDefault` 本身未动（仍被其他端点使用），store 层与前端未动。新增 `internal/api/push_history_limit_validation_test.go`，1 个表驱动测试、7 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`limit=1`/`0`/`999`（均 200）。既有 `TestPushHistoryUserFilter` 未动且仍通过。
+
 - **GET /api/review/trend 的 `days` 参数校验收紧**：照搬 forecast 的 `days` 写法，缺省或空仍默认 7；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为"days 参数非法"。解析成功后的钳制逻辑保持不变（小于等于 0 置 7、大于 60 置 60）。新增 `internal/api/review_trend_days_validation_test.go`，8 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`1`/`0`/`1000`/`-5`（均 200）。既有 `TestReviewTrendDaysClamp`（`days=0` 置 7、`days=1000` 置 60）未动且仍通过。
 
 - **GET /api/review/queue 的 `limit` 参数校验收紧**：照搬 forecast 的 `days` 写法，缺省或空仍默认 20；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为"limit 参数非法"。解析成功后的钳制逻辑保持不变（小于等于 0 置 20、大于 200 置 200）。新增 `internal/api/review_queue_limit_validation_test.go`，7 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`2`/`0`/`999`（均 200）。

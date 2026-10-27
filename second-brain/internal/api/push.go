@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -366,7 +367,16 @@ func handlePushHistory(st *store.Store) http.HandlerFunc {
 			return
 		}
 
-		limit := parseIntDefault(r.URL.Query().Get("limit"), 50)
+		rawLimit := r.URL.Query().Get("limit")
+		limit := 50
+		if rawLimit != "" {
+			parsed, err := strconv.Atoi(rawLimit)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "limit 参数非法")
+				return
+			}
+			limit = parsed
+		}
 		records, err := st.ListPushLogFor(limit, r.URL.Query().Get("user"))
 
 		if err != nil {
