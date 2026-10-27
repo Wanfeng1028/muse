@@ -2,6 +2,35 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.32.0] - 2026-10-27
+
+### 新增
+
+- 分组延迟趋势：Store 层 GroupMonthlyLatency（单月分组聚合：组内成功检查延迟的 p50/p95/p99、均值、成功检查数、监控数、最慢监控）与 GroupLatencyTrend（复用既有 shiftMonth 逐月聚合，月份按时间顺序排列；months 取值 1~12、非法 endMonth/months 报错；分组不存在报错）；API（均需鉴权）GET /api/groups/{id}/latency/trend?end=YYYY-MM&months=N（end 缺省当月、months 缺省 6、非法 end/months 返回 400、不存在的分组返回 404）、GET /api/groups/{id}/latency/trend.html（中文 HTML 导出：分组延迟趋势标题、逐月表、p95 延迟条形，条形宽度按窗口内最大 p95 归一化）；控制台页 /group-latency-trend（分组下拉、截止月份选择、3/6/12 个月选择、总览卡片、逐月表、p95 延迟条形、导出 HTML 链接），18 个既有控制台页导航末尾加分组延迟趋势链，/group-latency-trend 加进鉴权精确名单（页面壳为既有白名单口径、数据接口仍需鉴权）。
+- 语义界定：只统计组内成员、ok=1 的成功检查，失败检查与组外监控不计入分位与均值；空月 p50/p95/p99/均值均为 0、成功检查数为 0、最慢监控为空；最慢监控取当月有成功检查的成员中 p95 最大者、并列取先遇到；监控数为组成员数；月份窗口用 RFC3339 起止（与全站延迟趋势一致）；分位复用既有 percentileLinear 线性插值。
+- 无 schema 变更、无新环境变量。
+
+### 测试
+
+- 新增 internal/store/group_latency_trend_test.go（空组 3 个月：起止月份与空月零值与非法 months/endMonth/月份报错与不存在分组报错；双月：组内快 [100,200]、组内慢 [1000,1000]、组外 [5000,5000] 得 2 月 p50 600、p95 1000、p99 1000、均值 575、总数 4（组外未计入）、最慢为组内慢，3 月 [300,400,500] 加一条 9999 失败检查得 p50 400、p95 490、p99 498、均值 400、总数 3（失败检查已排除）、最慢为组内快；空组单月零值）、internal/handlers/group_latency_trend_test.go（JSON 的 group_id/group_name/end_month/months 与不存在分组 404 与非法 months/end 的 400、HTML 的 200 与“分组延迟趋势/组名/p95 延迟条形”字样与不存在分组 404 与非法 end 400）、internal/web/group_latency_trend_test.go（分组延迟趋势页 16 个标记与标记顺序、失败路径定义顺序、18 页导航链）；页面 JS 经 node --check 通过。
+- go vet 全洁；go test ./... 全绿（16 包，notify 包为既存最慢包，首跑 242.250 秒、最终代码状态重跑 240.796 秒）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18502 端口，SENTINEL_TICK_SEC=60；隔离库与隔离备份目录，绝未写仓库 data/backups）：种子监控占 1/2 号（已禁用）；新建分组 1 号“核心业务”；新建组内 UP 监控 3 号（本地 200 服务）与组内 DOWN 监控 4 号（127.0.0.1:9 拒绝）加入分组，另建组外 UP 监控 5 号不加入；各 CheckNow 2 次后 GET /api/groups/1/latency/trend?end=2026-10&months=2 返回 9 月空月 0 检查/零延迟/监控数 2、10 月成功检查数 2（组内 DOWN 的失败检查与组外 UP 的成功检查均未计入）、最慢监控为冒烟UP；无鉴权 401、months=0 与 end=2026-13 均为 400、不存在的分组 404；latency/trend.html 含“分组延迟趋势”与“p95 延迟条形”；/group-latency-trend 页 200 且含全部标记；冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+- 两次冒烟运行的 10 月延迟值不同（首跑 p50/p95/p99/均值均为 14.00/20.30/20.86/14.00，复拍为 6.50/9.65/9.93/6.50），系本地 200 服务实测延迟抖动，非口径变化。
+
+### 视觉验收
+
+- 截图 docs/screenshots/group-latency-trend-v032.png 亲眼核对——导航 19 链齐全且分组延迟趋势 active、控件（核心业务、October 2026、6 个月、查看、导出 HTML 版）、卡片（分组核心业务、截止月份 2026-10、成功检查总数 2）与逐月行（5–9 月 0.00、10 月 6.50/9.65/9.93/6.50、2 检查、监控数 2、最慢冒烟UP）及 p95 条形（10 月蓝色满格 9.65 ms、空月灰底 0.00 ms）均与 API 返回一致、无“加载失败”。
+- 截图 harness 说明：按 v0.31.0 模式（setContent 内联样式与 app.js、app.js 的 sessionStorage 取 token 桩化为空串、页面脚本的 /api 改写为绝对地址并经 route 代理回真实服务，路由层注入冒烟 stub token、OPTIONS 预检直接回 200 并补 CORS 头），该改写仅限截图环境，产品代码未动。调试实证两处页面 bug 均由冒烟/截图暴露并已修复：① /api/groups 返回 {"items": [...]} 而非裸数组，选项加载原稿遍历 data 本身抛错致下拉为空（已改 data.items）；② 逐月行模板误用 m.slowest_monitor，API 字段为 slowest_monitor_name，致最慢监控恒显示“—”（已改名）。
+
+### 模型稿
+
+- 全程只走 BotsRouter，大写 GLM-5.3-Flash，令牌 id=5，单路串行；调用器为本轮现写最小新文件 night12_sentinel_call.py（令牌经 SSH 现取、只进子进程内存、不落盘、未读任何现成调用脚本；显式流式解析 + include_usage，每次调用用量均已捕获记账，失败重试单独立行记账）；Go 代码、测试、页面均为小片段逐字输出口径；编排侧机械工作：路由与鉴权精确名单接线、18 页导航链机械追加（保留各页原行首缩进）、新页面 head/导航与全站页原文对齐（模型初稿编造了另一套导航）、Web 测试稿 staticFS 改既有 FS 符号、Handlers 渲染函数字段名修正（模型稿误用 P50/P95/Avg/SuccessCount/SlowestMonitor 短名）、Store 测试稿 %d 改 %v（float64 动词）、README/CHANGELOG 事实性文字；Handler 值测试一稿因收尾时间砍掉（数值已由 Store 测试覆盖，Handler 层保留 JSON+HTML 两稿）。
+- 平台层现象：Handlers 整稿一次 reasoning-only 空响应（16000 上限占满，改拆小稿 + 骨架照抄后成功）；页面骨架照抄稿一次 reasoning-only 空响应（16000 上限占满，改缩目标：复用上一稿页面、仅机械对齐 head/导航、模型修两处 JS 语义 bug 后通过）。
+- 调用统计（batch 目录 usage.log 全量记录）：成功调用 12 次，prompt 合计 291959、completion 合计 60205、合计 352164；空响应 2 次（均为 reasoning-only、16000 上限占满），其上报口径 prompt 合计 50531、completion 合计 32000、合计 82531；错误行 0 条；本轮无 429、无 HTTP 错误行；全量 14 条，prompt 合计 342490、completion 合计 92205、合计 434695；全部调用模型均为大写 GLM-5.3-Flash。
+
 ## [0.31.0] - 2026-10-27
 
 ### 新增

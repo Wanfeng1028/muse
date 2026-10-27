@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>分组延迟趋势 · 哨兵 Sentinel</title>
+<link rel="stylesheet" href="/static/style.css">
+<link rel="stylesheet" href="/static/design-v015.css">
+<script src="/static/app.js" defer></script>
+<style>
+.bar-row{display:flex;align-items:center;gap:8px;margin:4px 0}
+.bar-month{width:80px}
+.bar-outer{flex:1;background:#e5e7eb;height:12px}
+.bar-inner{background:#2563eb;height:12px}
+.bar-text{width:90px;text-align:right}
+</style>
+</head>
+<body onload="initGroupLatencyTrend()">
+  <header class="topbar">
+<span class="brand">哨兵 Sentinel</span>
+<nav class="nav">
+<a href="/">仪表盘</a>
+<a href="/monitors">监控管理</a>
+<a href="/incidents">事件</a>
+<a href="/deliveries">投递队列</a>
+<a href="/snapshots">快照归档</a>
+<a href="/sms-log">短信记录</a>
+<a href="/sla-report">SLA总报</a>
+<a href="/sla-trend">SLA趋势</a>
+<a href="/maintenance">维护窗口</a>
+<a href="/groups">监控分组</a>
+<a href="/group-sla">分组SLA</a>
+<a href="/group-sla-trend">分组SLA趋势</a>
+<a href="/monitor-sla-trend">单监控SLA趋势</a>
+<a href="/sla-year">年度SLA</a>
+<a href="/group-sla-year">分组年度SLA</a>
+<a href="/monitor-sla-year">单监控年度SLA</a>
+<a href="/latency-trend">延迟趋势</a>
+<a href="/group-latency-trend" class="active">分组延迟趋势</a>
+</nav>
+</header>
+  <main class="container">
+    <h1>分组延迟趋势</h1>
+    <p>最近 N 个月分组成功检查延迟逐月对比，仅统计成功检查，失败检查不计入分位与均值。</p>
+    <div class="ctrl-row">
+      <select id="group-latency-select"></select>
+      <input type="month" id="group-latency-end-input">
+      <select id="group-latency-months-select">
+        <option value="3">3 个月</option>
+        <option value="6">6 个月</option>
+        <option value="12">12 个月</option>
+      </select>
+      <button id="group-latency-load-btn">查看</button>
+      <a id="group-latency-export-link" href="#">导出 HTML 版</a>
+    </div>
+    <div id="group-latency-cards"></div>
+    <table class="snap-table">
+      <thead>
+        <tr>
+          <th>月份</th>
+          <th>p50 (ms)</th>
+          <th>p95 (ms)</th>
+          <th>p99 (ms)</th>
+          <th>平均 (ms)</th>
+          <th>成功检查数</th>
+          <th>监控数</th>
+          <th>最慢监控</th>
+        </tr>
+      </thead>
+      <tbody id="group-latency-rows"></tbody>
+    </table>
+    <h2>p95 延迟条形</h2>
+    <div id="group-latency-bars"></div>
+    <p id="group-latency-status"></p>
+  </main>
+  <script>
+    async function loadGroupLatencyTrend() {
+      const status = document.getElementById('group-latency-status');
+      const cards = document.getElementById('group-latency-cards');
+      const rowsEl = document.getElementById('group-latency-rows');
+      const barsEl = document.getElementById('group-latency-bars');
+      const select = document.getElementById('group-latency-select');
+      const endInput = document.getElementById('group-latency-end-input');
+      const monthsSelect = document.getElementById('group-latency-months-select');
+      const exportLink = document.getElementById('group-latency-export-link');
+      const gid = select.value;
+      const end = endInput.value;
+      const months = monthsSelect.value;
+      exportLink.href = '/api/groups/' + gid + '/latency/trend.html?end=' + end + '&months=' + months;
+      try {
+        const rep = await api('/api/groups/' + gid + '/latency/trend?end=' + end + '&months=' + months);
+        const items = rep.items || [];
+        let rows = '';
+        for (const m of items) {
+          rows += '<tr>' +
+            '<td>' + m.month + '</td>' +
+            '<td>' + m.p50_ms.toFixed(2) + '</td>' +
+            '<td>' + m.p95_ms.toFixed(2) + '</td>' +
+            '<td>' + m.p99_ms.toFixed(2) + '</td>' +
+            '<td>' + m.avg_ms.toFixed(2) + '</td>' +
+            '<td>' + m.total_checks + '</td>' +
+            '<td>' + m.monitor_count + '</td>' +
+            '<td>' + (m.slowest_monitor_name || '—') + '</td>' +
+            '</tr>';
+        }
+        rowsEl.innerHTML = rows;
+        let maxP95 = 0;
+        for (const m of items) {
+          maxP95 = Math.max(maxP95, m.p95_ms);
+        }
+        let bars = '';
+        for (const m of items) {
+          const pct = maxP95 > 0 ? (m.p95_ms / maxP95 * 100).toFixed(2) : '0.00';
+          bars += '<div class="bar-row">' +
+            '<div class="bar-month">' + m.month + '</div>' +
+            '<div class="bar-outer"><div class="bar-inner" style="width:' + pct + '%"></div></div>' +
+            '<div class="bar-text">' + m.p95_ms.toFixed(2) + ' ms</div>' +
+            '</div>';
+        }
+        barsEl.innerHTML = bars;
+        let totalChecks = 0;
+        for (const m of items) {
+          totalChecks += m.total_checks;
+        }
+        cards.innerHTML =
+          '<div class="card"><div class="card-label">分组</div><div class="card-value">' + rep.group_name + '</div></div>' +
+          '<div class="card"><div class="card-label">截止月份</div><div class="card-value">' + rep.end_month + '</div></div>' +
+          '<div class="card"><div class="card-label">成功检查总数</div><div class="card-value">' + totalChecks + '</div></div>';
+        status.textContent = '';
+      } catch (e) {
+        status.textContent = '加载失败';
+      }
+    }
+
+        async function loadGroupLatencyTrendOptions() {
+      const select = document.getElementById('group-latency-select');
+      try {
+        const data = await api('/api/groups');
+        const items = (data && Array.isArray(data.items)) ? data.items : [];
+        let html = '';
+        for (const g of items) {
+          html += '<option value="' + g.id + '">' + g.name + '</option>';
+        }
+        select.innerHTML = html;
+      } catch (e) {
+      }
+    }
+    function initGroupLatencyTrend() {
+      const endInput = document.getElementById('group-latency-end-input');
+      const now = new Date();
+      endInput.value = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0');
+      const monthsSelect = document.getElementById('group-latency-months-select');
+      monthsSelect.value = '6';
+      document.getElementById('group-latency-load-btn').addEventListener('click', loadGroupLatencyTrend);
+      monthsSelect.addEventListener('change', loadGroupLatencyTrend);
+      endInput.addEventListener('change', loadGroupLatencyTrend);
+      document.getElementById('group-latency-select').addEventListener('change', loadGroupLatencyTrend);
+      loadGroupLatencyTrendOptions().then(loadGroupLatencyTrend);
+    }
+  </script>
+  <script>initGroupLatencyTrend();</script>
+</body>
+</html>
