@@ -22,7 +22,7 @@ official / install_count / rating_sum / rating_count
 | 方法 | 路径 | 说明 |
 |------|------|------|
 | POST | `/api/skills` | 发布 Skill（自动建 1.0.0 版）→ 201 |
-| GET | `/api/skills?q=&tag=&category=&sort=` | 检索；sort=popular/rating/newest/name |
+| GET | `/api/skills?q=&tag=&category=&sort=` | 检索；sort=popular/rating/newest/name，非法值返回 400 |
 | GET | `/api/skills/installed` | 已安装列表 |
 | GET | `/api/skills/{id}` | 详情（版本列表倒序、最新 5 条评分、已安装版本） |
 | POST | `/api/skills/{id}/versions` | 发布新版本 → 201 |

@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-27 深耕轮：Skill 列表 sort 参数收紧）
+- 现象：GET /api/skills 的 sort 此前无校验：非法值静默回落为 popular 排序，调用方传错参数无法发现。
+- 修复：SkillService.list 开头先校验再过滤排序：sort 为 null、空串、popular、rating、newest、name 时放行，其余值抛 IllegalArgumentException（sort 参数非法），全局 handler 转 400；排序逻辑、默认值 popular、前端 skills.html 下拉框四个选项一字未动。
+- 测试：新增 SkillListSortValidationTest 8 例（bogus 400、POPULAR 400、空串 200、无参 200、popular/rating/newest/name 均 200），MockMvc 全链路验证；既有两处锁死旧回落语义的用例按新口径改为断言抛 IllegalArgumentException。
+- 无版本号变更、无 schema 变更、无 UI 改动。
 ### Fixed（2026-10-27 深耕轮：用量汇总与按天接口 days 参数收紧）
 - 现象：GET /api/usage/summary 与 GET /api/usage/by-day 此前无 days 校验，负数静默回落默认（summary 负数等同 0 = 全量，by-day 负数等同 30 天默认），超大值无上限查询，传错参数无法察觉。
 - 修复：UsageController.summary 与 UsageController.byDay 加控制器层校验，days < 0 或 days > 365 抛 IllegalArgumentException("days 参数非法")，由现有全局处理器映射 HTTP 400；days=0 语义不变（summary = 全量，by-day = 服务端默认 30 天）。

@@ -197,6 +197,11 @@ public class SkillService {
             filtered.add(skill);
         }
 
+        if (sort != null && !sort.isBlank()
+                && !"popular".equals(sort) && !"rating".equals(sort)
+                && !"newest".equals(sort) && !"name".equals(sort)) {
+            throw new IllegalArgumentException("sort 参数非法");
+        }
         String sortKey = (sort == null || sort.isBlank()) ? "popular" : sort;
         switch (sortKey) {
             case "rating" -> filtered.sort(Comparator.comparing(

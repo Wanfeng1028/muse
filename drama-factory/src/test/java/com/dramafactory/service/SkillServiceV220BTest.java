@@ -302,7 +302,7 @@ class SkillServiceV220BTest {
     }
 
     @Test
-    void list_invalidSort_usesDefaultArm() {
+    void list_invalidSort_throwsIllegalArgument() {
         Skill low = new Skill();
         low.setId(1L);
         low.setName("Low");
@@ -319,10 +319,8 @@ class SkillServiceV220BTest {
 
         when(skillRepository.findAll()).thenReturn(new ArrayList<>(List.of(low, high)));
 
-        List<Skill> result = skillService.list(null, null, null, "unknown-sort");
-
-        assertEquals(2, result.size());
-        assertEquals(2L, result.get(0).getId());
+        assertThrows(IllegalArgumentException.class,
+                () -> skillService.list(null, null, null, "unknown-sort"));
     }
 
     // ---------- install ----------

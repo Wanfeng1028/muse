@@ -14,6 +14,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
 
@@ -153,18 +154,14 @@ class SkillServiceListBranchTest {
     }
 
     @Test
-    void list_unknownSort_fallsBackToPopular() {
+    void list_unknownSort_throwsIllegalArgument() {
         Skill a = mk(1L, "Alpha", "alpha", "tool", "hook");
         a.setInstallCount(10L);
         Skill b = mk(2L, "Beta", "beta", "tool", "hook");
         b.setInstallCount(99L);
         when(skillRepository.findAll()).thenReturn(List.of(a, b));
 
-        List<Skill> result = skillService.list(null, null, null, "weird");
-
-        assertEquals(2, result.size());
-        assertEquals("Beta", result.get(0).getName());
-        assertEquals(Long.valueOf(99), result.get(0).getInstallCount());
-        assertTrue(result.get(1).getInstallCount() < result.get(0).getInstallCount());
+        assertThrows(IllegalArgumentException.class,
+                () -> skillService.list(null, null, null, "weird"));
     }
 }
