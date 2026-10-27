@@ -1119,7 +1119,15 @@ func handleStatsGeo(w http.ResponseWriter, r *http.Request, st *store.Store) {
 		days = 30
 	}
 	country := strings.TrimSpace(r.URL.Query().Get("country"))
-	n := parseIntDefault(r.URL.Query().Get("n"), 8)
+	raw := r.URL.Query().Get("n")
+	if raw == "" {
+		raw = "8"
+	}
+	n, err := strconv.Atoi(raw)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, "n 非法")
+		return
+	}
 	if n <= 0 || n > 100 {
 		n = 8
 	}

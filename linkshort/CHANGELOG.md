@@ -5,6 +5,17 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.32.0] - 2026-10-27
+
+### 新增
+
+- `GET /api/stats/geo` 的 `n` 参数收紧：照搬 top-referers 写法，空串先默认 `"8"` 再 `strconv.Atoi`；解析失败返回 400，错误体为 `{"error": "n 非法"}`；缺省/空串仍默认 8；合法数字小于等于 0 或大于 100 时仍回落 8（钳制口径不变）。仅改 `handleStatsGeo`；`hourly`、`geo.csv`、`parseIntDefault` 一字未动。
+
+### 测试
+
+- 新增 `internal/handler/stats_geo_n_validation_test.go` 6 例：n=abc、n=1.5、n=1x 返回 400 且体含 "n 非法"；不带 n、n=0、n=8 返回 200。
+- 既有 geo 越界/days 回落测试不受影响。
+
 ## [v1.31.0] - 2026-10-27
 
 ### 新增
