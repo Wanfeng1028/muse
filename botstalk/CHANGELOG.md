@@ -1,3 +1,10 @@
+## OpenAgents 第 15 轮：配对码 Web UI
+
+- api.ts 新增配对码封装：issuePairingCode / redeemPairingCode。
+- 新面板 PairingPanel：签发（默认 10 分钟，钳制 1~60）与兑码（设备 id 默认当前 nick）两区，关闭第 9 轮挂账的 Web 端空白。
+- Chat 顶栏与模块栏新增“配对码”入口；无新增 CSS、无网关改动。
+- 验收数字：web tsc -b 与 vite build 通过，截图脚本 PAIRING_UI_SHOT_PASS、console 零错误，2 张真实截图。
+
 ## OpenAgents 第 14 轮：Web 消息反应 UI
 
 - 反应接口封装：web/src/api.ts 新增 ReactionSummary、REACTION_OPTIONS 等。

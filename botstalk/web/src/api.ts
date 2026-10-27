@@ -426,3 +426,35 @@ export async function removeMessageReaction(room: string, messageId: number, rea
     reactions: Array.isArray(data.reactions) ? data.reactions : [],
   };
 }
+
+export interface IssuedPairingCode {
+  code: string;
+  room: string;
+  expires_at_ms: number;
+}
+
+export async function issuePairingCode(room: string, requester: string, ttlMinutes?: number): Promise<IssuedPairingCode> {
+  const body: { requester: string; ttl_minutes?: number } = { requester };
+  if (ttlMinutes !== undefined) {
+    body.ttl_minutes = ttlMinutes;
+  }
+  return apiJson<IssuedPairingCode>(`${BASE}/api/rooms/${encodeURIComponent(room)}/pairing-codes`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify(body),
+  });
+}
+
+export interface RedeemedPairingCode {
+  room: string;
+  adapter_id: string;
+  redeemed_at_ms: number;
+}
+
+export async function redeemPairingCode(code: string, adapterId: string): Promise<RedeemedPairingCode> {
+  return apiJson<RedeemedPairingCode>(`${BASE}/api/pairing-codes/redeem`, {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ code, adapter_id: adapterId }),
+  });
+}
