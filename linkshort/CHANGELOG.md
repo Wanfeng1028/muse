@@ -5,6 +5,14 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.31.0] - 2026-10-27
+
+### 新增
+- 收紧 `GET /api/stats/top-referers` 接口的 `n` 参数校验，照搬 v1.30.0 top-links 的写法：缺省或空串仍默认 8；非整数（如 `abc`、`1.5`、`1x`）返回 400，错误体为 `{"error": "n 非法"}`；合法数字小于等于 0 或大于 100 时仍回落为 8（既有钳制口径不变）。仅改 `internal/handler/handler.go` 的 `handleTopReferers`；同级端点（top-links/geo/hourly）与 `parseIntDefault` 一字未动；docs.html 的 top-referers 行无参数细节，本轮不动。
+
+### 测试
+- 新增 `internal/handler/stats_top_referers_n_validation_test.go`，`TestStatsTopReferersNValidation` 6 例（n=abc/1.5/1x 均 400 且体含“n 非法”、不带 n/n=0/n=8 均 200）。
+
 ## [v1.30.0] - 2026-10-27
 
 ### 新增
