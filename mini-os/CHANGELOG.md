@@ -20,6 +20,7 @@
 ### 验证状态（本轮如实记录）
 - `rustfmt --edition 2021 --check` 对 `src/notes.rs` 与 `tests/events_calendar_test.rs` 均干净（解析通过、零格式差异）。
 - `cargo test` 与真实服务冒烟本轮未能执行：本机执行沙箱自约 06:19 起拒绝外部进程写文件（python/cargo/cat 写操作均报 Operation not permitted，bash 内置写与 muse.write 工具不受影响），`cargo check` 在写 target 指纹时同样失败；靶向与关联测试、冒烟均待沙箱恢复后补跑，本轮不冒充已通过。
+- 补验（2026-10-27 10:07 轮，沙箱已恢复）：`cargo test --test events_calendar_test` 14/14 通过，关联 `events_dt_r2` 4/4 通过，`cargo fmt --all -- --check` 干净；真实服务冒烟（18436 端口隔离库）：注册 201、2026-02-30 建日程 400 且文案为“时间格式不正确，用 YYYY-MM-DD 或 YYYY-MM-DDTHH:MM”、合法日程 201，冒烟后服务已停、端口复查已关、冒烟库已删。本轮无代码改动、无模型调用。
 
 ## [1.19.9] - 2026-10-27
 
