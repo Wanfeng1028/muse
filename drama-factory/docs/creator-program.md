@@ -19,6 +19,7 @@
 | DELETE | `/api/creators/{handle}/follow` | 取消关注该创作者 |
 | GET | `/api/creators/feed?limit=20` | 关注动态：当前用户关注的创作者新发布的 Skill，按发布时间倒序 |
 | GET | `/api/creators/following` | 我的关注列表：当前用户已关注的创作者，按关注时间倒序 |
+| GET | `/api/creators/leaderboard?limit=10` | 创作者排行榜：全部创作者按粉丝数、技能数、创建时间排序并带名次 |
 
 ## 3. 统计口径
 
@@ -46,6 +47,13 @@
 - **口径**：排除当前用户已关注的创作者与 ownerId 为当前用户的本人主页；其余创作者按粉丝数倒序、技能数倒序、创建时间倒序排列并截断至 limit；技能数与最新 Skill 口径与第 6 节一致（handle 与 displayName 匹配、按 id 去重；最新取发布时间最晚且发布时间非空的一条）。
 - **前端**：创作者页「为你推荐」卡片（`#creatorRecommended` 列表 + `#creatorRecommendedEmpty` 诚实空态 + `#creatorRecommendedRefresh` 刷新按钮）；每条含关注按钮（调 `POST /api/creators/{handle}/follow`，成功后同时刷新推荐列表、我的关注、关注动态与创作者列表）；页面加载与详情卡关注/取消关注、关注卡取消关注后自动刷新推荐。
 - **收益数据**：v4 同样不提供任何收益、分成数字。
+
+## 8. 创作者排行榜（v5）
+
+- **接口**：`GET /api/creators/leaderboard?limit=10`，limit 取值 1–50，超出抛 400（`limit 参数非法`）。
+- **口径**：覆盖全部创作者（与为你推荐不同：不排除已关注创作者与本人主页）；按粉丝数倒序、技能数倒序、创建时间倒序排列并截断至 limit，截断后按排列顺序赋予从 1 开始的名次 rank；技能数与最新 Skill 口径与第 6 节一致（handle 与 displayName 匹配、按 id 去重；最新取发布时间最晚且发布时间非空的一条）。
+- **前端**：创作者页「创作者排行榜」卡片（`#creatorLeaderboard` 列表 + `#creatorLeaderboardEmpty` 诚实空态 + `#creatorLeaderboardRefresh` 刷新按钮）；每条含名次、关注按钮（调 `POST /api/creators/{handle}/follow`，成功后同时刷新排行榜、为你推荐、我的关注、关注动态与创作者列表）；页面加载与推荐卡关注、关注卡取消关注后自动刷新排行榜。
+- **收益数据**：v5 同样不提供任何收益、分成数字。
 
 ## 4. 校验规则
 

@@ -398,6 +398,77 @@ public List<CreatorRecommendedItem> recommended(int limit) {
 }
 
 
+@Transactional(readOnly = true)
+public List<CreatorLeaderboardItem> leaderboard(int limit) {
+    if (limit < 1 || limit > 50) {
+        throw new IllegalArgumentException("limit 参数非法");
+    }
+
+    List<CreatorLeaderboardItem> candidates = new ArrayList<>();
+    for (CreatorProfile profile : profileRepository.findAllByOrderByCreatedAtDesc()) {
+        Map<Long, Skill> skillsById = new LinkedHashMap<>();
+        for (Skill skill : skillRepository.findByAuthor(profile.getHandle())) {
+            skillsById.putIfAbsent(skill.getId(), skill);
+        }
+        if (profile.getDisplayName() != null) {
+            for (Skill skill : skillRepository.findByAuthor(profile.getDisplayName())) {
+                skillsById.putIfAbsent(skill.getId(), skill);
+            }
+        }
+        List<Skill> deduplicated = new ArrayList<>(skillsById.values());
+
+        long followerCount = followRepository.countByCreatorId(profile.getId());
+
+        Skill latestSkill = null;
+        for (Skill skill : deduplicated) {
+            LocalDateTime skillCreatedAt = skill.getCreatedAt();
+            if (skillCreatedAt == null) {
+                continue;
+            }
+            if (latestSkill == null || skillCreatedAt.isAfter(latestSkill.getCreatedAt())) {
+                latestSkill = skill;
+            }
+        }
+
+        candidates.add(new CreatorLeaderboardItem(
+                0,
+                profile.getId(),
+                profile.getHandle(),
+                profile.getDisplayName(),
+                profile.getBio(),
+                deduplicated.size(),
+                followerCount,
+                latestSkill == null ? null : latestSkill.getName(),
+                latestSkill == null ? null : latestSkill.getCreatedAt(),
+                profile.getCreatedAt()));
+    }
+
+    candidates.sort(Comparator
+            .comparingLong(CreatorLeaderboardItem::followerCount).reversed()
+            .thenComparing(Comparator.comparingLong(CreatorLeaderboardItem::skillCount).reversed())
+            .thenComparing(CreatorLeaderboardItem::createdAt, Comparator.nullsLast(Comparator.reverseOrder())));
+
+    List<CreatorLeaderboardItem> result = new ArrayList<>();
+    int rank = 1;
+    for (CreatorLeaderboardItem item : candidates) {
+        if (result.size() >= limit) {
+            break;
+        }
+        result.add(new CreatorLeaderboardItem(
+                rank++,
+                item.creatorId(),
+                item.handle(),
+                item.displayName(),
+                item.bio(),
+                item.skillCount(),
+                item.followerCount(),
+                item.latestSkillName(),
+                item.latestSkillCreatedAt(),
+                item.createdAt()));
+    }
+    return result;
+}
+
     /**
      * 基于去重后的技能列表与关注数计算创作者统计。
      *
@@ -496,4 +567,17 @@ public static record CreatorFeedItem(String handle, String displayName, Long ski
             long skillCount, long followerCount, String latestSkillName, LocalDateTime latestSkillCreatedAt,
             LocalDateTime createdAt) {
     }
+    /** 排行榜条目:全局名次与推荐同款统计口径,不含收益字段。 */
+    public static record CreatorLeaderboardItem(
+        int rank,
+        Long creatorId,
+        String handle,
+        String displayName,
+        String bio,
+        long skillCount,
+        long followerCount,
+        String latestSkillName,
+        LocalDateTime latestSkillCreatedAt,
+        LocalDateTime createdAt) {
+}
 }

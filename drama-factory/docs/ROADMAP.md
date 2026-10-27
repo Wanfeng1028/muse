@@ -48,6 +48,7 @@
    - [x] 2026-10-27 落地关注动态 v2（非收益后续）：`GET /api/creators/feed`（limit 1–50 默认 20，已关注创作者的 Skill 按发布时间倒序、按 id 去重）；`creators.html` 关注动态卡片 + `creators.js` 的 `loadFeed()`（加载与关注切换后自动刷新 + 手动刷新，诚实空态，中英双语）；无 schema 变更、无收益数字。文档见 docs/creator-program.md 第 5 节。
    - [x] 2026-10-27 落地我的关注列表 v3（非收益后续）；
    - [x] 2026-10-27 落地为你推荐 v4（非收益后续）：`GET /api/creators/recommended?limit=10`（limit 1–50，非法 400；排除已关注与本人主页；按粉丝数倒序、技能数倒序、创建时间倒序；含技能数/粉丝数/最新 Skill）；`creators.html`「为你推荐」卡片 + `creators.js` 的 `loadRecommended()`/`followRecommended()`（卡片内关注后推荐、我的关注、关注动态、创作者列表四处刷新）；无 schema 变更、无收益数字。文档见 docs/creator-program.md 第 7 节。：`GET /api/creators/following`（按关注时间倒序、含技能数/粉丝数/最新 Skill、缺失档案跳过）；`creators.html`「我的关注」卡片 + `creators.js` 的 `loadFollowing()`/`unfollowFollowing()`（卡片内取消关注后关注列表、关注动态、创作者列表三处刷新）；无 schema 变更、无收益数字。文档见 docs/creator-program.md 第 6 节。
+   - [x] 2026-10-27 落地创作者排行榜 v5（非收益后续）：`GET /api/creators/leaderboard?limit=10`（limit 1–50，非法 400；覆盖全部创作者，不排除已关注与本人；按粉丝数倒序、技能数倒序、创建时间倒序排列并截断至 limit，截断后按序赋予 1 起的名次 rank；含技能数/粉丝数/最新 Skill）；`creators.html`「创作者排行榜」卡片 + `creators.js` 的 `loadLeaderboard()`/`followLeaderboard()`（卡片内关注后排行榜、为你推荐、我的关注、关注动态、创作者列表五处刷新）；无 schema 变更、无收益数字。文档见 docs/creator-program.md 第 8 节。
 
 ## 差异化（超越 pix6 的点，本项目独有）
 

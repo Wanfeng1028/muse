@@ -115,6 +115,18 @@ public List<CreatorRecommendedItemDto> recommended(@RequestParam(defaultValue = 
 }
 
 
+/**
+     * 返回全站创作者排行榜（覆盖全部创作者，按粉丝数、技能数、创建时间依次排序，不含收入相关字段）。
+     */
+    @GetMapping("/leaderboard")
+    public List<CreatorLeaderboardItemDto> leaderboard(@RequestParam(defaultValue = "10") int limit) {
+        return creatorService.leaderboard(limit).stream()
+                .map(item -> new CreatorLeaderboardItemDto(
+                        item.rank(), item.creatorId(), item.handle(), item.displayName(), item.bio(), item.skillCount(),
+                        item.followerCount(), item.latestSkillName(), item.latestSkillCreatedAt(), item.createdAt()))
+                .toList();
+    }
+
     @GetMapping("/{handle}")
     public CreatorDetailDto detail(@PathVariable String handle) {
         return toDetailDto(creatorService.detail(handle));
@@ -351,4 +363,18 @@ public record CreatorFeedItemDto(String handle, String displayName, Long skillId
         java.time.LocalDateTime latestSkillCreatedAt,
         java.time.LocalDateTime createdAt) {
 }
+
+    /** 排行榜条目 DTO。 */
+    public record CreatorLeaderboardItemDto(
+            int rank,
+            Long creatorId,
+            String handle,
+            String displayName,
+            String bio,
+            long skillCount,
+            long followerCount,
+            String latestSkillName,
+            java.time.LocalDateTime latestSkillCreatedAt,
+            java.time.LocalDateTime createdAt) {
+    }
 }

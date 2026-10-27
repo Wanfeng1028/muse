@@ -46,6 +46,9 @@
     'cr.recommendedTitle': { 'zh-CN': '为你推荐', 'en': 'Recommended for you' },
     'cr.recommendedEmpty': { 'zh-CN': '还没有可推荐的创作者：可推荐的创作者已全部关注，或暂无其他创作者', 'en': 'No creators to recommend yet: all recommendable creators are already followed, or there are no other creators' },
     'cr.recommendedRefresh': { 'zh-CN': '刷新推荐', 'en': 'Refresh recommendations' },
+'cr.leaderboardTitle': { 'zh-CN': '创作者排行榜', 'en': 'Creator leaderboard' },
+'cr.leaderboardEmpty': { 'zh-CN': '还没有创作者上榜', 'en': 'No creators on the leaderboard yet' },
+'cr.leaderboardRefresh': { 'zh-CN': '刷新排行', 'en': 'Refresh leaderboard' },
   };
 
   if (window.DFI18N && typeof window.DFI18N.register === 'function') { window.DFI18N.register(PAGE_I18N); }
@@ -289,6 +292,7 @@ async function loadFeed() {
       await loadFollowing();
       await loadFeed();
       await loadRecommended();
+      await loadLeaderboard();
       await loadCreators();
     } catch (err) {
       showToast(_t('cr.loadFailed', '加载失败'));
@@ -321,12 +325,61 @@ async function loadRecommended() {
   `).join('');
 }
 
+  async function loadLeaderboard() {
+    try {
+      const items = await api('/api/creators/leaderboard');
+      const list = Array.isArray(items) ? items : [];
+      const wrap = document.getElementById('creatorLeaderboard');
+      if (!wrap) return;
+      const empty = document.getElementById('creatorLeaderboardEmpty');
+      if (empty) empty.hidden = list.length > 0;
+      wrap.innerHTML = list.map((item) => {
+        const handle = item.handle || '';
+        const displayName = item.displayName || handle;
+        const latest = item.latestSkillName
+          ? `${esc(_t('cr.followingLatest', '最新 Skill'))}：${esc(item.latestSkillName)} · ${esc(fmtDateTime(item.latestSkillCreatedAt))}`
+          : esc(_t('cr.followingNoSkill', '暂无 Skill'));
+        return `
+          <div class="col-12">
+            <div class="card">
+              <div class="card-body">
+                <div class="fw-bold">#${esc(item.rank)} ${esc(displayName)} @${esc(handle)}</div>
+                <div class="text-secondary">${esc(item.bio || '')}</div>
+                <div class="text-secondary">Skill ${esc(item.skillCount)} · 关注 ${esc(item.followerCount)}</div>
+                <div class="text-secondary">${latest}</div>
+                <button type="button" class="btn btn-outline-primary btn-sm" data-leaderboard-follow-handle="${esc(handle)}">${esc(_t('cr.follow', '关注'))}</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      showToast(_t('cr.loadFailed', '加载失败'));
+    }
+  }
+
+  async function followLeaderboard(handle) {
+    if (!handle) return;
+    try {
+      await api('/api/creators/' + encodeURIComponent(handle) + '/follow', { method: 'POST' });
+      showToast(_t('cr.followed', '已关注'));
+      await loadLeaderboard();
+      await loadRecommended();
+      await loadFollowing();
+      await loadFeed();
+      await loadCreators();
+    } catch (e) {
+      showToast(_t('cr.loadFailed', '加载失败'));
+    }
+  }
+
 async function followRecommended(handle) {
   if (!handle) return;
   try {
     await api('/api/creators/' + encodeURIComponent(handle) + '/follow', { method: 'POST' });
     showToast(_t('cr.followed', '已关注'));
     await loadRecommended();
+    await loadLeaderboard();
     await loadFollowing();
     await loadFeed();
     await loadCreators();
@@ -364,9 +417,15 @@ document.addEventListener('DOMContentLoaded', function () {
     if (item) followRecommended(item.getAttribute('data-follow-handle'));
   });
   document.getElementById('creatorRecommendedRefresh').addEventListener('click', loadRecommended);
+  document.getElementById('creatorLeaderboard').addEventListener('click', function (e) {
+    const item = e.target.closest('[data-leaderboard-follow-handle]');
+    if (item) followLeaderboard(item.getAttribute('data-leaderboard-follow-handle'));
+  });
+  document.getElementById('creatorLeaderboardRefresh').addEventListener('click', loadLeaderboard);
   loadCreators();
   loadFeed();
   loadFollowing();
   loadRecommended();
+  loadLeaderboard();
 });
 })();
