@@ -57,7 +57,7 @@ describe('GET /api/focus/summary/by-subject?days=', () => {
     expect(all.json()).toEqual({ subjects: [{ subject: 'math', sessions: 2, totalMinutes: 1059 }] });
   });
 
-  it('days 超出 31 按 31 钳制，非法 days 视为全部历史', async () => {
+  it('days 超出 31 按 31 钳制，非法 days 返回 400', async () => {
     const today = localToday();
     insert('focusbysubjectdays', 'english', 30, `${today}T10:00:00`);
     const clamped = await app.inject({
@@ -72,8 +72,8 @@ describe('GET /api/focus/summary/by-subject?days=', () => {
       url: '/api/focus/summary/by-subject?days=abc',
       headers: { cookie: authCookie },
     });
-    expect(invalid.statusCode).toBe(200);
-    expect(invalid.json()).toEqual({ subjects: [{ subject: 'english', sessions: 1, totalMinutes: 30 }] });
+    expect(invalid.statusCode).toBe(400);
+    expect(invalid.json()).toEqual({ error: 'days 参数无效' });
   });
 
   it('窗口内只统计当前用户，他人记录不计入', async () => {

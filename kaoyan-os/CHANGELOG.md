@@ -4,6 +4,23 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.16.0] - 2026-10-27
+### Added
+- 已验证：4 个专注相关测试文件 38/38 全绿；服务端 tsc --noEmit 零错；无前端改动，视觉验收不适用。
+- 后端：`apps/server/src/routes/focus.ts` 统一使用正则 `/^-?\d+$/` 校验参数，非整数（`abc`、`1.5`、`1x`、空串）返回 400（错误体 `{ error: 'limit 参数无效' }` 与 `{ error: 'days 参数无效' }`）；保留原有整数越界钳制（`limit` ≤ 0 回落 50，> 500 钳制为 500；`days` ≤ 0 钳制为 1，> 31 钳制为 31）与缺省值（`limit` 50、stats `days` 7、by-subject 不传 `days` 统计全部历史）。涉及接口：
+  - `GET /api/focus` 的 `limit` 参数
+  - `GET /api/focus/stats` 的 `days` 参数
+  - `GET /api/focus/summary/by-subject` 的 `days` 参数（注释同步更新为“不传时统计全部历史，非法 days 返回 400”）
+- 测试：
+  - 新增 `apps/server/tests/focus-param-validation.test.ts`，包含 10 例：`limit` 为 `abc`/`1.5`/`1x` 返回 400，`limit=2` 返回 200 长度 2；stats `days` 为 `abc`/`1.5` 返回 400，`days=7` 返回 200 长度 7；by-subject `days` 为 `abc`/`1.5` 返回 400，不传 `days` 返回 200 且 subjects 非空。
+  - 同步更新 3 个旧测试文件中断言静默回落的 `abc` 用例（改为断言 400，钳制断言不变）：`focus-concurrency.deep3.test.ts`、`focus.deep.test.ts`、`focus-summary-by-subject-days.test.ts`。
+- 文档：`docs/API.md` 同步 8 处，包括 `limit`/`days` 参数行、3 处错误码表新增 400 行、by-subject 描述句，以及计划与真题两处交叉引用删除与专注口径一致的说法。
+
+### Notes
+- 本轮模型调用仅通过 BotsRouter 讯飞星辰 spark-x2.6。
+- 整批调用多次触发完成帽导致返回空正文（B1 整批、B2、B4a 整批各浪费一次，后拆分为微批重试成功）。
+- 编排机械修正：B1a 应用时丢失换行导致合并行（已修复）；B2b 测试稿遗漏 `await` 且使用了中文科目名（已按真实 subject key 与旧文件写法修正）。
+
 ## [1.15.0] - 2026-10-27
 
 ### Added

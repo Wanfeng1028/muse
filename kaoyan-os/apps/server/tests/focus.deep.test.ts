@@ -210,7 +210,7 @@ describe('focus routes deep coverage', () => {
     expect(new Set(notes).size).toBe(2);
   });
 
-  it('单词 SRS 等价行为：limit 上限 500，非法 limit 回退到 50', async () => {
+  it('单词 SRS 等价行为：limit 上限 500，非法 limit 返回 400', async () => {
     for (let i = 0; i < 5; i++) {
       insertSession(h.db, 'english', 5, '2024-06-0' + (i + 1) + 'T08:00:00.000Z', 'w' + i);
     }
@@ -223,8 +223,8 @@ describe('focus routes deep coverage', () => {
     expect(resBad.json().length).toBe(5);
 
     const resNaN = await h.app.inject({ method: 'GET', url: '/api/focus?limit=abc', headers: { cookie: h.cookie } });
-    expect(resNaN.statusCode).toBe(200);
-    expect(resNaN.json().length).toBe(5);
+    expect(resNaN.statusCode).toBe(400);
+    expect(resNaN.json()).toEqual({ error: 'limit 参数无效' });
 
   });
 
@@ -302,7 +302,7 @@ describe('focus routes deep coverage', () => {
     expect(todayEntry.minutes).toBe(75);
   });
 
-  it('备份恢复 round-trip：stats days 上限 31、下限 1，非法值回退 7', async () => {
+  it('备份恢复 round-trip：stats days 上限 31、下限 1，非法值返回 400', async () => {
     insertSession(h.db, 'math', 15, todayStr() + 'T08:00:00.000Z', null);
 
     const big = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=999', headers: { cookie: h.cookie } });
@@ -314,8 +314,8 @@ describe('focus routes deep coverage', () => {
     expect(small.json().days.length).toBe(1);
 
     const nan = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=abc', headers: { cookie: h.cookie } });
-    expect(nan.statusCode).toBe(200);
-    expect(nan.json().days.length).toBe(7);
+    expect(nan.statusCode).toBe(400);
+    expect(nan.json()).toEqual({ error: 'days 参数无效' });
 
   });
 });

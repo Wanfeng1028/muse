@@ -55,8 +55,11 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
     let limit = 50;
     if (req.query.limit !== undefined) {
       const parsed = Number(req.query.limit);
-      if (Number.isFinite(parsed) && parsed > 0) {
-        limit = Math.min(Math.floor(parsed), 500);
+      if (!/^-?\d+$/.test(req.query.limit)) {
+        return reply.code(400).send({ error: "limit 参数无效" });
+      }
+      if (parsed > 0) {
+        limit = Math.min(parsed, 500);
       }
     }
     const rows = db
@@ -155,10 +158,12 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
   app.get<{ Querystring: StatsQuery }>('/api/focus/stats', (req, reply) => {
     let days = 7;
     if (req.query.days !== undefined) {
-      const parsed = Number(req.query.days);
-      if (Number.isFinite(parsed)) {
-        days = Math.min(Math.max(Math.floor(parsed), 1), 31);
+      const str = String(req.query.days);
+      if (!/^-?\d+$/.test(str)) {
+        return reply.code(400).send({ error: "days 参数无效" });
       }
+      const parsed = Number(str);
+      days = Math.min(Math.max(parsed, 1), 31);
     }
 
     const today = todayStr();
@@ -204,15 +209,17 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
   });
 
   // GET /api/focus/summary/by-subject —— 分科汇总专注时长：仅返回有记录的科目，按 SUBJECTS 顺序排列
-  // 可选 ?days=N：只统计最近 N 天（含今天），N 按 1~31 钳制；不传或非法时统计全部历史
+  // 可选 ?days=N：只统计最近 N 天（含今天），N 按 1~31 钳制；
+  // 不传时统计全部历史，非法 days 返回 400
   app.get<{ Querystring: StatsQuery }>('/api/focus/summary/by-subject', (req, reply) => {
     let startDate: string | undefined;
     if (req.query.days !== undefined) {
-      const parsed = Number(req.query.days);
-      if (Number.isFinite(parsed)) {
-        const days = Math.min(Math.max(Math.floor(parsed), 1), 31);
-        startDate = addDays(todayStr(), -(days - 1));
+      if (!/^-?\d+$/.test(req.query.days)) {
+        return reply.code(400).send({ error: "days 参数无效" });
       }
+      const parsed = Number(req.query.days);
+      const days = Math.min(Math.max(parsed, 1), 31);
+      startDate = addDays(todayStr(), -(days - 1));
     }
     const rows = db
       .prepare(

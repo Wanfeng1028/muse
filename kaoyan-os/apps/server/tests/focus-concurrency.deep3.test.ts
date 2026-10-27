@@ -199,7 +199,7 @@ describe('focus concurrency & deep validation', () => {
     expect(numRes.json()).toEqual({ error: 'note must be a string up to 500 chars' });
   });
 
-  it('limit boundary: 0→50, 1000→60, abc→50', async () => {
+  it('limit boundary: 0→50, 1000→60, abc→400', async () => {
     for (let i = 0; i < 60; i++) {
       const res = await app.inject({
         method: 'POST',
@@ -231,11 +231,11 @@ describe('focus concurrency & deep validation', () => {
       url: '/api/focus?limit=abc',
       headers: { cookie },
     });
-    expect(limitAbc.statusCode).toBe(200);
-    expect((limitAbc.json() as unknown[]).length).toBe(50);
+    expect(limitAbc.statusCode).toBe(400);
+    expect(limitAbc.json()).toEqual({ error: 'limit 参数无效' });
   });
 
-  it('stats days boundary: 0→1, 100→31, abc→7', async () => {
+  it('stats days boundary: 0→1, 100→31, abc→400', async () => {
     const res0 = await app.inject({
       method: 'GET',
       url: '/api/focus/stats?days=0',
@@ -259,9 +259,8 @@ describe('focus concurrency & deep validation', () => {
       url: '/api/focus/stats?days=abc',
       headers: { cookie },
     });
-    expect(resAbc.statusCode).toBe(200);
-    const bodyAbc = resAbc.json() as { days: unknown[] };
-    expect(bodyAbc.days.length).toBe(7);
+    expect(resAbc.statusCode).toBe(400);
+    expect(resAbc.json()).toEqual({ error: 'days 参数无效' });
   });
 
   it('user isolation: A has 2 records, B sees empty list and zero total', async () => {

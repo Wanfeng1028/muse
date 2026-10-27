@@ -225,7 +225,7 @@
 | --- | --- | --- |
 | GET | /api/plans/summary/by-subject | 需登录 |
 
-返回当前用户的计划分科汇总。可选查询参数 days：合法数字时只统计最近 N 天（含今天，按计划 date 界定），N 按 1~31 钳制；不传或非法时统计全部历史（与 GET /api/focus/summary/by-subject 的 days 口径一致）。
+返回当前用户的计划分科汇总。可选查询参数 days：合法数字时只统计最近 N 天（含今天，按计划 date 界定），N 按 1~31 钳制；不传或非法时统计全部历史。
 
 - 仅返回有计划的科目。
 - 按 SUBJECTS 顺序排列：math、english、politics、major。
@@ -655,7 +655,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
-| query | limit | number | 否 | 返回条数上限，缺省 50；仅当为有限且大于 0 的数值时生效，实际取 Math.min(Math.floor(limit), 500) |
+| query | limit | number | 否 | 返回条数上限，缺省 50；limit 必须为整数字符串（正则 /^-?\d+$/），非整数返回 400 错误体 { "error": "limit 参数无效" }；整数小于等于 0 时回落 50；整数大于 500 时钳制为 500。 |
 
 **成功响应**
 
@@ -678,6 +678,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 状态码 | 返回体 | 触发条件 |
 | --- | --- | --- |
+| 400 | `{ "error": "limit 参数无效" }` | limit 不是整数字符串 |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
 ### `POST /api/focus`
@@ -737,7 +738,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
-| query | days | number | 否 | 统计天数，缺省 7；仅当为有限数值时生效，实际取 Math.min(Math.max(Math.floor(days), 1), 31) |
+| query | days | number | 否 | 统计天数，缺省 7；days 必须为整数字符串（正则 /^-?\d+$/），非整数返回 400 错误体 { "error": "days 参数无效" }；整数小于等于 0 时钳制为 1；整数大于 31 时钳制为 31。 |
 
 **成功响应**
 
@@ -759,6 +760,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 状态码 | 返回体 | 触发条件 |
 | --- | --- | --- |
+| 400 | `{ "error": "days 参数无效" }` | days 不是整数字符串 |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
 ### `GET /api/focus/summary/by-subject`
@@ -767,7 +769,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | --- | --- | --- |
 | GET | /api/focus/summary/by-subject | 需要（登录用户） |
 
-按科目返回专注时长汇总：仅返回有专注记录的科目，按数学、英语、政治、专业课 821 的顺序排列。可选查询参数 `days`：只统计最近 N 天（含今天），N 按 1~31 钳制；不传或非法时统计全部历史。
+按科目返回专注时长汇总：仅返回有专注记录的科目，按数学、英语、政治、专业课 821 的顺序排列。可选查询参数 `days`：只统计最近 N 天（含今天），N 按 1~31 钳制；不传时统计全部历史，非法 days 返回 400 错误体 { "error": "days 参数无效" }。
 
 **成功响应**
 
@@ -786,6 +788,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 状态码 | 返回体 | 触发条件 |
 | --- | --- | --- |
+| 400 | `{ "error": "days 参数无效" }` | days 不是整数字符串 |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
 ### `GET /api/focus/export`
@@ -1771,7 +1774,7 @@ id,word,phonetic,meaning,example,source,source_name,memory_tip,repetitions,due_d
 - 按 SUBJECTS 顺序排列：math、english、politics、major。
 - 若无任何记录（空库），返回 `{ "subjects": [] }`。
 - 计算口径与 `GET /api/exams/summary` 同款：avgScore 保留一位小数；avgRate 为总分之和 / 满分之和保留四位小数；best 并列取最早；first 取 taken_at 最早（并列 id 最小）；latest 取 taken_at 最晚（并列 id 最大）；improvement 在场次小于 2 时为 0，否则为 latest.score - first.score。
-- 可选查询参数 days：合法数字时只统计最近 N 天（含今天，按 taken_at 日期界定），N 按 1~31 钳制；不传或非法时统计全部历史（与 GET /api/plans/summary/by-subject、GET /api/focus/summary/by-subject 的 days 口径一致）。
+- 可选查询参数 days：合法数字时只统计最近 N 天（含今天，按 taken_at 日期界定），N 按 1~31 钳制；不传或非法时统计全部历史（与 GET /api/plans/summary/by-subject 的 days 口径一致）。
 
 **成功响应示例：**
 
