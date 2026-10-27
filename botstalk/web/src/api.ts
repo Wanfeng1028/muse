@@ -1,5 +1,5 @@
 export interface HistoryMessage {
-  id: string;
+  id: number | string;
   room: string;
   sender: string;
   seq: number;
@@ -374,4 +374,55 @@ export async function revokeShareLink(room: string, id: string, requester: strin
         // ignore parse failure
     }
     throw new Error(message || `Failed to revoke share link (HTTP ${res.status})`);
+}
+
+export interface ReactionSummary {
+  reaction: string;
+  count: number;
+  reactors: string[];
+}
+
+// 顺序与网关 gateway/src/reactions.ts 的 SUPPORTED_REACTIONS 保持一致
+export const REACTION_OPTIONS: readonly string[] = [
+  '+1',
+  'like',
+  'smile',
+  'ok',
+  'done',
+  'heart',
+  'thumbs_up',
+  'thumbs_down',
+];
+
+export async function fetchMessageReactions(room: string, messageId: number): Promise<ReactionSummary[]> {
+  const data = await apiJson<{ reactions?: ReactionSummary[] }>(
+    `${BASE}/api/rooms/${encodeURIComponent(room)}/messages/${messageId}/reactions`,
+  );
+  return Array.isArray(data.reactions) ? data.reactions : [];
+}
+
+export async function addMessageReaction(room: string, messageId: number, reaction: string, requester: string): Promise<{ added: boolean; reactions: ReactionSummary[] }> {
+  const data = await apiJson<{ added?: boolean; reactions?: ReactionSummary[] }>(
+    `${BASE}/api/rooms/${encodeURIComponent(room)}/messages/${messageId}/reactions`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ reaction, requester }),
+    },
+  );
+  return {
+    added: typeof data.added === 'boolean' ? data.added : false,
+    reactions: Array.isArray(data.reactions) ? data.reactions : [],
+  };
+}
+
+export async function removeMessageReaction(room: string, messageId: number, reaction: string, requester: string): Promise<{ removed: boolean; reactions: ReactionSummary[] }> {
+  const data = await apiJson<{ removed?: boolean; reactions?: ReactionSummary[] }>(
+    `${BASE}/api/rooms/${encodeURIComponent(room)}/messages/${messageId}/reactions?reaction=${encodeURIComponent(reaction)}&requester=${encodeURIComponent(requester)}`,
+    { method: 'DELETE' },
+  );
+  return {
+    removed: typeof data.removed === 'boolean' ? data.removed : false,
+    reactions: Array.isArray(data.reactions) ? data.reactions : [],
+  };
 }

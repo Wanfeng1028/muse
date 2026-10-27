@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CalendarClock, ClipboardList, Gamepad2, LogOut, Moon, Settings, Share2, ShieldCheck, Spade } from 'lucide-react';
 import { ChatSocket, InboundMessage, WSStatus } from '../ws';
-import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload, fetchPendingApprovals } from '../api';
+import { fetchHistory, fetchPresence, fetchRoom, updateRoom, createGameSession, RoomInfo, RoomType, ROOM_TYPE_LABEL, HistoryMessage, GameStatePayload, fetchPendingApprovals, fetchMessageReactions, addMessageReaction, removeMessageReaction, ReactionSummary } from '../api';
 import MessageList, { ChatItem } from './MessageList';
 import Composer from './Composer';
 import Members, { MemberEntry } from './Members';
@@ -41,6 +41,7 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const [showWorkflows, setShowWorkflows] = useState(false);
   const [showShares, setShowShares] = useState(false);
   const [approvals, setApprovals] = useState<ApprovalRequest[]>([]);
+  const [reactions, setReactions] = useState<Record<string, ReactionSummary[]>>({});
   const [pendingReply, setPendingReply] = useState<{ msgId: string; sender: string; text: string } | null>(null);
   const [showGame, setShowGame] = useState(false);
   const [showDoudizhuLobby, setShowDoudizhuLobby] = useState(false);
@@ -97,6 +98,29 @@ export default function Chat({ nick, room, onLeave }: Props) {
       if (tid && (st === 'dispatched' || st === 'failed' || st === 'cancelled')) {
         setApprovals((prev) => prev.filter((a) => a.task_id !== tid));
       }
+      return;
+    }
+    if (frame.type === 'reaction_event') {
+      const p = frame.payload as { message_id?: unknown; reaction?: unknown; reactor?: unknown; action?: unknown };
+      const mid = typeof p.message_id === 'number' ? p.message_id : null;
+      const reaction = typeof p.reaction === 'string' ? p.reaction : '';
+      const reactor = typeof p.reactor === 'string' ? p.reactor : '';
+      if (mid === null || !reaction || !reactor) return;
+      const key = String(mid);
+      setReactions((prev) => {
+        const list = prev[key] ?? [];
+        if (p.action === 'remove') {
+          const next = list.map((g) => (g.reaction === reaction ? { reaction: g.reaction, reactors: g.reactors.filter((r) => r !== reactor), count: g.reactors.filter((r) => r !== reactor).length } : g)).filter((g) => g.count > 0);
+          return { ...prev, [key]: next };
+        }
+        const g = list.find((x) => x.reaction === reaction);
+        if (g && g.reactors.includes(reactor)) return prev;
+        if (g) {
+          const next = list.map((x) => (x.reaction === reaction ? { reaction: x.reaction, reactors: [...x.reactors, reactor], count: x.count + 1 } : x));
+          return { ...prev, [key]: next };
+        }
+        return { ...prev, [key]: [...list, { reaction, count: 1, reactors: [reactor] }] };
+      });
       return;
     }
     if (frame.type === 'approval_request') {
@@ -156,7 +180,7 @@ export default function Chat({ nick, room, onLeave }: Props) {
         const rows = await fetchHistory(room, PAGE_SIZE);
         if (cancelled) return;
         ingestHistory(rows);
-        if (rows.length > 0) oldestIdRef.current = rows[0].id;
+        if (rows.length > 0) oldestIdRef.current = String(rows[0].id);
         if (rows.length < PAGE_SIZE) setHasMore(false);
       } catch {
         /* 拉不到历史先不阻塞 */
@@ -225,7 +249,7 @@ export default function Chat({ nick, room, onLeave }: Props) {
         setHasMore(false);
       } else {
         ingestHistory(rows);
-        oldestIdRef.current = rows[0].id;
+        oldestIdRef.current = String(rows[0].id);
         if (rows.length < PAGE_SIZE) setHasMore(false);
       }
     } catch {
@@ -244,6 +268,44 @@ export default function Chat({ nick, room, onLeave }: Props) {
   const handleSendTask = useCallback((text: string, mentions: string[]) => {
     socketRef.current?.sendTask(text, mentions);
   }, []);
+  const resolveDbId = useCallback(async (item: ChatItem): Promise<number | null> => {
+    if (item.dbId !== null) return item.dbId;
+    try {
+      const rows = await fetchHistory(room, PAGE_SIZE);
+      const found = rows.find((r) => r.sender === item.sender && r.seq === item.seq);
+      const raw = found?.id;
+      const id = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d+$/.test(raw) ? Number.parseInt(raw, 10) : null;
+      if (id === null) return null;
+      setItems((prev) => prev.map((it) => (it.key === item.key ? { ...it, dbId: id } : it)));
+      return id;
+    } catch {
+      return null;
+    }
+  }, [room]);
+  const loadReactions = useCallback(async (item: ChatItem) => {
+    const dbId = await resolveDbId(item);
+    if (dbId === null) return;
+    try {
+      const list = await fetchMessageReactions(room, dbId);
+      setReactions((prev) => ({ ...prev, [String(dbId)]: list }));
+    } catch {
+      /* 拉不到不阻塞聊天 */
+    }
+  }, [room, resolveDbId]);
+  const toggleReaction = useCallback(async (item: ChatItem, reaction: string) => {
+    const dbId = await resolveDbId(item);
+    if (dbId === null) return;
+    try {
+      const current = await fetchMessageReactions(room, dbId);
+      const mine = current.find((g) => g.reaction === reaction)?.reactors.includes(nick) ?? false;
+      const res = mine
+        ? await removeMessageReaction(room, dbId, reaction, nick)
+        : await addMessageReaction(room, dbId, reaction, nick);
+      setReactions((prev) => ({ ...prev, [String(dbId)]: res.reactions }));
+    } catch {
+      /* 失败静默，界面保持原状 */
+    }
+  }, [room, nick, resolveDbId]);
 
   const markReadAndCloseTasks = useCallback(() => {
     setShowTasks(false);
@@ -329,6 +391,9 @@ export default function Chat({ nick, room, onLeave }: Props) {
             loadingOlder={loadingOlder}
             hasMore={hasMore}
             onReply={(item) => setPendingReply({ msgId: item.msgId, sender: item.sender, text: item.text })}
+            reactions={reactions}
+            onLoadReactions={loadReactions}
+            onToggleReaction={toggleReaction}
           />
           {pendingReply && (
             <div className="reply-bar">
@@ -534,9 +599,11 @@ function toChatItem(row: HistoryMessage): ChatItem {
   const isTask =
     typeof taskStatus === 'string' &&
     (taskStatus === 'running' || taskStatus === 'done' || taskStatus === 'failed');
+  const dbId = typeof row.id === 'number' ? row.id : typeof row.id === 'string' && /^\d+$/.test(row.id) ? Number.parseInt(row.id, 10) : null;
   return {
     key: `${row.sender}#${row.seq}`,
     msgId: String(row.payload.msg_id ?? row.id),
+    dbId,
     sender: row.sender,
     seq: row.seq,
     ts: row.ts,

@@ -1,3 +1,12 @@
+## OpenAgents 第 14 轮：Web 消息反应 UI
+
+- 反应接口封装：web/src/api.ts 新增 ReactionSummary、REACTION_OPTIONS 等。
+- dbId 打通：ChatItem 新增 dbId 字段，懒解析解决 UUID 与整数主键错位。
+- 消息行汇总与选择器：MessageList 接入汇总 chip、切换按钮与 8 项选择器。
+- 切换语义：先 GET 当前汇总再决定 POST 或 DELETE，避免状态误判。
+- 验收数字：tsc -b 与 vite build 通过，网关 23 例全绿，截图 3 张，console 零错误。
+- 已知保留：广播不补发，无独立 toggle 端点。
+
 # Changelog
 
 ## OpenAgents 第 13 轮：消息反应 WebSocket 广播

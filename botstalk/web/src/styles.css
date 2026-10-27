@@ -330,6 +330,53 @@ textarea {
   padding: 0 4px;
 }
 
+/* 消息反应（OpenAgents 第 14 轮） */
+.msg-react-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: var(--ink-muted);
+  padding: 0 2px;
+  cursor: pointer;
+  line-height: 1.4;
+}
+.msg-react-btn:hover {
+  color: var(--accent);
+}
+.msg-reactions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+}
+.reaction-chip {
+  font-size: 12px;
+  line-height: 1.4;
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  background: var(--paper-sunken);
+  color: var(--ink);
+  cursor: pointer;
+}
+.reaction-chip:hover {
+  border-color: var(--accent);
+}
+.reaction-chip-mine {
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
+}
+.reaction-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-1);
+  margin-top: var(--sp-1);
+  padding: var(--sp-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+
 /* 任务回执：灰色小字，不跟普通消息混排 */
 .task {
   display: flex;

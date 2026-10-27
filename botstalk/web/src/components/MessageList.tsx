@@ -1,9 +1,12 @@
 import React, { useEffect, useLayoutEffect, useRef } from 'react';
 import { Bot, Loader2, User } from 'lucide-react';
+import { REACTION_OPTIONS, ReactionSummary } from '../api';
 
 export interface ChatItem {
   key: string;
   msgId: string;
+  // dbId 为网关 messages 表整数主键；实时 WS 帧没有该值时为 null。
+  dbId: number | null;
   sender: string;
   seq: number;
   ts: number;
@@ -23,6 +26,9 @@ interface Props {
   loadingOlder: boolean;
   hasMore: boolean;
   onReply?: (item: ChatItem) => void;
+  reactions: Record<string, ReactionSummary[]>;
+  onLoadReactions: (item: ChatItem) => void;
+  onToggleReaction: (item: ChatItem, reaction: string) => void;
 }
 
 const TOP_THRESHOLD = 48;
@@ -34,6 +40,9 @@ export default function MessageList({
   loadingOlder,
   hasMore,
   onReply,
+  reactions,
+  onLoadReactions,
+  onToggleReaction,
 }: Props) {
   const scrollRef = useRef<HTMLDivElement>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -89,7 +98,7 @@ export default function MessageList({
         <div className="msgs-empty">还没有消息，说点什么吧</div>
       ) : (
         groupChatItems(items).map((group) => (
-          <ThreadGroup key={group.root.key} root={group.root} replies={group.replies} items={items} selfNick={selfNick} onReply={onReply} />
+          <ThreadGroup key={group.root.key} root={group.root} replies={group.replies} items={items} selfNick={selfNick} onReply={onReply} reactions={reactions} onLoadReactions={onLoadReactions} onToggleReaction={onToggleReaction} />
         ))
       )}
       <div ref={bottomRef} />
@@ -117,13 +126,13 @@ function groupChatItems(items: ChatItem[]): { root: ChatItem; replies: ChatItem[
   return groups;
 }
 
-function ThreadGroup({ root, replies, items, selfNick, onReply }: { root: ChatItem; replies: ChatItem[]; items: ChatItem[]; selfNick: string; onReply?: (item: ChatItem) => void }) {
+function ThreadGroup({ root, replies, items, selfNick, onReply, reactions, onLoadReactions, onToggleReaction }: { root: ChatItem; replies: ChatItem[]; items: ChatItem[]; selfNick: string; onReply?: (item: ChatItem) => void; reactions: Record<string, ReactionSummary[]>; onLoadReactions: (item: ChatItem) => void; onToggleReaction: (item: ChatItem, reaction: string) => void }) {
   const [open, setOpen] = React.useState(false);
   const byId = new Map(items.map((x) => [x.msgId, x]));
   if (root.kind === 'task') return <TaskRow item={root} />;
   return (
     <div className="thread-group">
-      <MessageRow item={root} selfNick={selfNick} onReply={onReply} />
+      <MessageRow item={root} selfNick={selfNick} onReply={onReply} reactions={reactions} onLoadReactions={onLoadReactions} onToggleReaction={onToggleReaction} />
       {replies.length > 0 && (
         <>
           <button className="thread-toggle" onClick={() => setOpen(!open)} aria-expanded={open}>
@@ -134,7 +143,7 @@ function ThreadGroup({ root, replies, items, selfNick, onReply }: { root: ChatIt
               <div className="thread-quote">
                 {r.replyTo && byId.get(r.replyTo) ? `引用 ${byId.get(r.replyTo)!.sender}：${byId.get(r.replyTo)!.text.slice(0, 80)}` : '引用消息已删除'}
               </div>
-              <MessageRow item={r} selfNick={selfNick} onReply={onReply} />
+              <MessageRow item={r} selfNick={selfNick} onReply={onReply} reactions={reactions} onLoadReactions={onLoadReactions} onToggleReaction={onToggleReaction} />
             </div>
           ))}
         </>
@@ -143,7 +152,7 @@ function ThreadGroup({ root, replies, items, selfNick, onReply }: { root: ChatIt
   );
 }
 
-function MessageRow({ item, selfNick, onReply }: { item: ChatItem; selfNick: string; onReply?: (item: ChatItem) => void }) {
+function MessageRow({ item, selfNick, onReply, reactions, onLoadReactions, onToggleReaction }: { item: ChatItem; selfNick: string; onReply?: (item: ChatItem) => void; reactions: Record<string, ReactionSummary[]>; onLoadReactions: (item: ChatItem) => void; onToggleReaction: (item: ChatItem, reaction: string) => void }) {
   const isSelf = item.sender === selfNick;
   const mentionsMe = item.mentions.includes(selfNick);
   const highlightClass = [
@@ -153,6 +162,14 @@ function MessageRow({ item, selfNick, onReply }: { item: ChatItem; selfNick: str
   ]
     .filter(Boolean)
     .join(' ');
+  const [pickerOpen, setPickerOpen] = React.useState(false);
+  const loadedDbIdRef = React.useRef<number | null>(null);
+  const summary = item.dbId === null ? [] : (reactions[String(item.dbId)] ?? []);
+  React.useEffect(() => {
+    if (item.dbId === null || loadedDbIdRef.current === item.dbId) return;
+    loadedDbIdRef.current = item.dbId;
+    onLoadReactions(item);
+  }, [item, onLoadReactions]);
 
   return (
     <div className={highlightClass} data-key={item.key}>
@@ -164,8 +181,27 @@ function MessageRow({ item, selfNick, onReply }: { item: ChatItem; selfNick: str
           <span className="msg-sender">{item.sender}</span>
           <span className="msg-time">{formatTime(item.ts)}</span>
           {onReply && <button className="msg-reply-btn" type="button" onClick={() => onReply(item)}>回复</button>}
+          <button className="msg-react-btn" type="button" aria-expanded={pickerOpen} onClick={() => setPickerOpen((v) => !v)}>反应</button>
         </div>
         <div className="msg-text">{renderText(item.text, item.mentions)}</div>
+        {summary.length > 0 && (
+          <div className="msg-reactions">
+            {summary.map((g) => (
+              <button key={g.reaction} type="button" className={g.reactors.includes(selfNick) ? 'reaction-chip reaction-chip-mine' : 'reaction-chip'} title={g.reactors.join('、')} onClick={() => onToggleReaction(item, g.reaction)}>
+                {g.reaction} {g.count}
+              </button>
+            ))}
+          </div>
+        )}
+        {pickerOpen && (
+          <div className="reaction-picker">
+            {REACTION_OPTIONS.map((r) => (
+              <button key={r} type="button" className={summary.some((g) => g.reaction === r && g.reactors.includes(selfNick)) ? 'reaction-chip reaction-chip-mine' : 'reaction-chip'} onClick={() => onToggleReaction(item, r)}>
+                {r}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
