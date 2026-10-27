@@ -5,6 +5,7 @@ const APP_SHELL = [
   '/static/index.html',
   '/static/style.css',
   '/static/design-v021.css',
+  '/static/design-v023.css',
   '/static/app.js',
   '/static/review.js',
   '/static/pwa.js',

@@ -1178,13 +1178,14 @@ function bindEvents() {
 // ---------- 复习统计 ----------
 async function loadReviewStatsView() {
   try {
-    const [trendRes, masteryRes, heatmapRes, healthRes, streakRes, forecastRes] = await Promise.all([
+    const [trendRes, masteryRes, heatmapRes, healthRes, streakRes, forecastRes, overdueRes] = await Promise.all([
       api("/api/review/trend?days=7"),
       api("/api/review/mastery"),
       api("/api/review/heatmap?days=365").catch(() => { console.error("热力图加载失败"); return null; }),
       api("/api/review/health").catch(() => { console.error("记忆健康加载失败"); return null; }),
       api("/api/review/streak").catch(() => { console.error("打卡连续加载失败"); return null; }),
       api("/api/review/forecast?days=7").catch(() => { console.error("未来到期预测加载失败"); return null; }),
+      api("/api/review/overdue?limit=50").catch(() => { console.error("逾期明细加载失败"); return null; }),
     ]);
     drawTrend(trendRes && trendRes.trend ? trendRes.trend : []);
     renderMastery(masteryRes && masteryRes.mastery ? masteryRes.mastery : []);
@@ -1192,6 +1193,7 @@ async function loadReviewStatsView() {
     renderHealth(healthRes);
     renderStreak(streakRes);
     renderForecast(forecastRes);
+    renderOverdue(overdueRes);
   } catch (e) {
     console.error("复习统计加载失败", e);
   }
@@ -1227,6 +1229,30 @@ function renderStreak(data) {
     chip.appendChild(numSpan);
     chip.appendChild(labelSpan);
     summary.appendChild(chip);
+  }
+}
+function renderOverdue(items) {
+  const list = document.getElementById('overdue-list');
+  const empty = document.getElementById('overdue-empty');
+  if (!list || !empty) return;
+  if (!items) return;
+  list.textContent = '';
+  if (items.length === 0) {
+    empty.style.display = '';
+    return;
+  }
+  empty.style.display = 'none';
+  for (const item of items) {
+    const row = document.createElement('li');
+    row.className = 'overdue-row';
+    const title = document.createElement('span');
+    title.className = 'overdue-title';
+    title.textContent = item.title;
+    const meta = document.createElement('span');
+    meta.className = 'overdue-meta';
+    meta.textContent = '逾期 ' + item.overdueDays + ' 天 · 到期 ' + item.dueDate;
+    row.append(title, meta);
+    list.append(row);
   }
 }
 function renderForecast(data) {
