@@ -738,7 +738,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
-| query | days | number | 否 | 统计天数，缺省 7；days 必须为整数字符串（正则 /^-?\d+$/），非整数返回 400 错误体 { "error": "days 参数无效" }；整数小于等于 0 时钳制为 1；整数大于 31 时钳制为 31。 |
+| query | days | number | 否 | 统计天数，缺省 7；days 必须为 1~31 的整数字符串（正则 /^-?\d+$/），非整数或越界（小于 1 或大于 31）返回 400 错误体 { "error": "days 参数无效" }。 |
 
 **成功响应**
 

@@ -235,24 +235,22 @@ describe('focus concurrency & deep validation', () => {
     expect(limitAbc.json()).toEqual({ error: 'limit 参数无效' });
   });
 
-  it('stats days boundary: 0→1, 100→31, abc→400', async () => {
+  it('stats days boundary: 0→400, 100→400, abc→400', async () => {
     const res0 = await app.inject({
       method: 'GET',
       url: '/api/focus/stats?days=0',
       headers: { cookie },
     });
-    expect(res0.statusCode).toBe(200);
-    const body0 = res0.json() as { days: unknown[] };
-    expect(body0.days.length).toBe(1);
+    expect(res0.statusCode).toBe(400);
+    expect(res0.json()).toEqual({ error: 'days 参数无效' });
 
     const res100 = await app.inject({
       method: 'GET',
       url: '/api/focus/stats?days=100',
       headers: { cookie },
     });
-    expect(res100.statusCode).toBe(200);
-    const body100 = res100.json() as { days: unknown[] };
-    expect(body100.days.length).toBe(31);
+    expect(res100.statusCode).toBe(400);
+    expect(res100.json()).toEqual({ error: 'days 参数无效' });
 
     const resAbc = await app.inject({
       method: 'GET',

@@ -163,7 +163,10 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
         return reply.code(400).send({ error: "days 参数无效" });
       }
       const parsed = Number(str);
-      days = Math.min(Math.max(parsed, 1), 31);
+      if (parsed < 1 || parsed > 31) {
+        return reply.code(400).send({ error: "days 参数无效" });
+      }
+      days = parsed;
     }
 
     const today = todayStr();

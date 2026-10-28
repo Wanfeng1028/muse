@@ -4,6 +4,17 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.23.0] - 2026-10-29
+
+### Added
+- GET /api/focus/stats 的 days 参数越界收紧：整数小于 1 或大于 31 返回 400 { error: 'days 参数无效' }，此前静默钳制为 1 或 31；缺省 7、合法 1~31、非整数 400、错误体文案均不变。
+- 新增测试 apps/server/tests/focus-stats-days-range.test.ts，覆盖越界 0/-1/32/100 返回 400 与合法 1/31/07/缺省返回 200。
+- 改写 focus-concurrency.deep3.test.ts 与 focus.deep.test.ts 中锁定旧钳制语义的 stats days 用例，预期由 200 改为 400。
+- 文档 docs/API.md 同步更新 /api/focus/stats 的 days 参数说明。
+
+### Notes
+- 本轮模型调用走 BotsRouter：成稿由七牛免费版 qiniu/conatus-free 生成；讯飞星辰 spark-x2.6 两通作废（首通思考外溢未写完用例、次通在 max-tokens 内截断）；编排按逐字锚定应用并机械修正新测试稿路径一处（/focus/records 改为 /api/focus/stats）。
+
 ## [1.22.0] - 2026-10-28
 
 ### Added

@@ -302,16 +302,16 @@ describe('focus routes deep coverage', () => {
     expect(todayEntry.minutes).toBe(75);
   });
 
-  it('备份恢复 round-trip：stats days 上限 31、下限 1，非法值返回 400', async () => {
+  it('备份恢复 round-trip：stats days 越界返回 400，非法值返回 400', async () => {
     insertSession(h.db, 'math', 15, todayStr() + 'T08:00:00.000Z', null);
 
     const big = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=999', headers: { cookie: h.cookie } });
-    expect(big.statusCode).toBe(200);
-    expect(big.json().days.length).toBe(31);
+    expect(big.statusCode).toBe(400);
+    expect(big.json()).toEqual({ error: 'days 参数无效' });
 
     const small = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=0', headers: { cookie: h.cookie } });
-    expect(small.statusCode).toBe(200);
-    expect(small.json().days.length).toBe(1);
+    expect(small.statusCode).toBe(400);
+    expect(small.json()).toEqual({ error: 'days 参数无效' });
 
     const nan = await h.app.inject({ method: 'GET', url: '/api/focus/stats?days=abc', headers: { cookie: h.cookie } });
     expect(nan.statusCode).toBe(400);
