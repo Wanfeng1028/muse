@@ -2,6 +2,8 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 
 	"github.com/Wanfeng1028/muse/second-brain/internal/config"
@@ -86,7 +88,11 @@ func handleDeletePushSubscription(st *store.Store, cfg config.Config) http.Handl
 		var body struct {
 			Endpoint string `json:"endpoint"`
 		}
-		if err := json.NewDecoder(r.Body).Decode(&body); err == nil {
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil && !errors.Is(err, io.EOF) {
+			writeError(w, r, http.StatusBadRequest, "请求体不是合法 JSON")
+			return
+		}
+		if body.Endpoint != "" {
 			endpoint = body.Endpoint
 		}
 		if endpoint == "" {
