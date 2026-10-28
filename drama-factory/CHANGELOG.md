@@ -5,6 +5,13 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-28 深耕轮：步骤日志 offset 参数收紧）
+
+- 现象：GET /api/runs/{id}/steps/{stepId}/logs（RunController.logs）的 offset 负数此前经 RunLogService.read 的 Math.max(0L, offsetBytes) 静默钳制为 0，调用方传错参数无法发现。
+- 修复：控制器入口先校验：offset<0 抛 IllegalArgumentException("offset 参数非法")，全局处理器映射为 HTTP 400；非整数 offset 本就由 Spring 类型转换返回 400；默认值 0、合法值行为、RunService/RunLogService 逻辑一字未动（RunLogService 的 Math.max 保留为防线内兜底，不再是 API 可见语义）；控制器 Javadoc 与 @Parameter 说明同步改为“负数返回 400”。
+- 测试：新增 RunLogsOffsetValidationTest 4 例（offset=-1 400、offset=abc 400、offset=0 200、不传默认 0 200）；定向运行 mvn -o test -Dtest=RunLogsOffsetValidationTest,RunControllerTest 结果 Tests run 15, Failures 0, Errors 0, Skipped 0, BUILD SUCCESS（新 4 + RunControllerTest 11）；另跑 RunLogServiceTest 与 RunLogServiceDeepTest 结果 Tests run 26, Failures 0, Errors 0, Skipped 0。
+- 无变更：无 schema 变更、无版本号升级、无 UI 变更；前端 run-detail.js 只从 0 起发 offset、后续用 nextOffset 递增，永不发负数，不受影响。
+
 ### Fixed（2026-10-28 深耕轮：审核历史 page/size 参数收紧）
 - 现象：`GET /api/projects/{projectId}/episodes/{episodeId}/review/history`（`ReviewController.getHistory`）的 `size` 参数无上限（如 `100000` 会返回超大页），且 `page`/`size` 校验依赖 `PageRequest` 内部行为、未在控制器显式声明。
 - 修复：控制器入口先校验再查归属：`page<0` 抛 `IllegalArgumentException("page 参数非法")`，`size<1` 或 `size>200` 抛 `IllegalArgumentException("size 参数非法")`，全局处理器映射为 HTTP 400；合法值、默认值（`page 0`、`size 20`）、排序（时间升序）、service 逻辑一字未动；Javadoc 的 `page`/`size` 两行注明范围。

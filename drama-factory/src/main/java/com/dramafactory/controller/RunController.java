@@ -214,7 +214,7 @@ public class RunController {
      *
      * @param id     Run 主键
      * @param stepId 步骤主键
-     * @param offset 起始字节偏移（负数按 0 处理）
+     * @param offset 起始字节偏移，负数返回 400（offset 参数非法）
      * @return 日志内容与下次偏移
      */
     @GetMapping("/{id}/steps/{stepId}/logs")
@@ -222,7 +222,10 @@ public class RunController {
     public Records.LogReadResponse logs(@Parameter(description = "Run 主键") @PathVariable Long id,
                                         @Parameter(description = "步骤主键") @PathVariable Long stepId,
 
-                                        @Parameter(description = "起始字节偏移，负数按 0 处理") @RequestParam(name = "offset", defaultValue = "0") long offset) {
+                                        @Parameter(description = "起始字节偏移，负数返回 400") @RequestParam(name = "offset", defaultValue = "0") long offset) {
+        if (offset < 0) {
+            throw new IllegalArgumentException("offset 参数非法");
+        }
         return runService.readStepLog(id, stepId, offset);
     }
 
