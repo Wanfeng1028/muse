@@ -40,6 +40,8 @@ export interface AdapterOptions {
   stateDir?: string;
   /** 设备凭据，显式配置优先；未配置时回落到环境变量 BOTSTALK_DEVICE_ID 与 BOTSTALK_DEVICE_KEY；密钥绝不打印到日志。 */
   device?: { id: string; key: string };
+  /** 设备鉴权失败（4403）回调，仅在 4403 关闭时触发。 */
+  onDeviceAuthFailed?: (code: number, reason: string) => void;
   /**
    * 共享线程上下文注入（OpenAgents agent-connector "Shared thread context" 的 TS 重实现）。
    * enabled=true 时，AdapterClient 在把 message 帧交给 onMessage/onTask 之前，先拉取本房间近史、
@@ -80,6 +82,7 @@ export class AdapterClient {
   protected reconnectTimer: NodeJS.Timeout | null = null;
   protected reconnectAttempt = 0;
   protected shouldReconnect = true;
+  protected deviceAuthFailed = false;
   protected stopped = false;
   protected capabilityVersion = 1;
   /** 客户端已见的最大 gseq（网关全局序列号），用于断线重连补发。 */
@@ -95,7 +98,13 @@ export class AdapterClient {
 
   connect(): void {
     this.stopped = false;
+    this.shouldReconnect = true;
+    this.deviceAuthFailed = false;
     this.openSocket();
+  }
+
+  hasDeviceAuthFailure(): boolean {
+    return this.deviceAuthFailed;
   }
 
   private openSocket(): void {
@@ -110,8 +119,18 @@ export class AdapterClient {
       const text = typeof data === "string" ? data : String(data);
       this.handleRaw(text);
     });
-    ws.on("close", () => {
+    ws.on("close", (code: number, reason: Buffer) => {
       this.clearHeartbeat();
+      if (code === 4403) {
+        this.deviceAuthFailed = true;
+        this.shouldReconnect = false;
+        try {
+          this.opts.onDeviceAuthFailed?.(4403, reason.toString());
+        } catch {
+          // ignore callback errors
+        }
+        return;
+      }
       if (this.shouldReconnect && !this.stopped) {
         this.scheduleReconnect();
       }
