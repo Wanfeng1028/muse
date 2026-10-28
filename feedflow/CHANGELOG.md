@@ -1,6 +1,17 @@
 
 # 更新日志
 
+## v1.37.0 — 2026-10-28
+
+### Changed
+
+- POST /api/articles/mark_read 的 scope 参数不再静默回落：JSON 体里 scope 非法（如 bogus）时返回 400，错误文案为“scope 非法”；此前非法值被静默当作 unread 处理并返回 200，批量标记的范围会被误改；缺参或空串时仍默认 unread（行为不变），合法值 unread/starred/all 行为不变。
+- 同文件内口径对照：GET /api/articles 与 POST /api/clusters/<id>/read 对非法 scope 早已返回 400“scope 非法”，本轮把 mark_read 对齐到同一口径；前端 app.js 的 markAllRead 只发 state.scope（unread/starred/all 三者之一），不受影响。
+- 合同变更声明：tests/test_api_deep3_markread.py 原先把回落锁死为合同的 test_mark_read_bad_scope_falls_back 已改名并改断言为 test_mark_read_bad_scope_returns400（400 + 文案“scope 非法”+ 断言被拒请求未改动任何文章：g2 仍未读）；若用户认为回落口径应保留，可据此条回滚。
+- 测试：靶向 .venv/bin/python -m pytest tests/test_api_deep3_markread.py tests/test_cluster_mark_read.py -q 结果 12 passed；ruff check feedflow/api.py tests/test_api_deep3_markread.py 全洁；真实服务冒烟未做。
+- 已知限制：全量 pytest 未跑；_int_arg 函数现已无调用处，本轮未删，留待后续清理轮。
+
+
 ## v1.36.0 — 2026-10-28
 
 ### Changed

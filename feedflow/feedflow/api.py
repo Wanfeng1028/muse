@@ -373,7 +373,7 @@ def mark_all_read():
     except (TypeError, ValueError):
         return _err("tag_id 非法", 400)
     if scope not in ("unread", "starred", "all"):
-        scope = "unread"
+        return _err("scope 非法", 400)
     count = store.mark_all_read(_db(), feed_id=feed_id, folder_id=folder_id, tag_id=tag_id, scope=scope)
     return jsonify({"updated": count})
 

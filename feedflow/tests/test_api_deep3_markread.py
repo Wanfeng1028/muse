@@ -27,28 +27,20 @@ def _mk(db_path, feed_id, guid, title):
     )
 
 
-def test_mark_read_bad_scope_falls_back(client, tmp_db):
+def test_mark_read_bad_scope_returns400(client, tmp_db):
     feed_id = _make_feed(tmp_db, "http://example.com/feed-a", "A")
     _mk(tmp_db, feed_id, "g1", "one")
     _mk(tmp_db, feed_id, "g2", "two")
-    db.execute_write(
-        tmp_db,
-        "UPDATE articles SET is_read=1 WHERE feed_id=? AND guid=?",
-        (feed_id, "g1"),
-    )
-
+    db.execute_write(tmp_db, "UPDATE articles SET is_read=1 WHERE feed_id=? AND guid=?", (feed_id, "g1"))
     resp = client.post("/api/articles/mark_read", json={"scope": "bogus"})
-    assert resp.status_code == 200
-    body = resp.get_json()
-    # store.mark_all_read 无返回值，API 的 updated 恒为 null
-    assert body["updated"] is None
-
+    assert resp.status_code == 400
+    assert "scope 非法" in resp.get_json()["error"]
     listing = client.get("/api/articles?scope=all")
     assert listing.status_code == 200
-    items = listing.get_json()["articles"]
-    mine = [a for a in items if a["feed_id"] == feed_id]
+    mine = [a for a in listing.get_json()["articles"] if a["feed_id"] == feed_id]
     assert len(mine) == 2
-    assert all(a["is_read"] == 1 for a in mine)
+    g2 = [a for a in mine if a["guid"] == "g2"]
+    assert len(g2) == 1 and g2[0]["is_read"] == 0
 
 
 def test_mark_read_bad_folder_id(client, tmp_db):
