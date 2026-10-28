@@ -444,6 +444,10 @@ func (s *Server) handleSMSLogAPI(w http.ResponseWriter, r *http.Request) {
 			writeErr(w, http.StatusBadRequest, "limit 参数非法")
 			return
 		}
+		if n < 1 || n > 1000 {
+			writeErr(w, http.StatusBadRequest, "limit 参数非法")
+			return
+		}
 		limit = n
 	}
 
@@ -451,6 +455,10 @@ func (s *Server) handleSMSLogAPI(w http.ResponseWriter, r *http.Request) {
 	if v := q.Get("offset"); v != "" {
 		n, err := strconv.Atoi(v)
 		if err != nil {
+			writeErr(w, http.StatusBadRequest, "offset 参数非法")
+			return
+		}
+		if n < 0 {
 			writeErr(w, http.StatusBadRequest, "offset 参数非法")
 			return
 		}

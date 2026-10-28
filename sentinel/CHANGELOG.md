@@ -2,6 +2,32 @@
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。
 
+## [0.33.1] - 2026-10-28
+
+### 修复
+
+- 短信记录接口 `GET /api/sms/log` 参数范围校验收紧：limit 小于 1 或大于 1000 返回 400（此前 handler 回显原始非法值、Store 层静默改写为 100/1000，响应 limit 字段与实际返回行数口径不一致）；offset 小于 0 返回 400（此前 Store 层静默改写为 0）。缺省仍 limit=50、offset=0，空串仍走缺省；非数字 limit/offset、status、monitor_id 口径不变；与检查记录接口 limit 1~1000 返回 400 的口径一致。控制台 `/sms-log` 页固定 limit=50、offset 从 0 递增，不受影响。Store 层 `ListSMSLogFiltered` 的改写逻辑保留作防御，不改。
+- 未改口径的对照：统计接口 days 越界钳制与投递接口 limit 钳制均有既有测试锁定为 200 合同，本轮核查后确认不改，只收紧短信记录接口这一处无测试锁定的缺口。
+
+### 测试
+
+- 新增 `internal/handlers/sms_log_range_validation_test.go`：`TestHandleSMSLogRangeValidation`，7 个子用例——limit=0/-5/1001 返回 400、limit=1000 返回 200 且响应 limit 字段为 1000、offset=-1 返回 400、offset=0 返回 200 且响应 offset 字段为 0、无参数返回 200 且响应 limit 字段为 50、total 为种子总数 3。
+- go vet 全洁；handlers 全包通过；真实服务冒烟 7 项全过（见下）。
+
+### 真实服务冒烟
+
+- 真实服务冒烟（隔离库 18504 端口，SENTINEL_TICK_SEC=60；隔离库与隔离备份目录，绝未写仓库 data/backups）：无鉴权 401；limit=0、limit=1001、offset=-1 均为 400（error 均为既有文案）；无参数返回 200 且 limit 50、total 0；limit=1000&offset=0 返回 200 且 limit 1000；/healthz 200。冒烟完二进制、隔离库、备份文件均已清理，端口已关。
+
+### 视觉验收
+
+- 不适用：无 UI 改动，控制台页与样式均未动。
+
+### 模型稿
+
+- 全程只走 BotsRouter，讯飞星辰 spark-x2.6；调用器为本轮现写最小新文件 `~/workspace/muse-build/sentinel-smslimit/call.py`（令牌经 SSH 现取、只进子进程环境变量、不落盘、不进 argv、未读任何现成调用脚本；SSE data 行解析 delta.content + usage）。
+- 调用统计（usage.log 全量记录）：成功 2 通，prompt 合计 1130、completion 合计 5324、合计 6454；失败 0 通；本轮无 429、无鉴权失败。
+- 批次质量：handler 补丁稿一次成功（OLD 逐字节核对唯一命中后应用，另手工修掉补丁引入的多余空行，gofmt 复核干净）；测试稿一次成功（直接跑通，路径用占位 path 但直接调 handler 故不影响断言，种子第二条文案与既有测试略有不同但不影响计数断言）。
+
 ## [0.33.0] - 2026-10-28
 
 ### 新增
