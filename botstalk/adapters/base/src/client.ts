@@ -38,6 +38,8 @@ export interface AdapterOptions {
   heartbeatMs?: number;
   /** gseq 水位持久化目录，默认取环境变量 BOTSTALK_STATE_DIR 或 ./.botstalk-state。 */
   stateDir?: string;
+  /** 设备凭据，显式配置优先；未配置时回落到环境变量 BOTSTALK_DEVICE_ID 与 BOTSTALK_DEVICE_KEY；密钥绝不打印到日志。 */
+  device?: { id: string; key: string };
   /**
    * 共享线程上下文注入（OpenAgents agent-connector "Shared thread context" 的 TS 重实现）。
    * enabled=true 时，AdapterClient 在把 message 帧交给 onMessage/onTask 之前，先拉取本房间近史、
@@ -120,6 +122,24 @@ export class AdapterClient {
   }
 
   /**
+   * 解析设备凭据：显式配置优先；否则使用环境变量。
+   * 仅当 id 与 key 均为非空字符串时返回完整凭据对，绝不返回单字段（否则网关会 4403）。
+   * 密钥绝不打印到日志。
+   */
+  protected resolveDeviceCredentials(): { id: string; key: string } | undefined {
+    const device = this.opts.device;
+    if (device && typeof device.id === "string" && device.id.length > 0 && typeof device.key === "string" && device.key.length > 0) {
+      return { id: device.id, key: device.key };
+    }
+    const envId = process.env.BOTSTALK_DEVICE_ID;
+    const envKey = process.env.BOTSTALK_DEVICE_KEY;
+    if (typeof envId === "string" && envId.length > 0 && typeof envKey === "string" && envKey.length > 0) {
+      return { id: envId, key: envKey };
+    }
+    return undefined;
+  }
+
+  /**
    * 解析 hello 中应携带的 last_seen_seq。
    * 内存 maxGseq>0 用内存值；否则读磁盘持久化水位；都没有返回 -1（全新实例，不重放历史）。
    */
@@ -161,7 +181,8 @@ export class AdapterClient {
   }
 
   protected onOpen(): void {
-    const hello = makeEnvelope<{ adapter_id: string; protocol_version: string; last_seen_seq: number }>(
+    const device = this.resolveDeviceCredentials();
+    const hello = makeEnvelope<{ adapter_id: string; protocol_version: string; last_seen_seq: number; device_id?: string; device_key?: string }>(
       "hello",
       this.opts.adapterId,
       this.room,
@@ -171,6 +192,7 @@ export class AdapterClient {
         adapter_id: this.opts.adapterId,
         protocol_version: PROTOCOL_VERSION_STR,
         last_seen_seq: this.resolveLastSeenSeq(),
+        ...(device ? { device_id: device.id, device_key: device.key } : {}),
       },
     );
     this.rawSend(hello);

@@ -1,3 +1,13 @@
+## OpenAgents 第 19 轮：adapter 客户端 hello 设备密钥透传
+
+- 接第 18 轮留待下轮项，落地 adapter 客户端 hello 设备密钥透传；网关与 protocol 包一字未动，不升协议版本。
+- `adapters/base/src/client.ts`：`AdapterOptions` 新增可选 `device?: { id: string; key: string }`；新增 `protected resolveDeviceCredentials()`，显式 `device` 两字段非空优先，否则环境变量 `BOTSTALK_DEVICE_ID` 与 `BOTSTALK_DEVICE_KEY` 两字段非空时用环境变量对，单字段或空串返回 `undefined`，绝不只发一个字段。
+- `onOpen` 有凭据时 hello payload 带 `device_id`/`device_key`，无凭据时 hello 与旧版一字不差；重连时 `onOpen` 重发，故重连同样带凭据。
+- 测试：新增 `adapters/base/test/device-hello.test.ts` 8 例，用 FakeGateway 断言 hello 首帧 payload；base 全量 vitest 5 文件 45 例全绿，base 源码 tsc 全洁，base 测试 tsc 仅 3 处既存错误（均在旧文件内，本轮未动，本轮新文件零错）。
+- 冒烟：真实网关 `scripts/smoke-device-hello.mjs` 10 ok，打印 `SMOKE_DEVICE_HELLO_PASS`（端口 18493：有效设备 adapter1 进 presence、legacy adapter2 进 presence、错密钥 adapter3 不进 presence；精确 4403 码由第 18 轮原始 WS 冒烟覆盖）。
+- deepseek 适配器 main 未改代码：它经 `AdapterClient` 构造，进程设置上述环境变量即自动透传。
+- 已知保留：第 18 轮保留项（在线连接吊销不踢人、吊销终态、REST requester 自报身份未动）仍在，第 17 轮设备管理 Web UI 缺 CHANGELOG 与轮次文档的缺口本轮未代补，仍在。
+
 ## OpenAgents 第 18 轮：设备密钥 WS 握手鉴权
 - hello 首帧可选携带 device_id/device_key；网关在顶号之前验真，失败关闭 4403 且不顶掉既有连接。
 - 失败码：单字段 device auth incomplete、未知设备 device not found、已吊销 device revoked、adapter 不一致 device adapter mismatch、密钥不符 device key mismatch。
