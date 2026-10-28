@@ -49,10 +49,26 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 	mux.HandleFunc("GET /api/notes", func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 		tag := q.Get("tag")
-		limit := parseIntDefault(q.Get("limit"), 50)
-		offset := parseIntDefault(q.Get("offset"), 0)
+		limit := 50
+		if ls := q.Get("limit"); ls != "" {
+			v, err := strconv.Atoi(ls)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "limit 参数非法")
+				return
+			}
+			limit = v
+		}
 		if limit < 0 {
 			limit = 0
+		}
+		offset := 0
+		if rawOffset := q.Get("offset"); rawOffset != "" {
+			v, err := strconv.Atoi(rawOffset)
+			if err != nil {
+				writeError(w, r, http.StatusBadRequest, "offset 参数非法")
+				return
+			}
+			offset = v
 		}
 		if offset < 0 {
 			offset = 0

@@ -167,17 +167,35 @@ func TestNotesListLimitOffsetClamp(t *testing.T) {
 		name     string
 		target   string
 		wantCode int
+		wantErr  string
 	}{
-		{"negative limit", "/api/notes?limit=-5", http.StatusOK},
-		{"negative offset", "/api/notes?offset=-10", http.StatusOK},
-		{"non numeric", "/api/notes?limit=abc", http.StatusOK},
-		{"huge limit", "/api/notes?limit=100000", http.StatusOK},
+		{"negative limit", "/api/notes?limit=-5", http.StatusOK, ""},
+		{"negative offset", "/api/notes?offset=-10", http.StatusOK, ""},
+		{"limit non-numeric", "/api/notes?limit=abc", http.StatusBadRequest, "limit 参数非法"},
+		{"limit decimal", "/api/notes?limit=1.5", http.StatusBadRequest, "limit 参数非法"},
+		{"limit mixed", "/api/notes?limit=1x", http.StatusBadRequest, "limit 参数非法"},
+		{"offset non-numeric", "/api/notes?offset=abc", http.StatusBadRequest, "offset 参数非法"},
+		{"offset decimal", "/api/notes?offset=1.5", http.StatusBadRequest, "offset 参数非法"},
+		{"offset mixed", "/api/notes?offset=1x", http.StatusBadRequest, "offset 参数非法"},
+		{"huge limit", "/api/notes?limit=100000", http.StatusOK, ""},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			rec := doJSONServer(t, h, http.MethodGet, tc.target, nil, nil)
 			if rec.Code != tc.wantCode {
 				t.Fatalf("status: got %d want %d body=%s", rec.Code, tc.wantCode, rec.Body.String())
+			}
+			if tc.wantErr != "" {
+				var errOut struct {
+					Error string `json:"error"`
+				}
+				if err := json.Unmarshal(rec.Body.Bytes(), &errOut); err != nil {
+					t.Fatalf("decode error response: %v", err)
+				}
+				if !strings.Contains(errOut.Error, tc.wantErr) {
+					t.Fatalf("error: got %q want substring %q", errOut.Error, tc.wantErr)
+				}
+				return
 			}
 			var out []store.Note
 			if err := json.Unmarshal(rec.Body.Bytes(), &out); err != nil {

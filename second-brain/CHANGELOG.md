@@ -9,6 +9,8 @@
 
 ### Changed
 
+- GET /api/notes 收紧 limit/offset 参数校验：limit 缺失或为空仍默认 50，offset 缺失或为空仍默认 0；但传入非整数值时不再静默回退默认值，而是返回 400，错误文案分别为 "limit 参数非法" 与 "offset 参数非法"；数值为负仍沿用既有 clamp 到 0 的语义（store 层将 limit <= 0 视为 100），超大 limit 仍返回全部行；tag 处理、ListNotes 调用、nil 转空 slice 处理均未改动，parseIntDefault 定义亦未动，store 层与前端均不受影响（前端仅调用不带 limit/offset 的 /api/notes）。这是一次有意的契约变更：此前 limit=abc / offset=abc 会静默回退默认值，现改为返回 400，若调用方依赖该静默回退，须自行修正查询参数；回滚方式为将 handler 解析恢复为 parseIntDefault 并还原旧测试断言。本轮改动文件：internal/api/server.go（仅 handler）、internal/api/server_deep_test.go（TestNotesListLimitOffsetClamp 非数字用例期望由 200 改为 400，并补充 limit/offset 两参数 1.5 与 1x 用例及错误文案断言）、新增 internal/api/notes_list_limit_offset_validation_test.go（TestNotesList_LimitOffsetValidation，15 个子用例）。
+
 - **GET /api/push/history 的 `limit` 参数校验收紧**：照搬 review_forecast 的 `days` 写法，缺省或空仍默认 50；非整数（如 `abc`、`1.5`、`1x`）由原先经 `parseIntDefault` 静默按默认值处理改为返回 400，错误文案为“limit 参数非法”。解析成功后直接传给 store，钳制沿用 store 既有逻辑（小于等于 0 置 50、大于 200 置 200），handler 内不新增钳制；`parseIntDefault` 本身未动（仍被其他端点使用），store 层与前端未动。新增 `internal/api/push_history_limit_validation_test.go`，1 个表驱动测试、7 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`limit=1`/`0`/`999`（均 200）。既有 `TestPushHistoryUserFilter` 未动且仍通过。
 
 - **GET /api/review/trend 的 `days` 参数校验收紧**：照搬 forecast 的 `days` 写法，缺省或空仍默认 7；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为"days 参数非法"。解析成功后的钳制逻辑保持不变（小于等于 0 置 7、大于 60 置 60）。新增 `internal/api/review_trend_days_validation_test.go`，8 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`1`/`0`/`1000`/`-5`（均 200）。既有 `TestReviewTrendDaysClamp`（`days=0` 置 7、`days=1000` 置 60）未动且仍通过。
