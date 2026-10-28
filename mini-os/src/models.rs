@@ -30,9 +30,9 @@ pub struct Node {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CreateNodeRequest {
-    /// 父节点 id，缺省为根；优先于 parent 生效
+    /// 父节点 id，缺省为根；与非空 parent 同时指定将返回 400
     pub parent_id: Option<i64>,
-    /// 父节点路径（如 "/docs"），parent_id 为空时解析它
+    /// 父节点路径（如 "/docs"），仅在 parent_id 缺省时解析
     pub parent: Option<String>,
     /// 名称
     pub name: String,

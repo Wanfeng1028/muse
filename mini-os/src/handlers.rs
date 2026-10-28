@@ -503,7 +503,19 @@ pub async fn create_fs(
 
     let conn = state.db.lock().unwrap();
 
-    // 父节点：parent_id 优先；否则按 parent 路径解析。
+    // 父节点：parent_id 与 parent 不可同时指定；否则按 parent 路径解析。
+    if req.parent_id.is_some()
+        && req
+            .parent
+            .as_deref()
+            .map_or(false, |p| !p.trim().is_empty())
+    {
+        return Err(err(
+            StatusCode::BAD_REQUEST,
+            "parent_id 与 parent 不能同时指定",
+        ));
+    }
+
     let parent_id: Option<i64> = if req.parent_id.is_some() {
         req.parent_id
     } else if let Some(p) = req.parent.as_deref() {

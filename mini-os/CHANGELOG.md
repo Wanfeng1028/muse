@@ -1,3 +1,27 @@
+## [1.19.14] - 2026-10-28
+
+### Changed
+- `POST /api/fs` no longer silently lets `parentId` win when both `parentId` and `parent` are given. If `parentId` is a number and `parent` is a non-empty string, it now returns `400 {"error": "parent_id 与 parent 不能同时指定"}`.
+- Updated the doc comments on `CreateNodeRequest` in `src/models.rs` to match (`parentId` plus a non-empty `parent` returns 400; `parent` path is resolved only when `parentId` is absent).
+- The following cases remain functional: `parentId` is `null` plus a `parent` path, `parentId` plus an empty string `parent`, `parentId` only, and `parent` only.
+
+### Added
+- Added `tests/fs_create_parent_conflict_test.rs` with 6 tests covering the following scenarios:
+  - Both `parentId` and `parent` path provided returns 400 (and nothing is created).
+  - Agreeing `parentId` and `parent` path returns 400.
+  - `parentId` only returns 201.
+  - `parent` path only returns 201.
+  - `parentId` plus an empty string `parent` returns 201.
+  - `parentId` is `null` plus `parent` path returns 201.
+
+### Verification
+- Targeted tests 6/6.
+- Associated `fs_v2_test` 15/15.
+- `fs_parent_id_validation_test` 6/6.
+- `vfs_path_r2` 1/1.
+- `cargo fmt` clean.
+- Real-service smoke test on port 18457 with an isolated database: `health` returns 1.19.14, conflict returns 400 with the exact message, both single-specification creates return 201, folder listing shows exactly the two created files.
+
 ## [1.19.13] - 2026-10-28
 ### 变更
 浅色主题在 :root（根元素）中添加了 --card-bg、--border-color 和 --text-color。.widget 规则、.widget-add input 以及 #widget-note-body 移除了 var() 回退。深色主题保持不变。副作用：.widget-add input 和 #widget-note-body 的浅色主题边框从 rgba(0, 0, 0, 0.12) 变为 rgba(0, 0, 0, 0.08)。
