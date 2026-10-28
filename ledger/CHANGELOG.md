@@ -1,5 +1,22 @@
 # 更新日志
 
+## v2.17.27 - 2026-10-28
+
+### 新增
+- 对 GET /api/transactions 增加 account_id、category_id 负值校验：在原有的 type 校验与日期格式/顺序校验之后，若 account_id 或 category_id 为负整数，接口返回 400，detail 分别为“account_id 参数非法”、“category_id 参数非法”，与交易列表既有校验口径一致，接 feedflow v1.35.0 同款负整数收紧。
+- 缺参仍不过滤，非整数仍由 FastAPI 返回 422（不动），0 保持原样透传（返回空列表，本轮不改，只以测试锁死该行为）。
+
+### 不变
+- 未改动任何其他接口、筛选器、分页逻辑与计算逻辑；type/date_from/date_to/q 的校验一字未动。
+
+### 测试
+- 新增测试文件 tests/test_transactions_negative_id_validation.py，包含 5 项测试用例（涵盖：account_id=-1 400、category_id=-5 400、双负组合 400、account_id=0 200、合法账户过滤 200 且 total 为 1）。
+- 新增测试与既有日期顺序校验 7 例合计 12 项通过；ruff check 改动文件全洁。
+- 真实服务冒烟（18438 端口隔离库）：account_id=-1 400、category_id=-5 400、account_id=0 200 且空列表，3 项全过；冒烟完服务已停、隔离库已删。
+
+### 补充
+- 核查排除项：导出 CSV 的日期颠倒行为已被既有测试 test_export_date_from_after_date_to_returns_empty 锁定为 200 空表头，本轮一律未动。
+
 ## v2.17.26 - 2026-10-28
 
 ### 新增

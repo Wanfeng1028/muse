@@ -128,6 +128,9 @@ async def list_transactions(
     # 两个值均已通过上方严格的 YYYY-MM-DD 校验，因此字典序比较等价于日期先后比较。
     if date_from and date_to and date_from > date_to:
         raise HTTPException(status_code=400, detail="date_from 不能晚于 date_to")
+    for value, name in ((account_id, "account_id"), (category_id, "category_id")):
+        if value is not None and value < 0:
+            raise HTTPException(status_code=400, detail=f"{name} 参数非法")
     async with get_session_factory()() as s:
         conds = []
         if account_id is not None:
