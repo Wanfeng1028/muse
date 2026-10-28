@@ -5,7 +5,16 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
-## [v1.35.0] - 2026-10-28
+## [v1.36.0] - 2026-10-29
+
+### 新增
+- `GET /api/stats/geo.csv` 的 `link_id` 参数收紧，照搬 v1.34.0 的 geo JSON 写法：缺省或空串仍默认 0（全局）；非整数（`abc`、`1.5`、`1x`）返回 400，错误体为 `{"error": "link_id 非法"}`；负数仍钳制为 0（行为不变）。仅改 `handleExportGeoCSV` 的 link_id 解析段；`days`、`handleStatsGeo`、`parseIntDefault` 一字未动。
+- 注意：geo JSON 的 days 非数字回落 30 是 v1.34.0 已锁定的合同，geo.csv 的 days 同样不动（非数字仍回落 30、仅 7/30 有效），本轮不碰 days 口径。
+
+### 测试
+- 新增 `internal/handler/stats_geo_csv_linkid_validation_test.go`，函数名 TestStatsGeoCSVLinkIDValidation，7 例：`link_id=abc`、`1.5`、`1x` 返回 400 且体含“link_id 非法”；不带参数、`link_id=-5`、`link_id=1` 返回 200；`days=abc` 返回 200（days 回落口径锁定）。
+- 既有 geo/geo.csv 测试不受影响（HeaderAndRowCount、NoData_HeaderOnly、DaysInvalid_FallsBackTo30、geo JSON link_id 校验均通过）；全量 `go test ./...` 14 包全过；`go vet` 全洁；改动文件 `gofmt` 全洁。
+- 真实服务冒烟（18484 端口 `:memory:` 库）：无 key 返回 401；`link_id=abc`、`1.5`、`1x` 均返回错误体逐字为 `{"error": "link_id 非法"}`；`link_id=-5` 与不带参数均返回 200 且体为 CSV 表头；`days=abc` 返回 200；冒烟后服务已停、端口已关、冒烟二进制已删。
 
 ### 新增
 - `GET /api/stats/hourly` 的 `link_id` 参数收紧，照搬 v1.34.0 的 geo link_id 写法：缺省或空串仍默认 0（全局）；非整数（`abc`、`1.5`、`1x`）返回 400，错误体为 `{"error": "link_id 非法"}`；负数仍钳制为 0（行为不变）。仅改 `handleStatsHourly`；`days`、`geo`、`geo.csv`、`parseIntDefault` 一字未动。

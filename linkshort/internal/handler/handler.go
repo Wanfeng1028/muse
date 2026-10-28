@@ -1248,7 +1248,18 @@ func handleExport(w http.ResponseWriter, r *http.Request, st *store.Store) {
 
 // handleExportGeoCSV 导出地域分布 CSV：国家代码,国家,省份,城市,点击,独立访客。
 func handleExportGeoCSV(w http.ResponseWriter, r *http.Request, st *store.Store) {
-	linkID := parseIntDefault(r.URL.Query().Get("link_id"), 0)
+	linkIDStr := r.URL.Query().Get("link_id")
+	var linkID int
+	if linkIDStr == "" {
+		linkID = 0
+	} else {
+		id, err := strconv.Atoi(linkIDStr)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "link_id 非法")
+			return
+		}
+		linkID = id
+	}
 	if linkID < 0 {
 		linkID = 0
 	}
