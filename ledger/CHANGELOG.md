@@ -1,5 +1,22 @@
 # 更新日志
 
+## v2.17.28 - 2026-10-28
+
+### 新增
+- 对 POST /api/transactions 创建交易的 occurred_on 增加严格 YYYY-MM-DD 校验：复用列表接口同款判定（strptime + 长度 10 + 第 5、8 位横杠），非法时在入库前返回 400，detail 为“occurred_on 参数非法”；合法日期（含闰年 2024-02-29）仍返回 201。
+
+### 不变
+- PUT 更新路径一字不动（occurred_on 仍走 schemas.TransactionUpdate 的 date 类型，非法仍由 pydantic 返回 422）；GET 列表的 type/date_from/date_to/q/account_id/category_id/limit/offset 校验一字不动；无 UI 改动、无迁移、无新依赖、无新增端点。
+
+### 测试
+- 新增 tests/test_transactions_create_occurred_validation.py，7 例全绿（5 例非法日期 400、闰年 201、合法日期 201 且列表可查）。
+- 相关交易测试 38 项全绿；ruff check 改动文件全洁。
+- 真实服务冒烟（18439 端口隔离库）：occurred_on 为 not-a-date、2024-13-01、空串时各 400，2024-02-29 时 201 且列表 total 为 1；冒烟完服务已停、隔离库已删。
+
+### 补充
+- 发版升版：__init__、pyproject、版本一致性测试期望值、CHANGELOG 顶条统一为 2.17.28；一并修复上一轮 v2.17.27 遗留的不一致（CHANGELOG 已是 2.17.27 但其余三处仍为 2.17.26）。
+- 核查排除项：导出 CSV 日期颠倒返回 200 空表头、GET 列表 type 空串不过滤、账单条目 status 空串不过滤、统计 month 空串走当月默认均已被既有测试锁定为合同，本轮未动。
+
 ## v2.17.27 - 2026-10-28
 
 ### 新增

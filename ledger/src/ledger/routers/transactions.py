@@ -175,6 +175,20 @@ async def list_transactions(
 @router.post("", status_code=201)
 async def create_transaction(payload: TransactionIn) -> dict[str, Any]:
     """创建交易。"""
+    # 严格 YYYY-MM-DD 校验（与列表接口同款）
+    occurred_on = payload.occurred_on
+    try:
+        datetime.strptime(occurred_on, "%Y-%m-%d")
+        ok = (
+            len(occurred_on) == 10
+            and occurred_on[4] == "-"
+            and occurred_on[7] == "-"
+        )
+    except (ValueError, TypeError):
+        ok = False
+    if not ok:
+        raise HTTPException(status_code=400, detail="occurred_on 参数非法")
+
     async with get_session_factory()() as s:
         await _validate(s, payload, is_update=False)
         now = _now()
