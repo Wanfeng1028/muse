@@ -143,6 +143,8 @@ def list_articles():
             feed_id = int(raw_feed_id)
         except (TypeError, ValueError):
             return _err("feed_id 参数非法", 400)
+        if feed_id < 0:
+            return _err("feed_id 参数非法", 400)
     raw_folder_id = request.args.get("folder_id")
     if raw_folder_id is None or raw_folder_id == "":
         folder_id = None
@@ -151,6 +153,8 @@ def list_articles():
             folder_id = int(raw_folder_id)
         except (TypeError, ValueError):
             return _err("folder_id 参数非法", 400)
+        if folder_id < 0:
+            return _err("folder_id 参数非法", 400)
     raw_tag_id = request.args.get("tag_id")
     if raw_tag_id is None or raw_tag_id == "":
         tag_id = None
@@ -158,6 +162,8 @@ def list_articles():
         try:
             tag_id = int(raw_tag_id)
         except (TypeError, ValueError):
+            return _err("tag_id 参数非法", 400)
+        if tag_id < 0:
             return _err("tag_id 参数非法", 400)
     raw_limit = request.args.get("limit")
     if raw_limit is None or raw_limit == "":
