@@ -1,6 +1,19 @@
 
 # 更新日志
 
+## v1.38.0 — 2026-10-29
+
+### Changed
+- 修复 `POST /api/articles/mark_read` 的 `feed_id`、`folder_id`、`tag_id` 负整数透传问题，此前负值会导致 `store.mark_all_read` 命中 0 行却返回 200 的误导，现已在 `feedflow/feedflow/api.py` 的 `mark_all_read` 函数三个转换分支各增加两行检查，负值均返回 400 并提示对应“非法”文案，缺参/空串（None）、0 值、非整数与 scope 校验行为保持不变。
+- 新增 `tests/test_mark_read_negative_ids_v138.py` 共 6 例覆盖单负值、双负值及边界透传场景，定向运行 3 组相关测试全部通过（18 passed），`ruff check` 静态检查全洁；真实服务在 18491 端口隔离库冒烟 6 项全过并已清理环境。
+- 批次质量确认：BotsRouter 讯飞星辰 spark-x2.6 产出补丁稿与测试稿各一次成功，无作废、截断或思考外溢，补丁 OLD 唯一命中并机械应用，本轮改动总计 6 行新增。
+
+### 已知限制
+- 全量 pytest 本轮未跑。
+- _int_arg 函数仍无调用处，本轮未删，留待后续清理轮。
+- JSON 布尔值经 int() 转换仍按 1/0 处理，本轮有意不收紧。
+- 无 UI 改动，视觉验收不适用。
+
 ## v1.37.0 — 2026-10-28
 
 ### Changed
