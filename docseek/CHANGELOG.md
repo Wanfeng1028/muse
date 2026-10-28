@@ -1,3 +1,9 @@
+## Unreleased（2026-10-28）——CLI search/locate --limit 非正数返回错误
+- 问题：CLI 子命令 search 与 locate 的 --limit 解析中，非正数值此前被静默重置为默认值（search 回 20、locate 回 5），调用方传错参数无法发现；非数字值此前已报错退出（错误：--limit 参数无效，退出码 1），两路口径不一致；serve 端 /api/search 与 /api/locate 的 limit 早已对小于 1 返回 400。
+- 修复：src/main.cpp 的 --limit 分支在解析出 v 后先判 v <= 0，打印“错误：--limit 参数无效”并 return 1，search 与 locate 两路同规则；正数值赋值、默认值（search 20、locate 5，仅作结构体初值）、缺参报错、非数字报错一字未动。
+- 验证：构建 cmake --build build --target docseek 成功；重建后的 build/docseek 实测 6 项全过：search --limit 0、search --limit -3、locate --limit 0、locate --limit -1 均退出码 1 且 stderr 为“错误：--limit 参数无效”；search --limit abc 仍退出码 1 同文案；search --limit 5 正常进入检索流程（退出码 0，未被误拒）。本轮未运行全量 ctest 套件。
+- 无变更：无版本号变更、无 schema 变更、无 UI 改动；已知剩余：--limit 带尾随字符（如 5x）仍被 stoll 接受为 5，本轮未动，留待后续轮次。
+
 ## Unreleased（2026-10-28）——serve search explain 非法值返回 400
 
 ### 修复（2026-10-28 深耕轮：serve search explain 参数收紧）

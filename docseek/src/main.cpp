@@ -686,12 +686,14 @@ int main(int argc, char** argv) {
             }
             try {
                 int v = static_cast<int>(std::stoll(argv[++i]));
+                if (v <= 0) {
+                    std::cerr << "错误：--limit 参数无效\n";
+                    return 1;
+                }
                 if (command == "locate") {
                     locateOpts.limit = v;
-                    if (locateOpts.limit <= 0) locateOpts.limit = 5;
                 } else {
                     searchOpts.limit = v;
-                    if (searchOpts.limit <= 0) searchOpts.limit = 20;
                 }
             } catch (...) {
                 std::cerr << "错误：--limit 参数无效\n";
