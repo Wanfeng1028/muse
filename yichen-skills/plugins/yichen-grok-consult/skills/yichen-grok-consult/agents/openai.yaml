@@ -1,0 +1,12 @@
+interface:
+  display_name: "Grok Consult"
+  short_description: "Ask or search with Grok without switching models"
+  default_prompt: "Use $yichen-grok-consult to ask Grok or search X with official Grok CLI first, falling back only under its documented safety rules."
+dependencies:
+  tools:
+    - type: "mcp"
+      value: "grok-consult"
+      description: "Read-only Grok consultation and native public X search through the official Grok CLI, with bounded local X fallbacks"
+      transport: "stdio"
+policy:
+  allow_implicit_invocation: true

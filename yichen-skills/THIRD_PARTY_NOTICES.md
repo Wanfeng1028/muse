@@ -1,0 +1,170 @@
+﻿# THIRD_PARTY_NOTICES
+
+Last updated: 2026-08-25
+
+This repository references and adapts ideas/workflows from external projects.
+
+## 1) wshuyi/x-article-publisher-skill
+
+- Upstream: https://github.com/wshuyi/x-article-publisher-skill
+- Referenced docs: https://github.com/wshuyi/x-article-publisher-skill/blob/main/README_CN.md
+- License: MIT (copyright notice: wshuyi)
+- Local copy of license: `licenses/wshuyi-x-article-publisher-skill-LICENSE.txt`
+- Usage in this repo:
+  - Workflow and X Articles editor automation references
+  - Adapted Markdown parsing and rich-text conversion ideas now used by `yichen-x-article-draft-uploader`
+
+## 2) JimLiu/baoyu-skills
+
+- Upstream: https://github.com/JimLiu/baoyu-skills
+- License declaration source: https://github.com/JimLiu/baoyu-skills/blob/main/README.md#license
+- Repository state checked on 2026-02-11:
+  - README contains `## License` and `MIT` statement
+  - No top-level LICENSE file found in repository root at check time
+- Local notice: `licenses/JimLiu-baoyu-skills-license-note.txt`
+- Usage in this repo:
+  - Referenced workflow/experience for Claude skills packaging and usage patterns
+
+## 3) zhuyansen/wx-favorites-report
+
+- Upstream: https://github.com/zhuyansen/wx-favorites-report
+- Author: zhuyansen
+- License: MIT
+- Usage in this repo (`yichen-wechat-local-vault`):
+  - Frida hook method for intercepting `CCKeyDerivationPBKDF` (Apple CommonCrypto PBKDF2) to extract SQLCipher encryption keys at runtime
+  - SQLCipher 4 page-level decryption logic (AES-256-CBC, page_size=4096, reserve=80)
+  - The approach of codesign-bypass to remove Hardened Runtime for frida injection
+- What was adapted:
+  - The frida JS hook script structure was adapted from the original project's key extraction methodology
+  - The database decryption function was implemented based on the documented decryption parameters
+  - The overall workflow (codesign → frida spawn → hook → capture keys → match to DB files) follows the same approach
+
+## 4) wechat-article/wechat-article-exporter
+
+- Upstream: https://github.com/wechat-article/wechat-article-exporter
+- License: MIT
+- Usage in this repo (`yichen-wechat-mp-batch-exporter`):
+  - Referenced workflow for WeChat Official Account search, history sync, multi-format export, and enhanced metric/comment export.
+  - The skill points users to their own local or hosted `wechat-article-exporter` instance instead of vendoring upstream code.
+- What was copied:
+  - No upstream source code is vendored in this repository.
+  - The public skill only includes local wrapper scripts, runbooks, output schemas, safety gates, and attribution links.
+
+## 5) wechat-article/wxdown-service
+
+- Upstream: https://github.com/wechat-article/wxdown-service
+- Documentation: https://docs.mptext.top/advanced/wxdown-service
+- License: MIT, according to the upstream documentation footer.
+- Usage in this repo (`yichen-wechat-mp-batch-exporter`):
+  - Referenced the credential-capture workflow needed for read counts, likes, shares, comments, and replies.
+  - The skill requires explicit user confirmation before any certificate, proxy, credential, or WeChat desktop step.
+- What was copied:
+  - No upstream source code is vendored in this repository.
+  - `start_wxdown_service.py` only starts a user-provided local checkout path and does not modify system proxy settings.
+
+## 6) sudoHG/codex-grok-search
+
+- Upstream: https://github.com/sudoHG/codex-grok-search
+- License: MIT
+- Usage in this repo (`yichen-grok-consult`):
+  - Referenced the public architecture of invoking the official Grok Build CLI from Codex in an isolated non-Git workspace.
+  - Reinforced the boundary that Grok should receive search tools without access to the user's current repository, browser cookies, local shell, or unrelated credentials.
+- What was copied:
+  - No upstream source code is vendored in this repository.
+  - The MCP server, transcript verification, URL extraction, Snowflake timestamp decoder, and Codex plugin packaging are independently implemented here.
+
+## 7) xAI Grok Build CLI
+
+- Official documentation: https://docs.x.ai/build/overview
+- Usage in this repo (`yichen-grok-consult`): external runtime dependency for native `x_search`, `web_search`, and `web_fetch`.
+- What is included:
+  - No Grok Build binary, xAI credential, authentication file, or xAI source code is included.
+  - Users install and authenticate the CLI separately under xAI's current terms and documentation.
+
+## 8) afar1/fieldtheory-cli
+
+- Upstream: https://github.com/afar1/fieldtheory-cli
+- License: MIT
+- Local license copy: `licenses/afar1-fieldtheory-cli-LICENSE.txt`
+- Usage in this repo (`yichen-bookmarks-export`):
+  - Optional external runtime for syncing X bookmarks and reading the user's local Field Theory index through `ft list --json`.
+  - The Skill requires a compatible build whose version contains `graphql-only` before it will export X links.
+- What was copied:
+  - No Field Theory source code, binary, private Query ID, Cookie, credential, or bookmark data is vendored in this repository.
+  - `export_x_links.py` is an independently implemented URL-only adapter that invokes the separately installed `ft` command.
+- Modification status:
+  - `graphql-only` identifies a user-maintained compatibility and safety overlay, not an official upstream Field Theory release name.
+  - The modified runtime is not distributed in this repository.
+  - Any redistribution of a modified Field Theory build must preserve the upstream MIT copyright and license notice and must not be represented as an official upstream release.
+
+## 9) WeComTeam/wecom-cli
+
+- Upstream: https://github.com/WecomTeam/wecom-cli
+- Package: https://www.npmjs.com/package/@wecom/cli
+- License: MIT, Copyright (c) 2026 WeCom
+- Usage in this repo (`yichen-wecom-operations`):
+  - External runtime for owner-authorized document, todo, meeting, schedule, and contact operations.
+  - The public Skill invokes a separately installed `wecom-cli`; it does not vendor upstream source or binaries.
+- Local-image boundary:
+  - The public Skill can use an optional external helper exposing `doc +doc_upload_image` when the user explicitly configures `WECOM_UPLOAD_HELPER`.
+  - That helper capability comes from a local, unpublished extension and is not distributed by this repository or represented as an official upstream feature.
+
+## 10) KKKKhazix/khazix-skills (`hv-analysis`)
+
+- Upstream: https://github.com/KKKKhazix/khazix-skills
+- Upstream component: https://github.com/KKKKhazix/khazix-skills/tree/7a5c4934be4106ac740ffdb95280bb81b3f4b83c/hv-analysis
+- Author: 数字生命卡兹克
+- Upstream commit: `7a5c4934be4106ac740ffdb95280bb81b3f4b83c`
+- License: MIT
+- Local copy of license: `licenses/KKKKhazix-khazix-skills-LICENSE.txt`
+- Usage in this repo (`yichen-web-research`):
+  - The horizontal-and-vertical research mode is based on, inspired by, and extends the upstream `hv-analysis` Skill.
+  - It adopts the core idea of combining longitudinal development with a cross-sectional current-state comparison for entities and industries.
+- Local extensions:
+  - A canonical research brief and plan, bounded workstreams and localized query groups, claim-source ledgers, source-independence and temporal rules, scope and contradiction gates, retained-gap disclosure, cross-axis evidence chains, and bounded scenarios.
+  - Explicit routing boundaries between public search, original-source verification, optional archive, private bookmark export, and ASR.
+- What is included:
+  - The protocol and implementation in this repository have been adapted for this Skill family and are not represented as an official upstream release.
+  - The upstream copyright and complete MIT license text are preserved in the local license copy above.
+
+## 11) joeseesun/yt-search-download
+
+- Upstream: https://github.com/joeseesun/yt-search-download
+- Author and copyright: Copyright (c) 2026 Joe Sun (@joeseesun)
+- License: MIT
+- Local copy of complete license: `licenses/joeseesun-yt-search-download-LICENSE.txt`
+- Usage in this repo (`yichen-unified-search`):
+  - The public YouTube keyword/channel search and result-filtering behavior in `scripts/youtube_search.py` is derived in part from the upstream project.
+  - The local adapter emits normalized discovery candidates and can use a separately configured YouTube Data API credential or a public `yt-dlp` listing fallback.
+- Local boundaries:
+  - The adapter does not include the upstream download, subtitle, audio-extraction, or media-processing workflow.
+  - It does not download media, browser cookies, API credentials, or upstream runtime files into this repository.
+  - The adapted implementation remains subject to the upstream MIT copyright and permission notice, while this repository's original contributions remain subject to the repository's own license.
+
+## 12) Zhihu Open Platform CLI-compatible runtime
+
+- Dependency type: separately installed external precompiled runtime used by `yichen-unified-search/scripts/zhihu_adapter.py`.
+- What is included:
+  - No Zhihu CLI source code, binary, credential, authentication store, or private-account data is distributed in this repository.
+  - The local adapter exposes only bounded public search and explicit hot-list discovery surfaces.
+- Provenance, license, and terms:
+  - This repository does not independently verify that the configured external runtime is an official Zhihu distribution.
+  - Users must identify the runtime's distributor and check its applicable license, service terms, redistribution rights, and version-specific notices before installation or use.
+  - This repository's license and this notice are not a license grant for the external CLI.
+
+## Notes
+
+- This repository maintains its own license (`LICENSE`) for original contributions. It is personal-learning and non-commercial only.
+- The upstream projects listed above retain their original licenses and copyrights.
+- Upstream licenses and notices should be preserved when redistributing derived works.
+- `yichen-wechat-local-vault` adapts Mac technical approaches from `wx-favorites-report` and includes selected MIT-licensed Windows source adaptations from `TANGandXUE/wcdb-key-tool` and `freanocank/wechat-decrypt`. Pinned commits, reviewed source hashes, retained license texts, and the exact adaptation scope are recorded in [Windows acquisition provenance](./yichen-wechat-local-vault/references/windows-live/PROVENANCE.md). Existing snapshot provenance remains in [Windows snapshot provenance](./yichen-wechat-local-vault/references/windows-snapshot/PROVENANCE.md).
+- `yichen-wechat-mp-batch-exporter` references workflows from `wechat-article-exporter` and `wxdown-service`, but does not include their source code, credentials, cached browser data, or downloaded article archives.
+- `yichen-x-article-draft-uploader` references workflow and Markdown parsing ideas from `wshuyi/x-article-publisher-skill`; it stores no real credentials in source control and writes exported X cookies only to a private local file with restricted permissions.
+- The broader skill packaging conventions reference public Claude skill community practices, including JimLiu/baoyu-skills.
+- `yichen-grok-consult` references the public isolation pattern from `sudoHG/codex-grok-search`, but includes an independently implemented MCP server and deterministic verification layer.
+- `yichen-bookmarks-export` calls Field Theory as an optional external runtime; Field Theory remains under its upstream MIT License, while this repository's independently implemented adapter remains under this repository's license.
+- The horizontal-and-vertical research mode in `yichen-web-research` is based on, inspired by, and extends KKKKhazix/khazix-skills `hv-analysis`; the upstream author, pinned commit, and MIT license are preserved above.
+- The YouTube search/filter implementation in `yichen-unified-search` is derived in part from `joeseesun/yt-search-download`; Joe Sun's copyright and the complete MIT license text are preserved above and in the local license copy.
+- The Zhihu CLI-compatible runtime is an external dependency and is not redistributed by this repository; users must verify its provenance, license, and service terms separately.
+- `yichen-mac-wechat-dual-open` references public X/Twitter discussion and implements the copy + bundle-id + ad-hoc signing workflow locally.
+- Do not remove this file when forking for personal study. It is the attribution record for borrowed ideas, workflows, and license notices.

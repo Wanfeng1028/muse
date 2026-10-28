@@ -14861,6 +14861,193 @@
       "source": "emilkowalski/skills",
       "sourceUrl": "https://github.com/emilkowalski/skills/blob/2d22863/skills/write-swift/SKILL.md",
       "rewritten": false
+    },
+    {
+      "id": "yichen-agent-memory",
+      "name": "yichen-agent-memory",
+      "version": "1.0.0",
+      "description": "安装、升级、检索或维护 Agent Memory Vault 共享记忆系统；用于明确的记忆系统任务。普通业务的历史回忆按 Vault 入口读取，不启动安装或维护流程。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-agent-memory/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-asr",
+      "name": "yichen-asr",
+      "version": "1.0.0",
+      "description": "逸尘自用的统一音视频转写入口，在 StepFun Step ASR 与火山引擎豆包 ASR 之间按输出需求、安全边界和可用状态路由。用于本地音频或视频的纯文本转写、时间戳、SRT 字幕、口播粗剪，以及转写前体检；用户明确指定服务商时不得静默切换。Use when a local audio or video file needs transcription and the correct ASR backend is unclear, or when the user explicitly invokes $yichen-asr.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-asr/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-bookmarks-export",
+      "name": "yichen-bookmarks-export",
+      "version": "1.0.0",
+      "description": "在用户当轮明确授权后，只读导出其小红书收藏、抖音收藏或 X/Twitter 书签为本地链接文件；本 Skill 直接完成收藏页滚动、链接提取、去重、数量核验、Field Theory GraphQL-only 导出和抽样验证。用于“导出/备份/同步我的收藏或书签链接”等私人数据导出任务；不得用于公开搜索、收藏内容分析、媒体下载、正文归档、推荐发现或未获当轮授权的私人读取。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-bookmarks-export/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-chatgpt-web-research",
+      "name": "yichen-chatgpt-web-research",
+      "version": "1.0.0",
+      "description": "Use the user's already signed-in official ChatGPT website account, especially GPT-5.5 Pro / ChatGPT Pro, to perform product research, market research, competitor research, second-opinion analysis, or any request that says ChatGPT 官网, ChatGPT 网页版, GPT-5.5 Pro, 5.5 Pro, 用官网调研, 产品调研, 市场调研, or avoid API cost. Prefer the Chrome plugin/extension route; if it is unavailable or cannot attach, fall back to Computer Use on the real visible Chrome window/profile. This skill must control the real ChatGPT web page in the intended Chrome account/profile; it must not open a different free-account window, use OpenAI API, use web search alone, use generic Playwright, or use the deprecated chatgpt-web MCP.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-chatgpt-web-research/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-codex-chatgpt",
+      "name": "yichen-codex-chatgpt",
+      "version": "1.0.0",
+      "description": "Use the signed-in ChatGPT website in Chat UI Pro mode, never Work mode, to research, architect, and review one local project through a configured Secure Tunnel and read-only MCP, while Codex alone edits and tests locally. Trigger on explicit $yichen-codex-chatgpt, 让 ChatGPT 设计后由 Codex 写代码, ChatGPT 架构并审查 Codex, or requests for a Codex and ChatGPT collaboration loop. Pure research stays on the official ChatGPT website; code and hybrid work follow ChatGPT PLAN to Codex execution to ChatGPT REVIEW. Website control defaults to in-app browser, then Chrome, then bounded Computer Use. Use a compatible local-only MCP only when the user explicitly requests local-only mode and that optional dependency is configured, never as an automatic fallback.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-codex-chatgpt/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-content-archive",
+      "name": "yichen-content-archive",
+      "version": "1.0.0",
+      "description": "按用户当轮要求读取、下载或归档已知网页/社交媒体链接、URL 清单、已确认候选或明确的有限容器。支持显式有界站点归档；不用于关键词发现、推荐扩展或私人收藏导出。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-content-archive/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-mac-wechat-dual-open",
+      "name": "yichen-mac-wechat-dual-open",
+      "version": "1.0.0",
+      "description": "Create, inspect, repair, and polish a second WeChat app on macOS by copying WeChat, changing the bundle identifier, ad-hoc re-signing, preparing it for the user to open manually, setting Chinese language preferences, and recoloring only the copied app icon from WeChat green to blue. Use when the user asks whether Mac WeChat dual-open methods from X/Twitter or scripts are reliable, asks to prepare a second WeChat app, fix WeChat-2 language/icon/cache issues, or make the copied app visually distinct without installing third-party injection tools. Never launch or control WeChat.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-mac-wechat-dual-open/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-unified-search",
+      "name": "yichen-unified-search",
+      "version": "1.0.0",
+      "description": "统一编排关键词驱动的公共网页、AI 最新动态、垂直领域和社交平台搜索，返回标准化候选；支持有界 X Research、显式站点 Map，以及本次搜索所得候选的轻量核验。不用于读取或下载用户直接给出的已知 URL，此类任务使用 yichen-content-archive。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-unified-search/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-volc-asr",
+      "name": "yichen-volc-asr",
+      "version": "1.0.0",
+      "description": "火山引擎音视频转写 + 口播自动粗剪 skill。用于语音转文字、视频转文字、音频识别、生成时间戳/SRT 字幕，也用于帮我剪口播、自动粗剪、删重复、删停顿、删口误、生成粗剪 MP4。\n触发场景：用户说\"帮我转写这个视频\"、\"音视频转文字\"、\"识别这个音频\"、\"帮我剪口播\"、\"自动剪辑\"时使用。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-volc-asr/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-web-research",
+      "name": "yichen-web-research",
+      "version": "1.0.0",
+      "description": "逸尘自用的互联网研究总入口。用于跨平台且跨阶段、用户尚未确定工具，或明确要求对公司、产品、人物、技术、行业和领域做横纵分析、发展史加现状对比或有来源约束的系统深度研究；先生成有截止日期和证据闸门的计划，再把搜索发现、候选核验、有限归档、按需转写和证据综合路由到 yichen-unified-search、yichen-content-archive、yichen-bookmarks-export 与 yichen-asr。若用户只要求搜索、只处理已知链接、只导出私人收藏或只转写已有音视频，应直接使用对应子 Skill。Use when an internet-research request spans multiple stages, requires evidence-grounded longitudinal and cross-sectional synthesis, the correct child route is unclear, or the user explicitly invokes $yichen-web-research.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-web-research/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-wechat-local-vault",
+      "name": "yichen-wechat-local-vault",
+      "version": "1.0.0",
+      "description": "微信本地数字资产库：支持 macOS 与已实测 Windows 环境的本地全量解析，包括全库采集、认证解密、聊天记录读取/搜索/导出，以及朋友圈和收藏正文解析。Mac 另支持增量刷新和漏看/待回复检查，默认微信1，微信2须明确指定。Windows 本机采集走 windows，离线聊天查询走 snapshot，朋友圈/收藏复用包内纯函数工作流；不触发 Mac 配置或流程。依赖最新聊天时必须先刷新相应来源，不能拿旧记录代替目标。Windows 版本及功能边界见本机采集参考。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-wechat-local-vault/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-wechat-mp-batch-exporter",
+      "name": "yichen-wechat-mp-batch-exporter",
+      "version": "1.0.0",
+      "description": "批量下载微信公众号文章正文、历史文章列表、原创文章筛选、历史计数口径、阅读量、点赞/转发等指标、评论和评论回复。Use when the user asks to batch fetch mp.weixin.qq.com articles, export WeChat public-account history, distinguish publish groups vs expanded article URLs vs original articles, use wechat-article-exporter, use wxdown-service credentials, collect read/comment metrics, or create an archive for Obsidian/Feishu/local analysis. Do not use for ordinary one-off article summarization unless batch/enhanced data is requested.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-wechat-mp-batch-exporter/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-wecom-local-vault",
+      "name": "yichen-wecom-local-vault",
+      "version": "1.0.0",
+      "description": "Read, decrypt, query, search, and export local WeCom/企业微信 5.x desktop databases on macOS into a private read-only vault. Use when the user asks to parse 企业微信本地数据、企微聊天记录、WeCom/WXWork contacts, sessions, groups, customers, message history, local database backup, structured export, or a Mac enterprise-WeChat data analysis workflow.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-wecom-local-vault/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-wecom-operations",
+      "name": "yichen-wecom-operations",
+      "version": "1.0.0",
+      "description": "企业微信官方 wecom-cli 操作入口。用于把本地 Markdown 创建为普通或智能文档、在用户另行配置图片上传 helper 后生成含本地图片的智能文档、读取或覆写企微文档、创建与管理待办，并在企业权限开放时预约、查询、更新或取消会议和日程。用户提到“企微文档”“智能文档”“上传 Markdown”“预定会议”“企微会议”“企微日程”“企微待办”时使用；不用于消息发送或企业微信客户端操作。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-wecom-operations/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-x-article-draft-uploader",
+      "name": "x-article-draft-uploader",
+      "version": "1.0.0",
+      "description": "将 Obsidian 或本地 Markdown 文章上传到 X/Twitter Articles 草稿；支持 Markdown pipe 表格转成 X 原生表格块；如果文章最上方有图片，则按当前 X 界面提示的 5:2 封面图上传；如果没有封面图，则跳过封面区域，直接上传标题、正文、表格和正文图片，完成后提醒用户补一张 5:2 封面。X Article 当前实测正文最多 25 个媒体项，封面单独上传且不占正文名额；表格尺寸选择器当前最大 10 x 10。适用于用户要求上传、发布、保存 Markdown 到 X Article，尤其是需要复用 Chrome 登录态、使用独立 Playwright 浏览器、不接管用户当前浏览器，或旧脚本出现缺图、错位、MPH_MARKER、表格变纯文本等问题时。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-x-article-draft-uploader/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-x-slicer",
+      "name": "yichen-x-slicer",
+      "version": "1.0.0",
+      "description": "将公开 X 推文、Quote 或同作者 Thread 转为 1080×1440 图片切片和 MP4；也支持显式 source-only 素材桥接。保留所选原生视频及对应音频，不发布。",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/yichen-x-slicer/SKILL.md",
+      "rewritten": false
+    },
+    {
+      "id": "yichen-grok-consult",
+      "name": "yichen-grok-consult",
+      "version": "1.0.0",
+      "description": "Consult or search with xAI Grok from a GPT-led Codex conversation without switching the main model. Use when the user asks Grok to answer, review, challenge, compare, provide a second opinion, search the web, search X/Twitter, find recent or fixed-date posts, decode timestamps embedded in X status IDs, research current topics, or invoke Grok while staying in the current GPT conversation.",
+      "author": "mcncarl",
+      "license": "Personal Learning and Non-Commercial Use License",
+      "source": "mcncarl/yichen-skills",
+      "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/plugins/yichen-grok-consult/skills/yichen-grok-consult/SKILL.md",
+      "rewritten": false
     }
   ]
 }

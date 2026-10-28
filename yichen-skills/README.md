@@ -1,0 +1,677 @@
+﻿# yichen-skills
+
+English | [中文](./README.zh.md)
+
+A skill collection for creators who want to streamline writing, X content slicing, X Articles draft publishing, WeChat digital-asset capture, and local workflows with Claude Code and Codex.
+
+## Maintainer
+
+Created and maintained by **逸尘 (Yichen)**, a serial entrepreneur born in 2006, law student, and founder of Yu Hackathon (渝客松), working on AI products, content, and services for businesses.
+
+- Personal website: [yichen.ai](https://yichen.ai/) · [About me](https://yichen.ai/about/)
+- Social media: [X](https://x.com/gengdaJ) · [YouTube](https://www.youtube.com/@yichenai) · [Douyin](https://v.douyin.com/diF63UgPZtI) · [Xiaohongshu](https://xhslink.com/m/3eiF47bau17)
+- WeChat: `yichen10801`; backup: `yichen365ai`
+- When adding me, please include `GitHub` in the verification message
+
+See [yichen.ai](https://yichen.ai/) for current personal information, products, services, and contact details.
+
+## Personal Use and Commercial Authorization
+
+This repository is available only for personal learning and non-commercial personal use. Commercial use—including client delivery, paid products or services, internal company deployment, marketplace packaging, and course bundling—requires the author's prior explicit written authorization.
+
+To request commercial authorization, contact me on WeChat at `yichen10801` and include `Commercial Authorization` in the verification message. Sending a contact request does not itself grant permission; commercial use is allowed only after you receive explicit written authorization.
+
+Join **TradeWinds**, Yichen’s paid community, to unlock commercial authorization for all Skills in this repository and connect with more peers born in 2005 or later and experienced practitioners with proven results. Contact Yichen on WeChat (`yichen10801`) for membership pricing. The specific scope is subject to written authorization; third-party components remain governed by their original licenses.
+
+## What This Repo Does
+
+1. Upload Obsidian/Markdown articles to X Articles drafts (`yichen-x-article-draft-uploader`)
+2. Run two WeChat accounts on one Mac with a distinct blue icon (`yichen-mac-wechat-dual-open`)
+3. Turn local WeChat chats, Moments, and Favorites into digital assets on macOS and Windows (`yichen-wechat-local-vault`)
+4. Fetch benchmark videos from known Douyin links (`yichen-content-archive`)
+5. Fetch benchmark posts from known Xiaohongshu links (`yichen-content-archive`)
+6. Transcribe, caption, and rough-cut talking-head videos with Volcengine ASR (`yichen-volc-asr`)
+7. Run verified research through the official ChatGPT web page (`yichen-chatgpt-web-research`)
+8. Install and maintain a Markdown/Obsidian-first Agent Memory Vault system (`yichen-agent-memory`)
+9. Batch-export WeChat Official Account article history, original-article lists, bodies, and optional read/comment metrics (`yichen-wechat-mp-batch-exporter`)
+10. Read and export local WeCom/企业微信 5.x database snapshots without controlling the app (`yichen-wecom-local-vault`)
+11. Let GPT call Grok for native X search or an independent second opinion without switching the main model (`yichen-grok-consult`)
+12. Route multi-stage internet research through one safety-first entry point (`yichen-web-research`)
+13. Normalize public web and platform search into reviewable candidates (`yichen-unified-search`)
+14. Read, download, and archive only known or explicitly confirmed links (`yichen-content-archive`)
+15. Export private bookmarks directly behind current-task authorization (`yichen-bookmarks-export`)
+16. Choose between Step and Doubao/Volcengine ASR without duplicate submissions (`yichen-asr`)
+17. Create authorized WeCom documents and manage todos, meetings, and schedules through the official CLI without controlling the desktop app (`yichen-wecom-operations`)
+18. Turn one public X Post or Thread URL into verified 3:4 image slices and a finished video that embeds complete native video visuals and preserves their original audio when present (`yichen-x-slicer`)
+19. Orchestrate ChatGPT Pro research, architecture, and read-only project review while Codex alone edits and tests (`codex-chatgpt`)
+
+## Included Skills
+
+### `yichen-x-article-draft-uploader`
+Upload Obsidian/Markdown long-form articles to X Articles drafts:
+- Uses a leading image as the optional 5:2 cover; otherwise keeps the draft cover empty
+- Converts Markdown into rich text for the X editor
+- Converts supported pipe tables into native X table blocks
+- Inserts up to 25 body media items at their original Markdown positions
+- Runs in an independent Playwright browser so it does not take over the user's current Chrome window
+- Imports Chrome login state into a private cookie file without committing it to the repository
+- Reloads the same draft and verifies text, tables, media identity, count, order, and position
+- Saves drafts only and never clicks the final `发布` button
+
+See [yichen-x-article-draft-uploader/README.md](./yichen-x-article-draft-uploader/README.md) for installation, privacy notes, and troubleshooting.
+
+### `yichen-mac-wechat-dual-open`
+Run two WeChat accounts simultaneously on macOS — no third-party tools:
+- Copies WeChat, changes the bundle identifier, and re-signs locally
+- Recolors the second app's icon from green to blue for visual distinction
+- Handles both outer and embedded icon files, Finder custom icon, and cache refresh
+- One-command workflow: `create` → `recolor-icon` → `launch`
+- Typical triggers: "微信双开", "WeChat dual open", "double WeChat"
+- Requirements: macOS 12+, WeChat at `/Applications/WeChat.app`, Python 3.10+, Pillow
+- Limitations: breaks after WeChat updates (re-run `repair`), push notifications may be unreliable
+- Based on the well-known copy + bundle-id + ad-hoc signing method documented by [@koffuxu](https://x.com/koffuxu/status/2043110831584690427)
+
+### `yichen-wechat-local-vault`
+
+Unified **full local WeChat data parsing on macOS and Windows**. Windows full-database capture, authenticated decryption, and row-by-row chat parsing are implemented; Favorites and Moments body parsing has also passed real-data acceptance through the bundled shared-function workflow.
+
+- macOS: full/incremental decryption, chats, Moments, Favorites, digests, and missed/reply-pending checks
+- Windows full local capture: `windows capture --scope all --source-id SOURCE_ID` covers all databases in the selected account's local data directory, including Favorites, Moments, media, and search indexes; the default capture scope remains chat databases
+- Windows chat queries: `snapshot --snapshot <directory>` validates, queries, searches, and exports the captured plaintext snapshot. Complete parsing is verified by comparing source rows, parsed rows, and output readback; individual query/export limits are separate
+- Windows Favorites/Moments bodies: use the existing pure functions and read-only snapshot workflow in the [Windows guide](./yichen-wechat-local-vault/references/windows-live.md#朋友圈和收藏正文解析); dedicated query subcommands are not yet packaged
+- Real acceptance covers full local capture, chat parsing, Favorites/Moments bodies, newly arriving messages, and export readback on Windows 11 build 26300 ARM64 with AMD64 WeChat 4.1.15.56 and CPython 3.12.10 AMD64
+- Scope: data already synced to the selected computer. Three known search-index integrity gaps are reported explicitly; media-file restoration, ordinary non-administrator execution, other client versions/architectures, and complete Mac workflow parity still require further work or verification
+- Does not operate the WeChat UI; login and test messages are performed manually by the user. Windows keys remain in memory; plaintext snapshots stay in private local storage
+- Mac dependencies: Python 3.9+, `pycryptodome`, `zstandard`; Windows uses CPython 3.12 AMD64, native Windows CNG, and the pinned `zstandard` dependency
+- See the [Skill README](./yichen-wechat-local-vault/README.md), [Windows full local parsing guide](./yichen-wechat-local-vault/references/windows-live.md), and [offline snapshot guide](./yichen-wechat-local-vault/references/windows-snapshot.md)
+
+### Social fetchers integrated into `yichen-content-archive`
+The former standalone Douyin and Xiaohongshu fetchers now have one source of truth:
+- `douyin_download.py` reads metadata or downloads a known Douyin video through Playwright interception
+- `xiaohongshu_fetch.py` anonymously reads known posts first, then downloads requested video, subtitles, or images
+- Existing outputs are never overwritten; a new `-run-N` path is selected instead
+- Xiaohongshu cookies require explicit current-task authorization, and optional Feishu deposition remains opt-in
+
+### `yichen-volc-asr`
+Transcribe local audio/video files and generate rough cuts:
+- Uses environment variables for Volcengine ASR and TOS configuration
+- Produces transcript text, SRT subtitles, ASR cache, and optional rough-cut MP4
+- Requires explicit user approval before cleaning temporary files
+
+### `yichen-chatgpt-web-research`
+Legacy research-only entry for the user's already signed-in official ChatGPT website account:
+- Uses the real ChatGPT web page, not the OpenAI API or a separate account
+- Prefers Chrome extension control and falls back to visible Computer Use only when necessary
+- Waits for a full answer with a unique marker before extracting
+- Saves raw and readable Markdown reports under the current workspace's `reports/` directory
+- Keeps profile names, local paths, cookies, tokens, and browser storage out of the public skill
+
+See [yichen-chatgpt-web-research/README.md](./yichen-chatgpt-web-research/README.md) for privacy notes and workflow details.
+
+### Unified entry: `codex-chatgpt`
+Run a bounded Codex × ChatGPT Review Loop:
+- ChatGPT Pro performs public-web research, architecture, PLAN, and final REVIEW
+- Codex is the only local file writer and command/test executor
+- Code, hybrid, and review modes require a separately configured Secure Tunnel and seven-tool read-only MCP
+- Pure research never starts or attaches the code Tunnel
+- The public package contains no Runtime Key, Tunnel/App ID, private runtime, browser session, screenshot, or personal absolute path
+
+This is the unified research + architecture + review entry. The older `yichen-chatgpt-web-research` directory remains available as a legacy research-only workflow. See [codex-chatgpt/README.md](./yichen-codex-chatgpt/README.md) for installation and the external runtime contract.
+
+### `yichen-agent-memory`
+Install and maintain the public Agent Memory Vault system:
+- Creates a local Markdown/Obsidian-first memory vault from the public template
+- Uses Markdown as the source of truth and SQLite/FTS as the fast index
+- Supports optional Zvec semantic retrieval for fuzzy "meaning-based" recall
+- Guides prewrite reconcile, closeout, audit, and privacy-safe template updates
+- Typical triggers: "install Agent Memory Vault", "set up memory vault", "run memory closeout", "audit my Agent Memory Vault"
+- Template repo: [mcncarl/agent-memory-vault](https://github.com/mcncarl/agent-memory-vault)
+
+### `yichen-wechat-mp-batch-exporter`
+Batch-export WeChat Official Account articles:
+- Downloads known `mp.weixin.qq.com` article URLs as Markdown/JSON/text/HTML
+- Uses `wechat-article-exporter` for account search and history list sync
+- Separates `publish_groups`, `expanded_url_items`, and `original_articles`
+- Supports enhanced archive planning for read counts, likes, shares, comments, and replies through `wxdown-service` when fresh user-owned credentials are available
+- Requires user confirmation for QR login, credential capture, certificate trust, proxy changes, and any WeChat desktop steps
+- Never operates WeChat UI or stores real credentials in the repo
+
+See [yichen-wechat-mp-batch-exporter/README.md](./yichen-wechat-mp-batch-exporter/README.md) for setup and privacy notes.
+
+### `yichen-wecom-local-vault`
+Read, decrypt, query, and export local WeCom/企业微信 5.x desktop databases on macOS:
+- Creates private, timestamped plaintext snapshots and never writes back to the WeCom container
+- Supports contacts, sessions, message history, search, and Markdown/JSON export
+- Keeps raw keys, snapshots, and chat exports out of Git
+- Does not control the original WeCom app or send messages
+
+### `yichen-grok-consult`
+Use Grok from a GPT-led Codex task without switching the main model:
+- Runs native public X search through the official Grok Build CLI
+- Verifies that the isolated Grok session completed `XSearch`
+- Extracts status URLs and deterministically decodes Snowflake publication times
+- Keeps Grok outside the current project and disables local file, shell, MCP, memory, and subagent access
+- Provides optional independent-answer, review, and challenge tools through local OpenCodex
+
+See [plugins/yichen-grok-consult/README.md](./plugins/yichen-grok-consult/README.md) for installation, privacy boundaries, and verification limits.
+
+### `yichen-web-research`
+
+Top-level router for research tasks that span search, candidate review, archiving, and optional transcription:
+
+- Sends single-stage work directly to the appropriate child Skill
+- Never turns a search result into an automatic download
+- Adds an evidence-gated horizontal-and-vertical research mode with bounded workstreams, claim-source ledgers, contradiction checks, and retained-gap disclosure
+- Routes recent AI discovery, general/vertical web search, platform-native discovery, explicit site maps, and original-source verification through distinct backends instead of silently substituting one for another
+- Enforces read-only social-platform use, exact-scope authorization, and no WeChat UI control
+- Ships with a portable read-only backend doctor that checks optional adapter readiness without outputting secret values, reading credential-file contents, or making paid probe requests
+
+See [yichen-web-research/README.md](./yichen-web-research/README.md) for the full family, optional backends, and configuration.
+
+### `yichen-unified-search`
+
+Read-only discovery planning across the public web and platform-specific routes:
+
+- Supports AI HOT, AnySearch, GitHub, WeChat public search, Weibo, Xiaohongshu, Douyin, Toutiao, Zhihu, X, Bilibili, YouTube, and Xiaoyuzhou routes
+- Uses AI HOT only for time-sensitive AI discovery, AnySearch for general/batch/vertical web search, and Firecrawl only for an explicit bounded site map or explicit verification of a current signed AnySearch candidate
+- Provides bounded Zhihu CLI search/hot-list access, anonymous-first public Weibo search, and YouTube keyword/channel discovery through the Data API or a public `yt-dlp` fallback; it does not download media
+- Supports one X Quick call per query and bounded multi-query X Research with phased search, deterministic deduplication, provenance preservation, time-window checks, and at most one gap-filling round
+- Built-in adapters produce normalized candidates with provenance, coverage, and limitations; direct GitHub, WeChat Official Account, Xiaohongshu, Douyin, Toutiao, and Bilibili CLI plan steps remain raw unless an explicit downstream normalizer is provided
+- Limits browser-session reuse to documented bounded public read-only routes; private-data access and all write actions are outside this Skill
+
+See the [detailed platform matrix and route boundaries](./yichen-unified-search/README.md).
+
+#### Search query and third-party data flow
+
+Search text is sent to the backend selected for that route. Do not place passwords, cookies, personal data, confidential business information, or private URLs in a search query.
+When a selected service requires an API or OAuth credential, that credential is sent only to that service according to its protocol; the adapters do not include credential values in candidate output or persist them in this repository.
+
+| Route | Data sent outside the local process | Recipient and boundary |
+|---|---|---|
+| AI HOT | AI discovery terms plus optional category/date filters | AI HOT public API; generated summaries are discovery hints, not verified evidence |
+| AnySearch | General, batch, or vertical queries and parameters; a selected current candidate URL only when verification is explicitly requested | AnySearch; the short-lived candidate receipt and its signing secret stay local |
+| GitHub | A repository-search query; a configured `gh` credential may be used for GitHub API access | GitHub only; the command forces `--visibility public`, treats the query as a positional argument, and never returns private repositories |
+| Firecrawl | An explicitly supplied public site-map seed URL or selected signed AnySearch candidate URL, plus the Firecrawl API credential in the protocol `Authorization` header | Firecrawl only; no browser cookies, page actions, or custom page headers are sent. The adapter does not output or persist the credential. Scrape sets `storeInCache=false`; Map makes no cache-control claim, and neither route claims zero data retention |
+| Zhihu | A keyword query or explicit hot-list request; the separately installed runtime may authenticate from its Keychain state | Zhihu through a separately installed Open Platform CLI-compatible runtime; this repository does not include or independently verify that runtime, its credential, or private-account commands |
+| Weibo | A public keyword query | `m.weibo.cn` first with a temporary in-memory anonymous visitor session; only an access-gate failure permits one bounded OpenCLI fallback using the existing browser session. Cookie values do not enter adapter commands, results, or logs |
+| YouTube | A keyword/channel identifier and public search filters; when configured, the API key is sent in the Data API request URL | YouTube Data API or the public YouTube interface through `yt-dlp`; the adapter does not output or persist the key, and no media download occurs |
+| X Quick / Research | Each query generated for the requested bounded search; the Grok CLI uses its account OAuth credential with xAI | xAI through the official Grok CLI and native `x_search`; only explicit Grok quota exhaustion permits anonymous FxTwitter, while OpenCLI/xreach remain blocked unless explicitly authorized for the current task |
+| Xiaohongshu / Douyin public search | The requested public search term | The selected platform through bounded read-only OpenCLI browser-session reuse; no authorization is inherited for private collections or write actions |
+
+### `yichen-content-archive`
+
+Known-link and exact-container processing:
+
+- Reads and archives confirmed web, Xiaohongshu, Douyin, WeChat Official Account, YouTube, Bilibili, and Xiaoyuzhou targets
+- Bundles the only maintained Douyin and Xiaohongshu known-link fetchers; optional Xiaohongshu-to-Feishu deposition remains explicit
+- Keeps search/discovery outside the archive layer
+- Uses collision-safe outputs, resumable checkpoints, and explicit overwrite guards
+
+### `yichen-bookmarks-export`
+
+Maintained private-bookmark export implementation:
+
+- Requires explicit authorization for each platform and scope in the current task
+- Bundles the Xiaohongshu/Douyin Chrome collectors and X local-index exporter
+- Exports links only and does not transfer that authorization to downloads
+- Produces a minimal handoff that references files without embedding private URLs
+
+See [yichen-bookmarks-export/README.md](./yichen-bookmarks-export/README.md) for installation, dependencies, and privacy boundaries.
+
+### `yichen-asr`
+
+Unified ASR router:
+
+- Defaults text-only work to a compatible Step executor and timestamp/SRT work to `yichen-volc-asr`
+- Uses only environment-provided App IDs and tokens
+- Never silently resubmits an already submitted job to another provider
+
+### `yichen-wecom-operations`
+
+Owner-authorized WeCom cloud operations through the official `@wecom/cli`:
+
+- Creates normal documents and Markdown-based smart documents
+- Reads or overwrites documents only after permission and exact-target checks
+- Creates and manages todos; meetings and schedules are available only when the enterprise grants those categories
+- Never controls the WeCom desktop app and never sends messages
+- Keeps credentials, internal IDs, receipts, source files, and customer data out of Git
+- Treats local-image upload as an optional external-helper capability that is not distributed in this repository
+
+See [yichen-wecom-operations/README.md](./yichen-wecom-operations/README.md) for installation, permission boundaries, and the local-image limitation.
+
+### `yichen-x-slicer` — Yichen X Slicer
+
+Turn one public X status URL into finished social assets:
+
+- Generates a verified 1080×1440 image sequence, a PNG-only ZIP, and an H.264 video by default
+- Uses the bundled Sunset Amber template by default and includes 11 visual templates
+- Keeps only the focal Post or verified same-author Thread; quoted content and unrelated replies are excluded
+- Keeps text and photo holds static, limits added motion to four-frame page transitions, and plays every selected native video in full inside its media stage instead of freezing its poster
+- Reads public data anonymously through FxTwitter and never uses X login state or cookies
+- Never generates TTS, voice-over, BGM, or music; selected native-video audio stays aligned to its matching page, while source-silent intervals remain silent and all-source-silent runs contain no audio stream
+
+Install this Skill directly with `npx skills add mcncarl/yichen-skills --skill yichen-x-slicer`.
+
+## Project Structure
+
+```text
+yichen-skills/
+├─ yichen-x-article-draft-uploader/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  ├─ agents/
+│  └─ scripts/
+│     ├─ export_x_cookies_from_chrome.py
+│     ├─ parse_markdown.py
+│     └─ upload_markdown_to_x_article.py
+├─ yichen-wechat-local-vault/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  └─ scripts/
+│     ├─ decrypt_all_dbs.py
+│     ├─ export_chat.py
+│     ├─ extract_keys.py
+│     ├─ list_contacts.py
+│     ├─ search_sns.py
+│     └─ wechat_digest.py
+├─ yichen-mac-wechat-dual-open/
+│  ├─ SKILL.md
+│  ├─ scripts/
+│  │  └─ wechat_dual_open.py
+│  └─ references/
+│     └─ reliability-and-risks.md
+├─ yichen-volc-asr/
+│  ├─ SKILL.md
+│  └─ scripts/
+│     └─ transcribe.py
+├─ yichen-chatgpt-web-research/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  └─ agents/
+├─ codex-chatgpt/
+│  ├─ LICENSE
+│  ├─ SKILL.md
+│  ├─ README.md
+│  ├─ SECURITY.md
+│  ├─ config.example.md
+│  ├─ agents/
+│  ├─ examples/
+│  └─ references/
+│     └─ setup.md
+├─ yichen-agent-memory/
+│  ├─ SKILL.md
+│  └─ agents/
+├─ yichen-wechat-mp-batch-exporter/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  ├─ agents/
+│  ├─ references/
+│  └─ scripts/
+├─ yichen-wecom-local-vault/
+│  ├─ SKILL.md
+│  ├─ agents/
+│  ├─ references/
+│  └─ scripts/
+├─ yichen-web-research/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  ├─ agents/
+│  ├─ scripts/
+│  └─ tests/
+├─ yichen-unified-search/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  ├─ README.zh.md
+│  ├─ agents/
+│  ├─ references/
+│  ├─ scripts/
+│  └─ tests/
+├─ yichen-content-archive/
+│  ├─ SKILL.md
+│  ├─ agents/
+│  ├─ references/
+│  ├─ scripts/
+│  └─ tests/
+├─ yichen-bookmarks-export/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  ├─ agents/
+│  ├─ references/
+│  ├─ scripts/
+│  └─ tests/
+├─ yichen-asr/
+│  ├─ SKILL.md
+│  ├─ agents/
+│  ├─ references/
+│  ├─ scripts/
+│  └─ tests/
+├─ yichen-wecom-operations/
+│  ├─ SKILL.md
+│  ├─ README.md
+│  ├─ agents/
+│  ├─ references/
+│  └─ scripts/
+├─ yichen-x-slicer/
+│  ├─ SKILL.md
+│  ├─ agents/
+│  ├─ assets/
+│  ├─ references/
+│  └─ scripts/
+├─ .agents/plugins/
+│  └─ marketplace.json
+├─ plugins/yichen-grok-consult/
+│  ├─ .codex-plugin/plugin.json
+│  ├─ .mcp.json
+│  ├─ README.md
+│  ├─ README.zh.md
+│  ├─ mcp/server.mjs
+│  ├─ mcp/authenticated-fallback-policy.mjs
+│  ├─ mcp/authenticated-fallback-policy.test.mjs
+│  └─ skills/yichen-grok-consult/
+├─ README.md
+├─ README.zh.md
+├─ THIRD_PARTY_NOTICES.md
+├─ LICENSE
+└─ .gitignore
+```
+
+## Requirements
+
+- Claude Code / Codex CLI (with local skill loading)
+- Python Playwright (required by `yichen-x-article-draft-uploader`)
+- Python 3.9+
+- Dependencies:
+  - X article drafts: `pip install playwright pycryptodome && python3 -m playwright install chromium`
+  - WeChat local vault: macOS uses `pycryptodome zstandard`; Windows uses native CNG and [pinned CPython 3.12 AMD64 dependencies](./yichen-wechat-local-vault/references/windows-live.md)
+  - WeChat dual open: `pip install Pillow`
+  - Content archive (Douyin): `pip install playwright requests && python3 -m playwright install chromium`
+  - Content archive (Xiaohongshu): `pip install requests`
+  - Volc ASR rough cut: `pip install requests` plus local `ffmpeg` / `ffprobe`
+  - ChatGPT Web research: Chrome signed in to ChatGPT, plus Chrome/Computer Use capability in your agent environment
+  - WeChat MP batch export: Python 3 standard library for known URL downloads; `wechat-article-exporter` / `wxdown-service` only for account history, metrics, and comments
+  - WeCom local vault: `pycryptodome`; `frida` only for explicitly authorized raw-key capture
+  - Grok Consult: Node.js 18+, the official Grok Build CLI, and an active `grok login`; local OpenCodex is optional for non-search consultation tools
+  - Social bookmarks exporter: Xiaohongshu/Douyin require an agent environment with `chrome:control-chrome`; the X route optionally requires a Field Theory `ft` CLI build whose version contains `graphql-only`
+  - Web research family: install all five family directories together. Unified Search adapters use Python's standard library plus optional `idna`; the other family members retain the dependencies listed above. Optional routes require their separately installed service/runtime, such as AnySearch, Firecrawl, a Zhihu Open Platform CLI-compatible runtime, OpenCLI, the official Grok CLI, `xreach`, `gh`, `yt-dlp`, `bili`, or `ffmpeg`
+  - Unified YouTube search can use a separately configured YouTube Data API credential or fall back to public `yt-dlp` listing; it never downloads media
+  - Unified Weibo search starts anonymously; its documented access-gate fallback requires OpenCLI and an existing signed-in Chrome session
+  - Yichen X Slicer: Node.js 18+, Playwright, local Chrome, `ffmpeg`, and `ffprobe`
+
+## Installation
+
+Copy this repository into your local skills directory:
+
+- Common Claude path: `~/.claude/skills/`
+- Common Agents path: `~/.agents/skills/`
+- Custom skill path also works if your setup supports it
+
+Keep directory names unchanged:
+- `yichen-x-article-draft-uploader`
+- `yichen-wechat-local-vault`
+- `yichen-mac-wechat-dual-open`
+- `yichen-volc-asr`
+- `yichen-chatgpt-web-research`
+- `codex-chatgpt`
+- `yichen-agent-memory`
+- `yichen-wechat-mp-batch-exporter`
+- `yichen-wecom-local-vault`
+- `yichen-web-research`
+- `yichen-unified-search`
+- `yichen-content-archive`
+- `yichen-bookmarks-export`
+- `yichen-asr`
+- `yichen-wecom-operations`
+- `yichen-x-slicer`
+
+`yichen-grok-consult` is a Codex plugin rather than a standalone copied skill. Install it through this repository's marketplace:
+
+```bash
+codex plugin marketplace add mcncarl/yichen-skills --ref main
+codex plugin add yichen-grok-consult@yichen-skills
+```
+
+## Quick Start (3 Minutes)
+
+### B) Enable `yichen-x-article-draft-uploader`
+
+1. Install the pinned `x-article-draft-uploader-v1.0.1` tag by following the fail-safe command in the Skill README
+2. Install the exact Python dependencies from the Skill's `requirements.txt`, then run `python3 -m playwright install chromium`
+3. Make sure Chrome is already logged in to X; Ailu users can import cookies from Chrome, paste JSON, or choose a JSON file in Settings
+4. Say "upload this Markdown article to X Articles draft" or run the script directly
+5. The Skill creates and verifies a fresh draft; it does not publish it
+6. See [yichen-x-article-draft-uploader/README.md](./yichen-x-article-draft-uploader/README.md) for the pinned install command and checks
+
+### C) Enable `yichen-mac-wechat-dual-open`
+
+1. Install Python dependency: `pip3 install Pillow`
+2. In Claude Code, say "帮我微信双开" or "WeChat dual open"
+3. The skill will create a second WeChat at `~/Applications/WeChat-2.app` with a blue icon
+4. See `yichen-mac-wechat-dual-open/SKILL.md` for all commands
+
+### D) Enable `yichen-wechat-local-vault`
+
+1. Choose the source first: macOS local vault, Windows local acquisition, or an explicit detached Windows plaintext snapshot.
+2. On macOS, install `pycryptodome zstandard`, then ask for chat parsing, export, Moments, or Favorites. The Skill guides the existing Mac setup and workflow selection.
+3. On Windows, use CPython 3.12 AMD64 and the pinned dependency in the [Windows acquisition guide](./yichen-wechat-local-vault/references/windows-live.md). Log in manually, select the authorized source with `windows discover`, and use `windows capture --scope all --source-id SOURCE_ID` for full local capture; the default `capture` scope selects only chat databases.
+4. Use the `snapshot` route for Windows query/search/export. It does not refresh data; capture again when current messages are required.
+5. See the [Skill README](./yichen-wechat-local-vault/README.md) for platform-specific commands, privacy paths, and tested permission/version limits.
+
+### E) Enable the creator video workflow
+
+1. Install Playwright, requests, and ffmpeg
+2. Use `yichen-content-archive` to save known Douyin or Xiaohongshu benchmark media locally
+3. Use `yichen-volc-asr` to transcribe or rough-cut recorded talking-head videos
+
+### F) Enable `yichen-chatgpt-web-research`
+
+1. Make sure Chrome is already signed in to the intended ChatGPT account
+2. Keep the ChatGPT tab or profile visible when a Pro route must be confirmed
+3. Ask for official-site research, for example: "Use ChatGPT Web to research Anthropic and save a Markdown report"
+4. The skill waits for a complete answer, verifies the marker, and saves raw/readable Markdown reports
+
+### F2) Enable `codex-chatgpt`
+
+1. Install it with `npx skills add mcncarl/yichen-skills --skill codex-chatgpt`
+2. For pure research, verify that the official ChatGPT website exposes Chat mode and a visible `Pro` route
+3. For code, hybrid, or review, configure the private App and compatible read-only runtime described in [codex-chatgpt/references/setup.md](./yichen-codex-chatgpt/references/setup.md)
+4. Keep the populated local configuration and all evidence outside source repositories
+
+### G) Enable `yichen-agent-memory`
+
+1. Make sure `yichen-agent-memory/SKILL.md` is available in your loaded skills path
+2. Ask Codex to "install Agent Memory Vault" or "set up a local Agent Memory Vault vault"
+3. The skill will use [mcncarl/agent-memory-vault](https://github.com/mcncarl/agent-memory-vault) to create a private local vault
+4. After setup, use `codex_memory_search.py`, `codex_memory_closeout.py`, and `codex_memory_audit.py` for search, task-end cleanup, and periodic review
+
+### H) Enable `yichen-wechat-mp-batch-exporter`
+
+1. Make sure `yichen-wechat-mp-batch-exporter/SKILL.md` is available in your loaded skills path
+2. For known article URLs, ask for a Markdown download directly
+3. For account history, configure `WECHAT_ARTICLE_EXPORTER_DIR` or use the public exporter route supported by `wechat-article-exporter`
+4. For read counts and comments, configure `WXDOWN_SERVICE_DIR` and confirm the credential-capture workflow before starting any local helper
+5. See [yichen-wechat-mp-batch-exporter/README.md](./yichen-wechat-mp-batch-exporter/README.md) before using metrics, comments, proxy, certificate, or WeChat desktop workflows
+
+### I) Enable `yichen-wecom-local-vault`
+
+1. Ensure `yichen-wecom-local-vault/SKILL.md` is available in your loaded skills path
+2. Install `pycryptodome`; install `frida` only if you need an explicitly authorized local raw-key capture
+3. Ask to inspect or export your local WeCom data; the workflow never controls the original app
+
+### J) Enable `yichen-grok-consult`
+
+1. Install the official Grok Build CLI and run `grok login`
+2. Add the `mcncarl/yichen-skills` marketplace and install `yichen-grok-consult`
+3. Start a new Codex task
+4. Ask GPT to search public X posts with Grok or request a Grok second opinion
+5. See [plugins/yichen-grok-consult/README.md](./plugins/yichen-grok-consult/README.md) before configuring proxies or OpenCodex
+
+### K) Enable `yichen-bookmarks-export`
+
+1. Ensure `yichen-bookmarks-export/SKILL.md` is available in your loaded skills path
+2. For Xiaohongshu or Douyin, sign in with the current Chrome session and open the intended favorites page
+3. For X, verify that the separately installed `ft --version` contains `graphql-only`
+4. Explicitly authorize the platforms, export scope, and output directory for the current task
+5. The Skill exports and validates links only; it does not automatically download media or change collection state
+
+### L) Enable the Web Research family
+
+1. Install `yichen-web-research`, `yichen-unified-search`, `yichen-content-archive`, `yichen-bookmarks-export`, and `yichen-asr` together
+2. To install those five Skills from this repository with the Skills CLI, run:
+
+```bash
+npx skills add mcncarl/yichen-skills --skill yichen-web-research
+npx skills add mcncarl/yichen-skills --skill yichen-unified-search
+npx skills add mcncarl/yichen-skills --skill yichen-content-archive
+npx skills add mcncarl/yichen-skills --skill yichen-bookmarks-export
+npx skills add mcncarl/yichen-skills --skill yichen-asr
+```
+
+3. Install and authenticate only the optional third-party backends needed for your intended routes; their executables and credentials are not bundled here
+4. Run `python3 yichen-web-research/scripts/validate_family.py`
+5. Start with `$yichen-web-research` for multi-stage work, or call a child directly for search-only, known-link archive, bookmark export, or local ASR
+6. Review the query/data-flow table above and [yichen-web-research/README.md](./yichen-web-research/README.md) before enabling a paid or account-session route
+
+## Support This Project
+
+If these Skills are useful to you, you can voluntarily buy me a coffee through
+the WeChat appreciation code below.
+
+<p align="center">
+  <img src="./assets/wechat-reward-code.jpg" width="280" alt="Yichen's WeChat appreciation code">
+</p>
+
+Appreciation is entirely voluntary. It does not create a paid-service,
+technical-support, feature-delivery, or response-time commitment.
+
+## X Cookie Handling
+
+This repo does not include real credentials or cookie templates.
+
+`yichen-x-article-draft-uploader` can export current X cookies from the user's local Chrome profile into a private Playwright cookie file. Ailu users should normally use the three import choices in Ailu Settings instead of handling the file directly:
+
+```bash
+python3 ~/.agents/skills/x-article-draft-uploader/scripts/export_x_cookies_from_chrome.py \
+  --output ~/.ailu/secrets/x/cookies.json
+```
+
+The canonical directory is mode `0700` and the file is mode `0600`. The file remains sensitive: never commit it, upload it to an issue, or attach it to a diagnostic report. `.gitignore` already ignores cookie JSON files.
+
+## Security Notes
+
+- Real token/cookie values are not included
+- History/cache artifacts are excluded from tracking
+- Personal absolute paths are replaced with generic forms
+- Third-party AppID, AppToken, TableID, bucket names, and ASR tokens must be supplied through environment variables or private config
+- WeChat exporter auth-keys, credential files, QR secrets, captured cookies, and downloaded article archives must stay local and private
+- `yichen-grok-consult` contains no fixed proxy or credentials; Grok queries and results are still sent to xAI and retained in an isolated local session directory
+- The Web Research family contains no personal absolute paths, App IDs, tokens, fixed Keychain items, or private proxy values; account-backed routes remain opt-in
+- `codex-chatgpt` contains only the orchestration protocol; its private MCP runtime, Runtime Key, Tunnel/App identifiers, browser session, screenshots, and populated local configuration are not distributed
+- Unified Search sends each query only to the third-party backend selected for that route, as described in the data-flow table. Local signing material, browser-cookie values, and third-party credentials are not included in repository files or normalized candidate output
+- The anonymous Weibo visitor session exists only in adapter memory. When the documented OpenCLI fallback is used, OpenCLI manages the browser session and the adapter does not accept or print Cookie values
+- Firecrawl Scrape sets `storeInCache=false`; Map makes no cache-control claim, and neither setting may be interpreted or advertised as a zero-data-retention guarantee
+- `yichen-wecom-operations` contains no Bot ID, Secret, internal user/resource ID, receipt, source document, or customer data; authorization remains tenant-specific
+
+If you ever exposed real cookies in a public repo, rotate them immediately.
+
+## FAQ
+
+### Why doesn't a skill trigger?
+- Verify the skill folder is in your actually loaded skill path
+- Restart the session and retry
+- Check `name` and `description` in `SKILL.md` frontmatter
+
+### Why did X Articles draft upload fail?
+- Check whether Chrome is still logged in to X
+- Re-export temporary cookies
+- Verify Python Playwright is installed
+- Verify local Markdown/image paths exist
+
+### Can I use my own Obsidian path?
+- Yes. Replace example paths in skill files
+- `<OBSIDIAN_VAULT>/...` is only an example
+
+## For Redistributors
+
+This repository is published for personal learning and non-commercial personal use only. Do not use it for commercial services, client delivery, paid products, internal company toolkits, marketplace packages, courses, or any other revenue-generating purpose without explicit written permission. To request commercial authorization, contact the author on WeChat at `yichen365ai` and include `Commercial Authorization` in the verification message.
+
+If you fork for personal study, keep at least:
+- `README.md`
+- `README.zh.md`
+- `LICENSE`
+- `.gitignore`
+- `THIRD_PARTY_NOTICES.md`
+- `yichen-x-article-draft-uploader/README.md`
+
+Do not republish or repackage this repository as a public skill bundle. Always remind users not to publish real credentials or private data.
+
+## Acknowledgments
+
+Parts of the X Articles draft workflow and Markdown parsing approach are adapted with references to:
+
+- `wshuyi/x-article-publisher-skill`
+  - Repo: <https://github.com/wshuyi/x-article-publisher-skill>
+  - Docs: <https://github.com/wshuyi/x-article-publisher-skill/blob/main/README_CN.md>
+  - License: MIT
+
+The WeChat database decryption approach in `yichen-wechat-local-vault` is adapted from:
+
+- `zhuyansen/wx-favorites-report`
+  - Repo: <https://github.com/zhuyansen/wx-favorites-report>
+  - Author: zhuyansen
+  - License: MIT
+  - Specifically: the frida hook method for `CCKeyDerivationPBKDF` key extraction and SQLCipher 4 page-level decryption logic
+
+The WeChat dual-open method in `yichen-mac-wechat-dual-open` is based on:
+
+- [@koffuxu](https://x.com/koffuxu) — original tutorial (2026-04): [Mac 微信双开最完美方案](https://x.com/koffuxu/status/2043110831584690427)
+- [@MinLiBuilds](https://x.com/MinLiBuilds) — independent confirmation (2026-04)
+
+The isolated Grok Build search design in `yichen-grok-consult` was informed by:
+
+- [`sudoHG/codex-grok-search`](https://github.com/sudoHG/codex-grok-search) — MIT-licensed public reference; no source code is vendored here
+
+The X bookmark route in `yichen-bookmarks-export` calls:
+
+- [`afar1/fieldtheory-cli`](https://github.com/afar1/fieldtheory-cli) — MIT-licensed optional external runtime; no Field Theory source or binary is vendored here
+- The required `graphql-only` marker refers to a user-maintained modified build, not an official upstream release name; that build is not distributed by this repository
+
+`yichen-wecom-operations` calls the separately installed official WeCom CLI:
+
+- [`WeComTeam/wecom-cli`](https://github.com/WecomTeam/wecom-cli) — MIT-licensed external runtime; no upstream source, binary, Bot credential, or tenant data is vendored here
+- Local-image upload requires an optional user-provided helper exposing `doc +doc_upload_image`; that local extension is not distributed here or represented as an upstream feature
+
+The YouTube search/filter implementation in `yichen-unified-search` is derived in part from:
+
+- [`joeseesun/yt-search-download`](https://github.com/joeseesun/yt-search-download) by Joe Sun — MIT-licensed; the upstream copyright and full license text are preserved in `licenses/joeseesun-yt-search-download-LICENSE.txt`
+- Only the public search/filter behavior is adapted. This repository's adapter emits normalized discovery candidates and does not include the upstream download, subtitle, or media-extraction workflow
+
+The Zhihu route invokes a separately installed Zhihu Open Platform CLI-compatible runtime whose vendor provenance is not independently verified by this repository:
+
+- No Zhihu CLI source or binary is distributed in this repository, and this repository does not grant rights to that external executable
+- Users must identify the runtime's distributor and review its version-specific license and service terms before installing or using it
+
+See `THIRD_PARTY_NOTICES.md` for details.
+
+## Compliance Boundary
+
+- This project is not affiliated with, endorsed by, or sponsored by AI HOT, AnySearch, Firecrawl, Zhihu, Weibo, YouTube, Google, X, xAI, OpenAI, WeChat, Tencent, Xiaohongshu, Douyin, or Field Theory.
+- This repository is for personal learning and non-commercial personal workflow use only.
+- Commercial use, client delivery, resale, paid redistribution, marketplace packaging, course bundling, and internal company deployment are prohibited without prior written permission.
+- Users are responsible for complying with X platform terms/policies and local laws.
+- Collection-export workflows are only for data the user is authorized to access; do not bypass access controls, CAPTCHA, rate limits, or platform security measures.
+- Search queries and selected public URLs are transmitted to the routed third-party services described above. Users are responsible for those services' current terms, privacy policies, quotas, and data-retention practices; never use a search box as a channel for secrets or private data.
+- Search cards, generated summaries, metrics, and opened pages remain candidate evidence until the relevant claim is checked against an appropriate original source.
+- X internal GraphQL and platform-DOM routes are unofficial compatibility methods and may change or trigger platform controls.
+- `yichen-wechat-local-vault` is for personal use only — only decrypt and read your own chat data.
+- `yichen-wecom-local-vault` is for owner-authorized local data only — never upload keys, plaintext snapshots, or chat exports.
+- `yichen-wecom-operations` is for owner-authorized bot resources only — never send messages, automate the client, bypass missing enterprise authorization, or commit IDs, receipts, source documents, and customer data.
+- Never upload real account credentials (for example, `cookies.json`, `wechat-keys.json`) to public repositories.
+- Never upload real chat records, WeChat databases, customer data, private notes, API keys, local paths, or other personal data.
+
+## License
+
+Personal Learning and Non-Commercial Use License. See [LICENSE](./LICENSE).
+
+## Skill version maintenance
+
+See [源码与安装版维护](docs/skill-maintenance.md) for read-only drift checks, scoped updates, and separate public/private runtime release boundaries.
