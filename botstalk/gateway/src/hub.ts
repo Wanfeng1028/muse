@@ -35,7 +35,8 @@ import * as store from "./db.js";
 import { visibleRecipients } from "@botstalk/protocol";
 import { deriveThreadId, findReplyTarget, targetThreadId } from "./thread.js";
 import type { Db } from "./db.js";
-import { randomUUID, createHash } from "node:crypto";
+import { randomUUID, createHash, timingSafeEqual } from "node:crypto";
+import { hashDeviceKey } from "./devices.js";
 
 /** 小游戏规则引擎：把玩家动作算成新局面。 */
 export interface GameEngine {
@@ -164,6 +165,41 @@ export class Hub {
       if (hello.protocol_version !== PROTOCOL_VERSION_STR) {
         ws.close(4400, "protocol version mismatch");
         return;
+      }
+
+      // 设备密钥握手鉴权（第 18 轮）：hello 可选携带 device_id/device_key。
+      // 两字段都不出现时沿用既有无鉴权握手；只出现一个时直接拒绝；都出现时查 devices 表比对。
+      // 校验发生在顶号之前：鉴权失败绝不顶掉既有连接。
+      const deviceId = hello.device_id;
+      const deviceKey = hello.device_key;
+      if ((deviceId === undefined) !== (deviceKey === undefined)) {
+        ws.close(4403, "device auth incomplete");
+        return;
+      }
+      if (deviceId !== undefined && deviceKey !== undefined) {
+        const deviceRow = store.getDevice(this.db, deviceId, env.room);
+        if (!deviceRow) {
+          ws.close(4403, "device not found");
+          return;
+        }
+        if (deviceRow.revoked_at_ms !== null) {
+          ws.close(4403, "device revoked");
+          return;
+        }
+        if (deviceRow.adapter_id !== hello.adapter_id) {
+          ws.close(4403, "device adapter mismatch");
+          return;
+        }
+        const expectedHash = deviceRow.device_key_hash;
+        const actualHash = hashDeviceKey(deviceKey);
+        const expectedBuf = Buffer.from(expectedHash, "utf8");
+        const actualBuf = Buffer.from(actualHash, "utf8");
+        if (expectedBuf.length !== actualBuf.length || !timingSafeEqual(expectedBuf, actualBuf)) {
+          ws.close(4403, "device key mismatch");
+          return;
+        }
+        // 鉴权成功：只刷新 last_seen，不轮换密钥（传入既有哈希，upsert 保持原值）。
+        store.upsertDevice(this.db, { deviceId, room: env.room, deviceKeyHash: expectedHash, adapterId: hello.adapter_id, nowMs: Date.now() });
       }
 
       // 顶号

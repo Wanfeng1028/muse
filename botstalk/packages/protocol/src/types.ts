@@ -207,6 +207,10 @@ export interface HelloPayload {
   protocol_version: string;
   /** v1.1 起语义为客户端已见的最大 gseq（网关全局序列号），用于断线补发；v1.0 语义已废弃。 */
   last_seen_seq: number;
+  /** 兑码时登记的设备 id；不出现表示沿用既有无鉴权握手。 */
+  device_id?: string;
+  /** 兑码时仅返回一次的设备密钥原文；网关只比对哈希，绝不入库原文。 */
+  device_key?: string;
 }
 
 /** type=presence 的 payload（心跳）。 */

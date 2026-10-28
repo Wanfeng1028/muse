@@ -430,6 +430,14 @@ function validateHelloPayload(payload: unknown): string[] {
   if (!isFiniteInteger(payload["last_seen_seq"])) {
     errors.push("payload.last_seen_seq: must be an integer");
   }
+  // 仅做形状校验：字段出现时必须为非空字符串；缺失不报错。
+  // 成对性（device_id 与 device_key 是否同时出现）由网关层校验，codec 不拒绝只出现一个的情况。
+  if (payload["device_id"] !== undefined && !isNonEmptyString(payload["device_id"])) {
+    errors.push("payload.device_id: must be a non-empty string");
+  }
+  if (payload["device_key"] !== undefined && !isNonEmptyString(payload["device_key"])) {
+    errors.push("payload.device_key: must be a non-empty string");
+  }
   return errors;
 }
 

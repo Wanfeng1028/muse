@@ -1,3 +1,10 @@
+## OpenAgents 第 18 轮：设备密钥 WS 握手鉴权
+- hello 首帧可选携带 device_id/device_key；网关在顶号之前验真，失败关闭 4403 且不顶掉既有连接。
+- 失败码：单字段 device auth incomplete、未知设备 device not found、已吊销 device revoked、adapter 不一致 device adapter mismatch、密钥不符 device key mismatch。
+- 鉴权成功只刷新设备 last_seen，不轮换密钥；两字段都不出现时沿用既有无鉴权握手，不升协议版本。
+- 测试：网关 device-auth 12/12、协议 codec-hello-device 5/5、真实网关冒烟 11/11 全过；网关全量 78 文件 1016 例、协议全量 23 文件 203 例全绿。
+- 已知保留：在线连接吊销不踢人、吊销终态、adapter 客户端尚未透传 device 字段。
+
 ## OpenAgents 第 16 轮：设备信任（稳定 device key + 幂等重兑 + 设备管理）
 - `redeem` 现可颁发稳定的设备密钥（仅返回一次，仅存储哈希）。
 - 使用新配对码对同一设备进行重新兑换时，将轮换密钥并更新原记录（无重复行）。
