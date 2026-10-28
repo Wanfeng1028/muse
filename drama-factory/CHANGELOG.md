@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-28 深耕轮：运行列表按用户归属过滤）
+
+**现象**：`GET /api/runs` 原先返回数据库中的全部 Run，不按归属过滤；而 `RunService.stats()` 仅统计当前用户名下项目的 Run，导致列表与统计条口径不一致，列表中会露出他人项目的运行。
+
+**修复**：抽出 private helper `currentUserOwnedProjectIds()`（取当前用户 id，经 `projectRepository.findByOwnerId` 查询后收集非空项目 id）。`stats()` 改为调用该 helper（行为不变）；`listRuns()` 在排序前加入与 `stats()` 完全相同的过滤——`projectId` 为空或不在归属集合中的 Run 一律排除，排序规则（创建时间倒序、空值最后）不变。同时将 `RunController` 中 `GET /api/runs` 的 `@Operation` summary 由“列出全部运行”改为“列出当前用户的运行”。
+
+**测试**：新增 `src/test/java/com/dramafactory/RunListOwnershipTest.java` 1 例（本人运行 2 条入选、他人运行与孤儿运行排除、stats 总数同为 2），1/1 全绿；关联复验 `RunServiceDeepTest` 的 `listRuns` 与 `stats` 空库 2 例 + `RunControllerTest` 11 例，合计 13/13 全绿。
+
+**无变更**：无 schema 变更、无版本号升级、无 UI 改动（前端 runs 页只读这两个接口，改动后统计条与列表同口径）。
+
 ### Fixed（2026-10-28 深耕轮：步骤日志 offset 参数收紧）
 
 - 现象：GET /api/runs/{id}/steps/{stepId}/logs（RunController.logs）的 offset 负数此前经 RunLogService.read 的 Math.max(0L, offsetBytes) 静默钳制为 0，调用方传错参数无法发现。

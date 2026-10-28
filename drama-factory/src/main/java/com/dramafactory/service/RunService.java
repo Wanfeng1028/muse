@@ -609,13 +609,28 @@ public class RunService {
 
     /**
      * 列表：按创建时间倒序。
+     *
+     * <p>只返回当前用户名下项目的运行，与 stats() 同口径。
      */
     @Transactional(readOnly = true)
     public List<Run> listRuns() {
         List<Run> all = new ArrayList<>();
         runRepository.findAll().forEach(all::add);
+        Set<Long> ownedProjectIds = currentUserOwnedProjectIds();
+        all.removeIf(r -> r.getProjectId() == null || !ownedProjectIds.contains(r.getProjectId()));
         all.sort(Comparator.comparing(Run::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())));
         return all;
+    }
+
+    private Set<Long> currentUserOwnedProjectIds() {
+        String ownerId = currentUser.currentUserId();
+        Set<Long> ownedProjectIds = new HashSet<>();
+        for (DramaProject p : projectRepository.findByOwnerId(ownerId, Sort.by("id"))) {
+            if (p.getId() != null) {
+                ownedProjectIds.add(p.getId());
+            }
+        }
+        return ownedProjectIds;
     }
 
     /**
@@ -627,13 +642,7 @@ public class RunService {
     public Records.RunStatsResponse stats() {
         List<Run> all = new ArrayList<>();
         runRepository.findAll().forEach(all::add);
-        String ownerId = currentUser.currentUserId();
-        Set<Long> ownedProjectIds = new HashSet<>();
-        for (DramaProject p : projectRepository.findByOwnerId(ownerId, Sort.by("id"))) {
-            if (p.getId() != null) {
-                ownedProjectIds.add(p.getId());
-            }
-        }
+        Set<Long> ownedProjectIds = currentUserOwnedProjectIds();
         all.removeIf(r -> r.getProjectId() == null || !ownedProjectIds.contains(r.getProjectId()));
         long total = all.size();
 

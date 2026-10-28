@@ -82,7 +82,7 @@ public class RunController {
      * @return Run 响应列表
      */
     @GetMapping("")
-    @Operation(summary = "列出全部运行")
+    @Operation(summary = "列出当前用户的运行")
     public List<Records.RunResponse> list() {
         List<Records.RunResponse> result = new ArrayList<>();
         for (var run : runService.listRuns()) {
