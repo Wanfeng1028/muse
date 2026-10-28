@@ -106,23 +106,45 @@ func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
 
 	up7, _, _, _, err := s.store.MonitorStats(id, 7)
 	if err != nil {
+		logErr(r, "handleMonitorProfile", err)
+		writeErr(w, http.StatusInternalServerError, "读取监控画像失败")
+		return
 	}
 	up30, _, _, incidents30, err := s.store.MonitorStats(id, 30)
 	if err != nil {
+		logErr(r, "handleMonitorProfile", err)
+		writeErr(w, http.StatusInternalServerError, "读取监控画像失败")
+		return
 	}
 
 	p50, p95, p99, err := s.store.LatencyPercentiles(id, 30)
 	if err != nil {
+		logErr(r, "handleMonitorProfile", err)
+		writeErr(w, http.StatusInternalServerError, "读取监控画像失败")
+		return
 	}
 
 	daily, err := s.store.DailyBreakdown(id, 30)
 	if err != nil {
+		logErr(r, "handleMonitorProfile", err)
+		writeErr(w, http.StatusInternalServerError, "读取监控画像失败")
+		return
 	}
 	if daily == nil {
 		daily = []store.DayStat{}
 	}
-	js, jl, _ := s.store.JitterScore(id, 7)
-	tl, _ := s.store.IncidentTimeline(id, 30, 50)
+	js, jl, err := s.store.JitterScore(id, 7)
+	if err != nil {
+		logErr(r, "handleMonitorProfile", err)
+		writeErr(w, http.StatusInternalServerError, "读取监控画像失败")
+		return
+	}
+	tl, err := s.store.IncidentTimeline(id, 30, 50)
+	if err != nil {
+		logErr(r, "handleMonitorProfile", err)
+		writeErr(w, http.StatusInternalServerError, "读取监控画像失败")
+		return
+	}
 	if tl == nil {
 		tl = []store.TimelineEvent{}
 	}
@@ -130,7 +152,12 @@ func (s *Server) handleMonitorProfile(w http.ResponseWriter, r *http.Request) {
 	var current any = nil
 	var certDays any = nil
 	last, err := s.store.LastCheck(id)
-	if err == nil && last != nil {
+	if err != nil {
+		logErr(r, "handleMonitorProfile", err)
+		writeErr(w, http.StatusInternalServerError, "读取监控画像失败")
+		return
+	}
+	if last != nil {
 		current = checkJSON(*last)
 		if last.CertDaysLeft.Valid {
 			certDays = last.CertDaysLeft.Int64

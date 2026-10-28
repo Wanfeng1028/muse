@@ -1,3 +1,18 @@
+## [0.33.4] - 2026-10-29
+
+### 修复
+- `GET /api/monitors/{id}/profile` (internal/handlers/profile.go 中的 handleMonitorProfile) 不再吞没底层 store 错误。此前，前四个聚合调用使用了空的 if 块，后三个直接忽略错误，导致数据库故障时接口仍返回 HTTP 200 及零值数据。现在以下 7 个聚合调用在遇到错误时，将返回 HTTP 500 "读取监控画像失败" 并输出结构化日志 (logErr, handler handleMonitorProfile)：MonitorStats 7d, MonitorStats 30d, LatencyPercentiles 30d, DailyBreakdown 30d, JitterScore 7d, IncidentTimeline 30d/50, LastCheck。
+- 未变更行为：响应键名与顺序不变；GetMonitor 错误仍为 404 "monitor 不存在"；DailyBreakdown 和 IncidentTimeline 的 nil 仍转换为空切片；无检查的 monitor 的 LastCheck (nil, nil) 仍返回 current null 与 cert_days_left null；JitterScore "数据不足" 仍视为非错误结果返回 200。无 schema 变更、无新增环境变量、无 UI 变更。
+- 本轮刻意未变更的项目（已记录为已考虑但未执行）：handlePublicStatus 针对单节点的 MonitorStats 错误仍保持单点降级（公共多节点页面不能因单个节点统计失败而 500）；publish 处理器的 monitor_count 在发布成功后仍保持尽力而为；Delivery limit 与 stats days 的 clamp 保持不变，因现有测试将其锁定为 200 契约。
+
+### 测试
+- 新增文件 internal/handlers/monitor_profile_error_test.go，包含 3 个测试用例，全部通过：正常场景（200，包含全部 11 个键，uptime_7d 100，current null，daily length 30，jitter_level "数据不足"，timeline 为空数组）、不存在的 monitor 返回 404、dropped-checks-table store 错误返回 500（错误信息仅断言状态码）。
+- 验证：go build ./... 通过；go vet ./internal/handlers/ 通过；gofmt 检查通过；handlers 完整包测试通过（11.368s）。
+- 真实服务冒烟测试：在隔离端口 18505 及隔离数据库上运行，healthz 返回 200，创建 monitor id 3，其 profile 返回 200 且包含全部 11 个键，缺失的 monitor 返回 404，无认证返回 401；冒烟测试服务器随后被停止并验证端口已关闭。
+
+### 模型稿
+所有内容均通过 BotsRouter，模型 spark-x2.6 生成。处理器补丁共调用 2 次（首次调用仅产生推理内容且为空，触发长度上限被丢弃；第二次使用缩短后的提示词成功）。由于 260 秒的 curl 超时且传输 0 字节，测试文件被拆分为两个微批次生成（成功部分 574+904，错误路径部分 652+3997）。编排器对测试草稿进行了机械修复（移除代码围栏、移除项目非依赖的 testify 导入、补全缺失的 httptest 导入、将作为请求体传入的字符串修正为 nil、添加 setup 错误检查）并将它们合并为一个文件。处理器 diff 补丁的 hunk 行号有误，最终通过精确锚点匹配进行应用。
+
 ## [0.33.3] - 2026-10-28
 
 ### 修复
