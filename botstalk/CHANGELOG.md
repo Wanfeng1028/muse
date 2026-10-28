@@ -1,3 +1,12 @@
+## OpenAgents 第 20 轮：吊销在线设备即踢人
+
+- 关闭第 18 轮留待下轮项「在线连接吊销不踢人」（第 19 轮已落地 adapter 客户端 hello 设备密钥透传）。
+- `gateway/src/hub.ts`：`Conn` 新增可选 `deviceId?: string`（hello 设备鉴权成功时赋值，legacy 连接为 `undefined`）；新增 `kickDeviceConnections(room, deviceId): number`，房间与 `deviceId` 同时匹配才关闭（码 4403、原因 `"device revoked"`），返回踢掉数，`close` 抛异常不计入；legacy 连接与其它房间同名设备绝不被踢；方法不删 `conns`、不写 presence，删连接与 presence 下线由既有 close 回调负责。
+- `gateway/src/server.ts`：`DELETE /api/rooms/:room/devices/:device_id` 在 `revokeResult` 为 `ok` 或 `already` 时先调 `hub.kickDeviceConnections(roomId, deviceId)` 再返回 204（`already` 也踢，覆盖旧版本遗留在线连接）；404 与 403 分支一字未动；`hub` 为同一 `startServer` 函数内后定义变量，请求时回调引用，与既有 `hub.broadcast` 相同，无新增 import、无参数改动。
+- 测试：新增 `gateway/test/device-revoke-kick.test.ts` 7 例（Hub 级 5 + REST 级 2）；相关三文件 36 例全绿；网关全量 79 文件 1023 例全绿（基线 78 文件 1016 例，恰增本轮 1 文件 7 例）。
+- 冒烟：新增 `scripts/smoke-device-revoke-kick.mjs`，真实网关端口 18494，10 ok，打印 `SMOKE_DEVICE_REVOKE_KICK_PASS`。
+- 已知保留：吊销仍为终态（无取消吊销接口）；REST requester 自报身份未动；第 17 轮设备管理 Web UI 缺 CHANGELOG 与轮次文档的缺口本轮未代补，仍在；被踢的 AdapterClient 按既有重连逻辑反复重连并反复被 4403 拒绝（presence 保持 offline），4403 不停重连的行为本轮未改，列为后续可选项。
+
 ## OpenAgents 第 19 轮：adapter 客户端 hello 设备密钥透传
 
 - 接第 18 轮留待下轮项，落地 adapter 客户端 hello 设备密钥透传；网关与 protocol 包一字未动，不升协议版本。

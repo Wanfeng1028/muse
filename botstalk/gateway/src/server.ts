@@ -1314,6 +1314,8 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
     }
     const revokeResult = revokeDevice(db, deviceId, roomId, Date.now());
     if (revokeResult === "ok" || revokeResult === "already") {
+      // 吊销即踢人：关闭该设备在本房间的全部在线连接（legacy 连接不受影响）。
+      hub.kickDeviceConnections(roomId, deviceId);
       res.writeHead(204);
       res.end();
       return;

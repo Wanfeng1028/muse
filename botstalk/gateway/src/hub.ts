@@ -54,6 +54,8 @@ export interface Conn {
   ws: WebSocket;
   adapterId: string;
   room: string;
+  /** hello 设备鉴权成功时绑定的 device_id；legacy 连接为 undefined。 */
+  deviceId?: string;
   lastFrameAtMs: number;
   maxSeenSeq: number;
   seqTracker: SeqTracker;
@@ -232,6 +234,7 @@ export class Hub {
         ws,
         adapterId: hello.adapter_id,
         room: env.room,
+        deviceId: deviceId,
         lastFrameAtMs: Date.now(),
         maxSeenSeq: 0,
         seqTracker: new SeqTracker(),
@@ -581,6 +584,21 @@ export class Hub {
 
   getConn(adapterId: string): Conn | undefined {
     return this.conns.get(adapterId);
+  }
+
+  /** 只踢同房间且 deviceId 匹配的连接；legacy 连接（deviceId 为 undefined）绝不被踢；其它房间同名设备绝不被踢。close 回调负责删 conns 与 presence 下线，本方法不直接删 conns、不直接写 presence。 */
+  kickDeviceConnections(room: string, deviceId: string): number {
+    let kicked = 0;
+    for (const conn of [...this.conns.values()]) {
+      if (conn.room !== room || conn.deviceId !== deviceId) continue;
+      try {
+        conn.ws.close(4403, "device revoked");
+        kicked += 1;
+      } catch {
+        /* ignore */
+      }
+    }
+    return kicked;
   }
 }
 
