@@ -685,7 +685,14 @@ int main(int argc, char** argv) {
                 return 1;
             }
             try {
-                int v = static_cast<int>(std::stoll(argv[++i]));
+                std::string raw = argv[++i];
+                std::size_t pos = 0;
+                long long parsed = std::stoll(raw, &pos);
+                if (pos != raw.size()) {
+                    std::cerr << "错误：--limit 参数无效\n";
+                    return 1;
+                }
+                int v = static_cast<int>(parsed);
                 if (v <= 0) {
                     std::cerr << "错误：--limit 参数无效\n";
                     return 1;

@@ -1,3 +1,9 @@
+## Unreleased（2026-10-28）——CLI search/locate --limit 尾随字符返回错误
+- 问题：CLI search/locate 的 --limit 解析中，带尾随字符的值（如 5x）此前被 std::stoll 静默接受为前面的数字，调用方传错参数无法发现；上一轮 CHANGELOG 已将此列为已知剩余。
+- 修复：src/main.cpp 的 --limit 分支改用带 pos 的 std::stoll 整串合法判定，pos != raw.size() 时打印“错误：--limit 参数无效”并 return 1；v<=0、非数字、缺参的旧行为与文案一字未动；默认值（search 20、locate 5）与 --title-boost/--phrase-boost/--port/--max-mb 各分支一字未动。
+- 验证：构建 cmake --build build --target docseek 成功；新建 1 文档小库实测 11 项全过：search --limit 5x/5.0/1a、locate --limit 5x/2y、search --limit 0/-3/abc 均退出码 1 且 stderr 为“错误：--limit 参数无效”；search --limit 5、locate --limit 5、search 不带 limit 均退出码 0 且返回命中文档。
+- 无变更：无版本号变更、无 schema 变更、无 UI 改动；全量 ctest 本轮未跑；--title-boost/--phrase-boost/--port/--max-mb 的尾随字符口径仍为旧实现，留待后续轮次。
+
 ## Unreleased（2026-10-28）——CLI search/locate --limit 非正数返回错误
 - 问题：CLI 子命令 search 与 locate 的 --limit 解析中，非正数值此前被静默重置为默认值（search 回 20、locate 回 5），调用方传错参数无法发现；非数字值此前已报错退出（错误：--limit 参数无效，退出码 1），两路口径不一致；serve 端 /api/search 与 /api/locate 的 limit 早已对小于 1 返回 400。
 - 修复：src/main.cpp 的 --limit 分支在解析出 v 后先判 v <= 0，打印“错误：--limit 参数无效”并 return 1，search 与 locate 两路同规则；正数值赋值、默认值（search 20、locate 5，仅作结构体初值）、缺参报错、非数字报错一字未动。
