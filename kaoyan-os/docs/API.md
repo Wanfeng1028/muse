@@ -769,7 +769,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | --- | --- | --- |
 | GET | /api/focus/summary/by-subject | 需要（登录用户） |
 
-按科目返回专注时长汇总：仅返回有专注记录的科目，按数学、英语、政治、专业课 821 的顺序排列。可选查询参数 `days`：只统计最近 N 天（含今天），N 按 1~31 钳制；不传时统计全部历史，非法 days 返回 400 错误体 { "error": "days 参数无效" }。
+按科目返回专注时长汇总：仅返回有专注记录的科目，按数学、英语、政治、专业课 821 的顺序排列。可选查询参数 `days`：只统计最近 N 天（含今天），N 必须为 1~31 的整数，越界（小于 1 或大于 31）返回 400 错误体 { "error": "days 参数无效" }；不传时统计全部历史，非法 days 返回 400 错误体 { "error": "days 参数无效" }。
 
 **成功响应**
 
@@ -788,7 +788,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 状态码 | 返回体 | 触发条件 |
 | --- | --- | --- |
-| 400 | `{ "error": "days 参数无效" }` | days 不是整数字符串 |
+| 400 | `{ "error": "days 参数无效" }` | days 不是整数字符串，或整数越界（小于 1 或大于 31） |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
 ### `GET /api/focus/export`

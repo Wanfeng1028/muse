@@ -212,7 +212,7 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
   });
 
   // GET /api/focus/summary/by-subject —— 分科汇总专注时长：仅返回有记录的科目，按 SUBJECTS 顺序排列
-  // 可选 ?days=N：只统计最近 N 天（含今天），N 按 1~31 钳制；
+  // 可选 ?days=N：只统计最近 N 天（含今天），N 越界（不在 1~31）返回 400；
   // 不传时统计全部历史，非法 days 返回 400
   app.get<{ Querystring: StatsQuery }>('/api/focus/summary/by-subject', (req, reply) => {
     let startDate: string | undefined;
@@ -221,8 +221,10 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
         return reply.code(400).send({ error: "days 参数无效" });
       }
       const parsed = Number(req.query.days);
-      const days = Math.min(Math.max(parsed, 1), 31);
-      startDate = addDays(todayStr(), -(days - 1));
+      if (parsed < 1 || parsed > 31) {
+        return reply.code(400).send({ error: "days 参数无效" });
+      }
+      startDate = addDays(todayStr(), -(parsed - 1));
     }
     const rows = db
       .prepare(

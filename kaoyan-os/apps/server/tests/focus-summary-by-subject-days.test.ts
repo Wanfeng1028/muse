@@ -57,23 +57,27 @@ describe('GET /api/focus/summary/by-subject?days=', () => {
     expect(all.json()).toEqual({ subjects: [{ subject: 'math', sessions: 2, totalMinutes: 1059 }] });
   });
 
-  it('days 超出 31 按 31 钳制，非法 days 返回 400', async () => {
+  it('days 越界返回 400，合法边界仍 200', async () => {
     const today = localToday();
     insert('focusbysubjectdays', 'english', 30, `${today}T10:00:00`);
-    const clamped = await app.inject({
-      method: 'GET',
-      url: '/api/focus/summary/by-subject?days=999',
-      headers: { cookie: authCookie },
-    });
-    expect(clamped.statusCode).toBe(200);
-    expect(clamped.json()).toEqual({ subjects: [{ subject: 'english', sessions: 1, totalMinutes: 30 }] });
-    const invalid = await app.inject({
-      method: 'GET',
-      url: '/api/focus/summary/by-subject?days=abc',
-      headers: { cookie: authCookie },
-    });
-    expect(invalid.statusCode).toBe(400);
-    expect(invalid.json()).toEqual({ error: 'days 参数无效' });
+    for (const days of [0, -1, 32, 100, 999]) {
+      const invalid = await app.inject({
+        method: 'GET',
+        url: `/api/focus/summary/by-subject?days=${days}`,
+        headers: { cookie: authCookie },
+      });
+      expect(invalid.statusCode).toBe(400);
+      expect(invalid.json()).toEqual({ error: 'days 参数无效' });
+    }
+    for (const days of [1, 31]) {
+      const valid = await app.inject({
+        method: 'GET',
+        url: `/api/focus/summary/by-subject?days=${days}`,
+        headers: { cookie: authCookie },
+      });
+      expect(valid.statusCode).toBe(200);
+      expect(valid.json()).toEqual({ subjects: [{ subject: 'english', sessions: 1, totalMinutes: 30 }] });
+    }
   });
 
   it('窗口内只统计当前用户，他人记录不计入', async () => {

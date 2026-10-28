@@ -4,6 +4,15 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.24.0] - 2026-10-29
+
+### Added
+- GET /api/focus/summary/by-subject 的 days 参数越界收紧：整数小于 1 或大于 31 返回 400 { error: 'days 参数无效' }，此前静默钳制为 1 或 31；不传 days 仍统计全部历史，合法 1~31、非整数 400、错误体文案均不变，与 GET /api/focus/stats 的 v1.23.0 口径对齐。
+- 改写测试 apps/server/tests/focus-summary-by-subject-days.test.ts 中锁定旧钳制语义的用例：days=0/-1/32/100/999 均返回 400，days=1/31 均返回 200。
+
+### Notes
+- 本轮模型调用走 BotsRouter 讯飞星辰 spark-x2.6。
+
 ## [1.23.0] - 2026-10-29
 
 ### Added
