@@ -134,7 +134,7 @@ class TransactionUpdate(BaseModel):
     to_account_id: int | None = None
     category_id: int | None = None
     amount_cents: int | None = Field(default=None, gt=0)
-    occurred_on: date | None = None
+    occurred_on: str | None = None
     note: str | None = None
     currency: str | None = None
 

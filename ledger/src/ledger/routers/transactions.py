@@ -228,9 +228,20 @@ async def update_transaction(txn_id: int, payload: TransactionUpdate) -> dict[st
         if t is None:
             raise HTTPException(status_code=404, detail="交易不存在")
         data = payload.model_dump(exclude_unset=True)
-        occurred = data.get("occurred_on", t.occurred_on)
-        if hasattr(occurred, "isoformat"):
-            occurred = occurred.isoformat()
+        if "occurred_on" in data:
+            occurred_on = data["occurred_on"]
+            if occurred_on is None:
+                raise HTTPException(status_code=400, detail="occurred_on 参数非法")
+            try:
+                datetime.strptime(occurred_on, "%Y-%m-%d")
+                ok = (len(occurred_on) == 10 and occurred_on[4] == "-" and occurred_on[7] == "-")
+            except (ValueError, TypeError):
+                ok = False
+            if not ok:
+                raise HTTPException(status_code=400, detail="occurred_on 参数非法")
+            occurred = occurred_on
+        else:
+            occurred = t.occurred_on
         merged = TransactionIn(
             type=t.type,
             account_id=t.account_id,

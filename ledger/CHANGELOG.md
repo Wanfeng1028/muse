@@ -1,5 +1,26 @@
 # 更新日志
 
+## v2.17.29 - 2026-10-29
+
+### 新增
+- PUT /api/transactions/{id} 的 occurred_on 非法值统一返回 400，detail 为“occurred_on 参数非法”，与 POST 创建接口及 GET 列表接口口径一致；此前 PUT 非法值由 pydantic 返回 422（detail 为校验错误数组），现不再出现。
+- 显式传 occurred_on: null 同样返回 400（此前会走到合并构造并返回 500），原值不变。
+- 实现方式：schemas.TransactionUpdate.occurred_on 由 date 类型改为 str 类型，update_transaction 在构造 merged 之前先做与 POST 同款严格校验（strptime + 长度 10 + 第 5、8 位横杠），通过后直接取字符串值，删掉原 isoformat 分支；date 导入仍被 schemas.py 其他模型使用，予以保留。
+- 合法日期（含闰年 2024-02-29）仍返回 200 且持久化；省略 occurred_on 仍不改原值。
+
+### 不变
+- POST 创建、GET 列表、GET 单条、DELETE 的行为一字不动；交易类型/账户/分类/转账规则校验一字不动；无 UI 改动、无迁移、无新依赖、无新增端点。
+- 本轮 v2.17.28 CHANGELOG 中“PUT 更新路径一字不动”的表述自本节起作废（该路径现已收紧）。
+
+### 测试
+- 新增 tests/test_transactions_update_occurred_validation.py，13 例全绿（8 例非法值参数化 400 且原值不变、null 400 且原值不变、合法值参数化 200 且持久化含闰日、省略 200 且原值不变）。
+- 相关交易测试 42 项全绿（新测 + 创建校验 + transactions + deep2）；ruff check 改动文件全洁（新测 import 顺序经 ruff --fix 修正；transactions.py 沿用 POST 同款多行 ok 写法，该写法在 HEAD 版已是 format 非洁净状态，本轮不扩范围重排格式）。
+- 全量回归在文档同步前：1525 通过、1 失败（仅版本一致性测试，系本文档批次同步内容）、1 跳过；同步后版本一致性测试通过。
+- 真实服务冒烟（18440 端口隔离库）：not-a-date、2024-13-01、空串、null 各返回 400 且 detail 为“occurred_on 参数非法”；2024-02-29 返回 200 且 GET 核对为 2024-02-29；冒烟完服务已停、端口已关、隔离库已删。
+
+### 补充
+- 发版升版四处统一为 2.17.29：src/ledger/__init__.py、pyproject.toml、tests/test_version_consistency_v21715.py 的 EXPECTED_VERSION、CHANGELOG.md 顶条。
+
 ## v2.17.28 - 2026-10-28
 
 ### 新增
