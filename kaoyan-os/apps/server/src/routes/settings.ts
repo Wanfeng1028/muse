@@ -18,6 +18,19 @@ const NUMBER_LIMITS: Record<'dailyGoalMinutes' | 'pomodoroMinutes' | 'breakMinut
   breakMinutes: 60,
 };
 
+// 严格校验 yyyy-mm-dd 是否为真实存在的日历日期
+function isValidExamDate(value: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const [year, month, day] = value.split('-').map(Number);
+  const date = new Date(`${value}T00:00:00`);
+  return (
+    !Number.isNaN(date.getTime()) &&
+    date.getFullYear() === year &&
+    date.getMonth() + 1 === month &&
+    date.getDate() === day
+  );
+}
+
 // 从数据库读取全部 settings，并与默认值合并
 function readSettings(db: DatabaseSync, userId: number): Settings {
   const rows = db.prepare('SELECT key, value FROM settings WHERE user_id = ?').all(userId) as Array<{
@@ -32,7 +45,7 @@ function readSettings(db: DatabaseSync, userId: number): Settings {
     const raw = map.get(dbKey);
     if (raw === undefined) continue;
     if (field === 'examDate') {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) result.examDate = raw;
+      if (isValidExamDate(raw)) result.examDate = raw;
     } else if (field === 'theme') {
       if (raw === 'light' || raw === 'dark') result.theme = raw;
     } else {
@@ -50,7 +63,7 @@ function validateField(
   value: unknown
 ): { ok: true; value: string } | { ok: false } {
   if (field === 'examDate') {
-    if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return { ok: false };
+    if (typeof value !== 'string' || !isValidExamDate(value)) return { ok: false };
     return { ok: true, value };
   }
   if (field === 'theme') {

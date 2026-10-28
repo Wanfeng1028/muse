@@ -4,6 +4,15 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.22.0] - 2026-10-28
+
+### Added
+- `apps/server/src/routes/settings.ts` 新增 `isValidExamDate` helper（格式正则 + Date 往返比对）；`PUT /api/settings` 的 `examDate` 分支与 `GET /api/settings` 的 `readSettings` 分支改用它。
+- 行为变更：不存在的日期（2024-02-30、2023-02-29、2026-04-31、2026-13-01）PUT 返回 400 `{ error: 'invalid field: examDate' }` 且不写库；库里已存的不存在日期 GET 时回退 `DEFAULT_SETTINGS.examDate`。闰年 2024-02-29 与合法日期行为不变。`theme` 与数字字段、错误体文案、upsert 事务一字未动。
+
+### Notes
+- 模型链：本轮全部调用走 BotsRouter 讯飞星辰 spark-x2.6；编排按逐字锚定应用并修正测试稿两处列名。
+
 ## [1.21.0] - 2026-10-28
 
 ### Added

@@ -2431,7 +2431,7 @@ CSV 列：
 
 **成功响应**
 
-状态码：200。返回 `Settings`，缺省字段以 `DEFAULT_SETTINGS` 补齐。数据库中非法值（exam_date 格式不符、theme 非 light/dark、数字非正整数或超过上限）会被忽略并回退默认值。
+状态码：200。返回 `Settings`，缺省字段以 `DEFAULT_SETTINGS` 补齐。数据库中非法值（exam_date 格式不符或不存在的日期、theme 非 light/dark、数字非正整数或超过上限）会被忽略并回退默认值。
 
 ```json
 {
@@ -2459,7 +2459,7 @@ Body 为 `Partial<Settings>`，仅处理出现在 Body 中的字段，未提供�
 
 | 字段 | 类型 | 校验 |
 | --- | --- | --- |
-| examDate | string | 匹配 `^\d{4}-\d{2}-\d{2}$` |
+| examDate | string | 匹配 YYYY-MM-DD 且为真实存在的日历日期（不存在的日期非法） |
 | dailyGoalMinutes | number | 有限、>0、≤1440 的整数（写入时向下取整） |
 | pomodoroMinutes | number | 有限、>0、≤180 的整数（写入时向下取整） |
 | breakMinutes | number | 有限、>0、≤60 的整数（写入时向下取整） |
