@@ -303,14 +303,12 @@ def test_invalid_n(client, tmp_db):
         )
 
     resp = client.get("/api/clusters?n=0")
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["total"] == 0
+    assert resp.status_code == 400
+    assert "n 参数非法" in resp.get_json()["error"]
 
     resp = client.get("/api/clusters?n=abc")
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["total"] == len(data["clusters"])
+    assert resp.status_code == 400
+    assert "n 参数非法" in resp.get_json()["error"]
 
 
 def test_score_bounded_and_reason(client, tmp_db):

@@ -1,6 +1,18 @@
 
 # 更新日志
 
+## v1.36.0 — 2026-10-28
+
+### Changed
+- `GET /api/clusters` 的 n 参数不再静默回落：缺参或空串时仍默认 10（行为不变），非整数字符串（如 abc、1.5）返回 400，错误文案为“n 参数非法”；n 小于 1（0、负数）同样返回 400，同文案；此前非法值经 _int_arg 回落默认值照常 200，0 与负数经 ranking 层返回空列表仍 200。改动只在 list_clusters 函数内把一行 _int_arg 调用换成显式解析分支，照搬同一文件内 list_articles 的 limit/offset 分支写法；ranking.py 的 get_digest_clusters 不动（其 n 非法返回空列表的语义保留作后置防线），_int_arg 函数不动，Web 页 /digest/clusters 不动，不加 n 上限（大 n 仍返回全部簇，行为不变）。
+- 测试：新增 tests/test_clusters_n_validation_v136.py 7 例（abc 400、1.5 400、0 400、-5 400、缺参 200、空串 200、n=1 返回不超过 1 簇）；既有测试同步新口径 4 处：tests/test_api_clusters.py 三例改名并改断言为 400（含“n 参数非法”），tests/test_api_score.py 的 test_invalid_n 体内两段断言改 400；靶向 25/25 通过（新测 7 + test_api_clusters 8 + test_api_score 10）；ruff check 改动文件全洁；真实服务冒烟（18471 端口隔离库，种子 3 篇聚成 1 簇）：abc、0、-5、1.5 均 400 且文案正确，空串、缺参、n=1 均 200 且 total 为 1，7 项全过；冒烟完服务已停、隔离库已删。
+- 批次质量：BotsRouter 讯飞星辰 spark-x2.6：补丁稿、新测稿、旧测同步稿各一次成功；补丁与旧测同步稿的 OLD 逐字节核对唯一命中后应用；新测稿与约定 7 例一字不差；旧测同步稿输出带 markdown 围栏、缺 @@ END 行，编排剥离围栏行后应用，文件未受污染。
+
+### 已知限制
+- Web 页 /digest/clusters 的 n 仍走配置 digest_n，不走本轮 API 校验口径，本轮有意不动。
+- 大 n 不设上限，返回全部簇，与此前行为一致，本轮有意不改。
+- 全量 pytest 本轮未跑（上一轮全量基线 1166 通过、2 处 v1.21 旧契约既有失败与本轮无关）。
+
 ## v1.35.0 — 2026-10-28
 
 ### Changed

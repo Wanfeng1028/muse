@@ -242,7 +242,16 @@ def get_article_score(article_id: int):
 def list_clusters():
     """聚类浏览：同事件多源报道折叠视图（SimHash+Jaccard 两阶段聚类，非 LLM）。"""
     from . import ranking
-    n = _int_arg("n", 10)
+    raw_n = request.args.get("n")
+    if raw_n is None or raw_n == "":
+        n = 10
+    else:
+        try:
+            n = int(raw_n)
+        except (TypeError, ValueError):
+            return _err("n 参数非法", 400)
+        if n < 1:
+            return _err("n 参数非法", 400)
     clusters = ranking.get_digest_clusters(_db(), n)
     return jsonify({"clusters": clusters, "total": len(clusters)})
 

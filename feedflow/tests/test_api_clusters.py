@@ -58,37 +58,31 @@ def test_n_1_limits_clusters(client, tmp_db):
     assert len(data["clusters"]) <= 1
 
 
-def test_invalid_n_falls_back_to_default(client, tmp_db):
+def test_invalid_n_returns_400(client, tmp_db):
     _make_article(tmp_db, "https://example.com/a.xml", guid="g1", title="Title One", content_text="text one")
     _make_article(tmp_db, "https://example.com/b.xml", guid="g2", title="Title Two", content_text="text two")
     _make_article(tmp_db, "https://example.com/c.xml", guid="g3", title="Title Three", content_text="text three")
-    resp_default = client.get("/api/clusters")
     resp_invalid = client.get("/api/clusters?n=abc")
-    assert resp_invalid.status_code == 200
-    data_default = resp_default.get_json()
-    data_invalid = resp_invalid.get_json()
-    assert data_invalid["total"] == len(data_invalid["clusters"])
-    assert data_invalid["total"] == data_default["total"]
+    assert resp_invalid.status_code == 400
+    assert "n 参数非法" in resp_invalid.get_json()["error"]
 
 
-def test_n_zero_returns_ok(client, tmp_db):
+def test_n_zero_returns_400(client, tmp_db):
     _make_article(tmp_db, "https://example.com/a.xml", guid="g1", title="Title One", content_text="text one")
     _make_article(tmp_db, "https://example.com/b.xml", guid="g2", title="Title Two", content_text="text two")
     _make_article(tmp_db, "https://example.com/c.xml", guid="g3", title="Title Three", content_text="text three")
     resp = client.get("/api/clusters?n=0")
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["total"] == len(data["clusters"])
+    assert resp.status_code == 400
+    assert "n 参数非法" in resp.get_json()["error"]
 
 
-def test_negative_n_returns_ok(client, tmp_db):
+def test_negative_n_returns_400(client, tmp_db):
     _make_article(tmp_db, "https://example.com/a.xml", guid="g1", title="Title One", content_text="text one")
     _make_article(tmp_db, "https://example.com/b.xml", guid="g2", title="Title Two", content_text="text two")
     _make_article(tmp_db, "https://example.com/c.xml", guid="g3", title="Title Three", content_text="text three")
     resp = client.get("/api/clusters?n=-5")
-    assert resp.status_code == 200
-    data = resp.get_json()
-    assert data["total"] == len(data["clusters"])
+    assert resp.status_code == 400
+    assert "n 参数非法" in resp.get_json()["error"]
 
 
 def test_response_content_type_json(client, tmp_db):
