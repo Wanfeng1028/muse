@@ -148,30 +148,24 @@ func TestHandleListIncidentsR2AllInvalidFallsToDefault(t *testing.T) {
 	}
 }
 
-// ---------- C. 钳制边界 ----------
+// ---------- C. 范围边界（越界返回 400，不再钳制） ----------
 
-func TestHandleListIncidentsR2PageSizeClampLower(t *testing.T) {
+func TestHandleListIncidentsR2PageSizeRangeLower(t *testing.T) {
 	srv, st := newTestServer(t)
 	seedIncidents(t, st, 30)
 
-	rec0, body0 := doJSON(t, srv.Routes(), "GET", "/api/incidents?per_page=0", "")
-	if rec0.Code != 200 {
-		t.Fatalf("期望状态码 200，实际 %d", rec0.Code)
-	}
-	if got := getFloat(t, body0, "page_size"); got != 1 {
-		t.Fatalf("期望 page_size 0 被钳制为 1，实际 %v", got)
+	rec0, _ := doJSON(t, srv.Routes(), "GET", "/api/incidents?per_page=0", "")
+	if rec0.Code != 400 {
+		t.Fatalf("期望状态码 400，实际 %d", rec0.Code)
 	}
 
-	recNeg, bodyNeg := doJSON(t, srv.Routes(), "GET", "/api/incidents?per_page=-5", "")
-	if recNeg.Code != 200 {
-		t.Fatalf("期望状态码 200，实际 %d", recNeg.Code)
-	}
-	if got := getFloat(t, bodyNeg, "page_size"); got != 1 {
-		t.Fatalf("期望 page_size -5 被钳制为 1，实际 %v", got)
+	recNeg, _ := doJSON(t, srv.Routes(), "GET", "/api/incidents?per_page=-5", "")
+	if recNeg.Code != 400 {
+		t.Fatalf("期望状态码 400，实际 %d", recNeg.Code)
 	}
 }
 
-func TestHandleListIncidentsR2PageSizeClampUpper(t *testing.T) {
+func TestHandleListIncidentsR2PageSizeRangeUpper(t *testing.T) {
 	srv, st := newTestServer(t)
 	seedIncidents(t, st, 5)
 
@@ -183,35 +177,26 @@ func TestHandleListIncidentsR2PageSizeClampUpper(t *testing.T) {
 		t.Fatalf("期望 page_size 100（上界保留），实际 %v", got)
 	}
 
-	rec101, body101 := doJSON(t, srv.Routes(), "GET", "/api/incidents?per_page=101", "")
-	if rec101.Code != 200 {
-		t.Fatalf("期望状态码 200，实际 %d", rec101.Code)
-	}
-	if got := getFloat(t, body101, "page_size"); got != 100 {
-		t.Fatalf("期望 page_size 101 被钳制为 100，实际 %v", got)
+	rec101, _ := doJSON(t, srv.Routes(), "GET", "/api/incidents?per_page=101", "")
+	if rec101.Code != 400 {
+		t.Fatalf("期望状态码 400，实际 %d", rec101.Code)
 	}
 
-	recBig, bodyBig := doJSON(t, srv.Routes(), "GET", "/api/incidents?page_size=99999", "")
-	if recBig.Code != 200 {
-		t.Fatalf("期望状态码 200，实际 %d", recBig.Code)
-	}
-	if got := getFloat(t, bodyBig, "page_size"); got != 100 {
-		t.Fatalf("期望 page_size 99999 被钳制为 100，实际 %v", got)
+	recBig, _ := doJSON(t, srv.Routes(), "GET", "/api/incidents?page_size=99999", "")
+	if recBig.Code != 400 {
+		t.Fatalf("期望状态码 400，实际 %d", recBig.Code)
 	}
 }
 
-func TestHandleListIncidentsR2PageClampInvalid(t *testing.T) {
+func TestHandleListIncidentsR2PageRangeInvalid(t *testing.T) {
 	srv, st := newTestServer(t)
 	seedIncidents(t, st, 30)
 
 	cases := []string{"page=0", "page=-2"}
 	for _, q := range cases {
-		rec, body := doJSON(t, srv.Routes(), "GET", "/api/incidents?"+q, "")
-		if rec.Code != 200 {
-			t.Fatalf("query %q 期望状态码 200，实际 %d", q, rec.Code)
-		}
-		if got := getFloat(t, body, "page"); got != 1 {
-			t.Fatalf("query %q 期望 page 钳制为 1，实际 %v", q, got)
+		rec, _ := doJSON(t, srv.Routes(), "GET", "/api/incidents?"+q, "")
+		if rec.Code != 400 {
+			t.Fatalf("query %q 期望状态码 400，实际 %d", q, rec.Code)
 		}
 	}
 }

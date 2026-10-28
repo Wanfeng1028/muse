@@ -1,3 +1,25 @@
+## [0.33.2] - 2026-10-28
+
+### 修复
+- 事件列表接口 GET /api/incidents 的分页参数收紧（internal/handlers/handlers.go 的 handleListIncidents）：此前 page<1 静默钳制为 1，pageSize（来自 per_page/page_size/limit 任一）<1 钳制为 1、>100 钳制为 100；本版起 page<1 返回 400（"page 参数非法"），per_page/page_size/limit 各自越界（<1 或 >100）返回 400（文案分别为 "per_page 参数非法"、"page_size 参数非法"、"limit 参数非法"）；非数字口径不变（早已返回 400）；缺省仍 page=1、pageSize=20；优先级 per_page > page_size > limit 不变，limit 仍重置 page=1；超大合法页码仍返回空 items 不报错；控制台 /incidents 页只发 page>=1、page_size=20，不受影响；统计接口 days 钳制与投递接口 limit 钳制本轮未动。
+- 合同变更声明：此前多处测试把钳制锁死为 200 合同，本版起改口径，相关测试已同步改为断言 400：incidents_perpage_test.go 的 PerPageClamp（改名 PerPageOverRange）、PerPageZero（改名 PerPageZeroReturns400）、PageZero（改名 PageZeroReturns400，旧 PageZero 函数因与新函数重复已删除）；handlers_deep2_test.go 的 LimitClampDeep3（改名 LimitRangeDeep3，limit=0/-9/5000 均改 400）；incidents_deep_r2_test.go 的 PageSizeClampLower（改名 RangeLower）、PageSizeClampUpper（改名 RangeUpper，per_page=100 仍 200）、PageClampInvalid（改名 RangeInvalid）；incidents_pagination_test.go 的 PageSizeClamp（改名 PageSizeOverRange）；新增 incidents_pagination_range_validation_test.go 4 例（page=-1、page_size=0、page_size=101、per_page=-5 均 400，其中 page_size=101 一例因与改名后的旧用例重名，编排已将其改名为 PageSize101Returns400）。另说明：旧报告 docs/PRODUCTION_CHECKLIST_REPORT_checks_limit_400.md 中 "handleListIncidents 的 page/pageSize 仍沿用钳制口径" 一句自本版起作废。
+
+### 测试
+- go test ./internal/handlers/ -run TestHandleListIncidents -count=1 通过。
+- go test ./internal/handlers/ -count=1 全包通过。
+- go vet 全洁。
+- gofmt 全洁（编排修掉模型稿双空行）。
+- 本轮未做真实服务冒烟，未运行除 handlers 外的其他包测试。
+
+### 视觉验收
+- 不适用，无 UI 改动。
+
+### 模型稿
+- 全程只走 BotsRouter，讯飞星辰 spark-x2.6（智谱 glm-4.7 撞上游周限额 429 至 2026-10-30 01:14:56 重置，故未用；dpsk 未探活，仍停用）。
+- 调用器为本轮现写最小新文件 ~/workspace/muse-build/scripts/botsrouter-call.py（令牌经 SSH 现取、只进子进程环境变量、不落盘、不进 argv、未读 relay-station 现成脚本；SSE data 行解析 delta.content，JSON 直回解析 message.content）。
+- 批次质量如实写：handler 稿首稿思考外泄且 4000 token 截断作废，七牛 conatus-free 第二稿同样外泄截断，spark-x2.6 第三稿（8000 token 上限、只输出代码）一次成功；测试稿一次成功。
+- 编排机械修正：删掉与新函数重复的旧 PageZero、改名冲突的一例、gofmt 双空行、deep_r2 钳制小节注释改为范围边界。
+
 # Changelog
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 的写法，版本号按 [SemVer](https://semver.org/lang/zh-CN/)。

@@ -47,39 +47,33 @@ func TestHandleListIncidents_PerPagePrecedence(t *testing.T) {
 	}
 }
 
-func TestHandleListIncidents_PerPageClamp(t *testing.T) {
+func TestHandleListIncidents_PerPageOverRange(t *testing.T) {
 	srv, st := newTestServer(t)
 	seedIncidents(t, st, 45)
 
-	rec, body := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?per_page=500", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("期望状态码 200，实际为 %d", rec.Code)
-	}
-
-	if got := body["page_size"].(float64); got != 100 {
-		t.Fatalf("期望 page_size 被钳制为 100，实际为 %v", got)
-	}
-
-	items, ok := body["items"].([]any)
-	if !ok {
-		t.Fatalf("期望 items 为数组，实际为 %T", body["items"])
-	}
-	if len(items) > 100 {
-		t.Fatalf("期望 items 长度不超过 100，实际为 %d", len(items))
+	rec, _ := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?per_page=500", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("期望状态码 400，实际为 %d", rec.Code)
 	}
 }
 
-func TestHandleListIncidents_PerPageZero(t *testing.T) {
+func TestHandleListIncidents_PerPageZeroReturns400(t *testing.T) {
 	srv, st := newTestServer(t)
 	seedIncidents(t, st, 45)
 
-	rec, body := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?per_page=0", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("期望状态码 200，实际为 %d", rec.Code)
+	rec, _ := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?per_page=0", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("期望状态码 400，实际为 %d", rec.Code)
 	}
+}
 
-	if got := body["page_size"].(float64); got != 1 {
-		t.Fatalf("期望 page_size 为 1，实际为 %v", got)
+func TestHandleListIncidents_PageZeroReturns400(t *testing.T) {
+	srv, st := newTestServer(t)
+	seedIncidents(t, st, 45)
+
+	rec, _ := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?page=0&per_page=10", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("期望状态码 400，实际为 %d", rec.Code)
 	}
 }
 
@@ -90,20 +84,6 @@ func TestHandleListIncidents_PerPageInvalid(t *testing.T) {
 	rec, body := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?per_page=abc", "")
 	if rec.Code != http.StatusBadRequest {
 		t.Fatalf("期望状态码 400，实际为 %d，body=%v", rec.Code, body)
-	}
-}
-
-func TestHandleListIncidents_PageZero(t *testing.T) {
-	srv, st := newTestServer(t)
-	seedIncidents(t, st, 45)
-
-	rec, body := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?page=0&per_page=10", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("期望状态码 200，实际为 %d", rec.Code)
-	}
-
-	if got := body["page"].(float64); got != 1 {
-		t.Fatalf("期望 page 为 1，实际为 %v", got)
 	}
 }
 

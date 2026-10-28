@@ -79,20 +79,13 @@ func TestHandleListIncidents_Page2(t *testing.T) {
 	}
 }
 
-func TestHandleListIncidents_PageSizeClamp(t *testing.T) {
+func TestHandleListIncidents_PageSizeOverRange(t *testing.T) {
 	srv, st := newTestServer(t)
 	seedIncidents(t, st, 45)
 
-	_, body := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?page_size=500", "")
-	if body["page_size"] != float64(100) {
-		t.Fatalf("page_size = %v, want 100", body["page_size"])
-	}
-	items := body["items"].([]any)
-	if len(items) > 100 {
-		t.Fatalf("items len = %d, want <= 100", len(items))
-	}
-	if len(items) != 45 {
-		t.Fatalf("items len = %d, want 45", len(items))
+	rec, _ := doJSON(t, srv.Routes(), http.MethodGet, "/api/incidents?page_size=500", "")
+	if rec.Code != 400 {
+		t.Fatalf("期望状态码 400，实际 %d", rec.Code)
 	}
 }
 

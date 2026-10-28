@@ -856,56 +856,46 @@ func (s *Server) handleListIncidents(w http.ResponseWriter, r *http.Request) {
 	}
 
 	page := 1
+	pageSize := 20
+	pageSizeSet := false
+
 	if v := r.URL.Query().Get("page"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil {
+		if err != nil || n < 1 {
 			writeErr(w, http.StatusBadRequest, "page 参数非法")
 			return
 		}
 		page = n
 	}
-	if page < 1 {
-		page = 1
-	}
 
-	pageSize := 20
-	pageSizeSet := false
 	if v := r.URL.Query().Get("per_page"); v != "" {
 		n, err := strconv.Atoi(v)
-		if err != nil {
+		if err != nil || n < 1 || n > 100 {
 			writeErr(w, http.StatusBadRequest, "per_page 参数非法")
 			return
 		}
 		pageSize = n
 		pageSizeSet = true
 	}
+
 	if !pageSizeSet {
 		if v := r.URL.Query().Get("page_size"); v != "" {
 			n, err := strconv.Atoi(v)
-			if err != nil {
+			if err != nil || n < 1 || n > 100 {
 				writeErr(w, http.StatusBadRequest, "page_size 参数非法")
 				return
 			}
 			pageSize = n
 			pageSizeSet = true
-		}
-	}
-	if !pageSizeSet {
-		if v := r.URL.Query().Get("limit"); v != "" {
+		} else if v := r.URL.Query().Get("limit"); v != "" {
 			n, err := strconv.Atoi(v)
-			if err != nil {
+			if err != nil || n < 1 || n > 100 {
 				writeErr(w, http.StatusBadRequest, "limit 参数非法")
 				return
 			}
 			pageSize = n
 			page = 1
 		}
-	}
-	if pageSize < 1 {
-		pageSize = 1
-	}
-	if pageSize > 100 {
-		pageSize = 100
 	}
 
 	total, err := s.store.CountIncidentsByStatus(monitorID, status)
