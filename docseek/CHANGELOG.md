@@ -1,3 +1,10 @@
+## Unreleased（2026-10-29）——CLI --max-mb/--title-boost/--phrase-boost/--port 尾随字符返回错误
+
+- **问题**：CLI 对 `--max-mb`（index/serve）、`--title-boost` 与 `--phrase-boost`（search）、`--port`（serve）的解析使用 `std::stoll`/`std::stod` 但未检查 `pos`，因此带尾随字符的值（如 `10x`、`1x`、`2y`、`8080x`）被静默接受为前导数字。这是 2026-10-28 `--limit` 尾随字符修复之后遗留的已知待办项。
+- **修复**：`src/main.cpp` 四个分支现在对原始字符串用 `pos` 解析一次，要求 `pos == raw.size()`，否则打印既有的各选项错误信息（"错误：--max-mb 参数无效" / "错误：--title-boost 参数无效" / "错误：--phrase-boost 参数无效" / "错误：--port 参数无效"）并返回 1。范围检查不变：title-boost/phrase-boost 有限且在 0.0..1000.0，port < 0 仍为无效，max-mb 缺参信息不变，`--limit` 分支未改动。
+- **验证**：cmake 构建 target `docseek` 成功；在全新 1 文档库上 14 项真实二进制检查全部通过：有效值通过（`index --max-mb 10`、`search --title-boost 1.5`、`search --phrase-boost 2.0` 返回退出码 0 并找到文档），尾随字符值以退出码 1 及匹配信息失败（`--title-boost 1x`、`--phrase-boost 2y`、`--max-mb 10x`、`--port 8080x`），既有无效值仍失败（四个选项均为 `abc`、`--title-boost 1001`、`--phrase-boost -1`、`--port -1`），`--limit 5x` 仍如前失败。
+- **无变更**：无版本变更、无 schema 变更、无 UI 变更；本轮未运行完整 ctest。
+
 ## Unreleased（2026-10-28）——CLI search/locate --limit 尾随字符返回错误
 - 问题：CLI search/locate 的 --limit 解析中，带尾随字符的值（如 5x）此前被 std::stoll 静默接受为前面的数字，调用方传错参数无法发现；上一轮 CHANGELOG 已将此列为已知剩余。
 - 修复：src/main.cpp 的 --limit 分支改用带 pos 的 std::stoll 整串合法判定，pos != raw.size() 时打印“错误：--limit 参数无效”并 return 1；v<=0、非数字、缺参的旧行为与文案一字未动；默认值（search 20、locate 5）与 --title-boost/--phrase-boost/--port/--max-mb 各分支一字未动。

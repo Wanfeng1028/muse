@@ -633,10 +633,17 @@ int main(int argc, char** argv) {
                 return 1;
             }
             try {
+                const std::string raw = argv[++i];
+                std::size_t pos = 0;
+                const long long val = std::stoll(raw, &pos);
+                if (pos != raw.size()) {
+                    std::cerr << "错误：--max-mb 参数无效\n";
+                    return 1;
+                }
                 if (command == "serve") {
-                    serveOpts.maxMb = std::stoll(argv[++i]);
+                    serveOpts.maxMb = val;
                 } else {
-                    indexOpts.maxMb = std::stoll(argv[++i]);
+                    indexOpts.maxMb = val;
                 }
             } catch (...) {
                 std::cerr << "错误：--max-mb 参数无效\n";
@@ -648,7 +655,13 @@ int main(int argc, char** argv) {
                 return 1;
             }
             try {
-                double v = std::stod(argv[++i]);
+                const std::string raw = argv[++i];
+                std::size_t pos = 0;
+                double v = std::stod(raw, &pos);
+                if (pos != raw.size()) {
+                    std::cerr << "错误：--title-boost 参数无效\n";
+                    return 1;
+                }
                 if (!std::isfinite(v) || v < 0.0 || v > 1000.0) {
                     std::cerr << "错误：--title-boost 参数无效\n";
                     return 1;
@@ -665,7 +678,13 @@ int main(int argc, char** argv) {
                 return 1;
             }
             try {
-                double v = std::stod(argv[++i]);
+                const std::string raw = argv[++i];
+                std::size_t pos = 0;
+                double v = std::stod(raw, &pos);
+                if (pos != raw.size()) {
+                    std::cerr << "错误：--phrase-boost 参数无效\n";
+                    return 1;
+                }
                 if (!std::isfinite(v) || v < 0.0 || v > 1000.0) {
                     std::cerr << "错误：--phrase-boost 参数无效\n";
                     return 1;
@@ -712,7 +731,13 @@ int main(int argc, char** argv) {
                 return 1;
             }
             try {
-                serveOpts.port = static_cast<int>(std::stoll(argv[++i]));
+                const std::string raw = argv[++i];
+                std::size_t pos = 0;
+                serveOpts.port = static_cast<int>(std::stoll(raw, &pos));
+                if (pos != raw.size()) {
+                    std::cerr << "错误：--port 参数无效\n";
+                    return 1;
+                }
             } catch (...) {
                 std::cerr << "错误：--port 参数无效\n";
                 return 1;
