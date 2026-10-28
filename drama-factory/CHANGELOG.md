@@ -5,6 +5,11 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-28 深耕轮：审核历史 page/size 参数收紧）
+- 现象：`GET /api/projects/{projectId}/episodes/{episodeId}/review/history`（`ReviewController.getHistory`）的 `size` 参数无上限（如 `100000` 会返回超大页），且 `page`/`size` 校验依赖 `PageRequest` 内部行为、未在控制器显式声明。
+- 修复：控制器入口先校验再查归属：`page<0` 抛 `IllegalArgumentException("page 参数非法")`，`size<1` 或 `size>200` 抛 `IllegalArgumentException("size 参数非法")`，全局处理器映射为 HTTP 400；合法值、默认值（`page 0`、`size 20`）、排序（时间升序）、service 逻辑一字未动；Javadoc 的 `page`/`size` 两行注明范围。
+- 测试：新增 `ReviewHistoryPaginationValidationTest` 8 例（`page=-1` 400、`size=0` 400、`size=201` 400、`size=200` 200、`size=1` 200、不传默认 200、`size=abc` 400、`page=abc` 400）；定向运行 `mvn -o test -Dtest=ReviewHistoryPaginationValidationTest,ReviewApiTest` 结果 `Tests run 17, Failures 0, Errors 0, Skipped 0, BUILD SUCCESS`（新 8 + `ReviewApiTest` 9）。
+- 无变更：无 schema 变更、无版本号升级、无 UI 变更；前端无调用处受影响（既有调用 `size=20`）。
 ### Fixed（2026-10-28 深耕轮：SkillHub 索引 page/size 参数收紧）
 - 现象：GET /api/skillhub/index（SkillHubController.index）原先对 page/size 静默钳制（page -1 变 0，size 0 变 1，size 500 变 200），不报错。
 - 修复：改为在 index() 入口校验：page 为 null 时取 0，size 为 null 时取 50；page < 0 抛 IllegalArgumentException("page 参数非法")；size < 1 或 size > 200 抛 IllegalArgumentException("size 参数非法")；由全局异常处理器映射为 HTTP 400。非整数 page/size 原本经 Spring 转换即返回 400。page 远超出范围（如 99999）仍返回 200 且空列表。下游继续使用 effectivePage/effectiveSize。

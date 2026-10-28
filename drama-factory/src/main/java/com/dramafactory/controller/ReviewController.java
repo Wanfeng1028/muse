@@ -218,8 +218,8 @@ public class ReviewController {
      * @param projectId 项目 ID
      * @param episodeId 剧集 ID
      * @param kind      审核类型，SCRIPT 或 BOARD
-     * @param page      页码，从 0 开始
-     * @param size      每页条数
+     * @param page      页码，从 0 开始，负数返回 400
+     * @param size      每页条数，1 到 200 之间，越界返回 400
      * @return 历史记录列表
      */
     @GetMapping("/history")
@@ -229,6 +229,12 @@ public class ReviewController {
                                                           @Parameter(description = "审核类型：SCRIPT 或 BOARD") @RequestParam("kind") String kind,
                                                           @Parameter(description = "页码，从 0 开始") @RequestParam(name = "page", defaultValue = "0") int page,
                                                           @Parameter(description = "每页条数") @RequestParam(name = "size", defaultValue = "20") int size) {
+        if (page < 0) {
+            throw new IllegalArgumentException("page 参数非法");
+        }
+        if (size < 1 || size > 200) {
+            throw new IllegalArgumentException("size 参数非法");
+        }
         assertEpisodeBelongsToProject(projectId, episodeId);
         return reviewService.getHistory(episodeId, kind, page, size);
     }
