@@ -1,3 +1,20 @@
+## [0.33.3] - 2026-10-28
+
+### 修复
+- 快照归档列表接口 GET /api/status-pages/{id}/snapshots 的 limit 参数加上限校验（internal/handlers/snapshot_archive.go 的 handleListSnapshots）：此前 limit 只判非数字与小于 1，超大值透传到 Store 层才被静默钳制为 200；本版起 limit>200 返回 400（“limit 参数非法”），上限 200 与 Store 层 ListStatusSnapshots 的上限一致，Store 层一字不动（留作防御）；缺省仍 50，非数字与小于 1 的旧行为与文案、404 与响应体结构一字未动；控制台快照页只发缺省请求，不受影响。
+- 对照核查：投递记录接口 limit 钳制与统计接口 days 钳制仍有既有测试锁定为 200 合同（delivery_deep2_test.go 显式断言 limit=0 钳制为 1、limit=99999 钳制），本轮核查后确认不改，只收紧快照列表这一处无测试锁定的缺口。
+
+### 测试
+- 新增 internal/handlers/snapshot_limit_upper_test.go，表驱动 6 例：limit=201/1000 均 400；limit=200/50 均 200 且 items 2；limit=abc/0 均 400。
+- go test ./internal/handlers/ -run TestSnapshotListLimitUpper -count=1：6/6 通过；handlers 全包通过；go vet 全洁；gofmt 全洁（编排格式化测试文件）。
+- 本轮未做真实服务冒烟，未运行除 handlers 外的其他包测试与全量 go test ./...。
+
+### 视觉验收
+- 不适用，无 UI 改动。
+
+### 模型稿
+- 全程只走 BotsRouter，讯飞星辰 spark-x2.6（智谱 glm-4.7 未用，周限额 429 至 2026-10-30 01:14:56 重置；dpsk 未探活，仍停用）。测试稿首通 urllib IncompleteRead 截断失败（用量未留档），改 curl 非流式重取一次成功；令牌经 SSH 现取、只进子进程环境变量与 curl 配置 stdin、不落盘、不进 argv。
+
 ## [0.33.2] - 2026-10-28
 
 ### 修复

@@ -70,7 +70,7 @@ func (s *Server) handleListSnapshots(w http.ResponseWriter, r *http.Request) {
 	limit := 50
 	if v := r.URL.Query().Get("limit"); v != "" {
 		n, e := strconv.Atoi(v)
-		if e != nil || n < 1 {
+		if e != nil || n < 1 || n > 200 {
 			writeErr(w, http.StatusBadRequest, "limit 参数非法")
 			return
 		}
