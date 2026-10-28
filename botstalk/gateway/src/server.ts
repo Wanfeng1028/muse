@@ -1082,6 +1082,12 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
         return;
       }
       const nowMs = Date.now();
+      const ttlMinutesRaw = body?.ttl_minutes;
+      if (ttlMinutesRaw !== undefined && (typeof ttlMinutesRaw !== "number" || !Number.isInteger(ttlMinutesRaw) || ttlMinutesRaw < 1 || ttlMinutesRaw > 60)) {
+        res.writeHead(400, { "content-type": "application/json" });
+        res.end(JSON.stringify({ error: "INVALID_TTL_MINUTES" }));
+        return;
+      }
       const ttlMinutes = clampPairingTtlMinutes(body?.ttl_minutes);
       const expiresAtMs = nowMs + ttlMinutes * 60000;
       issuePairingCode(db, { codeHash: hashPairingCode(normalized), room: roomId, createdAtMs: nowMs, expiresAtMs });

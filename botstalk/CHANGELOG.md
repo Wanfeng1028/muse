@@ -1,3 +1,12 @@
+## OpenAgents 第 22 轮：配对码签发 ttl_minutes 非法值返回 400
+
+- 动机：配对码签发分支此前对非法 ttl_minutes 静默钳制/回落，调用方拿到的有效期与请求值不一致却无从知晓；本轮改为显式校验并拒绝非法值，不再静默改写。
+- 落地：仅改 botstalk/gateway/src/server.ts 的 POST /api/rooms/:room/pairing-codes 分支。权限校验之后、generatePairingCode 之前新增校验：显式 ttl_minutes 不是整数、小于 1 或大于 60 时返回 400 {"error": "INVALID_TTL_MINUTES"}，不签发；缺省仍默认 10 分钟；显式 null 同样返回 400；非房主传非法 ttl 仍先得 403。clampPairingTtlMinutes 本身一字未动，校验通过的值再进它作防线。兑码分支、分享链接分支、Web 前端一字未动（Web 面板本身只发 1 到 60 的整数，不受影响）。
+- 测试：新增 botstalk/gateway/test/pairing-ttl-validation.test.ts，12 例全绿（0、-1、61、999、1.5、字符串 "10"、null、true 各 400；非房主传 0 得 403；1 分钟、60 分钟、缺省各 201 且有效期差值在容差内）。关联三文件（新测、pairing、devices）48 例全绿。网关全量 vitest：80 文件 1035 例全绿（基线 79 文件 1023 例，恰增本轮 1 文件 12 例）。
+- 冒烟：新增 botstalk/scripts/smoke-pairing-ttl.mjs，真实网关端口 18496，8 项全过，打印 SMOKE_PAIRING_TTL_PASS，冒烟后端口已关。
+- 类型：网关源码 tsc --noEmit 零错；测试 tsc 有 8 处既存错误，均在旧文件内，与本轮无关，本轮新文件零错。
+- 已知保留：分享链接 ttl_hours 的 clampShareTtlHours 静默钳制本轮未动，留待后续轮次；吊销仍为终态（无取消吊销接口）；REST requester 自报身份未动；第 17 轮设备管理 Web UI 缺 CHANGELOG 与轮次文档的缺口本轮未代补，仍在；无 Web UI 改动，视觉验收不适用；无协议版本变更。
+
 ## OpenAgents 第 21 轮：4403 设备鉴权关闭不再重连
 
   - 动机：第 20 轮遗留项“被踢的 AdapterClient 按既有重连逻辑反复重连并反复被 4403 拒绝（presence 保持 offline）”本轮关闭；网关 4403 关闭码全部原因（device auth incomplete / device not found / device revoked / device adapter mismatch / device key mismatch）均为同凭据重试必败的终态，客户端侧统一按终态处理，不只处理 revoked 一种
