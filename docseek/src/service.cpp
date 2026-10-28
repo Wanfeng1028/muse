@@ -338,8 +338,14 @@ public:
                 }
                 bool wantExplain = false;
                 auto eit = req.query.find("explain");
-                if (eit != req.query.end() && (eit->second == "true" || eit->second == "1")) {
-                    wantExplain = true;
+                if (eit != req.query.end() && !eit->second.empty()) {
+                    if (eit->second == "true" || eit->second == "1") {
+                        wantExplain = true;
+                    } else if (eit->second == "false" || eit->second == "0") {
+                        wantExplain = false;
+                    } else {
+                        return HttpResponse::json("{\"error\":\"explain 参数无效\"}", 400);
+                    }
                 }
                 Searcher searcher(db_, weights);
 

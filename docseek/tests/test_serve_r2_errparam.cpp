@@ -277,4 +277,30 @@ TEST_F(ServeErrParamR2, BoostTrailingGarbage) {
     expectContains(respPhrase, "phrase_boost 参数无效");
 }
 
+// 6. explain=yes / explain=TRUE（非白名单真值）：400，body 含对应文案。
+TEST_F(ServeErrParamR2, ExplainBogus) {
+    std::string respYes = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=yes");
+    EXPECT_EQ(statusCode(respYes), 400) << respYes;
+    expectContains(respYes, "explain 参数无效");
+
+    std::string respTrue = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=TRUE");
+    EXPECT_EQ(statusCode(respTrue), 400) << respTrue;
+    expectContains(respTrue, "explain 参数无效");
+}
+
+// 7. explain=false / explain=0 / explain=（空值）：200，body 不含 base_bm25。
+TEST_F(ServeErrParamR2, ExplainFalseValues) {
+    std::string respFalse = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=false");
+    EXPECT_EQ(statusCode(respFalse), 200) << respFalse;
+    EXPECT_EQ(respFalse.find("base_bm25"), std::string::npos) << respFalse;
+
+    std::string respZero = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=0");
+    EXPECT_EQ(statusCode(respZero), 200) << respZero;
+    EXPECT_EQ(respZero.find("base_bm25"), std::string::npos) << respZero;
+
+    std::string respEmpty = httpGet(port_, "/api/search?q=" + urlEncode("退款") + "&explain=");
+    EXPECT_EQ(statusCode(respEmpty), 200) << respEmpty;
+    EXPECT_EQ(respEmpty.find("base_bm25"), std::string::npos) << respEmpty;
+}
+
 }  // namespace

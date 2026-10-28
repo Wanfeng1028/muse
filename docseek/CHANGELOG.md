@@ -1,3 +1,12 @@
+## Unreleased（2026-10-28）——serve search explain 非法值返回 400
+
+### 修复（2026-10-28 深耕轮：serve search explain 参数收紧）
+
+- **问题**：serve 子命令 `/api/search` 的 `explain` 参数此前只认 `"true"`/`"1"` 为真，其余一切值（如 `explain=yes`、`explain=TRUE`、`explain=2` 等）都被静默当作 `false`，调用方传错参数无法发现；同接口的 `limit`、`title_boost`、`phrase_boost` 早已对非法值返回 400。
+- **修复**：`src/service.cpp` 的 `/api/search` 处理中，`explain` 出现且非空时只接受 `"true"`、`"1"`、`"false"`、`"0"`，其余值返回 400 且 body 为 `{"error":"explain 参数无效"}`；空串仍视为未传（`false`）；`"true"`/`"1"` 仍返回含 explain 计分字段的结果；`"false"`/`"0"` 仍返回普通结果；`q` 缺失、`limit`、`title_boost`、`phrase_boost`、排序与计分逻辑一字未动。
+- **验证**：`tests/test_serve_r2_errparam.cpp` 追加 2 例（`ExplainBogus`：`explain=yes` 与 `explain=TRUE` 均 400 且 body 含 `"explain 参数无效"`；`ExplainFalseValues`：`explain=false`、`explain=0`、`explain=`（空值）均 200 且 body 不含 `base_bm25`）；构建 `cmake --build build --target docseek docseek_tests` 成功；定向 gtest：`ServeErrParamR2.*` 7/7 通过（既有 5 + 新增 2），explain 相关过滤 `*Explain*:*explain*` 21/21 通过；本轮未运行全量 `ctest` 套件（既存 38 个失败与本轮无关，见此前轮次记录）。
+- **无变更**：无版本号变更、无 schema 变更、无 UI 改动；Web UI 不发 explain 非法值，不受影响。
+
 ## Unreleased（2026-10-28）——ServeFixture 夹具同名重命名
 
 ### 修复（2026-10-28 深耕轮：ServeFixture 夹具同名重命名）
