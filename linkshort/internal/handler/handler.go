@@ -1110,7 +1110,15 @@ func handleTopReferers(w http.ResponseWriter, r *http.Request, st *store.Store) 
 // handleStatsGeo 返回地域概览：按国家/省份/城市聚合的 TopN、总点击数、总 UV、unknown 占比。
 // link_id=0（默认）为全局；days 仅接受 7/30，否则按 30；country 可选；n 默认 8，范围 1~100。
 func handleStatsGeo(w http.ResponseWriter, r *http.Request, st *store.Store) {
-	linkID := parseIntDefault(r.URL.Query().Get("link_id"), 0)
+	linkID := 0
+	if rawLinkID := r.URL.Query().Get("link_id"); rawLinkID != "" {
+		v, err := strconv.Atoi(rawLinkID)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "link_id 非法")
+			return
+		}
+		linkID = v
+	}
 	if linkID < 0 {
 		linkID = 0
 	}

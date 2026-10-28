@@ -5,6 +5,18 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.34.0] - 2026-10-28
+
+### 新增
+- `GET /api/stats/geo` 的 `link_id` 参数收紧：缺省或空串仍默认 0（全局）；非整数（`abc`、`1.5`、`1x`）返回 400，错误体为 `{"error": "link_id 非法"}`；负数仍钳制为 0（行为不变）。仅改 `handleStatsGeo`；`days`、`n`、`country`、`geo.csv`、`hourly`、`parseIntDefault` 一字未动。
+- 本轮曾一度把 geo 的 `days` 非数字也改成 400，后经全量测试发现既有测试 TestStatsGeoDaysFallback 与 TestGeoAPI_days非法回落30 明确锁定 days=abc 返回 200 且体 days=30，v1.33.0 轮亦已写明 geo 的 days 口径不动，故 days 已恢复原样（非数字回落 30、合法整数不在 7、30 中仍回落 30），不属本轮变更。
+
+### 测试
+- 新增 `internal/handler/stats_geo_linkid_days_validation_test.go`，函数名 TestStatsGeoLinkIDValidation，6 例：`link_id=abc`、`1.5`、`1x` 返回 400 且体含“link_id 非法”；不带参数、`link_id=-5`、`days=2` 返回 200。
+- 既有 geo 回落测试不受影响（days=0/-5/100000 回落 30、n=0/101 回落 8 均通过）；全量 `go test ./...` 14 包全过；`go vet` 全洁；改动文件 `gofmt` 全洁。
+- 真实服务冒烟（18482 端口 `:memory:` 库）：无 key 返回 401；`link_id=abc` 与 `1x` 均 400 且错误体逐字为 `{"error": "link_id 非法"}`；`days=abc` 返回 200 且 `days=30`（回落口径如实保留）；不带参数返回 200 且 `days=30`；`link_id=-5` 返回 200；冒烟后服务已停、端口已关、冒烟二进制已删。
+- 批次质量：BotsRouter 讯飞星辰 spark-x2.6：补丁稿一次成功（首版 OLD 锚定同时命中 geo 与 geo.csv 两处被编排安全拒止后，改以函数签名锚定重派一次成功）；测试稿首版把 doJSON 第一个返回值错当状态码致编译失败、修正版漏写 srv := newTestServer(t) 一行致编译失败，两处均回喂模型修好；测试稿函数名与用例中文命名与 n 校验测试文件略有出入，不影响行为；冒烟首版鉴权头用错致全 401，改 X-API-Key 后重测通过，另 pkill -f 模式曾误杀编排自身 shell（教训：杀冒烟进程用 pkill -x 精确进程名）。
+
 ## [v1.33.0] - 2026-10-28
 
 ### 新增
