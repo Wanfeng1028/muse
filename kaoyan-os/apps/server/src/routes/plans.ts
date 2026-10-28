@@ -512,7 +512,13 @@ app.get('/api/plans/export', async (req, reply) => {
     }
 
     const dailyMinutesRaw = q.dailyMinutes;
-    const dailyMinutes = typeof dailyMinutesRaw === 'string' ? Number(dailyMinutesRaw) : NaN;
+    if (
+      typeof dailyMinutesRaw !== 'string' ||
+      !/^-?\d+$/.test(dailyMinutesRaw)
+    ) {
+      return reply.code(400).send({ error: 'dailyMinutes 非法' });
+    }
+    const dailyMinutes = Number(dailyMinutesRaw);
     if (
       !Number.isInteger(dailyMinutes) ||
       dailyMinutes < 30 ||
@@ -673,6 +679,12 @@ app.get('/api/plans/export', async (req, reply) => {
     const weekStart = q.weekStart;
 
     const dailyMinutesRaw = q.dailyMinutes;
+    if (
+      typeof dailyMinutesRaw === 'string' &&
+      !/^-?\d+$/.test(dailyMinutesRaw)
+    ) {
+      return reply.code(400).send({ error: 'dailyMinutes 非法' });
+    }
     const dailyMinutes =
       typeof dailyMinutesRaw === 'string'
         ? Number(dailyMinutesRaw)

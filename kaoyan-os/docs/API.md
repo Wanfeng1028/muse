@@ -455,7 +455,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | query | subjects | string | 是 | 逗号分隔的科目列表，如 `math,english`，非空 |
-| query | dailyMinutes | string | 是 | 单日可用分钟数，30~1440 的整数（query 传字符串，按 Number 解析） |
+| query | dailyMinutes | string | 是 | 单日可用分钟数，30~1440 的整数（query 传字符串，须匹配纯数字正则 /^-?\d+$/，60.0、0x3c、+60、带空格均非法） |
 | query | examDate | string | 是 | 考试日期，YYYY-MM-DD |
 | query | startDate | string | 否 | 起始日期，YYYY-MM-DD；缺省（undefined/null/空串）为今天 |
 
@@ -490,7 +490,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | --- | --- | --- |
 | 400 | `{ "error": "subjects 不能为空" }` | subjects 非字符串、trim 后为空，或拆分去空后没有任何有效项 |
 | 400 | `{ "error": "subject 非法" }` | subjects 中任一项不是 math/english/politics/major 之一 |
-| 400 | `{ "error": "dailyMinutes 非法" }` | dailyMinutes 解析后不是整数，或 <30，或 >1440 |
+| 400 | `{ "error": "dailyMinutes 非法" }` | dailyMinutes 不是纯数字串，或解析后不是整数，或 <30，或 >1440 |
 | 400 | `{ "error": "examDate 非法" }` | examDate 不是合法的 YYYY-MM-DD |
 | 400 | `{ "error": "startDate 非法" }` | startDate 显式传入（非空）但不是合法的 YYYY-MM-DD |
 | 400 | `{ "error": "examDate 不能早于 startDate" }` | examDate 早于 startDate |
@@ -602,7 +602,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
 | query | weekStart | string | 是 | 本周起始日（含），YYYY-MM-DD；服务端据此计算连续 7 天 |
-| query | dailyMinutes | string | 是 | 单日阈值分钟数，30~1440 的整数（query 传字符串，按 Number 解析） |
+| query | dailyMinutes | string | 是 | 单日阈值分钟数，30~1440 的整数（query 传字符串，须匹配纯数字正则 /^-?\d+$/） |
 
 **成功响应**
 
@@ -632,7 +632,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | 状态码 | 返回体 | 触发条件 |
 | --- | --- | --- |
 | 400 | `{ "error": "weekStart 格式非法，应为 YYYY-MM-DD" }` | weekStart 缺失或不是合法的 YYYY-MM-DD |
-| 400 | `{ "error": "dailyMinutes 非法" }` | dailyMinutes 解析后不是整数，或 <30，或 >1440 |
+| 400 | `{ "error": "dailyMinutes 非法" }` | dailyMinutes 不是纯数字串，或解析后不是整数，或 <30，或 >1440 |
 
 ---
 

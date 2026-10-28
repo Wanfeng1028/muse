@@ -4,6 +4,14 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.20.0] - 2026-10-28
+### Added
+- 后端两路正则校验：GET /api/plans/auto-schedule/preview 与 GET /api/plans/overload 的 dailyMinutes 查询串由 Number() 解析改为纯数字正则 /^-?\d+$/ 校验（60.0、0x3c、+60、带空格的 60 均返回 400 { error: 'dailyMinutes 非法' }，060 仍合法，范围 30~1440 与错误体不变）
+- 新增测试 apps/server/tests/daily-minutes-strict.test.ts，13 例全绿
+- 文档 API.md 四处同步（auto-schedule/preview 与 overload 的 dailyMinutes 参数行及 400 错误码行）
+### Notes
+- 本轮模型调用走 BotsRouter 讯飞星辰 spark-x2.6，代码与测试均由其生成，编排按逐字锚定应用并修正测试 harness 四处
+
 ## [1.19.0] - 2026-10-28
 ### Added
 - 后端：`GET /api/mistakes/:id/source-exams` 与 `GET /api/exams/:id/related-mistakes` 的 `windowDays` 由 `Number()` 口径改用正则 `/^-?\d+$/` 校验；非法值返回 400 `{ error: 'windowDays 非法' }`，缺省 7、范围 0~90、错误体、404 顺序、查询与排序逻辑不变，并与 v1.16.0/v1.17.0/v1.18.0 的 days/months 严格口径对齐。
