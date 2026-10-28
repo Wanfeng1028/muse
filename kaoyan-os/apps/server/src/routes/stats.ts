@@ -16,6 +16,10 @@ export function registerStatsRoutes(app: FastifyInstance, db: DatabaseSync): voi
       if (!/^\d{4}-\d{2}-\d{2}$/.test(q)) return reply.code(400).send({ error: 'start 日期格式无效' });
       const dt = new Date(q + 'T00:00:00');
       if (Number.isNaN(dt.getTime())) return reply.code(400).send({ error: 'start 日期无效' });
+      const [y, m, d] = q.split('-').map(Number);
+      if (dt.getFullYear() !== y || dt.getMonth() + 1 !== m || dt.getDate() !== d) {
+        return reply.code(400).send({ error: 'start 日期无效' });
+      }
       weekStart = q;
     }
     const weekEnd = addDays(weekStart, 7);

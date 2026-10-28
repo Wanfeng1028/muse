@@ -1989,7 +1989,7 @@ id,subject,subject_name,paper,score,total_score,rate,duration_minutes,taken_at
 
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
-| Query | start | string | 否 | 周起始日 `YYYY-MM-DD`；缺省为本周一（周一为每周第一天） |
+| Query | start | string | 否 | 周起始日 `YYYY-MM-DD`；缺省为本周一（周一为每周第一天）；不存在的日历日期（如 2024-02-30）返回 400 start 日期无效 |
 
 **成功响应**
 

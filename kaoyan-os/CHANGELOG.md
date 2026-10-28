@@ -4,6 +4,22 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.21.0] - 2026-10-28
+
+### Added
+
+- GET /api/stats/weekly 的 start 参数增加日历往返校验，不存在的日期（2024-02-30、2023-02-29、2026-04-31）返回 400 { error: 'start 日期无效' }
+- 格式错误的 start 参数仍返回 400 { error: 'start 日期格式无效' }
+- start 参数缺省与合法日期的行为保持不变
+- 日历校验口径与 plans.ts / mistakes.ts 的 isValidDate 对齐
+- 新增测试 apps/server/tests/weekly-start-strict.test.ts，覆盖 7 个日历校验用例
+- 更新 stats.deep3.test.ts 与 weekly-start-boundary.test.ts 中锁定旧语义的 2024-02-30 用例，预期响应由 200 改为 400
+- 文档 API.md 同步更新 start 参数说明
+
+### Notes
+
+本轮模型调用走 BotsRouter 讯飞星辰 spark-x2.6，代码与测试均由其生成，编排按逐字锚定应用。
+
 ## [1.20.0] - 2026-10-28
 ### Added
 - 后端两路正则校验：GET /api/plans/auto-schedule/preview 与 GET /api/plans/overload 的 dailyMinutes 查询串由 Number() 解析改为纯数字正则 /^-?\d+$/ 校验（60.0、0x3c、+60、带空格的 60 均返回 400 { error: 'dailyMinutes 非法' }，060 仍合法，范围 30~1440 与错误体不变）

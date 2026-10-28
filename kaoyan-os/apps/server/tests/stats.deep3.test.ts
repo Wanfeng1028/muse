@@ -58,11 +58,10 @@ describe('stats r3 深测', () => {
     expect(r2.statusCode).toBe(400);
     expect(r2.json().error).toBe('start 日期无效');
 
-    // '2024-02-30' 能通过正则且 new Date 不返回 NaN（JS 自动进位到 2024-03-01），故接口返回 200
-    // 这是源码当前行为（只拒绝 NaN），测试如实记录
+    // 严格日历校验口径下，不存在的日期（如 2024-02-30）一律被拒绝
     const r3 = await app.inject({ method: 'GET', url: '/api/stats/weekly?start=2024-02-30', headers: { cookie: authCookie } });
-    expect(r3.statusCode).toBe(200);
-    expect(r3.json().weekStart).toBe('2024-02-30');
+    expect(r3.statusCode).toBe(400);
+    expect(r3.json().error).toBe('start 日期无效');
 
   });
 
