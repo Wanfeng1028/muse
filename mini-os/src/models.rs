@@ -141,7 +141,7 @@ pub struct CreateShareRequest {
     /// 分享类型："file"（默认）或 "dir"；JSON 字段名为 type
     #[serde(rename = "type", default)]
     pub share_type: Option<String>,
-    /// 目录分享时的 VFS 路径，如 "/docs"；file 模式忽略
+    /// 目录分享时的 VFS 路径，如 "/docs"；dir 模式下 nodeId 与 path 不能同时指定（否则 400）；file 模式忽略
     #[serde(default)]
     pub path: Option<String>,
     /// 过期时间（unix 秒），None 表示永不过期

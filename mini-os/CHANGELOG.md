@@ -1,3 +1,15 @@
+## [1.19.15] - 2026-10-29
+
+### Changed
+- POST /api/shares 的 dir 模式下 nodeId 与 path 双指定不再静默忽略 nodeId：path 非空且 nodeId 已给时返回 400 {"error": "node_id 与 path 不能同时指定"}，不创建分享。dir + nodeId + 空 path 仍走原有 400 "目录分享需要 path 参数"；dir + path 不存在仍 404；dir + path 不是目录仍 400；file 模式 path 忽略的既有行为不动；type 非法、share_type 缺省 file 均不动。models.rs 的 path 字段注释同步说明 dir 冲突口径。Cargo.toml 与 Cargo.lock 版本同步升为 1.19.15。
+- 这是一次有意的契约变更：此前 dir 分享会按 path 建分享、nodeId 被无声丢弃，现改为拒绝；调用方须只给 path 或只给 nodeId（file 模式）。
+
+### Added
+- 新增 tests/share_node_path_conflict_test.rs，6 例：dir + 文件夹 nodeId 冲突 400 且列表为空、dir + 文件 nodeId 冲突 400 且列表为空、dir 仅 path 仍 201、dir + nodeId 无 path 仍为缺 path 400、file + path 忽略仍 201、file 缺 nodeId 仍 400。
+
+### Verification
+- 新测 6/6；分享关联 3 个目标 40 项全过（合计 46 项）；cargo fmt --all --check 干净；真实服务冒烟（18529 端口隔离库）：health 返回 1.19.15、注册 201、冲突 400 且文案逐字相符、dir 仅 path 201、列表恰 1 条；冒烟后服务已停、端口已关、冒烟二进制与隔离库已删。
+
 ## [1.19.14] - 2026-10-28
 
 ### Changed

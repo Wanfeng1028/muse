@@ -2487,6 +2487,9 @@ pub async fn create_share(
         if path.trim().is_empty() {
             return Err(err(StatusCode::BAD_REQUEST, "目录分享需要 path 参数"));
         }
+        if req.node_id.is_some() {
+            return Err(err(StatusCode::BAD_REQUEST, "node_id 与 path 不能同时指定"));
+        }
         match resolve_share_dir(&conn, path, user.id) {
             Ok(id) => id,
             Err(ShareDirError::NotFound) => return Err(err(StatusCode::NOT_FOUND, "目录不存在")),
