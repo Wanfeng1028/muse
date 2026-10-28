@@ -5,6 +5,16 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.35.0] - 2026-10-28
+
+### 新增
+- `GET /api/stats/hourly` 的 `link_id` 参数收紧，照搬 v1.34.0 的 geo link_id 写法：缺省或空串仍默认 0（全局）；非整数（`abc`、`1.5`、`1x`）返回 400，错误体为 `{"error": "link_id 非法"}`；负数仍钳制为 0（行为不变）。仅改 `handleStatsHourly`；`days`、`geo`、`geo.csv`、`parseIntDefault` 一字未动。
+
+### 测试
+- 新增 `internal/handler/stats_hourly_linkid_validation_test.go`，函数名 TestStatsHourlyLinkIDValidation，6 例：`link_id=abc`、`1.5`、`1x` 返回 400 且体含“link_id 非法”；不带参数、`link_id=-5`、`days=7` 返回 200。
+- 既有 hourly 测试不受影响（基本、days 回落、负 linkID）与 days 校验测试全绿；全量 `go test ./...` 14 包全过；`go vet` 全洁；改动文件 `gofmt` 全洁。
+- 真实服务冒烟（18483 端口 `:memory:` 库）：无 key 返回 401；`link_id=abc` 与 `1.5` 均 400 且错误体逐字为 `{"error": "link_id 非法"}`；`link_id=-5` 返回 200；不带参数返回 200；冒烟后服务已停、端口已关、冒烟二进制已删。
+
 ## [v1.34.0] - 2026-10-28
 
 ### 新增

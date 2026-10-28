@@ -1165,7 +1165,16 @@ func handleStatsGeo(w http.ResponseWriter, r *http.Request, st *store.Store) {
 }
 
 func handleStatsHourly(w http.ResponseWriter, req *http.Request, st *store.Store) {
-	linkID := int64(parseIntDefault(req.URL.Query().Get("link_id"), 0))
+	linkIDStr := req.URL.Query().Get("link_id")
+	var linkID int64
+	if linkIDStr != "" {
+		var err error
+		linkID, err = strconv.ParseInt(linkIDStr, 10, 64)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "link_id 非法")
+			return
+		}
+	}
 	if linkID < 0 {
 		linkID = 0
 	}
