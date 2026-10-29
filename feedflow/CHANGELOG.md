@@ -1,6 +1,20 @@
 
 # 更新日志
 
+## v1.39.0 — 2026-10-29
+
+### Changed
+- 修复 `POST /api/articles/mark_read` 的 JSON bool/float id 静默重解释问题：`feedflow/feedflow/api.py` 的 `mark_all_read` 中，`feed_id`、`folder_id`、`tag_id` 三个分支在 `int()` 转换前各增加两行校验，JSON bool 或 float 一律返回 400，文案分别为“feed_id 非法”、“folder_id 非法”、“tag_id 非法”；此前 `int(True)==1`、`int(False)==0`、`int(1.5)==1` 会把非整数输入静默当作合法 id（如 `{"feed_id": true}` 会标记 feed 1 已读）。总计新增 6 行，校验写为 `isinstance(x, (bool, float))`（ruff SIM101 口径）；scope 校验、负值检查、缺参/空串默认值、store 调用一字未动。
+- 新增 `tests/test_mark_read_bool_float_ids_v139.py` 共 8 例（feed_id true/false、folder_id true、tag_id false、feed_id 1.5、feed_id 2.0、bool 配合合法 scope、int 与数字字符串回归）；靶向运行新 8 例 + `tests/test_mark_read_negative_ids_v138.py` + `tests/test_api_deep3_markread.py` + `tests/test_cluster_mark_read.py` 共 26 passed；`ruff check` 两变更文件全洁。
+- 真实服务冒烟（隔离库、18493 端口）：三分支的 true/false/1.5/2.0 均 400 且文案匹配，feed_id 0 与空体仍 200（updated 恒为 null 的既有口径）；冒烟后服务已停、端口复查已关、隔离库已删。
+
+### 已知限制
+- 全量 pytest 本轮未跑。
+- 其它仍对 JSON id 做 `int()` 转换的接口（`create_feed` 的 folder_id、`update_feed` 的 folder_id）本轮未改，留待后续轮次。
+- 无 UI 改动，视觉验收不适用。
+- 本条目关闭 v1.38.0 明确记录的已知剩余：JSON 布尔值经 `int()` 转换仍按 1/0 处理。
+
+
 ## v1.38.0 — 2026-10-29
 
 ### Changed

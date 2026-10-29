@@ -361,18 +361,24 @@ def mark_all_read():
     tag_id = data.get("tag_id")
     scope = data.get("scope") or "unread"
     try:
+        if isinstance(feed_id, (bool, float)):
+            return _err("feed_id 非法", 400)
         feed_id = int(feed_id) if feed_id not in (None, "") else None
         if feed_id is not None and feed_id < 0:
             return _err("feed_id 非法", 400)
     except (TypeError, ValueError):
         return _err("feed_id 非法", 400)
     try:
+        if isinstance(folder_id, (bool, float)):
+            return _err("folder_id 非法", 400)
         folder_id = int(folder_id) if folder_id not in (None, "") else None
         if folder_id is not None and folder_id < 0:
             return _err("folder_id 非法", 400)
     except (TypeError, ValueError):
         return _err("folder_id 非法", 400)
     try:
+        if isinstance(tag_id, (bool, float)):
+            return _err("tag_id 非法", 400)
         tag_id = int(tag_id) if tag_id not in (None, "") else None
         if tag_id is not None and tag_id < 0:
             return _err("tag_id 非法", 400)
