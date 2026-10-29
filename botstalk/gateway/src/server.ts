@@ -1187,6 +1187,12 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       res.end(JSON.stringify({ error: "ROOM_MANAGE_FORBIDDEN" }));
       return;
     }
+    const ttlHoursRaw = body?.ttl_hours;
+    if (ttlHoursRaw !== undefined && (typeof ttlHoursRaw !== "number" || !Number.isInteger(ttlHoursRaw) || ttlHoursRaw < 1 || ttlHoursRaw > 720)) {
+      res.writeHead(400, { "content-type": "application/json" });
+      res.end(JSON.stringify({ error: "INVALID_TTL_HOURS" }));
+      return;
+    }
     const token = generateShareToken();
     const id = randomUUID();
     const nowMs = Date.now();
