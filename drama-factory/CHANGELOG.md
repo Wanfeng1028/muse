@@ -10,7 +10,7 @@
 现象：GET /api/cost-ledger/entries 的 limit 超过 500 时，此前会被静默截断为 500 并返回 200，调用方无从感知实际生效的条数。
 修复：limit 超过 500 时直接返回 HTTP 400，不再静默截断，与 SkillHub 规模超过 200、评审历史规模超过 200、使用天数超过 365 的收紧策略保持一致。
 测试：CostLedgerEntriesLimitTest 更新——limit=1000 由期望 200（截断后返回）改为期望 400；新增 limit=500 返回 200、limit=501 返回 400 两个边界用例。默认 limit=100、limit 为 0 或负数、非整数 limit 的既有 400 行为保持不变。
-未改动：无前端调用该接口，无 schema 变更，无 UI 变更。
+未改动：前端唯一调用处 limit=20，不受影响；无 schema 变更，无 UI 变更。
 模型车道：BotsRouter spark-x2.6。
 
 ### Fixed（2026-10-28 深耕轮：运行列表按用户归属过滤）
