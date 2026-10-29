@@ -1,3 +1,10 @@
+## Unreleased（2026-10-30）——serve 环境变量尾随字符回默认值
+
+- **问题**：serve 的 getEnvInt/getEnvDouble 用 std::stoi/std::stod 时不查 pos，带尾随字符的环境变量值被静默截断接受（如 DOCSEEK_SLOW_MS=0.001x 按 0.001 生效、DOCSEEK_LOCATE_CONCURRENCY=4x 按 4 生效），调用方配错值无法发现；这与 main.cpp 的 readWeightEnv 已有的整串合法口径不一致。
+- **修复**：src/service.cpp 两个函数现在要求 pos == 整串长度，否则按既有契约返回默认值；未设置、空串、非数字、小于等于 0 时回默认值不变；DOCSEEK_SLOW_MS 默认 500、DOCSEEK_LOCATE_CONCURRENCY 默认 4、DOCSEEK_LOCATE_WAIT_MS 默认 2000 一字未动。
+- **验证**：新增 tests/test_serve_r2_envparam.cpp（两个真实 serve 进程用例，均先以“会员”暖机再以“退款”作目标搜索，因首次搜索含约 1900ms 冷启动开销、暖机后约 2ms）：DOCSEEK_SLOW_MS=0.001x 时 slow_queries 里无 q=退款 条目（回 500 默认值，暖机条目本身可能存在，故不以 slow 为空数组断言）；DOCSEEK_SLOW_MS=0.001 合法小阈值时 slow_queries 里有 q=退款 条目（正向对照）。本轮未运行全量 ctest。
+- **无变更**：无版本变更、无 schema 变更、无 UI 改动；产品代码除上述两个函数外未动。
+
 ## Unreleased（2026-10-29）——CLI --max-mb/--title-boost/--phrase-boost/--port 尾随字符返回错误
 
 - **问题**：CLI 对 `--max-mb`（index/serve）、`--title-boost` 与 `--phrase-boost`（search）、`--port`（serve）的解析使用 `std::stoll`/`std::stod` 但未检查 `pos`，因此带尾随字符的值（如 `10x`、`1x`、`2y`、`8080x`）被静默接受为前导数字。这是 2026-10-28 `--limit` 尾随字符修复之后遗留的已知待办项。

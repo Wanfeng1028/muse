@@ -269,6 +269,7 @@ add_executable(docseek_tests
   tests/test_serve_r2_locatelimit.cpp
   tests/test_serve_r2_health.cpp
   tests/test_serve_r2_metrics.cpp
+  tests/test_serve_r2_envparam.cpp
   tests/test_locate_r2_precision.cpp
   tests/test_locate_r2_context.cpp
   tests/test_locate_r2_nonsense.cpp

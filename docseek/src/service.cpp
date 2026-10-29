@@ -10,6 +10,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstdlib>
+#include <cstring>
 #include <filesystem>
 #include <fstream>
 #include <iomanip>
@@ -155,7 +156,9 @@ int getEnvInt(const char* name, int def) {
     const char* v = std::getenv(name);
     if (v == nullptr || *v == '\0') return def;
     try {
-        int n = std::stoi(v);
+        size_t pos = 0;
+        int n = std::stoi(v, &pos);
+        if (pos != std::strlen(v)) return def;
         return n > 0 ? n : def;
     } catch (...) {
         return def;
@@ -167,7 +170,9 @@ double getEnvDouble(const char* name, double def) {
     const char* v = std::getenv(name);
     if (v == nullptr || *v == '\0') return def;
     try {
-        double d = std::stod(v);
+        size_t pos = 0;
+        double d = std::stod(v, &pos);
+        if (pos != std::strlen(v)) return def;
         return d > 0 ? d : def;
     } catch (...) {
         return def;

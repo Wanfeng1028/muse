@@ -12,6 +12,8 @@
 | `DOCSEEK_SLOW_MS` | `500` | 慢查询阈值（毫秒），超限记入 `/api/metrics` 的 slow_queries 并可用于告警 |
 | `DOCSEEK_LOCATE_CONCURRENCY` | `4` | `/api/locate` 最大并发数，超限回 429 |
 | `DOCSEEK_LOCATE_WAIT_MS` | `2000` | 拿不到并发槽位时的最大等待（毫秒），超时回 429 |
+
+注：上述三个变量的值必须整串合法，带尾随字符时（如 `0.001x`、`4x`）按默认值处理，不再静默截断接受。
 | `DOCSEEK_JIEBA_VERBOSE` | （空） | 设为 `1` 恢复词典加载时的 limonp 噪音日志，用于排障 |
 
 ## 2. 日志
