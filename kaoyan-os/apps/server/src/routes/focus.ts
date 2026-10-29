@@ -341,7 +341,8 @@ app.post('/api/import/focus', { bodyLimit: 5 * 1024 * 1024 }, async (req, reply)
       rowErrors.push('subject 非法');
     }
 
-    const minutes = Math.floor(Number(getCell(row, 'minutes')));
+    const rawMinutes = getCell(row, 'minutes');
+    const minutes = /^\d+$/.test(rawMinutes) ? Number(rawMinutes) : Number.NaN;
     if (!Number.isFinite(minutes) || minutes < 1 || minutes > 1440) {
       rowErrors.push('minutes 须为 1 到 1440 之间的整数');
     }

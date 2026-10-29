@@ -2410,7 +2410,7 @@ CSV 列：
 | 列 | 必填 | 说明 |
 | --- | --- | --- |
 | subject | 是 | 须为合法 SubjectKey（`math` / `english` / `politics` / `major`），否则记错 |
-| minutes | 是 | 取整后须在 1 到 1440 之间，否则记错 |
+| minutes | 是 | 须为 1 到 1440 之间的纯数字整数字符串，否则该行记错且不导入 |
 | started_at | 是 | 须以 `YYYY-MM-DD` 开头、长度 10 到 40，且可被 `Date.parse` 解析，否则记错 |
 | note | 否 | 缺省 `null`；超过 500 字记错 |
 | plan_id | 否 | 缺省 `null`；非空时须为正整数且为当前用户的计划，否则记错 |

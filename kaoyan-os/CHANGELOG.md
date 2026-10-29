@@ -4,6 +4,15 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.25.0] - 2026-10-29
+
+### Added
+- POST /api/import/focus 的 CSV minutes 列改为严格校验：必须是 1 到 1440 之间的纯数字整数字符串，否则该行记录为错误且不导入。
+- 新增测试文件 apps/server/tests/focus-import-minutes-strict.test.ts。
+
+### Notes
+- 本轮模型通道：BotsRouter spark-x2.6。
+
 ## [1.24.0] - 2026-10-29
 
 ### Added
