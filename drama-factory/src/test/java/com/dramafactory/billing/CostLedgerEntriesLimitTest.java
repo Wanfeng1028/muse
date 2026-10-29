@@ -75,10 +75,24 @@ class CostLedgerEntriesLimitTest {
     }
 
     @Test
-    void entries_limit1000_clampedTo500() throws Exception {
+    void entries_limit1000_returns400() throws Exception {
         seedFiveEstimates();
         mockMvc.perform(get("/api/cost-ledger/entries").param("limit", "1000"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void entries_limit500_returns200() throws Exception {
+        seedFiveEstimates();
+        mockMvc.perform(get("/api/cost-ledger/entries").param("limit", "500"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(5));
+    }
+
+    @Test
+    void entries_limit501_returns400() throws Exception {
+        seedFiveEstimates();
+        mockMvc.perform(get("/api/cost-ledger/entries").param("limit", "501"))
+                .andExpect(status().isBadRequest());
     }
 }

@@ -155,7 +155,10 @@ public class CostLedgerController {
         if (parsed <= 0) {
             throw new BadRequestError("Invalid limit: " + value);
         }
-        return Math.min(parsed, 500);
+        if (parsed > 500) {
+            throw new BadRequestError("Invalid limit: " + value);
+        }
+        return parsed;
     }
 
     private static LocalDateTime parseTime(String value) {
