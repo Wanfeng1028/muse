@@ -9,6 +9,9 @@
 
 ### Changed
 
+- `SB_SMTP_PORT`、`SB_RATE_LIMIT_BURST`、`SB_RATE_LIMIT_WRITE_BURST` 三个环境变量的非法值不再静默回退默认值，服务启动时立即以 `log.Fatalf` 报错退出；未设置或合法时仍分别使用默认值 587 / 40 / 10，前后空白仍按 `TrimSpace` 解析。
+- 此为有意的启动契约变更：此前非法 int 环境变量会被静默替换为默认值，部署前须检查相关环境变量，回滚方式为将 `getIntEnv` 恢复为返回默认值版本并还原 `Load` 中的三处调用。
+
 - **DELETE /api/push/subscriptions 的 body 解析收紧**：body 非空但 JSON 非法（语法错误如 {"endpoint":，或 endpoint 类型错误如 {"endpoint":123}）时，不再静默忽略 body 并回落 query，而是返回 400，错误文案为“请求体不是合法 JSON”；空 body 仍回落 query，body 解出但 endpoint 为空时仍回落 query，无 endpoint 时仍返回 400“缺少 endpoint 参数”。实现只改 internal/api/push_subscription.go 的删除处理器与 import（补 errors、io），同文件 POST 处理器、store 层、前端 webpush.js 一字未动（前端 unsubscribe 发合法 JSON，不受影响）。这是一次有意的契约变更：此前畸形 body + 有效 query 会静默删掉 query 指向的订阅，现改为拒绝并保留订阅。
 
 - GET /api/notes 收紧 limit/offset 参数校验：limit 缺失或为空仍默认 50，offset 缺失或为空仍默认 0；但传入非整数值时不再静默回退默认值，而是返回 400，错误文案分别为 "limit 参数非法" 与 "offset 参数非法"；数值为负仍沿用既有 clamp 到 0 的语义（store 层将 limit <= 0 视为 100），超大 limit 仍返回全部行；tag 处理、ListNotes 调用、nil 转空 slice 处理均未改动，parseIntDefault 定义亦未动，store 层与前端均不受影响（前端仅调用不带 limit/offset 的 /api/notes）。这是一次有意的契约变更：此前 limit=abc / offset=abc 会静默回退默认值，现改为返回 400，若调用方依赖该静默回退，须自行修正查询参数；回滚方式为将 handler 解析恢复为 parseIntDefault 并还原旧测试断言。本轮改动文件：internal/api/server.go（仅 handler）、internal/api/server_deep_test.go（TestNotesListLimitOffsetClamp 非数字用例期望由 200 改为 400，并补充 limit/offset 两参数 1.5 与 1x 用例及错误文案断言）、新增 internal/api/notes_list_limit_offset_validation_test.go（TestNotesList_LimitOffsetValidation，15 个子用例）。

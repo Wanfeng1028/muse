@@ -43,6 +43,10 @@ type PushConfig struct {
 // 支持的变量：SB_ADDR、SB_DB、SB_DATA_DIR 以及 SB_PUSH_* / SB_SMTP_* / SB_WEBHOOK_* / SB_METRICS_* / SB_RATE_LIMIT_*。
 // 若推送配置校验失败，直接 log.Fatalf 让服务启动失败。
 func Load() Config {
+	smtpPort, smtpPortOk := getIntEnv("SB_SMTP_PORT", 587)
+	if !smtpPortOk {
+		log.Fatalf("SB_SMTP_PORT 非法: %q", os.Getenv("SB_SMTP_PORT"))
+	}
 	cfg := Config{
 		Addr:    getEnv("SB_ADDR", ":8080"),
 		DBPath:  getEnv("SB_DB", "data/second-brain.db"),
@@ -52,7 +56,7 @@ func Load() Config {
 			Time:            getEnv("SB_PUSH_TIME", "08:30"),
 			Timezone:        getEnv("SB_PUSH_TZ", "Asia/Shanghai"),
 			SMTPHost:        os.Getenv("SB_SMTP_HOST"),
-			SMTPPort:        getIntEnv("SB_SMTP_PORT", 587),
+			SMTPPort:        smtpPort,
 			SMTPUser:        os.Getenv("SB_SMTP_USER"),
 			SMTPPass:        os.Getenv("SB_SMTP_PASS"),
 			SMTPFrom:        os.Getenv("SB_SMTP_FROM"),
@@ -74,7 +78,15 @@ func Load() Config {
 	if !ok {
 		log.Fatalf("SB_RATE_LIMIT_WRITE_RPS 非法: %q", os.Getenv("SB_RATE_LIMIT_WRITE_RPS"))
 	}
-	cfg.RateLimit = RateLimitConfig{Enabled: getBoolEnv("SB_RATE_LIMIT_ENABLED", true), RPS: rps, Burst: getIntEnv("SB_RATE_LIMIT_BURST", 40), WriteRPS: wrps, WriteBurst: getIntEnv("SB_RATE_LIMIT_WRITE_BURST", 10)}
+	burst, burstOk := getIntEnv("SB_RATE_LIMIT_BURST", 40)
+	if !burstOk {
+		log.Fatalf("SB_RATE_LIMIT_BURST 非法: %q", os.Getenv("SB_RATE_LIMIT_BURST"))
+	}
+	writeBurst, writeBurstOk := getIntEnv("SB_RATE_LIMIT_WRITE_BURST", 10)
+	if !writeBurstOk {
+		log.Fatalf("SB_RATE_LIMIT_WRITE_BURST 非法: %q", os.Getenv("SB_RATE_LIMIT_WRITE_BURST"))
+	}
+	cfg.RateLimit = RateLimitConfig{Enabled: getBoolEnv("SB_RATE_LIMIT_ENABLED", true), RPS: rps, Burst: burst, WriteRPS: wrps, WriteBurst: writeBurst}
 	if err := cfg.Push.Validate(); err != nil {
 		log.Fatalf("推送配置无效: %v", err)
 	}
@@ -166,17 +178,17 @@ func getBoolEnv(key string, def bool) bool {
 	}
 }
 
-// getIntEnv 解析整型环境变量，未设置或非法时返回默认值。
-func getIntEnv(key string, def int) int {
+// getIntEnv 解析整型环境变量，未设置返回默认值，非法返回 false，由调用方决定是否致命。
+func getIntEnv(key string, def int) (int, bool) {
 	v := os.Getenv(key)
 	if v == "" {
-		return def
+		return def, true
 	}
 	n, err := strconv.Atoi(strings.TrimSpace(v))
 	if err != nil {
-		return def
+		return 0, false
 	}
-	return n
+	return n, true
 }
 
 // MetricsConfig 指标导出配置。Token 为空表示 /metrics 无需鉴权。
