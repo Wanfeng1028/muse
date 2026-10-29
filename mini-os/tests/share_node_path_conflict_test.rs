@@ -173,7 +173,7 @@ async fn dir_share_nodeid_without_path_missing_path() {
     assert_eq!(body["error"].as_str().unwrap(), "目录分享需要 path 参数");
 }
 #[tokio::test]
-async fn file_share_with_path_ignored_still_works() {
+async fn file_share_with_path_now_400() {
     let (app, cookie) = authed_app("file_share_path_ignored").await;
     let docs_id = create_node(&app, &cookie, "docs", "folder", None, None).await;
     let file_id = create_node(&app, &cookie, "a.txt", "file", Some(docs_id), Some("hello")).await;
@@ -185,7 +185,13 @@ async fn file_share_with_path_ignored_still_works() {
         Some(cookie.clone()),
     )
     .await;
-    assert_eq!(resp.status(), StatusCode::CREATED);
+    assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
+    let body = body_json(resp).await;
+    assert_eq!(body["error"].as_str().unwrap(), "file 模式下不能指定 path");
+    let resp = raw_request(app.clone(), "GET", "/api/shares", None, Some(cookie)).await;
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = body_json(resp).await;
+    assert_eq!(body, json!([]));
 }
 #[tokio::test]
 async fn file_share_missing_nodeid_400() {

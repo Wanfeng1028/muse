@@ -2498,6 +2498,12 @@ pub async fn create_share(
             }
         }
     } else {
+        if let Some(p) = &req.path {
+            if !p.trim().is_empty() {
+                return Err(err(StatusCode::BAD_REQUEST, "file 模式下不能指定 path"));
+            }
+        }
+
         let node_id = match req.node_id {
             Some(id) => id,
             None => return Err(err(StatusCode::BAD_REQUEST, "文件分享需要 node_id")),

@@ -1,3 +1,20 @@
+## [1.19.16] - 2026-10-29
+
+### Changed
+- src/handlers.rs 的 create_share file 分支在取 node_id 之前，若 req.path 为 Some 且 trim 后非空则返回 400 及固定文案“file 模式下不能指定 path”，空串与纯空白 path 仍视为未给走原有逻辑，src/models.rs 的 path 字段注释同步更新为“file 模式下非空 path 返回 400”。
+- 契约变更：此前 file 模式会无声丢弃 path，现改为拒绝，调用方 file 分享只给 nodeId，不许再带 path。
+- 未动范围：未动 dir 分支、type 非法校验、expires_at 校验、token 生成、share_type 缺省逻辑、前端，无迁移、无新依赖、无新增端点、无 UI 改动。
+
+### Added
+- 新增 tests/share_file_path_conflict_test.rs 含 5 例（file+path 400 且列表为空、空 path 仍 201、纯空白 path 仍 201、缺省 type+path 400、file+path 无 nodeId 时先报 path 冲突 400），5/5 通过。
+- 旧测 tests/share_node_path_conflict_test.rs 的 file_share_with_path_ignored_still_works 翻转为 file_share_with_path_now_400（断言 400 + 文案 + 列表为空），该文件 6/6 通过。
+
+### Verification
+- 靶向测试：除 handlers_deep 外逐目标跑通 30 个目标、共 248 项通过、0 项失败（含 lib_deep 判为抖动），其余约 68 个远离改动面的目标列为已知缺口，不谎称全量通过。
+- 格式化：cargo fmt --all --check 干净。
+- 真服务冒烟（18531 端口）：health 返回 1.19.16，file+path 返回 400 且文案逐字相符，file 仅 nodeId 返回 201 且 token 非空，分享列表恰 1 条，冒烟后服务已停、端口已关、冒烟二进制与冒烟库已删。
+- clippy 基线：clippy --all-targets -- -D warnings 有 7 处报错，均位于 handlers.rs 508/1374/1520 与 notes.rs 116/125，与本轮 2501 行附近改动无交集，属既有基线，本轮未扩范围修复。
+
 ## [1.19.15] - 2026-10-29
 
 ### Changed
