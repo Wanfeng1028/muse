@@ -332,6 +332,7 @@ async def review_batch(
 
     reject 分支循环结束统一 commit；confirm 分支逐条 commit，避免与
     create_transaction 内部新 session 争抢 SQLite 写锁。
+    非 HTTP 异常同样逐条记入 failed，不中断整批。
     """
     if payload.action not in ("confirm", "reject"):
         raise HTTPException(status_code=400, detail="action 非法，应为 confirm 或 reject")
@@ -353,6 +354,14 @@ async def review_batch(
             except HTTPException as exc:
                 await session.rollback()
                 failed.append({"review_id": review_id, "error": str(exc.detail)})
+                continue
+            except Exception as exc:
+                await session.rollback()
+                _logger.warning(
+                    "batch_item_failed",
+                    extra={"extra_data": {"action": "reject", "review_id": review_id, "error": repr(exc)}},
+                )
+                failed.append({"review_id": review_id, "error": "处理失败"})
                 continue
             await session.commit()
             succeeded.append({"review_id": result["id"], "status": result["status"]})
@@ -377,6 +386,14 @@ async def review_batch(
             except HTTPException as exc:
                 await session.rollback()
                 failed.append({"review_id": item.review_id, "error": str(exc.detail)})
+                continue
+            except Exception as exc:
+                await session.rollback()
+                _logger.warning(
+                    "batch_item_failed",
+                    extra={"extra_data": {"action": "confirm", "review_id": item.review_id, "error": repr(exc)}},
+                )
+                failed.append({"review_id": item.review_id, "error": "处理失败"})
                 continue
             await session.commit()
             succeeded.append(

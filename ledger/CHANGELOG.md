@@ -1,5 +1,24 @@
 # 更新日志
 
+## v2.17.30 - 2026-10-29
+
+### 新增
+- POST /api/bills/review/batch 的 confirm 与 reject 分支：逐条处理函数抛出非 HTTPException 异常时不再穿出接口返回 500，改为回滚该条、记入 failed（error 固定为“处理失败”）、继续处理后续条目，最终仍返回 200；与文档字符串“逐条独立处理”的承诺对齐。
+- 上述非 HTTP 异常分支各记一条 warning 日志（事件名 batch_item_failed，extra_data 含 action、review_id、error 的 repr），错误详情只进服务端日志、不返回给调用方。
+- review_batch 文档字符串追加一行：非 HTTP 异常同样逐条记入 failed，不中断整批。
+
+### 不变
+- HTTPException 路径（不存在、已处理、日期非法等）一字不动：仍回滚该条、failed 的 error 仍为原 detail、后续条目继续处理。
+- 成功项结构、action/items 校验、commit 顺序、单条确认/驳回接口、OCR 接口、其他路由一字不动；无迁移、无新依赖、无新端点。
+
+### 测试
+- 新增 tests/test_bills_review_batch_nonhttp_isolation.py，2 例全绿：confirm 分支与 reject 分支各 1 例，均用 monkeypatch 把对应逐条函数换成对指定 review_id 抛 RuntimeError、其余委托原函数的 fake，顺序为成功、失败、成功，断言返回 200、成功项恰为两端、失败项恰为中间条且 error 为“处理失败”、失败条仍为 pending。
+- 新测 2 例 + 既有批量测试 13 例合计 15 项全绿；ruff check 改动文件全洁（新测经 ruff format 与 import 排序修正）。
+- 真实服务冒烟（18495 端口隔离库，冒烟后服务已停、端口已关、隔离库已删）：health 200、建账户 201、批量驳回 2 条 200、批量确认 1 条 200 且返回 transaction_id、非法 action 400，全过。冒烟时版本仍为 2.17.29（升版在冒烟后做）。
+
+### 补充
+- 发版升版四处统一为 2.17.30：src/ledger/__init__.py、pyproject.toml、tests/test_version_consistency_v21715.py 的 EXPECTED_VERSION、CHANGELOG.md 顶条（本节）。
+
 ## v2.17.29 - 2026-10-29
 
 ### 新增

@@ -1,3 +1,3 @@
 """Ledger package."""
 
-__version__ = "2.17.29"
+__version__ = "2.17.30"
