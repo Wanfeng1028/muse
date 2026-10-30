@@ -15048,6 +15048,17 @@
       "source": "mcncarl/yichen-skills",
       "sourceUrl": "https://github.com/mcncarl/yichen-skills/blob/ed6200f81ff1fddd1482ad6cae7f4a75de5ffc75/plugins/yichen-grok-consult/skills/yichen-grok-consult/SKILL.md",
       "rewritten": false
+    },
+    {
+      "id": "clone-website",
+      "name": "clone-website",
+      "version": "1.0.0",
+      "description": "Rebuild existing web pages as working local code, matching their real content, assets, responsive layout, and interactions. Use for website cloning, replication, or reverse engineering, including Framer sites and animated pages.",
+      "author": "JCodesMore",
+      "license": "MIT",
+      "source": "JCodesMore/ai-website-cloner-template",
+      "sourceUrl": "https://github.com/JCodesMore/ai-website-cloner-template/blob/ee3f5a2f31fd549b9593fa4f7cf6d2955ee593bb/.agents/skills/clone-website/SKILL.md",
+      "rewritten": false
     }
   ]
 }
