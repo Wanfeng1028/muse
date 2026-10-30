@@ -1,3 +1,24 @@
+## [0.33.5] - 2026-10-30
+
+### 修复
+- `GET /api/monitors`（`handleListMonitors`，`internal/handlers/handlers.go`）：`MonitorStats` 出错不再静默回退 `uptime_24h=100.0`；现在通过 `logErr(r, "handleListMonitors", err)` 记录日志，并返回 HTTP 500「读取监控统计失败」。Store 层 `MonitorStats` 本身未改动：零检查的监控仍合法返回 100。
+
+### 测试
+- 新增 `internal/handlers/monitor_list_stats_error_test.go`，3 个用例全部通过：`TestMonitorListStatsErrorReturns500`（DROP TABLE checks 后 GET /api/monitors 返回 500）、`TestMonitorListSuccessUptime`（一个监控，200，`uptime_24h` 100.0）、`TestMonitorListEmptyReturnsArray`（200，空数组）。
+- 定向运行：`go test ./internal/handlers/ -run TestMonitorList`，3/3 通过。完整套件结果待编排者填写，此处不声明。
+
+### 视觉验收
+- 不适用，无 UI 变更。
+
+### 模型稿
+- 全部内容由 BotsRouter（模型 spark-x2.6）生成。Handler patch 1 次调用（433 tokens）。首次完整测试草稿调用仅返回推理文本、内容为空，已弃用；随后拆分为两个微批次（错误路径测试 2905 tokens，成功+空数组测试 2940 tokens），均一次成功。
+- 编排者机械修复并披露：补 `encoding/json` 导入；修复 `CreateMonitor` 双值赋值；为两个 store 创建的测试监控补 `TenantID: 1`（列表按租户过滤，缺失时监控不可见、测试失败）；移除未使用的 `fmt` 导入。
+- 首个调用方版本失败，因 `curl -K -` 与 `--data-binary @-` 竞争 stdin（请求体非法 JSON）；调用方改用 urllib，token 仅存于进程内存。
+- 本轮 token 用量（调用方 usage.log 全量）：433（handler）+ 8901（B2 整批弃稿）+ 2905 + 2940（测试微批）+ 1797（本条目）+ 1184（对照报告）= 18160；一次被弃用的仅推理调用（B2 整批）只产推理文本、内容为空，调用方记录 8901 token（prompt 901 + completion 8000），已计入本轮总账；另有一次 curl stdin 冲突的失败调用记录为 0 token。
+
+### 未变更
+- `ListMonitorsByTenant` 出错仍返回 500「读取监控列表失败」；`LastCheck` 出错仍渲染 `last_ok` 为 null、`last_checked_at` 为空（未知上次检查非伪造值，保留降级）；stats-days 与 delivery limit 的 clamp 保持为既有测试锁定的 200 契约；checks 列表 `total=0` 回退本轮未改，仍为已知遗留项。
+
 ## [0.33.4] - 2026-10-29
 
 ### 修复

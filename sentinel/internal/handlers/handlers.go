@@ -573,7 +573,9 @@ func (s *Server) handleListMonitors(w http.ResponseWriter, r *http.Request) {
 		}
 		uptime, _, _, _, err := s.store.MonitorStats(m.ID, 1)
 		if err != nil {
-			uptime = 100.0
+			logErr(r, "handleListMonitors", err)
+			writeErr(w, http.StatusInternalServerError, "读取监控统计失败")
+			return
 		}
 		item["uptime_24h"] = uptime
 		items = append(items, item)
