@@ -42,7 +42,7 @@ def get_settings() -> Settings:
     try:
         port = int(port_raw)
     except (TypeError, ValueError):
-        port = DEFAULT_PORT
+        raise ValueError(f"LEDGER_PORT 非法: {port_raw!r}，必须为整数")
 
     raw_level = os.environ.get("LEDGER_LOG_LEVEL", DEFAULT_LOG_LEVEL)
     log_level = raw_level.upper()

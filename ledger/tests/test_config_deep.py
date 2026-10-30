@@ -84,7 +84,7 @@ def test_relative_db_path_is_anchored_to_project_root(env_guard):
 
 
 def test_negative_and_oversized_port_fall_back_to_default(env_guard):
-    """边界：端口负数/超长数字串无法解析为合法 int 时回退默认端口。"""
+    """边界：端口负数/超长数字串透传，非数字串必须抛错。"""
     os.environ["LEDGER_PORT"] = "-1"
     mod = _fresh_config()
     settings_neg = mod.get_settings()
@@ -99,9 +99,10 @@ def test_negative_and_oversized_port_fall_back_to_default(env_guard):
 
     mod.get_settings.cache_clear()
     os.environ["LEDGER_PORT"] = "not-a-number"
-    settings_bad = mod.get_settings()
-    assert settings_bad.port == mod.DEFAULT_PORT
-    assert settings_bad.port == 8100
+    with pytest.raises(ValueError) as exc:
+        mod.get_settings()
+    assert "LEDGER_PORT" in str(exc.value)
+    assert "not-a-number" in str(exc.value)
 
 
 def test_invalid_log_level_raises(env_guard):

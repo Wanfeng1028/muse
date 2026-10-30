@@ -1,5 +1,23 @@
 # 更新日志
 
+## v2.17.31 - 2026-10-31
+
+### 新增
+- get_settings 读取 LEDGER_PORT 时，非数字值不再静默回退默认端口 8100，改为抛 ValueError，detail 文案为“LEDGER_PORT 非法: '<原始值>'，必须为整数”，与同文件日志级别、币种非法即抛错的口径对齐；代码至此与 OPERATIONS.md“非整数时启动失败”的既有表述一致。
+- 负数与超大整数仍透传（本轮不收紧）；日志级别、币种、db_path 逻辑一字不动。
+
+### 不变
+- 其他接口、筛选器、分页与计算逻辑一字不动；无迁移、无新依赖、无新端点、无 UI 改动。
+
+### 测试
+- 新增 tests/test_config_port_invalid.py，6 例全绿（非数字参数化 4 例：not-a-number、8100x、空串、8100.5 均抛错且文案含 LEDGER_PORT 与原始值；8200 透传；带空白 8200 透传）。
+- tests/test_config_deep.py 旧用例第三段同步改为抛错断言；新测 6 + 深测 14 = 20 项全绿；再加 test_logging 与 test_currencies 相关用例合计 48 项全绿。
+- ruff check 与 ruff format 在 src/ledger/config.py 与新测试文件上全洁；test_config_deep.py 既存导入与格式漂移（非本轮改动行）未扩范围修复。
+- 真实服务冒烟（18555 端口隔离库，冒烟后服务已停、端口已关、冒烟库已删）：非法端口启动 exit 1 且文案逐字相符；合法端口 health 返回 2.17.30（冒烟在升版前做）、建账户成功。
+
+### 补充
+- 发版升版四处统一为 2.17.31：src/ledger/__init__.py、pyproject.toml、tests/test_version_consistency_v21715.py 的 EXPECTED_VERSION、CHANGELOG.md 顶条（本节）。
+
 ## v2.17.30 - 2026-10-29
 
 ### 新增
