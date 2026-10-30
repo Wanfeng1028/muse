@@ -38,9 +38,9 @@ pub struct CreateNodeRequest {
     pub name: String,
     /// 类型：只取 "file" 或 "folder"
     pub kind: String,
-    /// 初始内容（可选）
+    /// 初始内容（可选）；与 bytes 同时指定非空内容时返回 400
     pub content: Option<String>,
-    /// 二进制内容（JSON 数字数组）；提供时存入 content_blob 并优先于 content
+    /// 二进制内容（JSON 数字数组）；提供时存入 content_blob；与非空 content 同时指定时返回 400，不再静默丢弃 content
     pub bytes: Option<Vec<u8>>,
 }
 

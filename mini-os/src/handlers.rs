@@ -495,6 +495,18 @@ pub async fn create_fs(
     if req.kind != "file" && req.kind != "folder" {
         return Err(err(StatusCode::BAD_REQUEST, "kind 必须为 file 或 folder"));
     }
+    // bytes 与 content 不可同时指定；否则 content 会被无声丢弃。
+    if req.bytes.is_some()
+        && req
+            .content
+            .as_deref()
+            .map_or(false, |c| !c.trim().is_empty())
+    {
+        return Err(err(
+            StatusCode::BAD_REQUEST,
+            "bytes 与 content 不能同时指定",
+        ));
+    }
     // 内容：bytes（二进制数组）优先存入 content_blob；否则用 content 文本。
     let (content, content_blob): (String, Option<Vec<u8>>) = match req.bytes {
         Some(b) => (String::new(), Some(b)),
