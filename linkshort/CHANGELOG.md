@@ -5,6 +5,15 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.37.0] - 2026-10-31
+
+### 新增
+- 新增 11 个数值/布尔/duration 环境变量：`LINKSHORT_RATE_LIMIT_RPS`、`LINKSHORT_RATE_LIMIT_BURST`、`LINKSHORT_RATE_LIMIT_ENABLED`、`LINKSHORT_EXPORT_RATE_LIMIT_PER_MINUTE`、`LINKSHORT_BURN_PURGE_AFTER_DESTROY`、`LINKSHORT_PURGE_INTERVAL`、`LINKSHORT_PURGE_RETENTION_DAYS`、`LINKSHORT_BACKUP_MAX_AGE_DAYS`、`LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD`、`LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW`、`LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD`。非法值启动即 `log.Fatalf` 报错退出，不再静默回默认值；未设置或空串仍用默认值；范围钳制口径不变（PurgeInterval<=0 回 24h、PurgeRetentionDays<0 回 7、BackupMaxAgeDays<0 回 7、Threshold<=0 回 10、IPThreshold<=0 回 20、Window<=0 回 5m）。字符串变量、可信代理、自动生成密钥逻辑不动。
+
+### 测试
+- 新增 `config_env_strict_float_int_test.go`、`config_env_strict_bool_test.go`、`config_env_strict_duration_test.go` 四组 helper 表驱动测试。
+- 旧非法回落测试已按新契约改写（Purge 保留天数负值）与删除（RateLimit 非法回落）。
+
 ## [v1.36.0] - 2026-10-29
 
 ### 新增

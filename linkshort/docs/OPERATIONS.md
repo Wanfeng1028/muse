@@ -95,19 +95,19 @@ services:
 | `LINKSHORT_DB` | `./data/linkshort.db` | SQLite 数据库文件路径 |
 | `LINKSHORT_ADMIN_KEY` | 空 | 管理接口的 API Key。为空时程序自动生成 32 位 hex 并打印到日志，**重启会变**，生产环境必须显式设置 |
 | `LINKSHORT_BASE_URL` | 空 | 短链拼接用的基础 URL。为空时用请求的 Host 拼 |
-| `LINKSHORT_RATE_LIMIT_RPS` | `20` | 限流令牌桶每秒补充速率（v1.2 新增） |
-| `LINKSHORT_RATE_LIMIT_BURST` | `40` | 限流令牌桶容量，允许的瞬时突发量（v1.2 新增） |
-| `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否开启限流（v1.2 新增），`true`/`false` |
-| `LINKSHORT_EXPORT_RATE_LIMIT_PER_MINUTE` | `10` | CSV 导出额外限流：两处导出端点共用的慢速令牌桶每分钟限额（v1.15 新增）；`<=0`=关闭导出额外限流（全局限流仍在），仅全局限流开启时生效 |
-| `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档 |
-| `LINKSHORT_PURGE_INTERVAL` | `24h` | 定时清理间隔（v1.5 新增），duration 格式如 `24h`/`90m`，解析失败回 `24h` |
-| `LINKSHORT_PURGE_RETENTION_DAYS` | `7` | 已销毁 burn 链保留天数（v1.5 新增），`<0` 回 `7` |
+| `LINKSHORT_RATE_LIMIT_RPS` | `20` | 限流令牌桶每秒补充速率（v1.2 新增）；非法值启动即报错退出（v1.37.0 起） |
+| `LINKSHORT_RATE_LIMIT_BURST` | `40` | 限流令牌桶容量，允许的瞬时突发量（v1.2 新增）；非法值启动即报错退出（v1.37.0 起） |
+| `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否开启限流（v1.2 新增），`true`/`false`；非法值启动即报错退出（v1.37.0 起） |
+| `LINKSHORT_EXPORT_RATE_LIMIT_PER_MINUTE` | `10` | CSV 导出额外限流：两处导出端点共用的慢速令牌桶每分钟限额（v1.15 新增）；`<=0`=关闭导出额外限流（全局限流仍在），仅全局限流开启时生效；非法值启动即报错退出（v1.37.0 起） |
+| `LINKSHORT_BURN_PURGE_AFTER_DESTROY` | `false` | burn 销毁后是否彻底删除行（v1.3 新增），`true`=销毁即删库+404，`false`=仅禁用+410 留档；非法值启动即报错退出（v1.37.0 起） |
+| `LINKSHORT_PURGE_INTERVAL` | `24h` | 定时清理间隔（v1.5 新增），duration 格式如 `24h`/`90m`；非法值启动即报错退出（v1.37.0 起），`<=0` 仍回 `24h` |
+| `LINKSHORT_PURGE_RETENTION_DAYS` | `7` | 已销毁 burn 链保留天数（v1.5 新增），`<0` 回 `7`；非法值启动即报错退出（v1.37.0 起） |
 | `LINKSHORT_BACKUP_DIR` | `./backups` | 备份目录（backup.sh 与 /api/backup/health 共用）（v1.6 新增） |
-| `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期（v1.6 新增） |
+| `LINKSHORT_BACKUP_MAX_AGE_DAYS` | `7` | 备份过期阈值天数，超过判降级；`0`=不检查过期（v1.6 新增）；非法值启动即报错退出（v1.37.0 起） |
 | `LINKSHORT_ALERT_WEBHOOK_URL` | 空 | 告警 webhook：backup.sh 备份失败时 POST JSON 通知（v1.6 新增）；v1.10 起密码失败高告警复用该地址；v1.12 起支持逗号分隔多个 URL（空格 trim、空项剔除、去重保序），逐个 POST |
-| `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` | `10` | 密码失败高告警阈值：单个短链滑动窗口内密码失败达到该次数触发告警（v1.10 新增），`<=0` 回 `10` |
-| `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` | `5m` | 密码失败滑动窗口时长（v1.10 新增），duration 格式，解析失败或 `<=0` 回 `5m` |
-| `LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD` | `20` | 密码失败高告警 IP 维度阈值：同一 IP 滑动窗口内密码失败达到该次数触发告警（v1.12 新增），`<=0` 回 `20` |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_THRESHOLD` | `10` | 密码失败高告警阈值：单个短链滑动窗口内密码失败达到该次数触发告警（v1.10 新增），`<=0` 回 `10`；非法值启动即报错退出（v1.37.0 起） |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_WINDOW` | `5m` | 密码失败滑动窗口时长（v1.10 新增），duration 格式；非法值启动即报错退出（v1.37.0 起），`<=0` 仍回 `5m` |
+| `LINKSHORT_PASSWORD_FAIL_ALERT_IP_THRESHOLD` | `20` | 密码失败高告警 IP 维度阈值：同一 IP 滑动窗口内密码失败达到该次数触发告警（v1.12 新增），`<=0` 回 `20`；非法值启动即报错退出（v1.37.0 起） |
 
 
 限流按 IP + API Key 两个维度分别做令牌桶；`/metrics`、`/api/health`、`/api/readyz` 三个路径免限流。

@@ -186,26 +186,6 @@ func TestFromEnvRateLimitDisabled(t *testing.T) {
 	}
 }
 
-// TestFromEnvRateLimitInvalidFallsBack 检查非法数值回落到默认值。
-func TestFromEnvRateLimitInvalidFallsBack(t *testing.T) {
-	clearAllEnv(t)
-	setEnv(t, envRateLimitRPS, "not-a-number")
-	setEnv(t, envRateLimitBurst, "also-bad")
-	setEnv(t, envRateLimitEnabled, "maybe")
-
-	cfg := FromEnv()
-
-	if cfg.RateLimitRPS != 20 {
-		t.Fatalf("非法 RateLimitRPS 应回落 20，got %v", cfg.RateLimitRPS)
-	}
-	if cfg.RateLimitBurst != 40 {
-		t.Fatalf("非法 RateLimitBurst 应回落 40，got %d", cfg.RateLimitBurst)
-	}
-	if !cfg.RateLimitEnabled {
-		t.Fatalf("非法 RateLimitEnabled 应回落 true，got %v", cfg.RateLimitEnabled)
-	}
-}
-
 // TestFromEnvBurnPurgeAfterDestroy 检查焚毁后彻底删除的开关解析。
 func TestFromEnvBurnPurgeAfterDestroy(t *testing.T) {
 	clearAllEnv(t)

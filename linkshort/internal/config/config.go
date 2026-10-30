@@ -67,56 +67,56 @@ const (
 	envTrustedProxies               = "LINKSHORT_TRUSTED_PROXIES"
 )
 
-// getenvFloatDefault 读取浮点型环境变量，解析失败返回默认值。
-func getenvFloatDefault(key string, def float64) float64 {
+// getenvFloat 读取浮点型环境变量。未设置或空串返回 def；解析成功返回解析值；解析失败返回零值且 ok 为 false。
+func getenvFloat(key string, def float64) (float64, bool) {
 	v := os.Getenv(key)
 	if v == "" {
-		return def
+		return def, true
 	}
 	f, err := strconv.ParseFloat(v, 64)
 	if err != nil {
-		return def
+		return 0, false
 	}
-	return f
+	return f, true
 }
 
-// getenvIntDefault 读取整型环境变量，解析失败返回默认值。
-func getenvIntDefault(key string, def int) int {
+// getenvInt 读取整型环境变量。未设置或空串返回 def；解析成功返回解析值；解析失败返回零值且 ok 为 false。
+func getenvInt(key string, def int) (int, bool) {
 	v := os.Getenv(key)
 	if v == "" {
-		return def
+		return def, true
 	}
 	i, err := strconv.Atoi(v)
 	if err != nil {
-		return def
+		return 0, false
 	}
-	return i
+	return i, true
 }
 
-// getenvBoolDefault 读取布尔型环境变量，解析失败返回默认值。
-func getenvBoolDefault(key string, def bool) bool {
+// getenvBool 读取布尔型环境变量。未设置或空串返回 def；解析成功返回解析值；解析失败返回零值且 ok 为 false。
+func getenvBool(key string, def bool) (bool, bool) {
 	v := os.Getenv(key)
 	if v == "" {
-		return def
+		return def, true
 	}
 	b, err := strconv.ParseBool(v)
 	if err != nil {
-		return def
+		return false, false
 	}
-	return b
+	return b, true
 }
 
-// getenvDurationDefault 读取 duration 型环境变量，解析失败返回默认值。
-func getenvDurationDefault(key string, def time.Duration) time.Duration {
+// getenvDuration 读取 duration 型环境变量。未设置或空串返回 def；解析成功返回解析值；解析失败返回零值且 ok 为 false。
+func getenvDuration(key string, def time.Duration) (time.Duration, bool) {
 	v := os.Getenv(key)
 	if v == "" {
-		return def
+		return def, true
 	}
 	d, err := time.ParseDuration(v)
 	if err != nil {
-		return def
+		return 0, false
 	}
-	return d
+	return d, true
 }
 
 // SplitWebhookURLs 把逗号分隔的 webhook 地址解析为去重保序的 slice。
@@ -193,26 +193,61 @@ func FromEnv() *Config {
 		DBPath:   getenvDefault(envDB, "./data/linkshort.db"),
 		AdminKey: os.Getenv(envAdminKey),
 		BaseURL:  os.Getenv(envBaseURL),
-
-		RateLimitRPS:             getenvFloatDefault(envRateLimitRPS, 20),
-		RateLimitBurst:           getenvIntDefault(envRateLimitBurst, 40),
-		RateLimitEnabled:         getenvBoolDefault(envRateLimitEnabled, true),
-		ExportRateLimitPerMinute: getenvIntDefault(envExportRateLimitPerMinute, 10),
-
-		BurnPurgeAfterDestroy: getenvBoolDefault(envBurnPurgeAfterDestroy, false),
-
-		PurgeInterval:      getenvDurationDefault(envPurgeInterval, 24*time.Hour),
-		PurgeRetentionDays: getenvIntDefault(envPurgeRetentionDays, 7),
-
-		BackupDir:        getenvDefault(envBackupDir, "./backups"),
-		BackupMaxAgeDays: getenvIntDefault(envBackupMaxAgeDays, 7),
-
-		PasswordFailAlertThreshold:   getenvIntDefault(envPasswordFailAlertThreshold, 10),
-		PasswordFailAlertWindow:      getenvDurationDefault(envPasswordFailAlertWindow, 5*time.Minute),
-		PasswordFailAlertIPThreshold: getenvIntDefault(envPasswordFailAlertIPThreshold, 20),
-		AlertWebhookURL:              getenvDefault(envAlertWebhookURL, ""),
-		AlertWebhookURLs:             SplitWebhookURLs(getenvDefault(envAlertWebhookURL, "")),
 	}
+
+	var ok bool
+	cfg.RateLimitRPS, ok = getenvFloat(envRateLimitRPS, 20)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envRateLimitRPS, os.Getenv(envRateLimitRPS))
+	}
+	cfg.RateLimitBurst, ok = getenvInt(envRateLimitBurst, 40)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envRateLimitBurst, os.Getenv(envRateLimitBurst))
+	}
+	cfg.RateLimitEnabled, ok = getenvBool(envRateLimitEnabled, true)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envRateLimitEnabled, os.Getenv(envRateLimitEnabled))
+	}
+	cfg.ExportRateLimitPerMinute, ok = getenvInt(envExportRateLimitPerMinute, 10)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envExportRateLimitPerMinute, os.Getenv(envExportRateLimitPerMinute))
+	}
+
+	cfg.BurnPurgeAfterDestroy, ok = getenvBool(envBurnPurgeAfterDestroy, false)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envBurnPurgeAfterDestroy, os.Getenv(envBurnPurgeAfterDestroy))
+	}
+
+	cfg.PurgeInterval, ok = getenvDuration(envPurgeInterval, 24*time.Hour)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envPurgeInterval, os.Getenv(envPurgeInterval))
+	}
+	cfg.PurgeRetentionDays, ok = getenvInt(envPurgeRetentionDays, 7)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envPurgeRetentionDays, os.Getenv(envPurgeRetentionDays))
+	}
+
+	cfg.BackupDir = getenvDefault(envBackupDir, "./backups")
+	cfg.BackupMaxAgeDays, ok = getenvInt(envBackupMaxAgeDays, 7)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envBackupMaxAgeDays, os.Getenv(envBackupMaxAgeDays))
+	}
+
+	cfg.PasswordFailAlertThreshold, ok = getenvInt(envPasswordFailAlertThreshold, 10)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envPasswordFailAlertThreshold, os.Getenv(envPasswordFailAlertThreshold))
+	}
+	cfg.PasswordFailAlertWindow, ok = getenvDuration(envPasswordFailAlertWindow, 5*time.Minute)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envPasswordFailAlertWindow, os.Getenv(envPasswordFailAlertWindow))
+	}
+	cfg.PasswordFailAlertIPThreshold, ok = getenvInt(envPasswordFailAlertIPThreshold, 20)
+	if !ok {
+		log.Fatalf("%s 非法: %q", envPasswordFailAlertIPThreshold, os.Getenv(envPasswordFailAlertIPThreshold))
+	}
+	cfg.AlertWebhookURL = getenvDefault(envAlertWebhookURL, "")
+	cfg.AlertWebhookURLs = SplitWebhookURLs(getenvDefault(envAlertWebhookURL, ""))
+
 	trusted, err := ParseTrustedProxies(os.Getenv(envTrustedProxies))
 	if err != nil {
 		log.Fatalf("LINKSHORT_TRUSTED_PROXIES 解析失败: %v", err)
