@@ -1,0 +1,9 @@
+PRODUCTION CHECKLIST REPORT notes limit offset negative 400
+范围: GET /api/notes negative limit/offset now returns 400 instead of silently clamping to 0; test sync only; no UI change so visual acceptance does not apply; no migration, no new dependency, no new endpoint.
+- 可靠性: missing/empty limit/offset keep defaults 50/0, existing frontend calls (which pass no limit/offset) are unaffected; negative values are now explicitly rejected with 400, superseding the 2026-10-28 entry that kept clamping; rollback is to restore the two clamp branches and old test expectations.
+- 可观测性: 400 responses carry the explicit texts "limit 参数非法" / "offset 参数非法"; no logging or metrics path changed.
+- 数据与状态: change is only in the handler parameter-parsing layer, store and data model untouched; ListNotes call and nil-to-empty-slice handling unchanged.
+- 部署运维: no migration, no new dependency, no new endpoint, change confined to internal/api, ships with a normal release; frontend passes no limit/offset, unaffected.
+- 安全与健壮性: malformed input is explicitly rejected instead of being masked by a default; huge limit still returns all rows, unchanged, no new resource-amplification surface.
+- 可维护性: handler code is 2 changed branches; tests synced (validation test negative rows 200 to 400, deep test renamed to TestNotesListLimitOffsetNegative400 with negative cases 200 to 400); no other test file changed.
+结论: targeted TestNotesList_LimitOffsetValidation 15/15 PASS, TestNotesListLimitOffsetNegative400 9/9 PASS, gofmt clean on the three changed files, go vet internal/api clean, full go test ./... all packages ok (api 85.6s, store 73.0s); real-service smoke on port 18512 with an isolated database: health 200, limit=-5 400, offset=-10 400, limit=2 200, no params 200, server stopped, port verified closed, isolation database and binary deleted.

@@ -41,8 +41,8 @@ func TestNotesList_LimitOffsetValidation(t *testing.T) {
 		{"offset empty", "offset=", http.StatusOK, 3, ""},
 		{"limit 2", "limit=2", http.StatusOK, 2, ""},
 		{"offset 1", "offset=1", http.StatusOK, 2, ""},
-		{"limit negative", "limit=-5", http.StatusOK, 3, ""},
-		{"offset negative", "offset=-10", http.StatusOK, 3, ""},
+		{"limit negative", "limit=-5", http.StatusBadRequest, 0, "limit 参数非法"},
+		{"offset negative", "offset=-10", http.StatusBadRequest, 0, "offset 参数非法"},
 		{"limit huge", "limit=100000", http.StatusOK, 3, ""},
 		{"limit and offset", "limit=1&offset=1", http.StatusOK, 1, ""},
 	}

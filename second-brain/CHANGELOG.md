@@ -27,6 +27,8 @@
 - **GET /api/digest 的 `n` 参数校验收紧**：缺省或空参数仍默认 5，非整数（如 `abc`、`1.5`、`1x`）不再静默回落，而是返回 400 错误，错误文案固定为“n 参数非法”；解析成功后的钳制逻辑保持不变（`n` 小于等于 0 置 5、大于 200 置 200）。新增测试文件 `internal/api/digest_n_validation_test.go`，覆盖非法输入与钳制边界共 8 个子用例。
 
 
+- `GET /api/notes` 不再把负数 `limit`/`offset` 静默钳到 0：`limit=-5` 现返回 400，错误为 `limit 参数非法`；`offset=-10` 现返回 400，错误为 `offset 参数非法`。改动仅限 `internal/api/server.go` 的 handler（两处 clamp 分支改为 `writeError` 后 `return`）；非整数处理（400，文案同上）、缺省/空值（`limit 50`、`offset 0`）、超大 `limit`、tag 处理、`ListNotes` 调用、nil→空切片、`parseIntDefault` 均不变；store 层与前端未动（前端调用 `/api/notes` 不带 `limit`/`offset`）。测试同步：`internal/api/notes_list_limit_offset_validation_test.go` 负值行由 200 改为 400 并校验错误文案；`internal/api/server_deep_test.go` 负值用例由 200 改为 400 并校验错误文案，测试函数由 `TestNotesListLimitOffsetClamp` 更名为 `TestNotesListLimitOffsetNegative400`（已无 clamp）。此为有意的契约变更，取代 2026-10-28 的 notes limit/offset 条目（该条明确保留负数钳制）；回滚需恢复两处 clamp 分支与旧测试预期。验证：定向测试 `TestNotesList_LimitOffsetValidation` 15/15、`TestNotesListLimitOffsetNegative400` 9/9 通过；全量 `go test ./...` 各包通过；`gofmt`、`go vet` 干净；端口 18512 使用隔离库的真实服务冒烟：health 200，`limit=-5` 400，`offset=-10` 400，`limit=2` 200，无参数 200；服务已停止并确认端口关闭，隔离库与二进制已删除。
+
 ### 新增
 - **GET /api/review/heatmap 的 `days` 参数校验收紧**：照搬 forecast 的 `days` 写法，缺省或空仍默认 365；非整数（如 `abc`、`1.5`、`1x`）由原先静默按默认值处理改为返回 400，错误文案为“days 参数非法”。解析成功后的钳制逻辑保持不变（小于等于 0 置 365、大于 366 置 366）。新增 `internal/api/review_heatmap_validation_test.go`，8 个子用例覆盖 `abc`/`1.5`/`1x`（均 400）与不传/`1`/`0`/`999`/`-5`（均 200）。既有 `TestReviewHeatmapAPI_Clamp` 的 `days=abc` 期望由 200 同步改为 400。
 

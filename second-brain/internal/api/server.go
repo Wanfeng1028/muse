@@ -59,7 +59,8 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 			limit = v
 		}
 		if limit < 0 {
-			limit = 0
+			writeError(w, r, http.StatusBadRequest, "limit 参数非法")
+			return
 		}
 		offset := 0
 		if rawOffset := q.Get("offset"); rawOffset != "" {
@@ -71,7 +72,8 @@ func NewServer(st *store.Store, cfg config.Config) http.Handler {
 			offset = v
 		}
 		if offset < 0 {
-			offset = 0
+			writeError(w, r, http.StatusBadRequest, "offset 参数非法")
+			return
 		}
 		notes, err := st.ListNotes(tag, limit, offset)
 		if err != nil {

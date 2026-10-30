@@ -161,7 +161,7 @@ func TestSearchQueryTermsChinese(t *testing.T) {
 	}
 }
 
-func TestNotesListLimitOffsetClamp(t *testing.T) {
+func TestNotesListLimitOffsetNegative400(t *testing.T) {
 	h := NewServer(newStore(t), config.Config{})
 	cases := []struct {
 		name     string
@@ -169,8 +169,8 @@ func TestNotesListLimitOffsetClamp(t *testing.T) {
 		wantCode int
 		wantErr  string
 	}{
-		{"negative limit", "/api/notes?limit=-5", http.StatusOK, ""},
-		{"negative offset", "/api/notes?offset=-10", http.StatusOK, ""},
+		{"negative limit", "/api/notes?limit=-5", http.StatusBadRequest, "limit 参数非法"},
+		{"negative offset", "/api/notes?offset=-10", http.StatusBadRequest, "offset 参数非法"},
 		{"limit non-numeric", "/api/notes?limit=abc", http.StatusBadRequest, "limit 参数非法"},
 		{"limit decimal", "/api/notes?limit=1.5", http.StatusBadRequest, "limit 参数非法"},
 		{"limit mixed", "/api/notes?limit=1x", http.StatusBadRequest, "limit 参数非法"},
