@@ -1,6 +1,22 @@
 
 # 更新日志
 
+## v1.40.0 — 2026-10-30
+
+### Changed
+- `POST /api/feeds` (`create_feed`) and `PUT /api/feeds/<id>` (`update_feed`) in `feedflow/feedflow/api.py` now reject a JSON bool or float `folder_id` with 400 and error `"folder_id 非法"`: each function gained one `isinstance(folder_id/value, (bool, float))` check (4 added lines total), mirroring the v1.39.0 `mark_read` validation style. Previously `int(True)` became 1 and `int(1.5)` became 1, silently.
+- New `tests/test_feed_folder_id_bool_float_v140.py`, 10 tests: create `True`/`False`/`1.5`/`2.0` all 400 with that error and no feed created; create int `2` returns 201 with `folder_id` 2 and create without `folder_id` returns 201; update `True`/`1.5`/`False` all 400 with that error and `folder_id` unchanged; update int `3` returns 200 with `folder_id` 3; update of a missing feed with `folder_id` `True` returns 404 (existence is checked first).
+- Targeted run: new 10 tests plus `tests/test_api_deep2.py` plus mark_read v139/v138 tests: 41 passed, 1 failed. The 1 failure is `tests/test_api_deep2.py::test_articles_pagination_edge_cases`, reproduced on the clean tree without this change, so it is pre-existing and unrelated.
+- `ruff check` on the two changed files: all clean.
+- Real-service smoke on port 18511 with an isolated database: `healthz` 200; create `True` and `1.5` both 400 with the error text; create without `folder_id` 201; update `True` 400; update `3` returns 200 with `folder_id` 3; missing feed plus `True` 404; server stopped and port verified closed afterwards, isolation database deleted.
+- This closes the v1.39.0 known limitation that `create_feed` and `update_feed` `folder_id` were still `int()`-converted.
+
+### 已知限制
+- 全量 pytest 本轮未跑。
+- `update_feed` `interval_min`/`enabled`/`position` and `create_feed` `interval_min` still use plain `int()` conversion and are unchanged.
+- Negative `folder_id` still passes through in create/update and is unchanged.
+- No UI change, so no new screenshot.
+
 ## v1.39.0 — 2026-10-29
 
 ### Changed

@@ -409,6 +409,8 @@ def create_feed():
         return _err("feed_url 必填", 400)
     folder_id = data.get("folder_id")
     try:
+        if isinstance(folder_id, (bool, float)):
+            return _err("folder_id 非法", 400)
         folder_id = int(folder_id) if folder_id not in (None, "") else None
     except (TypeError, ValueError):
         return _err("folder_id 非法", 400)
@@ -446,6 +448,8 @@ def update_feed(feed_id: int):
                 fields[key] = None
             else:
                 try:
+                    if isinstance(value, (bool, float)):
+                        return _err("folder_id 非法", 400)
                     fields[key] = int(value)
                 except (TypeError, ValueError):
                     return _err("folder_id 非法", 400)
