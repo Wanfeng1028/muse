@@ -1,3 +1,26 @@
+## Unreleased（2026-10-31）——CLI --max-mb 非正数返回错误
+
+### 问题
+- CLI 的 --max-mb（index/serve 两路）此前只校验尾随字符，0 或负数被静默忽略：后续代码只在 maxMb > 0 时才设置 maxFileBytes，0 或负数最终仍用默认 5MB 上限，调用方传错参数无法发现。
+- 这与同文件 --limit 分支的非正数返回错误口径不一致。
+- 无测试锁定该旧语义。
+
+### 修复
+- src/main.cpp 的 --max-mb 分支在 pos 整串校验之后、赋值之前加非正数校验：val <= 0 时打印既有文案“错误：--max-mb 参数无效”并 return 1。
+- 正数行为、尾随字符校验、缺参报错、catch 分支文案、index/serve 两路赋值一字不动。
+
+### 验证
+- cmake --build build --target docseek 成功。
+- 全新 1 文档库上 7 项真实二进制检查全部通过：
+  - index --max-mb 0、index --max-mb -5、serve --max-mb 0（--port 0）均退出码 1 且 stderr 为“错误：--max-mb 参数无效”。
+  - index --max-mb 10x 与 --max-mb abc 仍退出码 1 同文案（回归）。
+  - index --max-mb 10 退出码 0（扫描 1 文件、新增 1）。
+  - 随后 search 退款退出码 0 并命中该文档（正向对照）。
+
+### 无变更
+- 无版本变更、无 schema 变更、无 UI 改动。
+- 本轮未运行全量 ctest。
+
 ## Unreleased（2026-10-30）——serve 环境变量尾随字符回默认值
 
 - **问题**：serve 的 getEnvInt/getEnvDouble 用 std::stoi/std::stod 时不查 pos，带尾随字符的环境变量值被静默截断接受（如 DOCSEEK_SLOW_MS=0.001x 按 0.001 生效、DOCSEEK_LOCATE_CONCURRENCY=4x 按 4 生效），调用方配错值无法发现；这与 main.cpp 的 readWeightEnv 已有的整串合法口径不一致。

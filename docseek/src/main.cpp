@@ -640,6 +640,10 @@ int main(int argc, char** argv) {
                     std::cerr << "错误：--max-mb 参数无效\n";
                     return 1;
                 }
+                if (val <= 0) {
+                    std::cerr << "错误：--max-mb 参数无效\n";
+                    return 1;
+                }
                 if (command == "serve") {
                     serveOpts.maxMb = val;
                 } else {
