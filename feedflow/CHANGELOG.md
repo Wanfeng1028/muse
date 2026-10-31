@@ -1,6 +1,18 @@
 
 # 更新日志
 
+## v1.41.0 — 2026-10-31
+
+### Changed
+- `POST /api/feeds`（`create_feed`，`feedflow/feedflow/api.py`）的 `interval_min` 分支新增 `isinstance(interval_min, (bool, float))` 校验：JSON 布尔值与浮点数一律返回 400，错误为“interval_min 非法”，与 v1.40.0 的 `folder_id` 分支同款；此前 `int(True)=1`、`int(1.5)=1` 被静默重解释。`None`/空串仍默认 0、整数与数字字符串转换、非数字的既有 400、`feed_url` 必填、`folder_id` 分支、`update_feed` 一字不动。
+
+### 测试验证
+- 新增 `tests/test_feed_interval_bool_float_v141.py`，7 例：True/False/1.5/2.0 均 400 且错误文案相符、且列表中无该源；int 30 返回 201 且 `interval_min` 为 30；不传返回 201 且 `interval_min` 为 0；字符串 `"30"` 返回 201 且 `interval_min` 为 30。
+- 靶向运行：新 7 例 + v1.40.0 的 `folder_id` 10 例，17 passed；`ruff check` 两变更文件全洁。
+
+### 已知限制
+- 全量 pytest 本轮未跑；`update_feed` 的 `interval_min`/`enabled`/`position` 仍用 plain `int()` 转换，未改；create/update 的负 `folder_id` 仍透传，未改；无 UI 改动，无新截图。
+
 ## v1.40.0 — 2026-10-30
 
 ### Changed

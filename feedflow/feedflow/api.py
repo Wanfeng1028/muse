@@ -416,6 +416,8 @@ def create_feed():
         return _err("folder_id 非法", 400)
     interval_min = data.get("interval_min", 0)
     try:
+        if isinstance(interval_min, (bool, float)):
+            return _err("interval_min 非法", 400)
         interval_min = int(interval_min) if interval_min not in (None, "") else 0
     except (TypeError, ValueError):
         return _err("interval_min 非法", 400)
