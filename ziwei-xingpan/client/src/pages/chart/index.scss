@@ -1,0 +1,20 @@
+@import '../../styles/variables.scss';
+.chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
+.palace { background: $card; border-radius: 12px; padding: 8px; min-height: 118px; }
+.palace.current { border: 2px solid $accent; }
+.palace-head { display: flex; justify-content: space-between; align-items: baseline; }
+.palace-branch { font-size: $fs-secondary; color: $sub; }
+.palace-name { font-size: $fs-item; font-weight: 600; }
+.palace-tag { font-size: $fs-caption; color: $brand-dot; margin-right: 4px; }
+.star-major { font-size: $fs-item; font-weight: 600; margin-top: 4px; }
+.star-bright { font-size: $fs-caption; color: $sub; margin-left: 2px; font-weight: 400; }
+.star-others { font-size: $fs-caption; color: $sub; margin-top: 4px; line-height: 1.5; }
+.shensha { font-size: $fs-caption; color: $dim; margin-top: 6px; line-height: 1.5; }
+.daxian-age { font-size: $fs-caption; color: $sub; margin-top: 4px; }
+.chart-center { grid-column: 2 / span 2; grid-row: 2 / span 2; background: $black-btn; color: #fff; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; justify-content: center; }
+.center-name { font-size: $fs-section; font-weight: 700; margin-bottom: 8px; }
+.center-line { font-size: $fs-secondary; line-height: 1.7; color: #d8d8de; }
+.daxian-row { padding: 8px 0; border-bottom: 1px solid $divider; font-size: $fs-item; }
+.daxian-row:last-child { border-bottom: none; }
+.liuyue-row { padding: 6px 0; border-bottom: 1px solid $divider; font-size: $fs-item; }
+.liuyue-row:last-child { border-bottom: none; }

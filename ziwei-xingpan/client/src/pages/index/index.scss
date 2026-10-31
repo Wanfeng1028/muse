@@ -1,0 +1,6 @@
+@import '../../styles/variables.scss';
+.hero { margin-bottom: 16px; }
+.hero-title { font-size: 28px; font-weight: 700; display: block; }
+.hero-sub { color: $sub; font-size: $fs-secondary; line-height: 1.6; display: block; margin-top: 6px; }
+.corr { margin-top: 12px; }
+.corr .btn-ghost { margin-top: 8px; }
