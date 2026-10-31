@@ -9,6 +9,8 @@
 
 ### Changed
 
+- `SB_PUSH_ENABLED`、`SB_SMTP_TLS`、`SB_METRICS_ENABLED`、`SB_RATE_LIMIT_ENABLED` 四个布尔环境变量的非法值不再静默回退默认值，`Load()` 在启动时立即以 `log.Fatalf "SB_XXX 非法: %q"` 报错退出；未设置或为空时仍分别使用默认值 false / true / true / true，前后空白仍按 `TrimSpace` 去除、字母大小写仍被忽略，合法值仍为 1/true/yes/on、0/false/no/off；如需回滚，将 `getBoolEnv` 恢复为单返回值版本并还原四处调用点即可。
+
 - `SB_SMTP_PORT`、`SB_RATE_LIMIT_BURST`、`SB_RATE_LIMIT_WRITE_BURST` 三个环境变量的非法值不再静默回退默认值，服务启动时立即以 `log.Fatalf` 报错退出；未设置或合法时仍分别使用默认值 587 / 40 / 10，前后空白仍按 `TrimSpace` 解析。
 - 此为有意的启动契约变更：此前非法 int 环境变量会被静默替换为默认值，部署前须检查相关环境变量，回滚方式为将 `getIntEnv` 恢复为返回默认值版本并还原 `Load` 中的三处调用。
 

@@ -47,12 +47,20 @@ func Load() Config {
 	if !smtpPortOk {
 		log.Fatalf("SB_SMTP_PORT 非法: %q", os.Getenv("SB_SMTP_PORT"))
 	}
+	pushEnabled, pushEnabledOk := getBoolEnv("SB_PUSH_ENABLED", false)
+	if !pushEnabledOk {
+		log.Fatalf("SB_PUSH_ENABLED 非法: %q", os.Getenv("SB_PUSH_ENABLED"))
+	}
+	smtpTLS, smtpTLSOk := getBoolEnv("SB_SMTP_TLS", true)
+	if !smtpTLSOk {
+		log.Fatalf("SB_SMTP_TLS 非法: %q", os.Getenv("SB_SMTP_TLS"))
+	}
 	cfg := Config{
 		Addr:    getEnv("SB_ADDR", ":8080"),
 		DBPath:  getEnv("SB_DB", "data/second-brain.db"),
 		DataDir: getEnv("SB_DATA_DIR", "data"),
 		Push: PushConfig{
-			Enabled:         getBoolEnv("SB_PUSH_ENABLED", false),
+			Enabled:         pushEnabled,
 			Time:            getEnv("SB_PUSH_TIME", "08:30"),
 			Timezone:        getEnv("SB_PUSH_TZ", "Asia/Shanghai"),
 			SMTPHost:        os.Getenv("SB_SMTP_HOST"),
@@ -60,7 +68,7 @@ func Load() Config {
 			SMTPUser:        os.Getenv("SB_SMTP_USER"),
 			SMTPPass:        os.Getenv("SB_SMTP_PASS"),
 			SMTPFrom:        os.Getenv("SB_SMTP_FROM"),
-			SMTPTLS:         getBoolEnv("SB_SMTP_TLS", true),
+			SMTPTLS:         smtpTLS,
 			MailTo:          os.Getenv("SB_MAIL_TO"),
 			WebhookURL:      os.Getenv("SB_WEBHOOK_URL"),
 			WebhookSecret:   os.Getenv("SB_WEBHOOK_SECRET"),
@@ -69,7 +77,11 @@ func Load() Config {
 			VAPIDSubject:    os.Getenv("SB_VAPID_SUBJECT"),
 		},
 	}
-	cfg.Metrics = MetricsConfig{Enabled: getBoolEnv("SB_METRICS_ENABLED", true), Token: os.Getenv("SB_METRICS_TOKEN")}
+	metricsEnabled, metricsEnabledOk := getBoolEnv("SB_METRICS_ENABLED", true)
+	if !metricsEnabledOk {
+		log.Fatalf("SB_METRICS_ENABLED 非法: %q", os.Getenv("SB_METRICS_ENABLED"))
+	}
+	cfg.Metrics = MetricsConfig{Enabled: metricsEnabled, Token: os.Getenv("SB_METRICS_TOKEN")}
 	rps, ok := getFloatEnv("SB_RATE_LIMIT_RPS", 20)
 	if !ok {
 		log.Fatalf("SB_RATE_LIMIT_RPS 非法: %q", os.Getenv("SB_RATE_LIMIT_RPS"))
@@ -86,7 +98,11 @@ func Load() Config {
 	if !writeBurstOk {
 		log.Fatalf("SB_RATE_LIMIT_WRITE_BURST 非法: %q", os.Getenv("SB_RATE_LIMIT_WRITE_BURST"))
 	}
-	cfg.RateLimit = RateLimitConfig{Enabled: getBoolEnv("SB_RATE_LIMIT_ENABLED", true), RPS: rps, Burst: burst, WriteRPS: wrps, WriteBurst: writeBurst}
+	rateLimitEnabled, rateLimitEnabledOk := getBoolEnv("SB_RATE_LIMIT_ENABLED", true)
+	if !rateLimitEnabledOk {
+		log.Fatalf("SB_RATE_LIMIT_ENABLED 非法: %q", os.Getenv("SB_RATE_LIMIT_ENABLED"))
+	}
+	cfg.RateLimit = RateLimitConfig{Enabled: rateLimitEnabled, RPS: rps, Burst: burst, WriteRPS: wrps, WriteBurst: writeBurst}
 	if err := cfg.Push.Validate(); err != nil {
 		log.Fatalf("推送配置无效: %v", err)
 	}
@@ -162,19 +178,19 @@ func getEnv(key, def string) string {
 	return def
 }
 
-// getBoolEnv 解析布尔环境变量，未设置或非法时返回默认值。
-func getBoolEnv(key string, def bool) bool {
+// getBoolEnv 解析布尔环境变量，未设置返回默认值，非法返回 false，由调用方决定是否致命。
+func getBoolEnv(key string, def bool) (bool, bool) {
 	v := os.Getenv(key)
 	if v == "" {
-		return def
+		return def, true
 	}
 	switch strings.ToLower(strings.TrimSpace(v)) {
 	case "1", "true", "yes", "on":
-		return true
+		return true, true
 	case "0", "false", "no", "off":
-		return false
+		return false, true
 	default:
-		return def
+		return false, false
 	}
 }
 
