@@ -153,26 +153,27 @@ describe('GET /api/exams/summary/by-subject days', () => {
     ]);
   });
 
-  it('days=100 会钳制到 31 并与 days=31 完全一致', async () => {
-    const res100 = await app.inject({
-      method: 'GET',
-      url: '/api/exams/summary/by-subject?days=100',
-      headers: { cookie },
-    });
+  it('days 越界（0、-1、32、100）返回 400，days=31 仍返回 200', async () => {
+    for (const d of [0, -1, 32, 100]) {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/exams/summary/by-subject?days=${d}`,
+        headers: { cookie },
+      });
+      expect(res.statusCode).toBe(400);
+      expect(res.json().error).toBe('days 参数无效');
+    }
+
     const res31 = await app.inject({
       method: 'GET',
       url: '/api/exams/summary/by-subject?days=31',
       headers: { cookie },
     });
 
-    expect(res100.statusCode).toBe(200);
     expect(res31.statusCode).toBe(200);
 
-    const subjects100 = getSubjects(res100);
     const subjects31 = getSubjects(res31);
-
-    expect(subjects100).toEqual(subjects31);
-    expect(subjects100).toEqual([
+    expect(subjects31).toEqual([
       {
         subject: 'math',
         count: 3,

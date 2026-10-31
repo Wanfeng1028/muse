@@ -4,6 +4,16 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.26.0] - 2026-10-31
+
+### Added
+- GET /api/exams/summary/by-subject 与 GET /api/plans/summary/by-subject 的 days 参数越界收紧：整数小于 1 或大于 31 返回 400 { error: 'days 参数无效' }，此前静默钳制为 1 或 31；不传 days 仍统计全部历史，合法 1~31、非整数 400、错误体文案均不变，与 GET /api/focus/summary/by-subject 的 v1.24.0 口径对齐。
+- 改写测试 apps/server/tests/exams-summary-by-subject-days.test.ts 与 apps/server/tests/plans-summary-by-subject-days.test.ts 中锁定旧钳制语义的用例：days=0/-1/32/100 均返回 400，days=31 均返回 200。
+- 文档 docs/API.md 同步更新两接口的 days 参数说明。
+
+### Notes
+- 本轮模型调用走 BotsRouter 讯飞星辰 spark-x2.6；首通思考外溢截断作废、七牛免费版 qiniu/conatus-free 撞全局限流 429、moonshotai/kimi-k3-free 上游已退役、glm-4.7 在分组 dyandcocoo 下无可用渠道；编排按逐字锚定应用，测试 URL 口径以斜杠路径为准。
+
 ## [1.25.0] - 2026-10-29
 
 ### Added

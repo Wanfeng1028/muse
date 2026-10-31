@@ -122,20 +122,27 @@ describe('GET /api/plans/summary/by-subject days 参数', () => {
     expect(subjects[1].subject).toBe('english');
   });
 
-  it('days 超过 31 时钳制为 31（40 天前排除、6 天前保留，days=100 与 days=31 结果相同）', async () => {
+  it('days 越界（0、-1、32、100）返回 400，days=31 仍返回 200', async () => {
     const cookie = await registerAndLogin(app, 'plansbysubjectdays');
     await seedPlans(cookie);
 
-    const subjects100 = await fetchSummary(cookie, '?days=100');
-    expect(subjects100).toEqual([
+    for (const d of [0, -1, 32, 100]) {
+      const res = await app.inject({
+        method: 'GET',
+        url: `/api/plans/summary/by-subject?days=${d}`,
+        headers: { cookie },
+      });
+      expect(res.statusCode).toBe(400);
+      expect((res.json() as { error: string }).error).toBe('days 参数无效');
+    }
+
+    const subjects31 = await fetchSummary(cookie, '?days=31');
+    expect(subjects31).toEqual([
       { subject: 'math', total: 3, done: 2, plannedMinutes: 240 },
       { subject: 'english', total: 2, done: 0, plannedMinutes: 105 },
     ]);
-    expect(subjects100[0].subject).toBe('math');
-    expect(subjects100[1].subject).toBe('english');
-
-    const subjects31 = await fetchSummary(cookie, '?days=31');
-    expect(subjects31).toEqual(subjects100);
+    expect(subjects31[0].subject).toBe('math');
+    expect(subjects31[1].subject).toBe('english');
   });
 
   it('days 非法（abc、1.5、1x、空串）时返回 400', async () => {

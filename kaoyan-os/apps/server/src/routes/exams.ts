@@ -181,7 +181,7 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
   });
 
 
-  // GET /api/exams/summary/by-subject - 真题分科汇总：仅返回有记录的科目，按 SUBJECTS 顺序排列；可选 days：只统计最近 N 天（含今天，按 taken_at 日期界定），N 按 1~31 钳制；不传时统计全部历史，非法 days 返回 400
+  // GET /api/exams/summary/by-subject - 真题分科汇总：仅返回有记录的科目，按 SUBJECTS 顺序排列；可选 days：只统计最近 N 天（含今天，按 taken_at 日期界定），N 必须为 1~31 的整数，越界返回 400；不传时统计全部历史，非法 days 返回 400
   app.get('/api/exams/summary/by-subject', async (req, reply) => {
     const rawDays = (req.query as { days?: string }).days;
     let days: number | null = null;
@@ -189,7 +189,11 @@ export function registerExamsRoutes(app: FastifyInstance, db: DatabaseSync): voi
       if (!/^-?\d+$/.test(rawDays)) {
         return reply.code(400).send({ error: 'days 参数无效' });
       }
-      days = Math.max(1, Math.min(31, Number(rawDays)));
+      const parsed = Number(rawDays);
+      if (parsed < 1 || parsed > 31) {
+        return reply.code(400).send({ error: 'days 参数无效' });
+      }
+      days = parsed;
     }
     const today = todayStr();
     const rangeStart = days === null ? null : addDays(today, -(days - 1));
