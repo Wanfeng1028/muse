@@ -820,11 +820,9 @@ func (s *Server) handleStats(w http.ResponseWriter, r *http.Request) {
 		}
 		days = n
 	}
-	if days < 1 {
-		days = 1
-	}
-	if days > 90 {
-		days = 90
+	if days < 1 || days > 90 {
+		writeErr(w, http.StatusBadRequest, "days 参数非法")
+		return
 	}
 	uptime, avgLat, total, downInc, err := s.store.MonitorStats(id, days)
 	if err != nil {

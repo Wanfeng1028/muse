@@ -1,3 +1,20 @@
+## [Unreleased]
+
+### 修复
+- GET /api/monitors/{id}/stats（internal/handlers/handlers.go 的 handleStats）的 days 参数此前非数字返回 400，但越界值被静默钳制（days<1 变 1、days>90 变 90）；本轮起 days<1 或 days>90 返回 400，错误文案与既有非数字分支一致为“days 参数非法”；默认值 7、非数字 400、监控不存在 404、统计字段一字不动。
+
+### 测试
+- handlers_deep2_test.go 中锁定旧钳制语义的 TestHandleStatsDaysClampDeep3 改写为 TestHandleStatsDaysOutOfRangeReturns400Deep3（days=0、-3、91、9999 均断言 400，不再断言统计字段）；定向运行 go test ./internal/handlers/ -run 'TestHandleStatsDays|TestHandleStatsNotFound'：3 个测试函数全绿（新用例 1、NotFound 1、Validation 1 含 2 个子测试）；go vet ./internal/handlers/ 全洁；gofmt 改动文件全洁。
+
+### 视觉验收
+- 不适用，无 UI 变更；仓库内静态前端未调用该接口，不受影响。
+
+### 模型稿
+- 全部内容由 BotsRouter（模型 spark-x2.6）生成；编排者机械修复并披露：新测试函数中 deep3DoJSON 的单值赋值改为 rec, _ 双值接收（该 helper 返回 recorder 与 map 两值），否则编译不过。
+
+### 未变更
+- handleListChecks 的 limit、handleListIncidents 的 page/per_page、其他 days 调用处一字不动；无 schema 变更、无版本号升级。
+
 ## [0.33.5] - 2026-10-30
 
 ### 修复
