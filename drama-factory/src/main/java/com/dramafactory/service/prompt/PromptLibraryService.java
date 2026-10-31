@@ -122,8 +122,14 @@ public class PromptLibraryService {
             filtered.add(new PromptSummary(detail.id(), detail.title(), detail.source(),
                     detail.path(), detail.summary()));
         }
-        int normalizedPage = page < 0 ? 0 : page;
-        int normalizedSize = size <= 0 ? 20 : Math.min(size, 100);
+        if (page < 0) {
+            throw new IllegalArgumentException("page 参数非法");
+        }
+        if (size < 1 || size > 100) {
+            throw new IllegalArgumentException("size 参数非法");
+        }
+        int normalizedPage = page;
+        int normalizedSize = size;
         long totalElements = filtered.size();
         int totalPages = totalElements == 0 ? 0 : (int) ((totalElements + normalizedSize - 1) / normalizedSize);
         long from = (long) normalizedPage * normalizedSize;

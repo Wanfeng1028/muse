@@ -5,6 +5,16 @@
 
 ## [Unreleased]
 
+### Fixed（2026-10-31 深耕轮：提示词库分页参数服务层收紧）
+
+- **现象**：此前 `PromptLibraryService.list(q, tag, page, size)` 服务层对分页参数执行静默归一化：page 为负变 0、size 为 0 变 20、size 超 100 截断为 100，而控制器 GET /api/prompts/page 早已按 page<0、size 不在 1 到 100 返回 400（invalid_pagination），两层口径不一致，直接调服务层的调用方传错参数无法发现。
+
+- **修复**：在服务层 `list` 过滤后、分页计算前增加校验：page < 0 抛 IllegalArgumentException("page 参数非法")，size < 1 或 size > 100 抛 IllegalArgumentException("size 参数非法")，全局处理器将其映射为 HTTP 400；合法值、过滤逻辑、分页计算、控制器、全局处理器一字不动，page 超出总量仍返回空 content。
+
+- **测试**：新增 PromptLibraryServicePaginationValidationTest 7 例（page=-1、size=0、size=-5、size=101 抛错且消息逐字相符；size=1、size=100、page=0 正常返回）；PromptLibraryServicePagingTest 与 PromptLibraryPagingBoundaryTest 各 3 个锁定旧语义的用例改写为断言抛错；PromptControllerTest.listReturnsAll 的 Integer.MAX_VALUE 调用改为合法最大值 100（只取 totalElements，断言含义不变）；靶向 PromptLibrary* 与 PromptControllerTest 合计 160/160 全绿（新测 7、PagingTest 9、BoundaryTest 4、PromptControllerTest 4、分页 REST 边缘 11，其余为既有提示词库套件），锚定测试矩阵全部通过。
+
+- **未改动**：无版本号升级、无 schema 变更、无 UI 改动；前端 prompts.js 默认 size=20、page 从 0 起，不受影响；HTTP 行为不变（控制器此前已返回 400）。
+
 ### Fixed（2026-10-29 深耕轮：成本台账分页 limit 超限改为 400）
 
 现象：GET /api/cost-ledger/entries 的 limit 超过 500 时，此前会被静默截断为 500 并返回 200，调用方无从感知实际生效的条数。

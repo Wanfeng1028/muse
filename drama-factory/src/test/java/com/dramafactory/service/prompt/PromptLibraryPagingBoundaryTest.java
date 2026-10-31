@@ -12,28 +12,22 @@ class PromptLibraryPagingBoundaryTest {
     @Test
     void negativePage_NormalizedToZero() {
         PromptLibraryService service = new PromptLibraryService();
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> negativePage = service.list(null, null, -1, 20);
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> zeroPage = service.list(null, null, 0, 20);
-        
-        assertEquals(0, negativePage.page());
-        assertEquals(zeroPage.content().size(), negativePage.content().size());
-        for (int i = 0; i < zeroPage.content().size(); i++) {
-            assertEquals(zeroPage.content().get(i).id(), negativePage.content().get(i).id());
-        }
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.list(null, null, -1, 20));
+        assertEquals("page 参数非法", exception.getMessage());
     }
 
     @Test
     void zeroSize_DefaultsTo20() {
         PromptLibraryService service = new PromptLibraryService();
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> page = service.list(null, null, 0, 0);
-        assertEquals(20, page.size());
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.list(null, null, 0, 0));
+        assertEquals("size 参数非法", exception.getMessage());
     }
 
     @Test
     void oversizeSize_ClampedTo100() {
         PromptLibraryService service = new PromptLibraryService();
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> page = service.list(null, null, 0, 500);
-        assertEquals(100, page.size());
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.list(null, null, 0, 500));
+        assertEquals("size 参数非法", ex.getMessage());
     }
 
     @Test

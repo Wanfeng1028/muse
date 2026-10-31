@@ -26,7 +26,7 @@ class PromptControllerTest {
         assertEquals(200, response.getStatusCode().value());
         List<PromptController.PromptSummaryDto> body = response.getBody();
         assertNotNull(body);
-        int expected = (int) new PromptLibraryService().list(null, null, 0, Integer.MAX_VALUE).totalElements();
+        int expected = (int) new PromptLibraryService().list(null, null, 0, 100).totalElements();
         assertEquals(expected, body.size());
     }
 

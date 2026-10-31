@@ -9,6 +9,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PromptLibraryServicePagingTest {
@@ -37,37 +38,23 @@ class PromptLibraryServicePagingTest {
     @Test
     void negativePageBecomesZero() {
         PromptLibraryService service = new PromptLibraryService();
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> negativePage = service.list(null, null, -1, 5);
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> zeroPage = service.list(null, null, 0, 5);
-        List<String> negativeIds = negativePage.content().stream()
-                .map(PromptLibraryService.PromptSummary::id)
-                .collect(Collectors.toList());
-        List<String> zeroIds = zeroPage.content().stream()
-                .map(PromptLibraryService.PromptSummary::id)
-                .collect(Collectors.toList());
-        assertEquals(zeroIds, negativeIds);
-        assertEquals(0, negativePage.page());
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.list(null, null, -1, 5));
+        assertEquals("page 参数非法", exception.getMessage());
     }
 
     @Test
     void zeroSizeDefaultsTo20() {
         PromptLibraryService service = new PromptLibraryService();
         long total = service.list(null, null, 0, 100).totalElements();
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> page = service.list(null, null, 0, 0);
-        assertEquals(20, page.size());
-        assertEquals(20, page.content().size());
-        assertEquals((int)((total + 20 - 1) / 20), page.totalPages());
+        IllegalArgumentException exception = assertThrows(IllegalArgumentException.class, () -> service.list(null, null, 0, 0));
+        assertEquals("size 参数非法", exception.getMessage());
     }
 
     @Test
     void oversizedSizeClampedTo100() {
         PromptLibraryService service = new PromptLibraryService();
-        long total = service.list(null, null, 0, 100).totalElements();
-        PromptLibraryService.Page<PromptLibraryService.PromptSummary> page = service.list(null, null, 0, 1000);
-        assertEquals(100, page.size());
-        assertEquals((int)Math.min(100, total), page.content().size());
-        assertEquals(total, page.totalElements());
-        assertEquals((int)((total + 100 - 1) / 100), page.totalPages());
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.list(null, null, 0, 1000));
+        assertEquals("size 参数非法", ex.getMessage());
     }
 
     @Test
