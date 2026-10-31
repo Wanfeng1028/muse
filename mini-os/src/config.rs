@@ -65,35 +65,50 @@ pub fn parse_backup_code_retention_days_raw(raw: Option<&str>) -> Result<i64, St
     }
 }
 
-/// 从环境变量读取配置，缺失或解析失败时使用默认值
+/// 从环境变量读取配置：缺失用默认值；PORT、UPLOAD_MAX_BYTES、SHUTDOWN_TIMEOUT_SECS、SESSION_TTL_SECS 非法时启动报错退出；DATABASE_PATH、STATIC_DIR 缺失仍用默认值。
 impl Config {
     pub fn from_env() -> Self {
         let data_dir = compute_data_dir();
-        let port = env::var("PORT")
-            .ok()
-            .and_then(|v| v.parse::<u16>().ok())
-            .unwrap_or(8090);
+        let port = match parse_port_raw(env::var("PORT").ok().as_deref()) {
+            Ok(v) => v,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
 
         let database_path =
             env::var("DATABASE_PATH").unwrap_or_else(|_| "data/mini-os.db".to_string());
 
         let static_dir = env::var("STATIC_DIR").unwrap_or_else(|_| "static".to_string());
 
-        let upload_max_bytes = env::var("UPLOAD_MAX_BYTES")
-            .ok()
-            .and_then(|v| v.parse::<u64>().ok())
-            .unwrap_or(50 * 1024 * 1024);
+        let upload_max_bytes =
+            match parse_upload_max_bytes_raw(env::var("UPLOAD_MAX_BYTES").ok().as_deref()) {
+                Ok(v) => v,
+                Err(msg) => {
+                    eprintln!("配置错误：{}", msg);
+                    std::process::exit(2);
+                }
+            };
 
-        let shutdown_timeout_secs = env::var("SHUTDOWN_TIMEOUT_SECS")
-            .ok()
-            .and_then(|v| v.parse::<u64>().ok())
-            .unwrap_or(30);
+        let shutdown_timeout_secs = match parse_shutdown_timeout_secs_raw(
+            env::var("SHUTDOWN_TIMEOUT_SECS").ok().as_deref(),
+        ) {
+            Ok(v) => v,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
 
-        let session_ttl_secs = env::var("SESSION_TTL_SECS")
-            .ok()
-            .and_then(|v| v.parse::<u64>().ok())
-            .filter(|&v| v > 0)
-            .unwrap_or(604800);
+        let session_ttl_secs =
+            match parse_session_ttl_secs_raw(env::var("SESSION_TTL_SECS").ok().as_deref()) {
+                Ok(v) => v,
+                Err(msg) => {
+                    eprintln!("配置错误：{}", msg);
+                    std::process::exit(2);
+                }
+            };
 
         // 会话滑动续期开关：非法值 fail-fast（与限流配置同规格）。
         let session_sliding =
@@ -161,6 +176,53 @@ impl Config {
             share_ratelimit_enabled: share_limit.enabled,
             term_output_limit,
             backup_code_retention_days,
+        }
+    }
+}
+
+/// 解析 PORT：缺失时默认 8090；必须是 0 到 65535 之间的整数。
+pub fn parse_port_raw(raw: Option<&str>) -> Result<u16, String> {
+    match raw {
+        None => Ok(8090),
+        Some(s) => s
+            .trim()
+            .parse::<u16>()
+            .map_err(|_| format!("PORT 必须是 0 到 65535 之间的整数，当前值：{}", s)),
+    }
+}
+
+/// 解析 UPLOAD_MAX_BYTES：缺失时默认 50MiB；必须是整数。
+pub fn parse_upload_max_bytes_raw(raw: Option<&str>) -> Result<u64, String> {
+    match raw {
+        None => Ok(50 * 1024 * 1024),
+        Some(s) => s
+            .trim()
+            .parse::<u64>()
+            .map_err(|_| format!("UPLOAD_MAX_BYTES 必须是整数，当前值：{}", s)),
+    }
+}
+
+/// 解析 SHUTDOWN_TIMEOUT_SECS：缺失时默认 30；必须是整数。
+pub fn parse_shutdown_timeout_secs_raw(raw: Option<&str>) -> Result<u64, String> {
+    match raw {
+        None => Ok(30),
+        Some(s) => s
+            .trim()
+            .parse::<u64>()
+            .map_err(|_| format!("SHUTDOWN_TIMEOUT_SECS 必须是整数，当前值：{}", s)),
+    }
+}
+
+/// 解析 SESSION_TTL_SECS：缺失时默认 604800；必须是正整数。
+pub fn parse_session_ttl_secs_raw(raw: Option<&str>) -> Result<u64, String> {
+    match raw {
+        None => Ok(604800),
+        Some(s) => {
+            let trimmed = s.trim();
+            match trimmed.parse::<u64>() {
+                Ok(v) if v > 0 => Ok(v),
+                _ => Err(format!("SESSION_TTL_SECS 必须是正整数，当前值：{}", s)),
+            }
         }
     }
 }

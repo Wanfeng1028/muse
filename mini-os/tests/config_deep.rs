@@ -11,7 +11,10 @@ use std::path::{Component, Path, PathBuf};
 use std::sync::{Arc, Barrier};
 use std::thread;
 
-use mini_os::config::Config;
+use mini_os::config::{
+    parse_port_raw, parse_session_ttl_secs_raw, parse_shutdown_timeout_secs_raw,
+    parse_upload_max_bytes_raw, Config,
+};
 
 /// 环境变量测试必须串行，避免并行测试互相污染进程环境。
 static ENV_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
@@ -228,21 +231,14 @@ fn from_env_reads_valid_overrides() {
 }
 
 #[test]
-fn from_env_falls_back_on_unparseable_numbers() {
-    let _lock = ENV_LOCK.lock().unwrap_or_else(|e| e.into_inner());
-    let _guard = EnvGuard::new(CONFIG_VARS);
-
-    env::set_var("PORT", "70000");
-    env::set_var("UPLOAD_MAX_BYTES", "abc");
-    env::set_var("SHUTDOWN_TIMEOUT_SECS", "-1");
-    env::set_var("SESSION_TTL_SECS", "0");
-
-    let cfg = Config::from_env();
-
-    assert_eq!(cfg.port, 8090);
-    assert_eq!(cfg.upload_max_bytes, 50 * 1024 * 1024);
-    assert_eq!(cfg.shutdown_timeout_secs, 30);
-    assert_eq!(cfg.session_ttl_secs, 604800);
+fn from_env_strict_parsers_reject_unparseable_numbers() {
+    // 注意：Config::from_env 对这 4 项非法值会直接 exit(2)，同进程内无法断言；
+    // 这里直接驱动纯解析函数（真实来源）断言 Err，与 config_deep 头部对限流解析的做法一致。
+    // 旧语义“非法值静默回默认值”已被 v1.19.18 废止，故本测试取代旧的 from_env_falls_back_on_unparseable_numbers。
+    assert!(parse_port_raw(Some("70000")).is_err());
+    assert!(parse_upload_max_bytes_raw(Some("abc")).is_err());
+    assert!(parse_shutdown_timeout_secs_raw(Some("-1")).is_err());
+    assert!(parse_session_ttl_secs_raw(Some("0")).is_err());
 }
 
 #[test]

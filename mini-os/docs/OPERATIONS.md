@@ -83,9 +83,9 @@ journalctl -u mini-os -f
 
 | 变量 | 默认值 | 说明 |
 | --- | --- | --- |
-| `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节） |
-| `SHUTDOWN_TIMEOUT_SECS` | `30` | 优雅关闭排空阶段超时（秒）。只约束收到 SIGTERM/Ctrl+C 后的排空阶段，不掐正常服务（已回归验证） |
-| `SESSION_TTL_SECS` | `604800`（7 天） | 登录 session 有效期（秒）；非法/≤0 回落默认值 |
+| `UPLOAD_MAX_BYTES` | `52428800`（50MB） | 单文件上传大小上限（字节）；非法值启动即报错退出（exit 2） |
+| `SHUTDOWN_TIMEOUT_SECS` | `30` | 优雅关闭排空阶段超时（秒）。只约束收到 SIGTERM/Ctrl+C 后的排空阶段，不掐正常服务（已回归验证）；非法值启动即报错退出（exit 2） |
+| `SESSION_TTL_SECS` | `604800`（7 天） | 登录 session 有效期（秒）；非法值或 0 启动即报错退出（exit 2） |
 | `MINIOS_SESSION_SLIDING` | `true` | 会话滑动续期开关：开启时，活跃请求在剩余寿命 < TTL/2 时自动顺延 expires_at 并重发 Cookie；取值为 true/false/1/0/yes/no/on/off，非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_RPS` | `1` | 登录限流每秒补充 token 数；非法值启动即报错退出（exit 2） |
 | `MINIOS_LOGIN_BURST` | `5` | 登录限流桶容量（突发上限）；非法值启动即报错退出（exit 2） |

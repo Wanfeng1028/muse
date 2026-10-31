@@ -1,3 +1,34 @@
+## [1.19.18] - 2026-11-01
+
+### Changed
+- `src/config.rs` 新增 4 个 `pub` 纯解析函数：
+  - `parse_port_raw`（缺省 `8090`，`u16`）
+  - `parse_upload_max_bytes_raw`（缺省 `50 * 1024 * 1024`，`u64`）
+  - `parse_shutdown_timeout_secs_raw`（缺省 `30`，`u64`）
+  - `parse_session_ttl_secs_raw`（缺省 `604800`，`u64` 且 `0` 非法）
+- `Config::from_env` 对以上 4 项的非法值改为 `eprintln("配置错误：...")` + `exit(2)`，与 `MINIOS_SESSION_SLIDING`、登录限流、分享限流、`MINIOS_TERM_OUTPUT_LIMIT`、`MINIOS_BACKUP_CODE_RETENTION_DAYS` 的 fail-fast 口径一致。
+- 此前 `PORT` 超 `u16`、`UPLOAD_MAX_BYTES` 非数字、`SHUTDOWN_TIMEOUT_SECS` 负数、`SESSION_TTL_SECS` 为 `0` 均静默回默认值，现一律启动报错。
+- 合法边界保持不变：`PORT` 的 `0` 与 `65535`、`UPLOAD_MAX_BYTES` 的 `0`、`SHUTDOWN_TIMEOUT_SECS` 的 `0` 此前本就接受，本轮不扩范围。
+- 版本由 `1.19.17` 升为 `1.19.18`（`Cargo.toml` 与 `Cargo.lock` 同步）。
+
+### Added
+- 新增 `tests/config_env_strict_test.rs`，4 个测试函数 4/4 通过。
+- `tests/config_deep.rs` 改写旧静默回落测试为 `from_env_strict_parsers_reject_unparseable_numbers`：因 `from_env` 本身会 `exit(2)`，改为直接驱动纯解析函数断言 `Err`。
+
+### Verification
+- `tests/config_env_strict_test.rs`：4/4 通过。
+- `tests/config_deep.rs`：10/10 通过。
+- lib 内 config 单元测试（`term_output_limit` 三项）：3/3 通过。
+- `cargo fmt --all --check` 干净。
+- `cargo clippy --lib` 有 8 个告警，均不在本轮改动文件（`config.rs` 与两个测试目标无归属告警），属既存基线，本轮未扩范围修复。
+- 真实服务冒烟（18571 端口、隔离库，冒烟后服务已按端口查到的 PID 定向 kill、端口复查已关、冒烟库已删）：
+  - `PORT=abc` 启动 `exit 2`，末行：`配置错误：PORT 必须是 0 到 65535 之间的整数，当前值：abc`
+  - `SESSION_TTL_SECS=0` 启动 `exit 2`，末行：`配置错误：SESSION_TTL_SECS 必须是正整数，当前值：0`
+  - `UPLOAD_MAX_BYTES=abc` 启动 `exit 2`，末行：`配置错误：UPLOAD_MAX_BYTES 必须是整数，当前值：abc`
+  - `SHUTDOWN_TIMEOUT_SECS=-1` 启动 `exit 2`，末行：`配置错误：SHUTDOWN_TIMEOUT_SECS 必须是整数，当前值：-1`
+  - 合法配置起服后 `GET /api/health` 返回 `{"status":"ok","version":"1.19.18"}`；`POST /api/auth/register` 返回 `id 2`、`username smokeuser`、`isAdmin true`、`role admin`；`GET /api/readyz` 返回 `{"status":"ready"}`。
+- 已知限制：本轮未跑全量 `cargo test`（只跑了靶向测试与 lib 内 config 单元测试）；`DATABASE_PATH`、`STATIC_DIR` 缺失仍用默认值，不在本轮收紧范围；无数据库迁移、无新增端点、无新增依赖、无 UI 改动，视觉验收不适用。
+
 ## [1.19.17] - 2026-10-30
 ### Changed
 - src/handlers.rs：create_fs 在 kind 校验后、内容解析前、DB 加锁前新增冲突检查：bytes 为 Some 且 content 为 Some 且 trim 后非空时返回 400，文案逐字为“bytes 与 content 不能同时指定”，不创建节点；bytes 空数组加非空 content 同样 400；bytes 单独、content 单独、两者都不给、content 为空串或纯空白加 bytes 行为不变。此前 bytes 与 content 同时给时 content 被无声丢弃。
