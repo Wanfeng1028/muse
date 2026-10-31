@@ -148,8 +148,18 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       let limit = 50;
       const limitParam = parsed.searchParams.get("limit");
       if (limitParam !== null) {
+        if (!/^[0-9]+$/.test(limitParam)) {
+          res.writeHead(400, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "INVALID_HISTORY_LIMIT" }));
+          return;
+        }
         const n = Number.parseInt(limitParam, 10);
-        if (Number.isFinite(n) && n > 0) limit = Math.min(n, 200);
+        if (n < 1) {
+          res.writeHead(400, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "INVALID_HISTORY_LIMIT" }));
+          return;
+        }
+        limit = Math.min(n, 200);
       }
       let beforeId: number | undefined;
       const beforeParam = parsed.searchParams.get("before_id");

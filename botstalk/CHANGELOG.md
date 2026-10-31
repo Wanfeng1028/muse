@@ -1,3 +1,17 @@
+## OpenAgents 第 24 轮：历史接口 limit 非法值返回 400
+### 动机
+GET /api/rooms/:room/history 此前对 limit 非法取值静默回落默认 50（abc、0、负数、空串都回落），parseInt 还会把 1.5 截成 1、把 10abc 截成 10；本轮改为入口显式校验、非法一律拒绝。
+### 落地
+仅改 botstalk/gateway/src/server.ts 的 history 分支。limitParam 存在时必须匹配纯十进制整数字符串且解析后大于等于 1，否则返回 400 且 body 严格等于 {"error":"INVALID_HISTORY_LIMIT"}，不调用 getRoomHistory；校验通过后仍保留 Math.min(n, 200) 作为上限防线；缺省 limit 仍默认 50；before_id 分支一字不动。
+### 测试
+新增 botstalk/gateway/test/history-limit-validation.test.ts，12 例全绿（无效 7 个：0、-1、abc、1.5、10abc、空串、5.0 各返回 400；有效 5 个：limit=5 得 5 条、limit=1 得 1 条、limit=1000 得 7 条、缺省得 7 条、limit=200 得 7 条）。网关全量 vitest：82 文件 1059 例全绿（第 23 轮基线 81 文件 1047 例，恰增本轮 1 文件 12 例）。
+### 冒烟
+新增 botstalk/scripts/smoke-history-limit.mjs，真实网关端口 18498，8 项全过，打印 SMOKE_HISTORY_LIMIT_PASS，冒烟后端口已关。
+### 类型
+网关源码 tsc --noEmit 零错；测试 tsc 共 7 处既存错误，均在旧文件内（game-frames、pairing、werewolf），本轮新文件零错。
+### 已知保留
+before_id 非法值静默忽略本轮未动，列为下一轮候选；吊销仍为终态；REST requester 自报身份未动；第 17 轮设备管理 Web UI 缺 CHANGELOG 与轮次文档的缺口仍在；无 Web UI 改动，视觉验收不适用；无协议版本变更。
+
 ## OpenAgents 第 23 轮：分享链接签发 ttl_hours 非法值返回 400
 
 - 动机：分享链接签发分支此前对非法 ttl_hours 静默钳制或回落 168，调用方拿到的有效期与请求值不一致却无从知晓；本轮改为显式校验并拒绝非法值，不再静默改写。
