@@ -49,6 +49,14 @@ function mapFocus(row: FocusRow): FocusSession {
   };
 }
 
+// startedAt 日期部分必须是真实日历日期：Date.parse 会把不存在的日期
+// （如 2024-02-30）滚动进位后解析成功，本函数用 Date.UTC 往返比对拦截。
+function isRealCalendarDatePrefix(value: string): boolean {
+  const [y, m, d] = value.slice(0, 10).split('-').map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return dt.getUTCFullYear() === y && dt.getUTCMonth() === m - 1 && dt.getUTCDate() === d;
+}
+
 export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): void {
   // GET /api/focus —— 按 started_at 降序返回专注记录
   app.get<{ Querystring: FocusQuery }>('/api/focus', (req, reply) => {
@@ -103,6 +111,9 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
         trimmed.length > 40 ||
         Number.isNaN(Date.parse(trimmed))
       ) {
+        return reply.code(400).send({ error: 'startedAt must be a valid date string' });
+      }
+      if (!isRealCalendarDatePrefix(trimmed)) {
         return reply.code(400).send({ error: 'startedAt must be a valid date string' });
       }
       finalStartedAt = trimmed;
@@ -352,7 +363,8 @@ app.post('/api/import/focus', { bodyLimit: 5 * 1024 * 1024 }, async (req, reply)
       startedAt.length >= 10 &&
       startedAt.length <= 40 &&
       /^\d{4}-\d{2}-\d{2}/.test(startedAt) &&
-      !Number.isNaN(Date.parse(startedAt));
+      !Number.isNaN(Date.parse(startedAt)) &&
+      isRealCalendarDatePrefix(startedAt);
     if (!startedAtOk) {
       rowErrors.push('started_at 格式非法');
     }

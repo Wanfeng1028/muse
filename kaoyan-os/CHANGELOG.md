@@ -4,6 +4,17 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.27.0] - 2026-11-01
+
+### Added
+- POST /api/focus 的 startedAt 增加真实日历日期校验：日期部分经 Date.UTC 往返比对，不存在的日期（2024-02-30、2023-02-29、2026-04-31）返回 400 { error: 'startedAt must be a valid date string' }；此前 Date.parse 会把这类日期滚动进位后悄悄收下（如 2024-02-30 当成 2024-03-01）；2024-02-29（闰年）仍可通过，错误体文案、其他校验一字不动。
+- POST /api/import/focus 的 CSV started_at 列复用同一校验：不存在的日期该行记为错误行（文案 started_at 格式非法）、不导入；2024-02-29 仍可导入。
+- 新增测试 apps/server/tests/focus-startedat-calendar.test.ts 8 例：POST 单点非法 3 例（2024-02-30、2023-02-29、2026-04-31）与合法回归 2 例（2024-02-29、2024-05-01），CSV 导入非法 1 例、合法 1 例、混合 1 例。
+- 文档 docs/API.md 同步更新 POST /api/focus 的 startedAt 说明与错误触发条件、POST /api/import/focus 的 started_at 列说明。
+
+### Notes
+- 本轮模型调用走 BotsRouter 讯飞星辰 spark-x2.6；编排按逐字锚定应用，测试文件尾部伪影与类型行经编排机械修正。
+
 ## [1.26.0] - 2026-10-31
 
 ### Added

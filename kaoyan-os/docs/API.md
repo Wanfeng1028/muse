@@ -695,7 +695,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | --- | --- | --- | --- | --- |
 | body | subject | SubjectKey | 是 | 必须是合法学科 key，否则返回 400 |
 | body | minutes | number | 是 | 必须为整数且在 1~1440 之间 |
-| body | startedAt | string | 否 | 提供时必须为字符串；trim 后需以 YYYY-MM-DD 开头、长度 10~40 且 Date.parse 可解析；未提供或为 null 时使用 nowIso() |
+| body | startedAt | string | 否 | 提供时必须为字符串；trim 后需以 YYYY-MM-DD 开头、长度 10~40 且 Date.parse 可解析，且日期部分须为真实日历日期（Date.UTC 往返比对，2024-02-30 之类不存在的日期返回 400）；未提供或为 null 时使用 nowIso() |
 | body | note | string | 否 | 提供时必须为字符串且长度 <= 500；未提供或为 null 时存为 null |
 | body | planId | number | 否 | 提供时必须为正整数，且为当前用户拥有的计划，否则 400 或 404；未提供时存为 null |
 
@@ -720,7 +720,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 | --- | --- | --- |
 | 400 | `{ "error": "invalid subject" }` | subject 不是合法学科 key |
 | 400 | `{ "error": "minutes must be an integer between 1 and 1440" }` | minutes 非数字、非整数或不在 1~1440 |
-| 400 | `{ "error": "startedAt must be a valid date string" }` | startedAt 提供时非字符串，或 trim 后不满足 YYYY-MM-DD 开头、长度 10~40、Date.parse 可解析 |
+| 400 | `{ "error": "startedAt must be a valid date string" }` | startedAt 提供时非字符串，或 trim 后不满足 YYYY-MM-DD 开头、长度 10~40、Date.parse 可解析，或日期部分不是真实日历日期 |
 | 400 | `{ "error": "note must be a string up to 500 chars" }` | note 提供时非字符串或长度超过 500 |
 | 400 | `{ "error": "planId 非法" }` | planId 提供时非正整数 |
 | 404 | `{ "error": "计划不存在" }` | planId 提供但不存在或不属于当前用户 |
@@ -2411,7 +2411,7 @@ CSV 列：
 | --- | --- | --- |
 | subject | 是 | 须为合法 SubjectKey（`math` / `english` / `politics` / `major`），否则记错 |
 | minutes | 是 | 须为 1 到 1440 之间的纯数字整数字符串，否则该行记错且不导入 |
-| started_at | 是 | 须以 `YYYY-MM-DD` 开头、长度 10 到 40，且可被 `Date.parse` 解析，否则记错 |
+| started_at | 是 | 须以 `YYYY-MM-DD` 开头、长度 10 到 40，且可被 `Date.parse` 解析，且日期部分须为真实日历日期（2024-02-30 之类不存在的日期记错），否则记错 |
 | note | 否 | 缺省 `null`；超过 500 字记错 |
 | plan_id | 否 | 缺省 `null`；非空时须为正整数且为当前用户的计划，否则记错 |
 
