@@ -17,7 +17,7 @@
   flex-shrink: 0;
 }
 .avatar-mark { width: 55.38px; height: 55.38px; }
-.mine-name { font-size: $fs-page; font-weight: 700; display: block; color: $light-text; }
+.mine-name { font-size: 42.31px; font-weight: 700; display: block; color: $light-text; }
 .mine-balance { font-size: $fs-huge; font-weight: 600; line-height: 1; display: block; color: $light-text; }
 // v3 gap 6: 列表主行 = body 16 半粗（不是表单 13 标签），箭头 20 半粗。
 .mine-row-label { color: $light-text; font-size: $fs-body; font-weight: 600; line-height: 1.5; }
@@ -56,4 +56,7 @@
 
 // ---- Productization round: service list heading (section title above
 // the spaced cards; the cards themselves live in components/ui.scss) ----
-.svc-heading { display: block; font-size: 30.77px; font-weight: 700; color: $light-text; margin: 30.77px 0 23.08px 0; }
+// 布局轮：服务区章节眉同首页（英文编号 + 20pt 标题，章上 40pt、
+// 标题到卡片 12pt），服务卡本身收紧（见 ui.scss）。
+.svc-head { margin-top: $gap-section-lg; }
+.svc-heading { display: block; font-size: 38.46px; font-weight: 700; color: $light-text; margin: 0 0 $gap-title-content 0; }

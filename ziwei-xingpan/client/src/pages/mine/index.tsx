@@ -366,6 +366,7 @@ export default function Mine() {
 
   const header = (
     <Card light>
+      <Text className='sec-eyebrow'>01 · Account</Text>
       <View style={{ display: 'flex', alignItems: 'center' }} onClick={() => { if (!user) Taro.navigateTo({ url: '/pages/auth/index' }); }}>
         <View className='avatar-geo'>
           <Image className='avatar-mark' src={starMark} mode='aspectFit' />
@@ -706,7 +707,10 @@ export default function Mine() {
     <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
       {header}
-      <Text className='svc-heading'>我的服务</Text>
+      <View className='svc-head'>
+        <Text className='sec-eyebrow'>02 · Services</Text>
+        <Text className='svc-heading'>我的服务</Text>
+      </View>
       <View className='svc-grid'>
         {ROWS.map((r) => (
           <View key={r.section} className='svc-card' onClick={() => setSection(r.section)}>

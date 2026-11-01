@@ -18,8 +18,13 @@
   box-shadow: 0 0 0 1.92px rgba(255, 255, 255, 0.03), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
   border-radius: 38.46px;
   padding: 19.23px;
-  margin-bottom: $section-gap;
+  // 布局轮：盘面是本页主角，盘下留 40pt 再进详情卡（原 28pt）。
+  margin-bottom: $gap-section-lg;
 }
+// 布局轮标题层级：选中宫详情卡标题 20pt，高于大运/流年卡标题
+// 16pt；宫格、格间隙、格内边距一律不动（三方四正线是运行时
+// 量测的宫格中心，动几何即错位）。
+.chart-plate + .card .card-title { font-size: 38.46px; }
 .chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 19.23px; }
 .palace {
   background:
@@ -67,7 +72,13 @@
 .daxian-row:last-child { border-bottom: none; }
 .liuyue-row { padding: $bubble-py 0; border-bottom: $hairline solid $divider; font-size: $fs-item; color: $text; }
 .liuyue-row:last-child { border-bottom: none; }
+// 布局轮节奏：详情卡→操作行 12pt，操作行→AI CTA 28pt，
+// AI CTA→大运卡 28pt，大运卡→流年卡 40pt，流年卡→声明 12pt。
 .chart-actions { margin-bottom: $card-gap; }
+// Portal round: AI 解读 CTA（Gemini 渐变主按钮，置于操作行下方）。
+.chart-ai-cta { margin: 30.77px 0 53.85px; }
+// 大运卡下留 40pt 再进流年卡（原 12pt 卡片等距）。
+#chart-daxian .card { margin-bottom: $gap-section-lg; }
 
 // ---- Productization round: selected palace, 三方四正 lines, detail card ----
 .chart-grid { position: relative; }
@@ -117,5 +128,3 @@
 .chart-fullscreen-bar { display: flex; justify-content: space-between; align-items: center; gap: 23.08px; margin-bottom: $card-gap; }
 .chart-fullscreen-title { font-size: $fs-item; font-weight: 600; color: $text; line-height: 1.5; }
 
-// Portal round: AI 解读 CTA（Gemini 渐变主按钮，置于操作行下方）。
-.chart-ai-cta { margin-bottom: $card-gap; }

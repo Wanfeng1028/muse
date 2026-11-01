@@ -78,7 +78,7 @@
 // ---- Light service cards (mine main, productization round) ----
 // Spaced divider-free white cards replacing the full-screen divider list
 // (s6: big whitespace, one theme color, no divider lines).
-.svc-grid { display: flex; flex-direction: column; gap: $card-gap; }
+.svc-grid { display: flex; flex-direction: column; gap: 15.38px; }
 .svc-card {
   display: flex;
   align-items: center;
@@ -86,11 +86,11 @@
   background: $light-card;
   border: $hairline solid $light-divider;
   border-radius: $radius-card;
-  padding: 30.77px;
+  padding: 23.08px 30.77px;
   box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
 .svc-body { flex: 1; }
-.svc-title { display: block; font-size: 30.77px; font-weight: 700; color: $light-text; }
-.svc-sub { display: block; margin-top: 3.85px; font-size: 23.08px; color: $light-sub; }
+.svc-title { display: block; font-size: 28.85px; font-weight: 700; color: $light-text; }
+.svc-sub { display: block; margin-top: 7.69px; font-size: 23.08px; color: $light-sub; }
 .svc-arrow { font-size: 38.46px; font-weight: 600; color: $light-accent; }
 .svc-arrow-img { width: 38.46px; height: 38.46px; flex-shrink: 0; }

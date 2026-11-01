@@ -259,7 +259,20 @@ page {
 .sihua-ke { color: $sihua-ke; font-weight: 600; }
 .sihua-ji { color: $sihua-ji; font-weight: 600; }
 
-// Brand dot cluster (Model.tsx BrandDots, size 8): diagonal cluster,
+// Editorial section eyebrow (layout round): small-caps English section
+// number + label above the Chinese section title. Shared by home and
+// mine; the 4pt eyebrow-to-title gap lives on this class, the 40pt
+// section-top gap lives on each page's section-head wrapper.
+.sec-eyebrow {
+  display: block;
+  font-size: $fs-eyebrow;
+  font-weight: 600;
+  letter-spacing: 1.92px;
+  text-transform: uppercase;
+  color: $light-sub;
+  margin-bottom: $gap-eyebrow-title;
+}
+.page.theme-dark .sec-eyebrow { color: $sub; }
 // 22×15 box; dots at (0,bottom), (7,3.5), (14,0) in pt.
 .brand-dots { position: relative; width: $brand-cluster-w; height: $brand-cluster-h; flex-shrink: 0; }
 .brand-dot { position: absolute; width: $brand-dot-size; height: $brand-dot-size; border-radius: 50%; }

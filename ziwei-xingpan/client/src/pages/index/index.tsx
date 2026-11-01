@@ -148,7 +148,10 @@ export default function Home() {
         )}
       </View>
 
-      <Text className='home-section-title'>今年运限</Text>
+      <View className='home-sec-head'>
+        <Text className='sec-eyebrow'>01 · Fortune</Text>
+        <Text className='home-section-title'>今年运限</Text>
+      </View>
       {chart ? (
         <View>
           <View className='home-yun-row'>
@@ -177,7 +180,10 @@ export default function Home() {
         </Card>
       )}
 
-      <Text className='home-section-title'>解读</Text>
+      <View className='home-sec-head'>
+        <Text className='sec-eyebrow'>02 · Reading</Text>
+        <Text className='home-section-title'>解读</Text>
+      </View>
       <Card title='13 维本地解读'>
         {chart ? (
           <View>
@@ -196,7 +202,10 @@ export default function Home() {
         )}
       </Card>
 
-      <Text className='home-section-title'>功能</Text>
+      <View className='home-sec-head'>
+        <Text className='sec-eyebrow'>03 · Tools</Text>
+        <Text className='home-section-title'>功能</Text>
+      </View>
       <View className='home-tile-row'>
         <View className='home-tile' onClick={() => goKnowledge()}>
           <IconBadge name='book-open' dark={dark} />

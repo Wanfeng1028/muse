@@ -69,6 +69,17 @@ $fs-caption: 23.08px; // 12
 $fs-huge: 98.08px; // 51
 $fs-meta: 23.08px; // 12
 
+// ---- Layout round (2026-11-01): editorial type scale ----
+// pt values (rpx = pt × 750/390): display 44 / section 20 / body 15 /
+// small 12. Card titles stay 16 as a sub-level under section titles.
+// Section rhythm: major-section top gap 40, title-to-content 12,
+// eyebrow-to-title 4. Body 15 = $fs-item, small 12 = $fs-caption.
+$fs-display: 84.62px; // 44
+$fs-eyebrow: 21.15px; // 11
+$gap-section-lg: 76.92px; // 40
+$gap-title-content: 23.08px; // 12
+$gap-eyebrow-title: 7.69px; // 4
+
 // ---- Spacing / radius / component heights: value (Medley pt) ----
 $page-padding: 38.46px; // 20
 $section-gap: 53.85px; // 28
