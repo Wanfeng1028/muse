@@ -3,17 +3,21 @@
 ### 修复
 - GET /api/monitors/{id}/stats（internal/handlers/handlers.go 的 handleStats）的 days 参数此前非数字返回 400，但越界值被静默钳制（days<1 变 1、days>90 变 90）；本轮起 days<1 或 days>90 返回 400，错误文案与既有非数字分支一致为“days 参数非法”；默认值 7、非数字 400、监控不存在 404、统计字段一字不动。
 
+- 修复：GET /api/alerts/deliveries 的 limit 参数校验收紧。旧逻辑在 limit 小于 1 时置 1、大于 1000 时置 1000；新逻辑在 limit 小于 1 或大于 1000 时直接返回 400，文案“limit 参数非法”。缺省 limit=100、非数字 limit 返回 400、status 白名单与文案、monitor_id 校验、Store 调用、响应体 items/total 均未改动。
 ### 测试
 - handlers_deep2_test.go 中锁定旧钳制语义的 TestHandleStatsDaysClampDeep3 改写为 TestHandleStatsDaysOutOfRangeReturns400Deep3（days=0、-3、91、9999 均断言 400，不再断言统计字段）；定向运行 go test ./internal/handlers/ -run 'TestHandleStatsDays|TestHandleStatsNotFound'：3 个测试函数全绿（新用例 1、NotFound 1、Validation 1 含 2 个子测试）；go vet ./internal/handlers/ 全洁；gofmt 改动文件全洁。
 
+- 测试：TestListDeliveriesDeepLimitClampLow 改名为 TestListDeliveriesDeepLimitOutOfRangeLow（limit=0 与 -5 均断言 400），TestListDeliveriesDeepLimitClampHigh 改名为 TestListDeliveriesDeepLimitOutOfRangeHigh（limit=1001 与 99999 均断言 400），不再断言 items。定向 `go test ./internal/handlers/ -run 'TestListDeliveriesDeep'` 全绿（含新用例 Low 与 High 各 2 次 400 请求日志）；`go test ./internal/handlers/ -count=1` 通过（ok，11.185s）；`go vet ./internal/handlers/` 全洁；gofmt 改动两文件全洁；`go build ./...` 通过。
 ### 视觉验收
 - 不适用，无 UI 变更；仓库内静态前端未调用该接口，不受影响。
 
 ### 模型稿
 - 全部内容由 BotsRouter（模型 spark-x2.6）生成；编排者机械修复并披露：新测试函数中 deep3DoJSON 的单值赋值改为 rec, _ 双值接收（该 helper 返回 recorder 与 map 两值），否则编译不过。
 
+- 投递 limit 收紧轮模型稿：全部内容由 BotsRouter（模型 spark-x2.6）生成；B1 首稿只交推理过程无代码作废（8303 token）、B1b 凭描述重构函数致签名失真作废（2881 token）、B1c 嵌现函数全文一次成功（2433 token）、B2 测试改写一次成功（1795 token）、B3 文档一次成功（2813 token），合计 18225 token；编排者机械操作：函数跨度替换、gofmt 校验、测试执行，未改模型逻辑。
 ### 未变更
 - handleListChecks 的 limit、handleListIncidents 的 page/per_page、其他 days 调用处一字不动；无 schema 变更、无版本号升级。
+- 未变更：0.33.5 版“未变更”中“delivery limit 的 clamp 保持为 200 契约”一句自本轮起作废。Store 层 ListDeliveries 自身钳制保留作防御，未改动。仓库内静态前端 deliveries.html 仅发 limit=100，不受影响。本轮无 schema 变更，无版本号升级。
 
 ## [0.33.5] - 2026-10-30
 

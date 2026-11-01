@@ -75,39 +75,43 @@ func TestListDeliveriesDeepLimitInvalid(t *testing.T) {
 	}
 }
 
-func TestListDeliveriesDeepLimitClampLow(t *testing.T) {
+func TestListDeliveriesDeepLimitOutOfRangeLow(t *testing.T) {
 	srv, st := newTestServer(t)
-	mid := mkMonitor(t, st, "clamp-low")
+	mid := mkMonitor(t, st, "out-of-range-low")
 	base := time.Now().UTC()
 	for i := 0; i < 3; i++ {
 		if _, err := st.EnqueueDelivery(mid, "https://example.com/x", "down", `{"at":"`+base.Add(time.Duration(i)*time.Second).Format(time.RFC3339)+`"}`, 8); err != nil {
 			t.Fatalf("enqueue %d: %v", i, err)
 		}
 	}
+
 	rec, body := doJSON(t, srv.Routes(), "GET", "/api/alerts/deliveries?limit=0", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%v", rec.Code, body)
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%v", rec.Code, body)
 	}
-	items, _ := body["items"].([]any)
-	if len(items) != 1 {
-		t.Fatalf("expected limit=0 clamped to 1, got %d", len(items))
+
+	rec, body = doJSON(t, srv.Routes(), "GET", "/api/alerts/deliveries?limit=-5", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%v", rec.Code, body)
 	}
 }
 
-func TestListDeliveriesDeepLimitClampHigh(t *testing.T) {
+func TestListDeliveriesDeepLimitOutOfRangeHigh(t *testing.T) {
 	srv, st := newTestServer(t)
-	mid := mkMonitor(t, st, "clamp-high")
+	mid := mkMonitor(t, st, "out-of-range-high")
 	base := time.Now().UTC()
 	if _, err := st.EnqueueDelivery(mid, "https://example.com/h", "down", `{"at":"`+base.Format(time.RFC3339)+`"}`, 8); err != nil {
 		t.Fatalf("enqueue: %v", err)
 	}
-	rec, body := doJSON(t, srv.Routes(), "GET", "/api/alerts/deliveries?limit=99999", "")
-	if rec.Code != http.StatusOK {
-		t.Fatalf("expected 200, got %d body=%v", rec.Code, body)
+
+	rec, body := doJSON(t, srv.Routes(), "GET", "/api/alerts/deliveries?limit=1001", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%v", rec.Code, body)
 	}
-	items, _ := body["items"].([]any)
-	if len(items) != 1 {
-		t.Fatalf("expected high limit clamped, got %d items", len(items))
+
+	rec, body = doJSON(t, srv.Routes(), "GET", "/api/alerts/deliveries?limit=99999", "")
+	if rec.Code != http.StatusBadRequest {
+		t.Fatalf("expected 400, got %d body=%v", rec.Code, body)
 	}
 }
 
