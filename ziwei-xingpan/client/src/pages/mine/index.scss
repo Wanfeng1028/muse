@@ -16,3 +16,33 @@
 .mine-name { font-size: 18px; font-weight: 600; display: block; color: $text; }
 .mine-row-label { color: $text; }
 .mine-arrow { color: $sub; }
+.btn-mini {
+  background: $white-btn;
+  color: $black-btn;
+  border-radius: $radius-button;
+  text-align: center;
+  padding: 8px 16px;
+  font-size: $fs-secondary;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+.field-textarea {
+  width: 100%;
+  min-height: 120px;
+  box-sizing: border-box;
+  background: $input-bg;
+  border: 1px solid $border-glass;
+  border-radius: $radius-card;
+  padding: 12px;
+  margin-top: 12px;
+  font-size: $fs-item;
+  color: $text;
+}
+.legal-body {
+  display: block;
+  white-space: pre-wrap;
+  color: $text;
+  font-size: $fs-secondary;
+  line-height: 1.8;
+  margin-top: 12px;
+}

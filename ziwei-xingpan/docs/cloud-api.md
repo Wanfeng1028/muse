@@ -133,12 +133,22 @@ ads 含 bannerHome / bannerInterpret / rewardedVideo / interstitial
 Pro 月限，不含任何密钥。fromSeed=true 表示 configs 集合尚未导入种子，
 上线前必须消除。
 
+## feedback
+
+| action | 入参 | 出参 data |
+|---|---|---|
+| create | `{ content, contact? }`（content 1–1000 字） | `{ feedbackId, status: 'open' }` |
+| list | {} | `{ feedbacks }`（本人，倒序，最多 50） |
+
+说明：反馈只有提交与本人查看两条路；运营回复不在本函数内伪造，
+未回复的项状态保持 `open`，如实显示。
+
 ## 无真实 envId / 商户号时不可测的项
 
 以下各项在本机无真实配置时均不可测，需在真实云环境 + 真实配置下
 由协调方复测，复测前不要宣称通过：
 
-1. 全部 9 个函数的真实云端调用（getWXContext、数据库、存储）。
+1. 全部 10 个函数的真实云端调用（getWXContext、数据库、存储）。
 2. 支付全链路：unifiedOrder 返回 payment、wx.requestPayment 调起、
    支付回调 order 发放会员、queryOrder/closeOrder。
 3. CloudBase AI 对话与生图（含模型启用、用量计入 quotaLogs、阈值降级实测）。
@@ -149,6 +159,6 @@ Pro 月限，不含任何密钥。fromSeed=true 表示 configs 集合尚未导�
 7. 依赖安装：各函数 `npm install`（wx-server-sdk、ai/aiImage 的
    @cloudbase/node-sdk >= 3.18.3）需在开发者工具部署时完成。
 
-已在本机验证：9 个函数 + 10 个共享模块 `node --check` 通过；
+已在本机验证：10 个函数 + 10 个共享模块 `node --check` 通过；
 纯逻辑测试 `node cloudfunctions/tests/pure-logic.test.js` 13 项通过；
 代码与种子中无真实密钥、AppID、商户号、envId（仅占位符与环境变量名）。

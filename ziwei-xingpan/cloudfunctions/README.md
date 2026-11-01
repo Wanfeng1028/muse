@@ -1,6 +1,6 @@
 # 紫微星盘云开发后端
 
-微信云开发后端：9 个云函数 + 云数据库 + 云存储。不配域名、不配 Docker/Caddy、
+微信云开发后端：10 个云函数 + 云数据库 + 云存储。不配域名、不配 Docker/Caddy、
 不走日本服务器。会话走云开发原生 openid，不自造 JWT。
 
 ## 函数清单
@@ -16,6 +16,7 @@
 | ai | AI 解盘/问答：CloudBase 主力 + BotsRouter 备用 + aiCache 缓存 + 额度降级 |
 | aiImage | 生图：CloudBase 混元生图主力 + BotsRouter 备用 + imageCache 缓存 + 云存储 fileID |
 | config | 下发广告位 ID、会员价目、积分规则、AI 配置（客户端绝不硬编码这些值） |
+| feedback | 意见反馈：创建 + 本人列表（状态 open，回复由运营在控制台处理，不伪造回复） |
 
 每个函数目录独立可部署：`index.js` + `package.json` + `shared/`（共享模块的
 物化副本）。`tests/` 不是云函数，不要部署。
@@ -33,14 +34,14 @@
 1. 微信开发者工具打开小程序项目，确认 `project.config.json` 的
    `cloudfunctionRoot` 指向本目录（`cloudfunctions/`）。
 2. 开通云开发环境，记下环境 ID（只填进开发者工具/云函数环境配置，不进代码）。
-3. 云开发控制台 → 数据库，新建 10 个集合（见 `docs/cloud-schema.md`），
+3. 云开发控制台 → 数据库，新建 11 个集合（见 `docs/cloud-schema.md`），
    并按文档建索引、配安全规则（客户端直连数据库只读自己文档，写操作一律走云函数）。
 4. 把 `cloudfunctions/_shared/config-seed.js` 里的 `SEED_CONFIGS` 5 条文档
    （pricing、ads、pointsRules、ai、quota）导入 `configs` 集合。
    未导入时函数会用种子兜底并返回 `fromSeed: true`，上线前必须消除该标记。
 5. 云函数环境配置（控制台 → 云函数 → 环境变量）按下面清单填写。
    全部留空时对应功能返回明确的未配置错误，绝不伪造成功。
-6. 开发者工具里对 9 个函数逐个右键「上传并部署：云端安装依赖」。
+6. 开发者工具里对 10 个函数逐个右键「上传并部署：云端安装依赖」。
    超时建议：ai 120 秒，aiImage 300 秒（生图官方建议最长 900 秒）。
 7. 小程序端 `wx.cloud.init({ env: '<环境ID>', traceUser: true })` 后按
    `docs/cloud-api.md` 依次调用：先 `login`，再其他函数。
@@ -82,8 +83,15 @@
 
 ## 本地检查
 
-- 语法：`for f in login charts membership order points invite ai aiImage config; do node --check $f/index.js; done`
-- 纯逻辑测试：`node cloudfunctions/tests/pure-logic.test.js`（13 项，含积分规则、
-  邀请阶梯、盘 hash、缓存键、额度阈值、种子价目）
+- 语法：`for f in login charts membership order points invite ai aiImage config feedback; do node --check $f/index.js; done`
+- 纯逻辑测试：`node cloudfunctions/tests/pure-logic.test.js`（16 项，含积分规则、
+  邀请阶梯、盘 hash、缓存键、额度阈值、种子价目、不降级发放）
+- 接口契约检查：`node cloudfunctions/tests/contract-check.js`（客户端每个
+  callFn 调用点在服务端都有对应函数与 action，无真实云环境时以此
+  代替联调；真实云端调用仍需 envId 后复测）
 - 真实云环境调用、支付、AI、生图均需真实 envId/商户号/密钥，见
   `docs/cloud-api.md` 末尾「无真实配置时不可测的项」。
+- 部署前置补记（2026-11-01 二期联调发现）：小程序端 `project.config.json`
+  的 `cloudfunctionRoot` 须指向本目录；开发者工具导入的构建产物目录
+  不同，相对路径以导入目录为准，导入后以开发者工具实际解析为准，
+  本仓库不猜测导入目录，部署时以工具内显示的函数列表为准核验。

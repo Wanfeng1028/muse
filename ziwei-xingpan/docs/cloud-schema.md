@@ -139,6 +139,18 @@
 
 索引建议：`cacheKey`（唯一）。
 
+## feedbacks（意见反馈）
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| openid | string | 提交用户 |
+| content | string | 反馈内容（1–1000 字，服务端校验） |
+| contact | string | 用户自留联系方式，可空（最长 128） |
+| status | string | open（待处理）；回复由运营在控制台处理，客户端不伪造回复状态 |
+| createdAt / updatedAt | date | 时间戳 |
+
+索引建议：`openid + createdAt`。
+
 ## configs（配置种子，5 条文档）
 
 `_id` 即配置键，内容见 `cloudfunctions/_shared/config-seed.js`：

@@ -15,7 +15,7 @@ const root = path.join(__dirname);
 const sharedDir = path.join(root, '_shared');
 const functions = [
   'login', 'charts', 'membership', 'order', 'points',
-  'invite', 'ai', 'aiImage', 'config'
+  'invite', 'ai', 'aiImage', 'config', 'feedback'
 ];
 
 const files = fs.readdirSync(sharedDir).filter(function (f) { return f.endsWith('.js'); });
