@@ -1,0 +1,19 @@
+@import '../styles/variables.scss';
+
+.lucide-icon { display: block; flex-shrink: 0; }
+.icon-badge {
+  box-sizing: border-box;
+  width: 69.23px;
+  height: 69.23px;
+  border-radius: 19.23px;
+  background: $gemini-soft;
+  border: 1.92px solid $gemini-line;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.icon-badge-dark {
+  background: rgba(141, 180, 255, 0.12);
+  border-color: rgba(141, 180, 255, 0.35);
+}

@@ -1,9 +1,10 @@
 @import '../styles/variables.scss';
 
-// ---- Segmented capsule control (productization round) ----
+// ---- Segmented capsule control (productization round; Gemini blue
+// round) ----
 // Track: dark pages use the raised row surface, light pages the light
-// bubble surface. Selected pill: gold + black text on dark (matches
-// 宫垣 gold selected 男), violet + white text on light (theme accent).
+// bubble surface. Selected pill: Gemini blue gradient + white text on
+// BOTH tones (retires the gold dark pill and the violet light pill).
 .segctl {
   display: flex;
   gap: 11.54px;
@@ -22,8 +23,8 @@
   color: $sub;
 }
 .segctl-light .segctl-opt { color: $light-sub; }
-.segctl-dark .segctl-opt-active { background: $sihua-quan; color: #000000; }
-.segctl-light .segctl-opt-active { background: $light-accent; color: #ffffff; }
+.segctl-dark .segctl-opt-active { background: $gemini-grad; color: #ffffff; }
+.segctl-light .segctl-opt-active { background: $gemini-grad; color: #ffffff; }
 
 // ---- Vector cover (knowledge, productization round) ----
 .cover {
@@ -88,13 +89,8 @@
   padding: 30.77px;
   box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
-.svc-dot { width: 69.23px; height: 69.23px; border-radius: 50%; flex-shrink: 0; }
-.svc-dot-violet { background: $light-accent-soft; border: $hairline solid $light-accent-line; }
-.svc-dot-green { background: rgba(39, 122, 95, 0.12); border: $hairline solid rgba(39, 122, 95, 0.35); }
-.svc-dot-blue { background: rgba(63, 116, 171, 0.12); border: $hairline solid rgba(63, 116, 171, 0.35); }
-.svc-dot-pink { background: rgba(168, 78, 122, 0.12); border: $hairline solid rgba(168, 78, 122, 0.35); }
-.svc-dot-orange { background: rgba(180, 85, 13, 0.12); border: $hairline solid rgba(180, 85, 13, 0.35); }
 .svc-body { flex: 1; }
 .svc-title { display: block; font-size: 30.77px; font-weight: 700; color: $light-text; }
 .svc-sub { display: block; margin-top: 3.85px; font-size: 23.08px; color: $light-sub; }
 .svc-arrow { font-size: 38.46px; font-weight: 600; color: $light-accent; }
+.svc-arrow-img { width: 38.46px; height: 38.46px; flex-shrink: 0; }

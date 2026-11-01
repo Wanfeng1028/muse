@@ -154,9 +154,9 @@ export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; in
     <Card light title='分享海报'>
       {!chart ? <Text className='muted'>请先在首页排盘，再生成分享海报。</Text> : null}
       <Canvas canvasId={CANVAS_ID} style={{ width: '300px', height: '420px', background: '#111518', borderRadius: '16px' }} />
-      <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={generatePoster}>{busy ? '生成中…' : '生成海报'}</View>
-      <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={aiBackground}>AI 背景（云开发省图 token，生图结果缓存复用）</View>
-      <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={savePoster}>保存海报到相册</View>
+      <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={generatePoster}>{busy ? '生成中…' : '生成海报'}</View>
+      <View className='btn-medley btn-medley-outline-light' hoverClass='btn-press' style={{ marginTop: '10px' }} onClick={aiBackground}>AI 背景（云开发省图 token，生图结果缓存复用）</View>
+      <View className='btn-medley btn-medley-outline-light' hoverClass='btn-press' style={{ marginTop: '10px' }} onClick={savePoster}>保存海报到相册</View>
       {qrNote ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{qrNote}</Text> : null}
       {note ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{note}</Text> : null}
       <Disclaimer />

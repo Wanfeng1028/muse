@@ -1,0 +1,134 @@
+@import './variables.scss';
+
+// Theme overrides (Gemini-blue round). Every page root renders
+// .page.theme-light (default) or .page.theme-dark; the dark page styles
+// stay the baseline and the light block re-skins them, so no dark
+// implementation is deleted. Specificity is .page.theme-X .cls (0,3,0),
+// which beats .page-light .cls (0,2,0) and single-class rules (0,1,0)
+// regardless of stylesheet order. Mine/knowledge keep their page-light
+// class; the dark block re-skins those pages when the toggle is on.
+// Light star/sihua colours are darkened Medley hues (AA on white);
+// chart data colours (lines, palace.current) are untouched.
+
+// ---------- LIGHT (default): re-skin dark-baseline pages ----------
+.page.theme-light { background: $light-bg; color: $light-text; }
+.page.theme-light.page-welcome { background: $light-bg; }
+.page.theme-light .muted, .page.theme-light .caption { color: $light-sub; }
+.page.theme-light .card {
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.90), 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
+}
+.page.theme-light .card-title { color: $light-text; }
+.page.theme-light .brand-name { color: $light-text; }
+.page.theme-light .disclaimer { border-color: $light-divider; color: $light-sub; }
+.page.theme-light .input-row { border-color: $light-divider; }
+.page.theme-light .input-label { color: $light-sub; }
+.page.theme-light .input-value, .page.theme-light .field-input { color: $light-text; }
+.page.theme-light .btn-medley-outline { border-color: $light-divider; color: $light-text; }
+.page.theme-light .btn-medley-white { border: $hairline solid $light-divider; }
+.page.theme-light .btn-pill-outline-dark { border-color: $light-divider; color: $light-text; }
+.page.theme-light .composer {
+  background: $white-btn;
+  border: $hairline solid $light-divider;
+  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
+}
+.page.theme-light .composer-label { color: $light-text; }
+.page.theme-light .hero-title { color: $light-text; }
+.page.theme-light .hero-sub { color: $light-sub; }
+.page.theme-light .hero-sub2 { color: $light-dim; }
+.page.theme-light .preview-row { border-color: $light-divider; }
+.page.theme-light .preview-accent { color: $gemini-blue; }
+.page.theme-light .segctl-dark { background: $light-bubble; }
+.page.theme-light .segctl-dark .segctl-opt { color: $light-sub; }
+// Active text stays white: the .segctl-opt colour rules above are
+// higher-specificity than ui.scss's active rule, so without this the
+// selected label renders grey on the blue gradient.
+.page.theme-light .segctl-dark .segctl-opt-active, .page.theme-light .segctl-light .segctl-opt-active { color: #ffffff; }
+.page.theme-light .chart-plate {
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
+}
+.page.theme-light .palace {
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
+}
+.page.theme-light .palace-branch, .page.theme-light .shensha, .page.theme-light .daxian-age { color: $light-sub; }
+.page.theme-light .palace-name, .page.theme-light .star-major { color: $light-text; }
+.page.theme-light .palace-tag { color: $light-orange; }
+.page.theme-light .star-minor { color: $light-blue; }
+.page.theme-light .star-lucky { color: $light-green; }
+.page.theme-light .star-sha { color: $light-orange; }
+.page.theme-light .star-borrowed { color: $light-sub; }
+.page.theme-light .sihua-lu { color: #2e7d4f; }
+.page.theme-light .sihua-quan { color: $light-orange; }
+.page.theme-light .sihua-ke { color: $light-blue; }
+.page.theme-light .sihua-ji { color: #b03a3a; }
+.page.theme-light .palace-tag-liunian { color: $light-orange; }
+.page.theme-light .palace-tag-xiaoxian { color: $light-blue; }
+.page.theme-light .chart-center {
+  background: $light-card;
+  border: $hairline solid $light-divider;
+  box-shadow: none;
+}
+.page.theme-light .center-name { color: $light-text; }
+.page.theme-light .center-line { color: $light-sub; }
+.page.theme-light .daxian-row, .page.theme-light .liuyue-row { border-color: $light-divider; color: $light-text; }
+.page.theme-light .detail-line { color: $light-text; }
+.page.theme-light .detail-body { color: $light-sub; }
+.page.theme-light .detail-liunian { color: $light-orange; }
+.page.theme-light .detail-xiaoxian { color: $light-blue; }
+.page.theme-light .chart-fullscreen { background: $light-bg; }
+.page.theme-light .chart-fullscreen-title { color: $light-text; }
+.page.theme-light .chat-meta { color: $light-text; }
+.page.theme-light .chat-bubble {
+  background: $white-btn;
+  border: $hairline solid $light-divider;
+  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
+  color: $light-text;
+}
+.page.theme-light .chat-dot { background: $gemini-blue; }
+.page.theme-light .pattern-card { border-left-color: $gemini-blue; }
+.page.theme-light .pattern-name { color: $light-text; }
+.page.theme-light .ask-composer .composer-input { color: $light-text; }
+
+// ---------- DARK (settings toggle): re-skin light-baseline pages ----------
+.page.theme-dark .card-light {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 45%, rgba(0, 0, 0, 0.10)), $card;
+  border: $hairline solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.09), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
+}
+.page.theme-dark .muted, .page.theme-dark .caption { color: $sub; }
+.page.theme-dark .card-title { color: $text; }
+.page.theme-dark .brand-name { color: $text; }
+.page.theme-dark .disclaimer { border-color: $divider; color: $sub; }
+.page.theme-dark .input-row { border-color: $divider; }
+.page.theme-dark .input-label { color: $sub; }
+.page.theme-dark .input-value, .page.theme-dark .field-input { color: $text; }
+.page.theme-dark .btn-medley-outline-light { border-color: $outline-dark; color: $text; }
+.page.theme-dark .btn-pill-outline-light { border-color: $outline-dark; color: $text; }
+.page.theme-dark .segctl-light { background: $row; }
+.page.theme-dark .segctl-light .segctl-opt { color: $sub; }
+.page.theme-dark .segctl-light .segctl-opt-active, .page.theme-dark .segctl-dark .segctl-opt-active { color: #ffffff; }
+.page.theme-dark .svc-card {
+  background: $card;
+  border: $hairline solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.09), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
+}
+.page.theme-dark .svc-title { color: $text; }
+.page.theme-dark .svc-sub { color: $sub; }
+.page.theme-dark .svc-heading { color: $text; }
+.page.theme-dark .avatar-geo { background: $row; border-color: $outline-dark; }
+.page.theme-dark .mine-name { color: $text; }
+.page.theme-dark .mine-row-label { color: $text; }
+.page.theme-dark .mine-arrow { color: $sub; }
+.page.theme-dark .field-textarea { background: $card; border-color: $outline-dark; color: $text; }
+.page.theme-dark .legal-body { color: $text; }
+.page.theme-dark .empty-state { background: rgba(255, 255, 255, 0.04); border-color: $divider; }
+.page.theme-dark .empty-state-title { color: $text; }
+.page.theme-dark .empty-state-hint { color: $sub; }
+.page.theme-dark .seg-tab { color: $sub; }
+.page.theme-dark .seg-tab-active { background: $card; color: $text; border-color: $outline-dark; }
+.page.theme-dark .know-body { color: $sub; }

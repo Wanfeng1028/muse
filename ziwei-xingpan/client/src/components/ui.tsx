@@ -1,7 +1,7 @@
-import { View, Text, Image } from '@tarojs/components';
+import { View, Text } from '@tarojs/components';
 import type { ReactNode } from 'react';
 import { DISCLAIMER } from '../lib/chart';
-import arrowUp from '../assets/arrow-up.png';
+import { Icon } from './icons';
 import './ui.scss';
 
 // v3 ambient layers (gap 1 / gap 4 light half). Pure background Views:
@@ -29,8 +29,8 @@ export function ComposerBar({ label, onClick, light }: { label: string; onClick:
   return (
     <View className={light ? 'composer composer-light' : 'composer'} onClick={onClick}>
       <Text className='composer-label'>{label}</Text>
-      <View className='composer-send'>
-        <Image className='composer-send-img' src={arrowUp} mode='aspectFit' />
+      <View className='composer-send' hoverClass='btn-press'>
+        <Icon name='arrow-up' tone='white' size='38px' />
       </View>
     </View>
   );

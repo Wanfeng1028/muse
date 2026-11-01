@@ -5,10 +5,11 @@ import { loadChart } from '../../lib/chart';
 import { buildDimensions } from '../../lib/interpret';
 import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
-import { Ambient, Card, Disclaimer } from '../../components/ui';
+import { Ambient, AmbientLight, Card, Disclaimer } from '../../components/ui';
+import { Icon } from '../../components/icons';
+import { useTheme } from '../../lib/theme';
 import { LoadingButton } from '../../components/interactions';
 import { BannerAd } from '../../components/ads';
-import arrowUp from '../../assets/arrow-up.png';
 import {
   callFn, cloudConfigured, tempFileURL,
   type AppConfig, type MembershipStatus, type SavedChart,
@@ -19,6 +20,7 @@ import CustomTabBar from '../../custom-tab-bar';
 import './index.scss';
 
 export default function Interpret() {
+  const [theme] = useTheme();
   const [chart, setChart] = useState<ZiweiChart | null>(null);
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [tier, setTier] = useState<string | null>(null);
@@ -100,8 +102,8 @@ export default function Interpret() {
 
   if (!chart) {
     return (
-      <View className='page'>
-        <Ambient />
+      <View className={'page theme-' + theme}>
+        {theme === 'light' ? <AmbientLight /> : <Ambient />}
         <Card title='还没有命盘'>
           <Text className='muted'>请先在首页排盘，解读会基于该盘生成。AI 解读还需先在命盘图页把当前盘保存到命盘历史。</Text>
           <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
@@ -112,8 +114,8 @@ export default function Interpret() {
   const dims = buildDimensions(chart);
   const patterns = detectPatterns(chart);
   return (
-    <View className='page'>
-      <Ambient />
+    <View className={'page theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
       <View className='chat-msg'>
         <View className='chat-meta'><View className='chat-dot' /><Text>格局判断</Text></View>
         {patterns.length === 0 ? (
@@ -162,8 +164,8 @@ export default function Interpret() {
           <View>
             <View className='composer ask-composer'>
               <Input className='composer-input' placeholder='例如：今年财帛方面宜注意什么' value={question} onInput={(e) => setQuestion(e.detail.value)} />
-              <View className='composer-send' onClick={aiAsk}>
-                <Image className='composer-send-img' src={arrowUp} mode='aspectFit' />
+              <View className='composer-send' hoverClass='btn-press' onClick={aiAsk}>
+                <Icon name='arrow-up' tone='white' size='38px' />
               </View>
             </View>
             {busy === 'ask' ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>思考中…</Text> : null}

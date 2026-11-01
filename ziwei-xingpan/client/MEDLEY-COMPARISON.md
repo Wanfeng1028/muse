@@ -313,3 +313,52 @@
   里会落在拼接中部（拼接产物，非产品行为）；真机上底栏恒在屏底，页底
   230.77px 留白保证末尾内容不被遮挡。验收裁切一律用视口截图，底栏位
   置真实。
+
+## Gemini 蓝 + Lucide + 亮色默认 + 登录页（2026-11-01 修复轮）
+
+用户看完产品化一轮截图后判“还是太丑”，下 5 条，本轮逐项闭合：
+
+- 图标一律 Lucide：49 个官方 glyph（lucide-static v1.66.0，ISC，SVG 原文
+  存 src/assets/lucide/svg/）。微信 <image> 不支持 SVG，且 Taro 默认把
+  小图内联为 base64（<image> 同样无法显示），故构建时光栅化：脚本
+  scripts/lucide-rasterize.cjs（Playwright，透明 144px PNG，四色：
+  蓝 #346bf0 / 浅蓝 #8db4ff / 灰 #9a9ba2 / 白 #ffffff），组件
+  src/components/icons.tsx（Icon + IconBadge，196 张 PNG 映射由
+  scripts/gen-icons-map.cjs 生成）。血泪两则：① locator.screenshot
+  必须传 omitBackground，否则白底被烤进 PNG，图标在深色上变白方块
+  （本轮实测：开始排盘发送钮因此一度“消失”）；② config/index.ts
+  以 imageUrlLoaderOption.limit=true 强制全部图片走文件（runner
+  getAssetsMaxSize 把布尔 true 映为 maxSize 0，即永不内联），weapp
+  构建验：196 文件落 dist、0 处 data URI 内联。底栏、服务卡、设置
+  行、按钮、空态、详情卡的旧彩色圆点与手绘矢量形全部撤掉。
+- 胶囊一律 Gemini 蓝：主渐变 linear-gradient(89.58deg,#3186ff
+  0.28%,#346bf0 44.45%,#4ea0ff 99.55%)（用户博客 BlogAstroPure
+  global.css，2026-10-23 GoClub 换色轮真值），按压态亮度 1.06 用
+  hover-class 等价实现（.btn-press 提亮渐变，weapp 无 :active）。
+  适用：开始排盘、性别分段器选中态、解读 CTA、设置浅色 pill、登录
+  注册主按钮、全部 btn-medley-dark 主按钮；橙色胶囊与紫罗兰主题色
+  全撤。白粗按钮字在渐变上满足大字 AA（3:1），扁平 #346bf0 在白底
+  为 4.66:1（AA）。有意保留：命盘选中金边与星曜/四化数据色（数据
+  语义，非胶囊），知识页类色（内容色，非主题色）。
+- 默认亮色：lib/theme.ts（storage 键 zw-theme，默认 light；useTheme
+  在 show 时重读）。全部主页面根挂 theme-light/theme-dark；深色实
+  现一律保留（styles/theme.scss 只做覆盖，不删深色样式），设置页
+  “深色模式（默认亮色）”开关切换。亮色下星曜/四化改用深色版 Medley
+  色相（浅底 AA）；深色下浅色页（我的/知识）由 theme.scss 深色块重
+  绘。微信导航栏静态配置跟随亮色默认（真机切深色时导航栏不变，
+  属平台限制，文档明说）。H5 截图用 window.__ZW_THEME__ 强制主题
+  （仅 WEB 分支，weapp 不受影响）。
+- 登录注册屏（新增 pages/auth/index，非 tab 页，我的页顶部头像行
+  与“登录 / 注册”钮进入）：邮箱 + 密码、同页分段切换登录/注册、
+  忘记密码入口（?mode=forgot）、Google / Apple 第三方按钮、全部
+  控件 999px 胶囊、主按钮 Gemini 蓝渐变、Lucide 图标、亮色默认。
+  诚实态：无邮箱账号后端（envId 等 13 项待用户），提交永不假成功
+  ——未配置 toast 未配置提示，已配置亦明说账号函数未开通；Lucide
+  无官方 Google / Apple 品牌标，第三方按钮用 chrome / apple 字形 +
+  文字表示，不仿造厂商原标。
+- 全部界面截图：shots-prod/ 共 25 张（17 全页 + 登录/注册/忘记密码
+  3 张 + 5 张深色对照），全部为修复后代码真实渲染并亲眼验过；另
+  验两处回归修复：性别选中字在亮色下曾被主题覆盖层压成灰字（已补
+  active 白字规则）、发送钮曾因白底 PNG 隐身（已改 omitBackground）。
+- 验收：tsc 通过、weapp 构建成功（仅既有 chunk-common 警告）、引擎
+  smoke 768/0、H5 全页重拍亲眼验过。

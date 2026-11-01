@@ -9,7 +9,8 @@ import { getLiuNianSiHua, getLiuYueSiHua } from '../../engine/sihua';
 import { jiangQianShenName, suiQianShenName, boshiShenName } from '../../engine/shier-shen';
 import { STEMS } from '../../engine/constants';
 import type { Palace, ZiweiChart } from '../../engine/types';
-import { Ambient, Card, Disclaimer } from '../../components/ui';
+import { Ambient, AmbientLight, Card, Disclaimer } from '../../components/ui';
+import { useTheme } from '../../lib/theme';
 import { buildDimensions } from '../../lib/interpret';
 import './index.scss';
 
@@ -194,6 +195,7 @@ function ChartGrid({ chart, input, selectedBranch, onSelect, liunianBranch, xiao
 }
 
 export default function ChartPage() {
+  const [theme] = useTheme();
   const [chart, setChart] = useState<ZiweiChart | null>(null);
   const [input, setInput] = useState(loadInput());
   const [saved, setSaved] = useState(false);
@@ -226,8 +228,8 @@ export default function ChartPage() {
 
   if (!chart) {
     return (
-      <View className='page'>
-        <Ambient />
+      <View className={'page theme-' + theme}>
+        {theme === 'light' ? <AmbientLight /> : <Ambient />}
         <Card title='还没有命盘'>
           <Text className='muted'>请先在首页填写出生信息并排盘。</Text>
           <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
@@ -285,8 +287,8 @@ export default function ChartPage() {
   );
 
   return (
-    <View className='page'>
-      <Ambient />
+    <View className={'page theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
       <View className='chart-plate'>
         <ChartGrid
           chart={chart}

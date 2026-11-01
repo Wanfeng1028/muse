@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Input, Textarea, Picker, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { AmbientLight, Card, Disclaimer, SegmentedControl, EmptyState } from '../../components/ui';
+import { Ambient, AmbientLight, Card, Disclaimer, SegmentedControl, EmptyState } from '../../components/ui';
+import { Icon, IconBadge, type IconName } from '../../components/icons';
+import { useTheme } from '../../lib/theme';
 import CustomTabBar from '../../custom-tab-bar';
 import { Toggle, ParticleBurst, LongPressConfirm } from '../../components/interactions';
 import { PosterCard } from '../../components/poster';
@@ -31,6 +33,7 @@ const LEGAL_TABS: Array<{ key: LegalTab; label: string; text: string }> = [
 ];
 
 export default function Mine() {
+  const [theme, applyTheme] = useTheme();
   const [section, setSection] = useState<Section>('main');
   const [legalTab, setLegalTab] = useState<LegalTab>('privacy');
   const [user, setUser] = useState<CloudUser | null>(null);
@@ -295,7 +298,7 @@ export default function Mine() {
 
   const header = (
     <Card light>
-      <View style={{ display: 'flex', alignItems: 'center' }}>
+      <View style={{ display: 'flex', alignItems: 'center' }} onClick={() => { if (!user) Taro.navigateTo({ url: '/pages/auth/index' }); }}>
         <View className='avatar-geo'>
           <Image className='avatar-mark' src={starMark} mode='aspectFit' />
         </View>
@@ -309,8 +312,8 @@ export default function Mine() {
           {balance !== null ? <Text className='muted' style={{ display: 'block' }}>积分：<Text className='mine-points-num'>{balance}</Text>（永不过期）</Text> : null}
         </View>
       </View>
-      {configured && !user ? (
-        <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={() => refreshAll()}>登录</View>
+      {!user ? (
+        <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={() => Taro.navigateTo({ url: '/pages/auth/index' })}>登录 / 注册</View>
       ) : null}
       <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={() => refreshAll()}>刷新</View>
       {notice ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{notice}</Text> : null}
@@ -319,8 +322,8 @@ export default function Mine() {
 
   if (section === 'member') {
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='会员中心'>
           {unconfiguredNote()}{needLoginNote()}
@@ -364,8 +367,8 @@ export default function Mine() {
   if (section === 'points') {
     const videoOpen = !!config && config.ads.enabled && !isPlaceholderAdUnit(config.ads.rewardedVideo);
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='积分中心'>
           {unconfiguredNote()}{needLoginNote()}
@@ -395,8 +398,8 @@ export default function Mine() {
 
   if (section === 'invite') {
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='邀请中心'>
           {unconfiguredNote()}{needLoginNote()}
@@ -421,7 +424,7 @@ export default function Mine() {
             <Text className='input-label'>邀请码</Text>
             <Input className='field-input' placeholder='填写邀请人的码' value={bindCode} onInput={(e) => setBindCode(e.detail.value)} />
           </View>
-          <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={bindInvite}>绑定</View>
+          <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={bindInvite}>绑定</View>
           <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={settleInvite}>结算我的邀请（核查被邀人是否已排盘）</View>
           {user?.invitedBy ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>已绑定邀请人，不可重复绑定。</Text> : null}
         </Card>
@@ -439,8 +442,8 @@ export default function Mine() {
 
   if (section === 'orders') {
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='我的订单'>
           {unconfiguredNote()}{needLoginNote()}
@@ -463,8 +466,8 @@ export default function Mine() {
 
   if (section === 'settings') {
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='设置'>
           {unconfiguredNote()}{needLoginNote()}
@@ -484,8 +487,12 @@ export default function Mine() {
             <Text className='input-label'>我是未成年人</Text>
             <Toggle checked={isMinorSwitch} onChange={setIsMinorSwitch} />
           </View>
+          <View className='input-row'>
+            <Text className='input-label'>深色模式（默认亮色）</Text>
+            <Toggle checked={theme === 'dark'} onChange={(v) => applyTheme(v ? 'dark' : 'light')} />
+          </View>
           {user?.minor ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>当前账号已标记为未成年人：AI 解读、付费会员、积分兑换付费内容均不可用。清除标记需填写成年出生年份后保存。</Text> : null}
-          <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={saveSettings}>保存资料</View>
+          <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={saveSettings}>保存资料</View>
           <Text className='muted' style={{ display: 'block', marginTop: '10px' }}>设备指纹（防刷用，本机安装标识，非真实设备号）：{deviceFingerprint()}</Text>
           <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；命盘管理请到命盘历史；出生年份可在下方填写，用于未成年人门禁换算（未满 18 岁不可使用付费解读与付费会员）。</Text>
         </Card>
@@ -497,8 +504,8 @@ export default function Mine() {
 
   if (section === 'feedback') {
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='意见反馈'>
           {unconfiguredNote()}{needLoginNote()}
@@ -507,7 +514,7 @@ export default function Mine() {
             <Input className='field-input' placeholder='邮箱或微信号' value={fbContact} onInput={(e) => setFbContact(e.detail.value)} />
           </View>
           <Textarea className='field-textarea' placeholder='请描述问题或建议（1–1000 字）' value={fbContent} onInput={(e) => setFbContent(e.detail.value)} />
-          <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={submitFeedback}>提交反馈</View>
+          <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={submitFeedback}>提交反馈</View>
           <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>反馈由运营在云端处理；未回复的项状态保持“待处理”，不伪造回复。</Text>
         </Card>
         <Card light title='我的反馈'>
@@ -528,8 +535,8 @@ export default function Mine() {
 
   if (section === 'charts') {
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='命盘历史（多盘管理）'>
           {unconfiguredNote()}{needLoginNote()}
@@ -559,8 +566,8 @@ export default function Mine() {
     const b = savedCharts.find((c) => c._id === compareB) || null;
     const palaces = ['命宫', '财帛宫', '官禄宫', '夫妻宫', '疾厄宫', '福德宫'];
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='合盘对照（两盘主星对照）'>
           {unconfiguredNote()}{needLoginNote()}
@@ -598,8 +605,8 @@ export default function Mine() {
 
   if (section === 'poster') {
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <PosterCard chart={localChart} inviteCode={invite?.inviteCode || ''} />
         {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
@@ -610,8 +617,8 @@ export default function Mine() {
   if (section === 'legal') {
     const tab = LEGAL_TABS.find((t) => t.key === legalTab) || LEGAL_TABS[0];
     return (
-      <View className='page page-light'>
-      <AmbientLight />
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='关于 / 隐私 / 条款'>
           <View style={{ display: 'flex', flexWrap: 'wrap' }}>
@@ -629,41 +636,41 @@ export default function Mine() {
 
   // Spaced divider-free service cards (s6 pattern): color dot + bold title
   // + one-line sub + violet arrow. No divider lines, big whitespace.
-  const ROWS: Array<{ label: string; sub: string; dot: string; section: Section }> = [
-    { label: '会员中心', sub: 'Pro / Max 订阅与连续包月', dot: 'svc-dot-violet', section: 'member' },
-    { label: '积分中心', sub: '签到、视频、邀请赚积分', dot: 'svc-dot-green', section: 'points' },
-    { label: '邀请中心', sub: '邀请码与阶梯奖励', dot: 'svc-dot-blue', section: 'invite' },
-    { label: '命盘历史', sub: '已保存的命盘', dot: 'svc-dot-pink', section: 'charts' },
-    { label: '合盘对照', sub: '双方六宫主星对照', dot: 'svc-dot-orange', section: 'compare' },
-    { label: '分享海报', sub: '命盘海报与邀请码', dot: 'svc-dot-violet', section: 'poster' },
-    { label: '我的订单', sub: '购买与支付记录', dot: 'svc-dot-green', section: 'orders' },
-    { label: '设置', sub: '资料、未成年人标记', dot: 'svc-dot-blue', section: 'settings' },
-    { label: '意见反馈', sub: '告诉我们你的建议', dot: 'svc-dot-pink', section: 'feedback' },
-    { label: '关于（含数据来源）', sub: '协议与数据来源', dot: 'svc-dot-orange', section: 'legal' },
+  const ROWS: Array<{ label: string; sub: string; icon: IconName; section: Section }> = [
+    { label: '会员中心', sub: 'Pro / Max 订阅与连续包月', icon: 'crown', section: 'member' },
+    { label: '积分中心', sub: '签到、视频、邀请赚积分', icon: 'coins', section: 'points' },
+    { label: '邀请中心', sub: '邀请码与阶梯奖励', icon: 'users', section: 'invite' },
+    { label: '命盘历史', sub: '已保存的命盘', icon: 'history', section: 'charts' },
+    { label: '合盘对照', sub: '双方六宫主星对照', icon: 'layers', section: 'compare' },
+    { label: '分享海报', sub: '命盘海报与邀请码', icon: 'share-2', section: 'poster' },
+    { label: '我的订单', sub: '购买与支付记录', icon: 'clipboard-list', section: 'orders' },
+    { label: '设置', sub: '资料、未成年人标记', icon: 'settings', section: 'settings' },
+    { label: '意见反馈', sub: '告诉我们你的建议', icon: 'message-square', section: 'feedback' },
+    { label: '关于（含数据来源）', sub: '协议与数据来源', icon: 'info', section: 'legal' },
   ];
   return (
-    <View className='page page-light'>
-      <AmbientLight />
+    <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
       {header}
       <Text className='svc-heading'>我的服务</Text>
       <View className='svc-grid'>
         {ROWS.map((r) => (
           <View key={r.section} className='svc-card' onClick={() => setSection(r.section)}>
-            <View className={`svc-dot ${r.dot}`} />
+            <IconBadge name={r.icon} dark={theme === 'dark'} />
             <View className='svc-body'>
               <Text className='svc-title'>{r.label}</Text>
               <Text className='svc-sub'>{r.sub}</Text>
             </View>
-            <Text className='svc-arrow'>›</Text>
+            <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
           </View>
         ))}
         <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/demo/index' })}>
-          <View className='svc-dot svc-dot-violet' />
+          <IconBadge name='layout-grid' dark={theme === 'dark'} />
           <View className='svc-body'>
             <Text className='svc-title'>组件演示</Text>
             <Text className='svc-sub'>6 个交互组件演示</Text>
           </View>
-          <Text className='svc-arrow'>›</Text>
+          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
         </View>
       </View>
       <Text className='caption'>

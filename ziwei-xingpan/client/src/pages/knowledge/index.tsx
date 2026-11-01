@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { STAR_ENTRIES, PALACE_ENTRIES, SIHUA_ENTRIES, PATTERN_ENTRIES } from '../../lib/knowledge';
-import { AmbientLight, Card, Cover } from '../../components/ui';
+import { Ambient, AmbientLight, Card, Cover } from '../../components/ui';
+import { useTheme } from '../../lib/theme';
 import CustomTabBar from '../../custom-tab-bar';
 import './index.scss';
 
@@ -14,11 +15,12 @@ const TABS = [
 ] as const;
 
 export default function Knowledge() {
+  const [theme] = useTheme();
   const [tab, setTab] = useState<string>('star');
   const current = TABS.find((t) => t.id === tab) ?? TABS[0];
   return (
-    <View className='page page-light'>
-      <AmbientLight />
+    <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
       <View className='seg'>
         {TABS.map((t) => (
           <View key={t.id} className={t.id === tab ? `seg-tab seg-tab-${t.id} seg-tab-active` : `seg-tab seg-tab-${t.id}`} onClick={() => setTab(t.id)}>

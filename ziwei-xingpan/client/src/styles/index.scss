@@ -135,7 +135,12 @@ page {
   font-weight: 700;
   flex-shrink: 0;
 }
-.btn-medley-dark { background: $black-btn; color: $white-btn; }
+.btn-medley-dark { background: $gemini-grad; color: $white-btn; }
+// Gemini press state: weapp has no :active on View, so hover-class is
+// the native equivalent. Brightened gradient (~6% lighter stops).
+// !important is deliberate: the hover class must beat page-level
+// button backgrounds (e.g. .auth-submit) regardless of order.
+.btn-press { background: linear-gradient(89.58deg, #4d97ff 0.28%, #4d7df5 44.45%, #63adff 99.55%) !important; }
 .btn-medley-white { background: $white-btn; color: $black-btn; }
 .btn-medley-outline { background: transparent; border: $hairline solid $outline-dark; color: $text; }
 .btn-medley-outline-light { background: transparent; border: $hairline solid $light-divider; color: $light-text; }
@@ -183,14 +188,13 @@ page {
   width: $composer-btn;
   height: $composer-btn;
   border-radius: 50%;
-  background: $accent;
+  background: $gemini-grad;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.composer-light .composer-send { background: $black-btn; }
-.composer-send-img { width: $icon; height: $icon; }
+.composer-light .composer-send { background: $gemini-grad; }
 
 // Medley SuggestionRow badge (Chat.tsx): rounded 6, px 6, py 2, 11pt bold.
 .chip {
@@ -203,7 +207,7 @@ page {
   font-weight: 700;
   margin: 3.85px 7.69px 3.85px 0;
 }
-.chip-accent { background: rgba(226, 161, 129, 0.22); color: $accent; }
+.chip-accent { background: $gemini-soft; color: $gemini-blue; }
 
 // Form rows (gap 6). Medley type scale: label = secondary 13,
 // value = body 16 semibold — label and value no longer share 15pt.

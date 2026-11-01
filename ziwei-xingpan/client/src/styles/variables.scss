@@ -122,11 +122,25 @@ $light-blue: #3f74ab;
 $light-green: #277a5f;
 $light-pink: #a84e7a;
 $light-orange: #b4550d;
-// Light theme accent (productization round): single violet for light-page
-// primary actions, active tab, highlights. AA 7.1 on white.
-$light-accent: #6d28d9;
-$light-accent-soft: rgba(109, 40, 217, 0.10);
-$light-accent-line: rgba(109, 40, 217, 0.35);
+// ---- Gemini blue (user's BlogAstroPure global.css, 2026-10-23 GoClub
+// recolour round, verified): the single app-wide action colour. The
+// productization round's violet accent and the gold/orange capsules
+// are retired; every capsule, primary button and active state uses
+// this gradient or its flat blue. Dark pages use the light-blue #8db4ff
+// for text-on-dark accents (AA on #1e1f23). ----
+$gemini-grad: linear-gradient(89.58deg, #3186ff 0.28%, #346bf0 44.45%, #4ea0ff 99.55%);
+$gemini-blue: #346bf0;
+$gemini-sky: #8db4ff;
+$gemini-soft: rgba(52, 107, 240, 0.10);
+$gemini-line: rgba(52, 107, 240, 0.35);
+// Light theme accent: Gemini blue (replaces the productization
+// round's violet #6d28d9). Flat #346bf0 is 4.66:1 on white (AA for
+// normal text); white bold button text on the gradient meets
+// large-scale AA (3:1) — the gradient is the user's own BlogAstroPure
+// button, kept verbatim, not re-tuned here.
+$light-accent: $gemini-blue;
+$light-accent-soft: $gemini-soft;
+$light-accent-line: $gemini-line;
 $glow-blue-w: 615.38px; // 320
 $glow-blue-h: 500.00px; // 260
 $glow-warm-w: 576.92px; // 300

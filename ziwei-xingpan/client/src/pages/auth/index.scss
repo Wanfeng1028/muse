@@ -1,0 +1,64 @@
+@import '../../styles/variables.scss';
+
+// Auth (login / register / forgot): light-first; dark overrides scoped
+// under .page.theme-dark at the bottom. Every control is a 999px
+// capsule (user's login spec); primary = Gemini blue gradient.
+.auth-back { display: flex; align-items: center; gap: 11.54px; margin-bottom: 30.77px; }
+.auth-back-text { font-size: $fs-item; font-weight: 600; color: $light-sub; }
+.auth-brand { display: flex; align-items: center; margin-bottom: 30.77px; }
+.auth-brand-mark { width: 48px; height: 48px; flex-shrink: 0; }
+.auth-title { display: block; font-size: $fs-hero; font-weight: 600; line-height: 1.15; color: $light-text; }
+.auth-sub { display: block; margin-top: 23.08px; margin-bottom: 30.77px; font-size: $fs-item; line-height: 1.6; color: $light-sub; }
+.auth-row {
+  display: flex;
+  align-items: center;
+  gap: 23.08px;
+  padding: 26.92px 0;
+  border-bottom: 1.92px solid $light-divider;
+}
+.auth-row-last { border-bottom: none; }
+.auth-input { flex: 1; font-size: $fs-body; font-weight: 600; line-height: 1.5; border: none; outline: none; background: transparent; color: $light-text; min-width: 0; }
+.auth-forgot { display: flex; justify-content: flex-end; margin: 23.08px 0; }
+.auth-link { font-size: $fs-secondary; font-weight: 600; color: $gemini-blue; }
+.auth-submit {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: $button-h;
+  border-radius: 999px;
+  background: $gemini-grad;
+  margin-top: 23.08px;
+}
+.auth-submit-text { font-size: $fs-item; font-weight: 700; color: #ffffff; }
+.auth-divider { display: flex; align-items: center; justify-content: center; margin: 30.77px 0; }
+.auth-divider-text { font-size: $fs-secondary; color: $light-dim; }
+.auth-third {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 19.23px;
+  width: 100%;
+  height: $button-h;
+  border-radius: 999px;
+  border: 1.92px solid $light-divider;
+  background: transparent;
+  margin-bottom: 23.08px;
+}
+.auth-third-text { font-size: $fs-item; font-weight: 600; color: $light-text; }
+.auth-note { display: block; margin-top: 7.69px; font-size: $fs-caption; line-height: 1.7; color: $light-sub; }
+.auth-switch { display: flex; justify-content: center; margin-top: 23.08px; }
+
+// ---------- Dark ----------
+.page.theme-dark .auth-back-text { color: $sub; }
+.page.theme-dark .auth-title { color: $text; }
+.page.theme-dark .auth-sub { color: $sub; }
+.page.theme-dark .auth-row { border-color: $divider; }
+.page.theme-dark .auth-input { color: $text; }
+.page.theme-dark .auth-link { color: $gemini-sky; }
+.page.theme-dark .auth-third { border-color: $outline-dark; }
+.page.theme-dark .auth-third-text { color: $text; }
+.page.theme-dark .auth-note { color: $sub; }
+.page.theme-dark .auth-divider-text { color: $dim; }

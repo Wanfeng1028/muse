@@ -1,6 +1,7 @@
 import { View, Text } from '@tarojs/components';
 import { useEffect, useRef, useState } from 'react';
 import { Card } from '../../components/ui';
+import { useTheme } from '../../lib/theme';
 import { RippleView, Toggle, ParticleBurst, LongPressConfirm, LoadingButton, HamburgerMorph } from '../../components/interactions';
 import './index.scss';
 
@@ -11,6 +12,7 @@ import './index.scss';
 const MENU_ROWS = ['水波纹点击', '开关切换', '粒子爆发', '长按确认', '按钮内加载', '汉堡变叉'];
 
 export default function Demo() {
+  const [theme] = useTheme();
   const [toggleOn, setToggleOn] = useState(false);
   const [burstKey, setBurstKey] = useState(0);
   const [lpDeleted, setLpDeleted] = useState(false);
@@ -29,7 +31,7 @@ export default function Demo() {
   }
 
   return (
-    <View className='page'>
+    <View className={'page theme-' + theme}>
       <Card title='组件演示'>
         <Text className='muted'>以下 6 项均为交互组件演示，非正式功能入口。正式页面里的真实接入点见各组件文件头的注释。</Text>
       </Card>

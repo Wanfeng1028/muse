@@ -7,7 +7,8 @@ import {
   branchFromClock, formatDate, parseDate, previewCorrections, saveInput,
   shichenLabel, shichenRange, shiftDate, loadInput, type BirthFormInput,
 } from '../../lib/chart';
-import { Ambient, Card, ComposerBar, SegmentedControl } from '../../components/ui';
+import { Ambient, AmbientLight, Card, ComposerBar, SegmentedControl } from '../../components/ui';
+import { useTheme } from '../../lib/theme';
 import starMark from '../../assets/logo/star-mark.png';
 import { BannerAd } from '../../components/ads';
 import { callFn, cloudConfigured, type AppConfig, type MembershipStatus } from '../../lib/cloud';
@@ -18,6 +19,7 @@ import './index.scss';
 const GENDERS = ['男', '女'];
 
 export default function Home() {
+  const [theme] = useTheme();
   const [name, setName] = useState('');
   const [genderIdx, setGenderIdx] = useState(0);
   const [date, setDate] = useState('1995-06-15');
@@ -103,8 +105,8 @@ export default function Home() {
   }
 
   return (
-    <View className='page page-welcome'>
-      <Ambient welcome />
+    <View className={'page page-welcome theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient welcome />}
       <View className='hero'>
         <View className='hero-brand'>
           <Image className='brand-mark' src={starMark} mode='aspectFit' />

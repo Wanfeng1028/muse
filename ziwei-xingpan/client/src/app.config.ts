@@ -5,18 +5,19 @@ export default {
     'pages/interpret/index',
     'pages/knowledge/index',
     'pages/mine/index',
+    'pages/auth/index',
     'pages/demo/index',
   ],
   tabBar: {
     custom: true,
     // List kept for compatibility (WeChat requires list items even with a
     // custom tabBar); the floating pill in src/custom-tab-bar/ is what
-    // actually renders. Its icons are vector shapes drawn in code, not
-    // the old PNGs below (those are opaque squares painted on #111518
-    // and only fit the old native dark bar).
+    // actually renders, with Lucide PNG icons (not the old PNGs below,
+    // which are opaque squares painted on #111518 and only fit the old
+    // native dark bar).
     color: '#9a9ba2',
-    selectedColor: '#f5f5f7',
-    backgroundColor: '#111518',
+    selectedColor: '#346bf0',
+    backgroundColor: '#f5f6f8',
     borderStyle: 'white',
     list: [
       { pagePath: 'pages/index/index', text: '首页', iconPath: 'assets/tabbar/home.png', selectedIconPath: 'assets/tabbar/home-active.png' },
@@ -26,9 +27,10 @@ export default {
     ],
   },
   window: {
-    backgroundTextStyle: 'dark',
-    navigationBarBackgroundColor: '#111518',
-    navigationBarTextStyle: 'white',
+    backgroundTextStyle: 'light',
+    backgroundColor: '#f5f6f8',
+    navigationBarBackgroundColor: '#f5f6f8',
+    navigationBarTextStyle: 'black',
     navigationBarTitleText: '紫微星盘',
   },
 };
