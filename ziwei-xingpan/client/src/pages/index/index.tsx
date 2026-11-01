@@ -7,11 +7,12 @@ import {
   branchFromClock, formatDate, parseDate, previewCorrections, saveInput,
   shichenLabel, shichenRange, shiftDate, loadInput, type BirthFormInput,
 } from '../../lib/chart';
-import { Ambient, Card, ComposerBar } from '../../components/ui';
+import { Ambient, Card, ComposerBar, SegmentedControl } from '../../components/ui';
 import starMark from '../../assets/logo/star-mark.png';
 import { BannerAd } from '../../components/ads';
 import { callFn, cloudConfigured, type AppConfig, type MembershipStatus } from '../../lib/cloud';
 import { adSlotLive } from '../../lib/ads';
+import CustomTabBar from '../../custom-tab-bar';
 import './index.scss';
 
 const GENDERS = ['男', '女'];
@@ -121,11 +122,9 @@ export default function Home() {
           <Text className='input-label'>姓名（可选）</Text>
           <Input className='field-input' placeholder='不填也可排盘' value={name} onInput={(e) => setName(e.detail.value)} />
         </View>
-        <View className='input-row'>
+        <View className='input-row input-row-col'>
           <Text className='input-label'>性别</Text>
-          <Picker mode='selector' range={GENDERS} value={genderIdx} onChange={(e) => setGenderIdx(Number(e.detail.value))}>
-            <Text className='input-value'>{GENDERS[genderIdx]}</Text>
-          </Picker>
+          <SegmentedControl options={GENDERS} value={genderIdx} onChange={setGenderIdx} tone='dark' />
         </View>
         <View className='input-row'>
           <Text className='input-label'>公历生日</Text>
@@ -154,6 +153,40 @@ export default function Home() {
             <Text className='input-value'>{province?.name} {city?.name}（经度 {city?.longitude}°）</Text>
           </Picker>
         </View>
+      </Card>
+
+      {/* 实时计算预览卡（宫垣 g1 式）：表单下方直接给结果，不改动输入；
+          采用校正仍需到下方时间校正卡点按钮。数值随表单输入实时重算。 */}
+      <Card title='计算结果预览'>
+        <View className='preview-row'>
+          <Text className='input-label'>出生地经度</Text>
+          <Text className='input-value'>{province?.name} {city?.name} {city?.longitude}°</Text>
+        </View>
+        <View className='preview-row'>
+          <Text className='input-label'>钟表时间</Text>
+          <Text className='input-value'>{time}（{shichenLabel(branch)}）</Text>
+        </View>
+        <View className='preview-row'>
+          <Text className='input-label'>真太阳时</Text>
+          <Text className='input-value preview-accent'>
+            {preview.solar
+              ? `${String(preview.solar.hour).padStart(2, '0')}:${String(preview.solar.minute).padStart(2, '0')}（${shichenLabel(preview.solarBranch ?? branch)}）`
+              : '—'}
+          </Text>
+        </View>
+        <View className='preview-row'>
+          <Text className='input-label'>修正量</Text>
+          <Text className='input-value'>
+            {preview.solar
+              ? `经度 ${preview.solar.longitudeCorrectionMinutes.toFixed(1)} 分钟，均时差 ${preview.solar.equationOfTimeMinutes.toFixed(1)} 分钟`
+              : '—'}
+          </Text>
+        </View>
+        <View className='preview-row preview-row-last'>
+          <Text className='input-label'>夏令时</Text>
+          <Text className='input-value'>{preview.isDst ? `${preview.dstNote}，减 1 小时后为 ${preview.clockShifted}` : '该日期不在中国大陆夏令时期间，无需换算'}</Text>
+        </View>
+        <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>预览只展示计算结果，不改动你填的时间；要采用校正请到下方时间校正卡点按钮。</Text>
       </Card>
 
       <Card title='时间校正（手动、可撤销，绝不自动改）'>
@@ -193,6 +226,10 @@ export default function Home() {
       ) : null}
       <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>地支对照：{BRANCHES.join(' ')}；时辰以两小时为一档，23:00 后属次日子时口径由排盘引擎处理。</Text>
       {adTier === 'free' ? <BannerAd unitId={adSlotLive(adConfig, 'bannerHome')} /> : null}
+      {/* H5 has no custom-tabBar support (weapp-only feature): on WEB the
+          same floating bar is mounted in-page; on weapp the framework
+          injects it natively and this branch renders null. */}
+      {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
     </View>
   );
 }

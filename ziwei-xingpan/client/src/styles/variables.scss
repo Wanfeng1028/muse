@@ -122,6 +122,11 @@ $light-blue: #3f74ab;
 $light-green: #277a5f;
 $light-pink: #a84e7a;
 $light-orange: #b4550d;
+// Light theme accent (productization round): single violet for light-page
+// primary actions, active tab, highlights. AA 7.1 on white.
+$light-accent: #6d28d9;
+$light-accent-soft: rgba(109, 40, 217, 0.10);
+$light-accent-line: rgba(109, 40, 217, 0.35);
 $glow-blue-w: 615.38px; // 320
 $glow-blue-h: 500.00px; // 260
 $glow-warm-w: 576.92px; // 300

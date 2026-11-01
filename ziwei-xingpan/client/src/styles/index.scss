@@ -14,7 +14,9 @@ page {
 .page {
   position: relative;
   z-index: 0;
-  padding: $page-padding;
+  // Bottom padding clears the floating tab bar (bar 56pt + bottom margin
+  // 12pt + safe area up to ~34pt) plus breathing room.
+  padding: $page-padding $page-padding 230.77px $page-padding;
   min-height: 100vh;
   box-sizing: border-box;
   background: $bg;
@@ -218,6 +220,7 @@ page {
 }
 .input-row:last-child { border-bottom: none; }
 .page-light .input-row { border-color: $light-divider; }
+.input-row-col { flex-direction: column; align-items: stretch; gap: 15.38px; }
 .input-label { font-size: $fs-secondary; font-weight: 500; line-height: 1.5; color: $sub; flex-shrink: 0; }
 .input-value { font-size: $fs-body; font-weight: 600; line-height: 1.5; text-align: right; flex: 1; color: $text; }
 .field-input { font-size: $fs-body; font-weight: 600; line-height: 1.5; text-align: right; flex: 1; border: none; outline: none; background: transparent; color: $text; }

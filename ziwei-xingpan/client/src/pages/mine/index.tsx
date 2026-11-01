@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Input, Textarea, Picker, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { AmbientLight, Card, Disclaimer } from '../../components/ui';
+import { AmbientLight, Card, Disclaimer, SegmentedControl, EmptyState } from '../../components/ui';
+import CustomTabBar from '../../custom-tab-bar';
 import { Toggle, ParticleBurst, LongPressConfirm } from '../../components/interactions';
 import { PosterCard } from '../../components/poster';
 import starMark from '../../assets/logo/star-mark.png';
@@ -355,6 +356,7 @@ export default function Mine() {
           <View className='btn-medley btn-medley-outline-light' onClick={() => redeem('pro30d')}>{busy === 'redeem-pro30d' ? '处理中…' : '1500 积分兑换 30 天 Pro'}</View>
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -378,7 +380,7 @@ export default function Mine() {
           <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => earn('profile')}>{busy === 'earn-profile' ? '处理中…' : (user?.profileBonusClaimed ? '完善资料 +30（已领取）' : '完善资料 +30（一次，需先在设置填昵称）')}</View>
         </Card>
         <Card light title='积分账本（最近 50 条）'>
-          {ledger.length === 0 ? <Text className='muted'>暂无积分记录。</Text> : ledger.map((e, i) => (
+          {ledger.length === 0 ? <EmptyState title='暂无积分记录' hint='每日签到 +10，完整看完激励视频 +20，邀请好友 +100。' /> : ledger.map((e, i) => (
             <View key={i} className='input-row'>
               <Text className='input-label mine-row-label'>{RULE_LABELS[e.rule] || e.rule}</Text>
               <Text className='input-value'><Text className={e.delta > 0 ? 'mine-delta-pos' : 'mine-delta-neg'}>{e.delta > 0 ? '+' + e.delta : e.delta}</Text><Text className='muted'> · {formatDateTime(e.createdAt)}</Text></Text>
@@ -386,6 +388,7 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -429,6 +432,7 @@ export default function Mine() {
           <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>完整分享海报（含邀请二维码）在三期随海报功能提供；此处先提供小程序码原图。</Text>
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -441,7 +445,7 @@ export default function Mine() {
         <Card light title='我的订单'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('订单') ? <Text className='muted'>订单加载失败，请刷新重试。</Text> : null}
-          {orders.length === 0 ? <Text className='muted'>暂无订单。</Text> : orders.map((o) => (
+          {orders.length === 0 ? <EmptyState title='暂无订单' hint='在会员中心购买后，订单会出现在这里。' /> : orders.map((o) => (
             <View key={o._id} className='input-row'>
               <View>
                 <Text className='mine-row-label'>{PLAN_NAMES[o.plan] || o.plan} · {formatYuan(o.amountFen)}</Text>
@@ -452,6 +456,7 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -467,11 +472,9 @@ export default function Mine() {
             <Text className='input-label'>昵称</Text>
             <Input className='field-input' placeholder='填写昵称' value={nickname} onInput={(e) => setNickname(e.detail.value)} />
           </View>
-          <View className='input-row'>
+          <View className='input-row input-row-col'>
             <Text className='input-label'>性别</Text>
-            <Picker mode='selector' range={GENDERS} value={genderIdx} onChange={(e) => setGenderIdx(Number(e.detail.value))}>
-              <Text className='input-value'>{GENDERS[genderIdx]}</Text>
-            </Picker>
+            <SegmentedControl options={GENDERS} value={genderIdx} onChange={setGenderIdx} tone='light' />
           </View>
           <View className='input-row'>
             <Text className='input-label'>出生年份</Text>
@@ -487,6 +490,7 @@ export default function Mine() {
           <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；命盘管理请到命盘历史；出生年份可在下方填写，用于未成年人门禁换算（未满 18 岁不可使用付费解读与付费会员）。</Text>
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -507,7 +511,7 @@ export default function Mine() {
           <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>反馈由运营在云端处理；未回复的项状态保持“待处理”，不伪造回复。</Text>
         </Card>
         <Card light title='我的反馈'>
-          {feedbacks.length === 0 ? <Text className='muted'>暂无反馈记录。</Text> : feedbacks.map((f, i) => (
+          {feedbacks.length === 0 ? <EmptyState title='暂无反馈记录' hint='在上方提交反馈后，处理状态会出现在这里。' /> : feedbacks.map((f, i) => (
             <View key={i} className='input-row'>
               <View style={{ flex: 1 }}>
                 <Text className='mine-row-label'>{f.content}</Text>
@@ -517,6 +521,7 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -529,7 +534,7 @@ export default function Mine() {
         <Card light title='命盘历史（多盘管理）'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('命盘') ? <Text className='muted'>命盘历史加载失败，请刷新重试。</Text> : null}
-          {savedCharts.length === 0 ? <Text className='muted'>暂无保存的命盘。请先在首页排盘，再到命盘图页点“保存到我的命盘”。</Text> : savedCharts.map((c) => (
+          {savedCharts.length === 0 ? <EmptyState title='暂无保存的命盘' hint='请先在首页排盘，再到命盘图页点“保存到我的命盘”。' actionLabel='去首页排盘' onAction={() => Taro.switchTab({ url: '/pages/index/index' })} /> : savedCharts.map((c) => (
             <View key={c._id} style={{ marginBottom: '12px' }}>
               <View className='input-row'>
                 <Text className='input-label mine-row-label'>{c.name}{c.isDefault ? '（默认盘）' : ''}</Text>
@@ -544,6 +549,7 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -585,6 +591,7 @@ export default function Mine() {
           )}
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -595,6 +602,7 @@ export default function Mine() {
       <AmbientLight />
         {backBtn()}
         <PosterCard chart={localChart} inviteCode={invite?.inviteCode || ''} />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -614,42 +622,56 @@ export default function Mine() {
           <Text className='legal-body'>{tab.text}</Text>
         </Card>
         <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
 
-  const ROWS: Array<{ label: string; section: Section }> = [
-    { label: '会员中心', section: 'member' },
-    { label: '积分中心', section: 'points' },
-    { label: '邀请中心', section: 'invite' },
-    { label: '命盘历史', section: 'charts' },
-    { label: '合盘对照', section: 'compare' },
-    { label: '分享海报', section: 'poster' },
-    { label: '我的订单', section: 'orders' },
-    { label: '设置', section: 'settings' },
-    { label: '意见反馈', section: 'feedback' },
-    { label: '关于（含数据来源）', section: 'legal' },
+  // Spaced divider-free service cards (s6 pattern): color dot + bold title
+  // + one-line sub + violet arrow. No divider lines, big whitespace.
+  const ROWS: Array<{ label: string; sub: string; dot: string; section: Section }> = [
+    { label: '会员中心', sub: 'Pro / Max 订阅与连续包月', dot: 'svc-dot-violet', section: 'member' },
+    { label: '积分中心', sub: '签到、视频、邀请赚积分', dot: 'svc-dot-green', section: 'points' },
+    { label: '邀请中心', sub: '邀请码与阶梯奖励', dot: 'svc-dot-blue', section: 'invite' },
+    { label: '命盘历史', sub: '已保存的命盘', dot: 'svc-dot-pink', section: 'charts' },
+    { label: '合盘对照', sub: '双方六宫主星对照', dot: 'svc-dot-orange', section: 'compare' },
+    { label: '分享海报', sub: '命盘海报与邀请码', dot: 'svc-dot-violet', section: 'poster' },
+    { label: '我的订单', sub: '购买与支付记录', dot: 'svc-dot-green', section: 'orders' },
+    { label: '设置', sub: '资料、未成年人标记', dot: 'svc-dot-blue', section: 'settings' },
+    { label: '意见反馈', sub: '告诉我们你的建议', dot: 'svc-dot-pink', section: 'feedback' },
+    { label: '关于（含数据来源）', sub: '协议与数据来源', dot: 'svc-dot-orange', section: 'legal' },
   ];
   return (
     <View className='page page-light'>
       <AmbientLight />
       {header}
-      <Card light title='我的服务'>
+      <Text className='svc-heading'>我的服务</Text>
+      <View className='svc-grid'>
         {ROWS.map((r) => (
-          <View key={r.section} className='input-row' onClick={() => setSection(r.section)}>
-            <Text className='input-label mine-row-label'>{r.label}</Text>
-            <Text className='mine-arrow'>›</Text>
+          <View key={r.section} className='svc-card' onClick={() => setSection(r.section)}>
+            <View className={`svc-dot ${r.dot}`} />
+            <View className='svc-body'>
+              <Text className='svc-title'>{r.label}</Text>
+              <Text className='svc-sub'>{r.sub}</Text>
+            </View>
+            <Text className='svc-arrow'>›</Text>
           </View>
         ))}
-        <View className='input-row' onClick={() => Taro.navigateTo({ url: '/pages/demo/index' })}>
-          <Text className='input-label mine-row-label'>组件演示</Text>
-          <Text className='mine-arrow'>›</Text>
+        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/demo/index' })}>
+          <View className='svc-dot svc-dot-violet' />
+          <View className='svc-body'>
+            <Text className='svc-title'>组件演示</Text>
+            <Text className='svc-sub'>6 个交互组件演示</Text>
+          </View>
+          <Text className='svc-arrow'>›</Text>
         </View>
-      </Card>
+      </View>
       <Text className='caption'>
         数据来源：排盘引擎移植自 Renhuai123/ziwei-doushu（MIT，见引擎目录 LICENSE 与 SOURCE.md）。
         内容源自传统紫微斗数文化，仅供学习与娱乐参考，不构成人生决策建议。
       </Text>
+      {/* H5 fallback mount (weapp injects the custom tabBar natively). */}
+      {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
     </View>
   );
 }

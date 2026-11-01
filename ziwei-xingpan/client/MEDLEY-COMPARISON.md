@@ -195,3 +195,121 @@
 
 残留总数 11 项；其中平台/内容接受 4 项（R1''、R2''、R4''、R8''），待真机复核 3 项（R3''、R6''、R9''），范围外未做 1 项（R5''），待数据 1 项（R10''），待用户给值 2 项（R7''、R11''）。
 最关键的三项：R3''（真机是唯一未验大项，尤其 .ambient 的 fixed + pointer-events 在真机上的表现）、R1''（玻璃无真折射，观感上限）、R7''（我的页着色需真实数据复验）。
+
+## v4：产品化一轮（2026-11-01，用户纠正：Medley 是底色不是唯一来源）
+
+用户原话：用 Medley 前端不等于只能用 Medley 的组件，其他好的组件也要用；现在的东西不像给用户用的小程序，黑乎乎的，黑白（深色与浅色）都要做好；功能和界面都要做好。本轮不是纯样式轮，是产品化轮：组件体系（Vant Weapp / TDesign MiniProgram pattern，手写，不硬装不兼容的原生库）+ 排盘标杆（宫垣 Kairos、文墨天机可读性）+ iOS 质感，逐项过全部功能。
+
+### 4 条验收（用户 13:12 亲眼看过的原图，逐项对齐，不是“已参考”）
+
+1. **宫垣 g1 表单页**：深色分层卡 + 大标题 + 性别胶囊分段器 + 表单下方真太阳时预览卡。
+   - 首页性别由纯文字 Picker 改为分段胶囊（深色：金色 pill + 黑字，复刻宫垣金色选中男；浅色设置页同款，紫色 pill + 白字）。
+   - 表单下方新增“计算结果预览”卡：出生地经度、钟表时间、真太阳时（金色值）、修正量（经度修正/均时差）、夏令时状态，随输入实时重算；只展示结果，不改动输入，采用仍需到时间校正卡点按钮（与一期“绝不自动改”铁律一致）。
+   - 证据：shots-prod/home.png、crop-home-form.png（男金 pill、预览卡紧贴表单均可见）。
+2. **宫垣 g2 命盘页**：三方四正连线 + 选中宫位金边 + 盘下宫位详情卡。
+   - 选中态：默认命宫，点任意宫位切换；金色 inset 影（不改布局尺寸，避免量测漂移）；与现有的当前大运边（.current）并存，互不复用。
+   - 连线：运行时 createSelectorQuery 量测 12 宫中心（grid 行高随内容走、非正方形，百分比坐标必错，故不用）；三合碧色三角（#5ec8a7，Medley logo 绿）+ 对宫金色对角线（#e3ac45）。H5 实测顶点：辰 (37,471)、申 (291,154)、午 (122,154)、子 (206,1095)，段长 406/945/945 与中心距逐项对上（DOM 量测值，非目测）。
+   - 详情卡：盘下直接跟选中宫卡（主星 + 亮度 + 四化 + 借对宫注 + 三方四正宫名 + 大运年龄 + 复用解读维度的 body，不新编内容）+ 切换提示。
+   - 流年/小限：按通行口径推算（流年支 = 农历年 −4 取余，2024 甲辰 → 辰验算通过；小限男顺女逆，从生年支起数虚岁，代码与文档均标“通行口径”）；对应宫位贴 流年（金）/ 小限（蓝）角标。默认数据（1995-06-15，今农历 2026 年）下两者恰好同落午宫，双标同格，数学复核无误。
+   - 全屏查看：专注看盘覆盖层（同 grid + 同选中 + 同详情卡，独立量测）；诚实标注：是专注视图，不是捏合缩放（Taro MovableView 缩放链路在 H5 不可靠，不谎称）。
+   - 证据：shots-prod/chart.png、crop-chart-plate.png、crop-chart-detail.png、chart-fullscreen.png。
+3. **s6 生活社区（浅色标杆）**：去分割线大留白、一个主题色贯穿、图片卡、浅色底栏彩色激活。
+   - 我的主页服务列表由满屏分割线改为间隔白卡（色点 + 粗标题 + 一行副标题 + 紫色 ›），无分割线；主题色紫 #6d28d9（白底 AA 7.1）贯穿浅色页（激活态、箭头、分段器、价格/积分色）。
+   - 图片卡：本程序无图库、外链不可上架，故知识封面为矢量渐变 + 抽象装饰（圆 + 点，纯 CSS，不挪用 logo 作装饰），标题层级加粗；此为诚实替代，不是假照片。
+   - 证据：shots-prod/mine.png、crop-mine-cards.png。
+4. **s5 新闻资讯**：深浅双主题一等公民、图片 + 粗标题撑视觉。
+   - 知识页：分类封面（星曜蓝 / 宫位绿 / 四化橙 / 格局粉渐变 + 粗标题 + 副标题）+ 分段器 + 色条卡片 + 粗标题 + 正文层级；深色页（首页/命盘/解读）同步分层（环境光 + 亮卡 + 彩色层级），不再黑乎乎一片。
+   - 证据：shots-prod/knowledge.png、crop-knowledge-cover.png；深色见 home/chart/interpret。
+
+### 悬浮圆角底栏（自定义 tabBar，Taro 4.x 实测结论）
+
+- 微信自定义 tabBar 是 weapp 专属能力（Taro 文档支持矩阵：custom 列仅微信小程序 ✔，H5 ✘）；H5 下 custom:true 直接不出栏（实测 dist 含 custom:true 但 bundle 无组件代码）。
+- 落地：weapp 由框架原生注入 src/custom-tab-bar/（dist/custom-tab-bar/ 已验，index.js/json/wxml/wxss 齐全）；H5 预览由 4 个 tab 页 + 我的 11 个分屏 return 以 WEB-only 分支同组件挂载（weapp 上该分支恒为 null，不双份）。
+- 图标不用图片导入：两条实测陷阱——① Taro 会把 custom-tab-bar 内的小图 import 内联为 base64，而微信 <image> 不显示 base64；② v3 的 tabBar PNG 是画在 #111518 底上的不透明方块，不是透明字形，无法换色。最终图标为纯 View 矢量形（描边 = 未选中，填充 = 选中），深色 pill 白激活、浅色 pill 紫激活。
+- 选中推导必须 mount + show 双跑：只 mount 会在 tab 切换时读到旧路由，只 show 会在我的分屏切换（同路由内新实例挂载、无 show 事件）时停在默认深色；双跑后深浅与激活态在 tab 切换、分屏切换、直链进入三路皆对（member 分屏深色栏 bug 即由此闭合）。
+- .page 底部留白 230.77px（56pt 栏 + 12pt 底边距 + 安全区 + 呼吸）。
+
+### 功能清单表（功能 → 界面状态 → 截图，全部实拍，无假数据）
+
+| 功能 | 界面状态 | 截图 |
+|---|---|---|
+| 排盘表单 | 性别分段胶囊 + 实时预览卡 + 校正按钮（手动可撤销） | home.png、crop-home-form.png |
+| 十二宫命盘 | 连线 + 金边选中 + 流年/小限角标 | chart.png、crop-chart-plate.png |
+| 宫位详情卡 | 盘下详情卡 + 切换提示 | chart.png、crop-chart-detail.png |
+| 全屏查看 | 专注覆盖层（同盘同选中） | chart-fullscreen.png |
+| 大运流年流月 | 大运卡 + 流年/流月卡（今年农历年、虚岁） | chart.png（下半） |
+| 13 维解读 | 格局 5 条 + 13 维 + 每处免责 | interpret.png |
+| AI 解盘 / 问答 / 配图 | 诚实未配置态（需 envId，不展示假解读） | interpret.png（下半） |
+| 知识库 | 分类封面 + 分段器 + 色条卡片 | knowledge.png、crop-knowledge-cover.png |
+| 合盘对照 | 诚实缺口态（需 ≥2 保存盘 + 云配置） | mine-compare.png |
+| 命盘历史 | EmptyState + 去首页排盘入口 | mine-charts.png |
+| 会员中心 | 诚实未配置态 + 积分兑换按钮 | mine-member.png |
+| 积分中心 | 规则 + 胶囊按钮 + 账本 EmptyState | mine-points.png |
+| 邀请中心 | 绑定码 + 结算 + 小程序码入口 | mine-invite.png |
+| 分享海报 | 浅色卡 + 深色画布作品 + 生成/保存按钮（此前深卡深字 bug 已修） | mine-poster.png |
+| 我的订单 | EmptyState | mine-orders.png |
+| 设置 | 性别分段胶囊 + 未成年人 Toggle + 指纹注 | mine-settings.png |
+| 意见反馈 | 表单 + 提交 + 反馈 EmptyState | mine-feedback.png |
+| 关于 / 隐私 / 条款 | 4 tab + 全文 | mine-legal.png |
+| 组件演示 | 6 组件全部在位 | demo.png |
+| 底栏 | 深色 pill（首页/解读）+ 浅色 pill（知识/我的） | 各页底部 |
+
+并排对比（shots-prod/sbs/）：sbs-home（↔ welcome-dark）、sbs-interpret（↔ chat-dark-lisbon-cn）、sbs-knowledge（↔ home-light-cn）、sbs-mine（↔ credits-light），左为本轮新拍、右为 Medley 原图 390 宽缩放。
+
+### 本轮修掉的既有 bug（顺带，不在原验收内但逐项过时撞见）
+
+- 分享海报卡在浅色我的页里用深卡，导致 .page-light 文本重映射下深字压深底、按钮近乎不可见；PosterCard 仅用于我的海报分屏，改为浅色卡（画布本身仍是深色海报作品，属有意设计），重拍闭合。
+
+### 验证收据
+
+- `tsc --noEmit` 通过；`taro build --type weapp` 通过（仅既有 mini-css-extract chunk 警告）；`taro build --type h5` 通过；`engine:smoke` 768 盘 0 失败。
+- callFn 调用点零改动（本轮未动 lib/cloud 与 cloudfunctions/）；engine/ 零改动；logo 三处零改动（assets/logo/、首页品牌行、我的头像 diff 为空）；6 交互组件 + 演示页零改动；v3 闭合 7 条零回退（环境光、标题一行、星曜着色、卡片玻璃、图标加粗、表单层级、命盘 plate 均在位）。
+- H5 截图法说明：Taro H5 在 .taro_page 内滚动（overflow scroll，文档高恒 844），Playwright fullPage 只拍视口；截图时以 JS 临时放开滚动链（仅截图用，不改产品代码），再 fullPage 拍全页；像素本身未动过。
+
+### v4 残留表（接 v3，带数）
+
+| # | 残留项 | 具体差距 | 状态 |
+|---|---|---|---|
+| R2'' | TabBar 全局深色 | 已闭合：自定义悬浮 pill 深浅双 variant，真机尺寸与 H5 一致性仍待真机看一眼 | 待真机复核 |
+| R7'' | 我的页主屏着色受限 | 部分闭合：服务卡已着色；会员/积分/订单真实数据着色仍待 envId 后自验，绝不造假 | 待用户给值（envId 后自验） |
+| R12'' | 命盘连线真机行为 | H5 量测 + DOM 几何已验；微信真机上 pointer-events:none 透传与 createSelectorQuery 表现未验 | 待真机复核 |
+| R13'' | 全屏非捏合缩放 | 覆盖层专注视图，标题与文档均诚实标注，不谎称捏合缩放 | 接受：诚实标注 |
+| R14'' | 知识封面非照片 | 矢量渐变 + 抽象装饰代替照片（无图库、外链不可上架），已在文档与代码注释中明说 | 接受：诚实替代 |
+| R3''、R6''、R9''、R10''、R11'' | 沿用 v3 | 见 v3 残留表 | 未变 |
+
+### v4 补充：OCR 审查与证据重拍（2026-11-01 晚）
+
+- OCR delegation 审查（ocr delegate preview → rule → workspace diff 逐文件，
+  coverage：preview 20 项 = 本轮 16 项 reviewed + docseek 1 项 skipped（他人
+  工作，不属本轮范围）+ 工具排除 3 项（md/log/db），100% accounted）：
+  - F1（Medium，文档）：app.config.ts 注释称自定义栏用
+    `src/assets/tabbar/float/` 透明重着色图——该目录已删，实际为代码绘制
+    矢量形。已修注释。
+  - F2（Medium，可维护）：详情卡 JSX 在主视图与全屏遮罩重复，且全屏版已
+    漂移（缺三方四正/大运/流年/小限行）。已抽为 ChartPage 内 renderDetail
+    （compact）渲染方法（不用内层组件，合项目惯例）；全屏 compact 版仅
+    主星 + 维度正文，差异有注释。
+  - F3（Low，健壮）：Cover 无兜底背景，未知 kind 会白字落浅底不可见。已
+    给 .cover 加默认渐变（已知 4 类视觉不变）。
+  - F4（Low，规则字面）：currentPath 与 createSelectorQuery 回调的 any
+    补了一行注释（Taro API 本身弱类型 + try/catch 防护）。
+  - 不修：静态内联 margin（沿用文件既有写法）、useEffect 依赖（derive
+    只读 Taro API + setState，行为正确）、真机未验（见 R12''）。
+  - 修复后重验：tsc 通过、weapp 构建成功（仅既有 chunk-common 警告）、
+    引擎 smoke 768/0、图表与全屏重拍确认重构输出一致（详情卡内容、
+    金边、三合/对宫线均在）。
+- 证据事故与恢复（诚实记录）：OCR 修复后的一次 `rsync --delete` 同步
+  （client → H5 预览目录）误删了预览目录下全部 v4 证据（shots-prod/、
+  shots-medley-v2/、shots-medley-v3/、shots-interactions/）与拍摄/服务
+  脚本（shot-prod.js、shot-crops.js、sbs-prod.py、server.js），并导致
+  H5 构建产物 dist/index.html 丢失、旧服务 404。已全部重建：server.js
+  （SPA 回退读预览根目录 spa-index.html，不再依赖 dist/index.html，
+  故后续构建不再丢壳）、shot-prod.js、shot-crops.js、sbs-prod.py；17 张
+  全页 + 6 张验收裁切 + 4 张 sbs 全部重拍，均为修复后代码的真实渲染。
+  v2/v3 历史证据未恢复（仅 v4 证据重建；如需历史对比以仓库 CHANGELOG
+  与 MEDLEY-COMPARISON.md 各章节文字记录为准）。教训：预览目录同步
+  一律不用 --delete，只同步 src/config，工具与证据不进同步路径。
+- 全页截图说明：position:fixed 的悬浮底栏在 Playwright fullPage 拼接图
+  里会落在拼接中部（拼接产物，非产品行为）；真机上底栏恒在屏底，页底
+  230.77px 留白保证末尾内容不被遮挡。验收裁切一律用视口截图，底栏位
+  置真实。

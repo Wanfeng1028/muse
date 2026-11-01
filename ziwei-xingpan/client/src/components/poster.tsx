@@ -147,8 +147,11 @@ export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; in
     }
   }
 
+  // Light card: PosterCard lives only in the mine poster section (a light
+  // page). A dark Card here rendered dark-on-dark under .page-light's
+  // text remap. The canvas itself stays a dark poster artwork on purpose.
   return (
-    <Card title='分享海报'>
+    <Card light title='分享海报'>
       {!chart ? <Text className='muted'>请先在首页排盘，再生成分享海报。</Text> : null}
       <Canvas canvasId={CANVAS_ID} style={{ width: '300px', height: '420px', background: '#111518', borderRadius: '16px' }} />
       <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={generatePoster}>{busy ? '生成中…' : '生成海报'}</View>

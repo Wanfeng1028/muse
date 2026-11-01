@@ -52,3 +52,7 @@
   line-height: 1.8;
   margin-top: $card-gap;
 }
+
+// ---- Productization round: service list heading (section title above
+// the spaced cards; the cards themselves live in components/ui.scss) ----
+.svc-heading { display: block; font-size: 30.77px; font-weight: 700; color: $light-text; margin: 30.77px 0 23.08px 0; }

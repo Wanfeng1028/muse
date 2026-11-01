@@ -27,3 +27,15 @@
 .corr .btn-pill { margin-top: 15.38px; }
 .home-submit { margin-top: $section-gap; }
 .home-secondary { margin-top: $card-gap; }
+
+// ---- Productization round: segmented gender row + live preview card ----
+.preview-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 23.08px;
+  padding: 19.23px 0;
+  border-bottom: $hairline solid $divider;
+}
+.preview-row-last { border-bottom: none; }
+.preview-accent { color: $accent; }

@@ -1,0 +1,75 @@
+@import '../styles/variables.scss';
+
+// Floating iOS-style tab bar: full capsule pill, floating above content
+// with side margins + bottom margin + safe-area padding. Dark pages get
+// a dark glass pill (white active), light pages a white pill (violet
+// active, AA 7.1 on white). Height 56pt: icon 24pt + label 11pt.
+.floatbar {
+  position: fixed;
+  left: $page-padding;
+  right: $page-padding;
+  bottom: 23.08px;
+  padding-bottom: env(safe-area-inset-bottom);
+  height: 107.69px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  border-radius: 53.85px;
+  z-index: 100;
+}
+.floatbar-dark {
+  background: rgba(30, 31, 35, 0.94);
+  border: $hairline solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 19.23px 50.00px rgba(0, 0, 0, 0.45);
+}
+.floatbar-light {
+  background: rgba(255, 255, 255, 0.96);
+  border: $hairline solid $light-divider;
+  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.14);
+}
+.floatbar-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3.85px;
+}
+.floatbar-label { font-size: 21.15px; line-height: 1.2; color: $sub; }
+.floatbar-dark .floatbar-label-active { color: $text; font-weight: 700; }
+.floatbar-light .floatbar-label { color: $light-sub; }
+.floatbar-light .floatbar-label-active { color: $light-accent; font-weight: 700; }
+
+// Vector tab icons: 46x46 box, 2pt stroke. Classes fix geometry only;
+// colors come inline (outline = border colors, filled = background).
+.ticon { position: relative; width: 46.15px; height: 46.15px; }
+.ticon-part { position: absolute; box-sizing: border-box; }
+.ticon-house-roof {
+  width: 26.92px; height: 26.92px; left: 4.23px; top: 3.85px;
+  border-top: 3.85px solid transparent; border-left: 3.85px solid transparent;
+  transform: rotate(45deg);
+}
+.ticon-house-roof-fill {
+  width: 0; height: 0; left: 3.85px; top: 3.85px;
+  border-left: 19.23px solid transparent; border-right: 19.23px solid transparent;
+  border-bottom: 17.31px solid transparent;
+}
+.ticon-house-body {
+  width: 30.77px; height: 19.23px; left: 7.69px; top: 21.15px;
+  border-left: 3.85px solid transparent; border-right: 3.85px solid transparent;
+  border-bottom: 3.85px solid transparent;
+}
+.ticon-house-body-fill { width: 30.77px; height: 19.23px; left: 7.69px; top: 21.15px; }
+.ticon-chat-bubble { width: 38.46px; height: 30.77px; left: 3.85px; top: 3.85px; border: 3.85px solid transparent; border-radius: 9.62px; }
+.ticon-chat-tail {
+  width: 0; height: 0; left: 11.54px; top: 32.69px;
+  border-left: 7.69px solid transparent; border-top: 9.62px solid transparent;
+}
+.ticon-book-body { width: 36.15px; height: 30.77px; left: 5.00px; top: 7.69px; border: 3.85px solid transparent; border-radius: 3.85px; }
+.ticon-book-spine { width: 3.85px; height: 23.07px; left: 21.15px; top: 11.54px; }
+.ticon-person-head { width: 15.38px; height: 15.38px; left: 15.38px; top: 3.85px; border: 3.85px solid transparent; border-radius: 50%; }
+.ticon-person-body {
+  width: 30.77px; height: 15.38px; left: 7.69px; top: 26.92px;
+  border-top: 3.85px solid transparent; border-left: 3.85px solid transparent; border-right: 3.85px solid transparent;
+  border-top-left-radius: 15.38px; border-top-right-radius: 15.38px;
+}
