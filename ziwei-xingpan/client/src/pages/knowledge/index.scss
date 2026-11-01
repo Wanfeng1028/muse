@@ -1,22 +1,22 @@
 @import '../../styles/variables.scss';
 
-// Knowledge tabs: Medley segmented control (dark input pill container,
-// active tab is the dark pill). Tab labels reuse .chip sizing.
+// Knowledge (light): Medley TabsTrigger chips on lightBg.
+// Inactive 13 medium lightSub; active white bg + bold lightText +
+// lightDivider border. Entries are light cards with 15 body text.
 .seg {
   display: flex;
-  background: $input-bg;
-  border: 1px solid $border-glass;
-  border-radius: $radius-input;
-  padding: 3px;
-  margin-bottom: 12px;
+  gap: 11.54px;
+  margin-bottom: $card-gap;
 }
 .seg-tab {
+  box-sizing: border-box;
   flex: 1;
   text-align: center;
-  padding: 6px 0;
-  font-size: 14px;
-  color: $sub;
-  border-radius: 16px;
+  padding: 15.38px 0;
+  font-size: $fs-secondary;
+  font-weight: 500;
+  color: $light-sub;
+  border-radius: $radius-tab;
 }
-.seg-tab-active { background: $pill; color: $text; font-weight: 600; }
-.know-body { line-height: 1.7; color: $sub; font-size: $fs-secondary; }
+.seg-tab-active { background: $light-card; color: $light-text; font-weight: 700; border: $hairline solid $light-divider; }
+.know-body { line-height: 1.7; color: $light-sub; font-size: $fs-item; }

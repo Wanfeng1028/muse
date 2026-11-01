@@ -1,18 +1,24 @@
 @import '../../styles/variables.scss';
 
-.hero { margin-bottom: 16px; padding-top: 8px; }
-.hero-brand { margin-bottom: 20px; }
+// Home: Medley welcome-dark hero (brand + 43 title + 15 subs) over
+// the form card. Title block spacing uses sectionGap (28) and the
+// welcome mt-3/mt-1 (12/4) rhythms.
+.hero { margin-bottom: $section-gap; }
+.hero-brand { display: flex; align-items: center; margin-bottom: $section-gap; }
 .hero-title-row { display: flex; align-items: baseline; }
 .hero-title { font-size: $fs-welcome; font-weight: 600; line-height: 1.15; color: $text; }
 .hero-cursor {
-  width: 15px;
-  height: 15px;
+  width: $cursor-dot-size;
+  height: $cursor-dot-size;
   border-radius: 50%;
   background: $cursor-dot;
-  margin-left: 8px;
+  margin-left: 15.38px;
+  align-self: center;
   flex-shrink: 0;
 }
-.hero-sub { color: $sub-light; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 12px; }
-.hero-sub2 { color: $sub-dim; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 2px; }
-.corr { margin-top: 12px; }
-.corr .btn-ghost { margin-top: 8px; }
+.hero-sub { color: $sub-light; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 23.08px; }
+.hero-sub2 { color: $sub-dim; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 7.69px; }
+.corr { margin-top: 23.08px; }
+.corr .btn-pill { margin-top: 15.38px; }
+.home-submit { margin-top: $section-gap; }
+.home-secondary { margin-top: $card-gap; }

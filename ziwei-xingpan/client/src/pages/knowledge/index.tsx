@@ -15,7 +15,7 @@ export default function Knowledge() {
   const [tab, setTab] = useState<string>('star');
   const current = TABS.find((t) => t.id === tab) ?? TABS[0];
   return (
-    <View className='page'>
+    <View className='page page-light'>
       <View className='seg'>
         {TABS.map((t) => (
           <View key={t.id} className={t.id === tab ? 'seg-tab seg-tab-active' : 'seg-tab'} onClick={() => setTab(t.id)}>
@@ -24,7 +24,7 @@ export default function Knowledge() {
         ))}
       </View>
       {current.entries.map((e) => (
-        <Card key={e.title} title={e.title}>
+        <Card light key={e.title} title={e.title}>
           <Text className='know-body'>{e.body}</Text>
         </Card>
       ))}

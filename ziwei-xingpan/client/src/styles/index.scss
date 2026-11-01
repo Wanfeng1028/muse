@@ -7,93 +7,170 @@ page {
   font-size: $fs-body;
 }
 
-// Dark Medley page: base #111518 plus the three photo-9 ambient glows
-// (warm lower-left, green lower-right, blue upper-right). The glow layer
-// is a background only, so it can never tint the text above it.
+// Dark Medley page (chat-dark): flat #111518. The welcome glows live
+// only on .page-welcome, not on every dark page.
 .page {
-  padding: $page-padding $page-padding 40px;
+  padding: $page-padding;
   min-height: 100vh;
   box-sizing: border-box;
-  background:
-    radial-gradient(ellipse 320px 260px at 78% 12%, $glow-blue, rgba(52, 86, 120, 0) 70%),
-    radial-gradient(ellipse 300px 240px at 12% 78%, $glow-warm, rgba(114, 66, 40, 0) 70%),
-    radial-gradient(ellipse 280px 220px at 88% 96%, $glow-green, rgba(38, 94, 78, 0) 70%),
-    $bg;
+  background: $bg;
 }
 
-// Liquid-glass card (weapp-safe: no backdrop-filter, which the mini
-// program does not reliably support; the glass read comes from the
-// translucent-look border + soft shadow + layered dark tones).
+// Welcome-dark page: base #0D0E10 + the three photo-9 ambient glows
+// at Medley positions (blue 78%/30%, warm 21%/76%, green 82%/92%),
+// fading to transparent at 70%. Background only, never tints text.
+.page-welcome {
+  background:
+    radial-gradient(ellipse $glow-blue-w $glow-blue-h at 78% 30%, $glow-blue, rgba(52, 86, 120, 0) 70%),
+    radial-gradient(ellipse $glow-warm-w $glow-warm-h at 21% 76%, $glow-warm, rgba(114, 66, 40, 0) 70%),
+    radial-gradient(ellipse $glow-green-w $glow-green-h at 82% 92%, $glow-green, rgba(38, 94, 78, 0) 70%),
+    $bg-welcome;
+}
+
+// Light Medley page (home-light / credits-light): flat #f5f6f8.
+.page-light { background: $light-bg; color: $light-text; }
+.page-light .muted, .page-light .caption { color: $light-sub; }
+.page-light .input-label { color: $light-sub; }
+.page-light .input-value, .page-light .field-input { color: $light-text; }
+.page-light .card-title { color: $light-text; }
+.page-light .brand-name { color: $light-text; }
+.page-light .disclaimer { border-color: $light-divider; color: $light-sub; }
+
+// Medley card (dark) and light card. Shadow is the measured Medley
+// glass shadow (0 10px 26px rgba(0,0,0,0.16)); no backdrop-filter:
+// the mini program does not reliably support it, and over the opaque
+// fills it is a no-op in a static shot anyway.
 .card {
   background: $card;
-  border: 1px solid $border-glass;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  border: $hairline solid $border-glass;
+  box-shadow: 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
   border-radius: $radius-card;
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: $bubble-px;
+  margin-bottom: $card-gap;
 }
-.card-title { font-size: $fs-section; font-weight: 600; margin-bottom: 10px; color: $text; }
+.card-light {
+  background: $light-card;
+  border: $hairline solid $light-divider;
+}
+.card-title { font-size: $fs-section; font-weight: 700; margin-bottom: 19.23px; color: $text; }
 .muted { color: $sub; font-size: $fs-secondary; line-height: 1.6; }
 .caption { color: $sub; font-size: $fs-caption; line-height: 1.6; }
 
-// Medley welcome pattern: primary action is the white capsule button,
-// secondary is the outlined capsule button.
-.btn {
-  background: $white-btn;
-  color: $black-btn;
+// Medley Button (ui/button.tsx): inline-flex, h 52, px 20, radius 26,
+// 15pt bold, gap 8. Content-width by construction — never a full-width
+// bar. The old .btn/.btn-ghost full-width bars are deleted.
+.btn-medley {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: $button-h;
+  padding: 0 $page-padding;
   border-radius: $radius-button;
-  text-align: center;
-  padding: 13px 0;
   font-size: $fs-item;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.btn-medley-dark { background: $black-btn; color: $white-btn; }
+.btn-medley-white { background: $white-btn; color: $black-btn; }
+.btn-medley-outline { background: transparent; border: $hairline solid $outline-dark; color: $text; }
+.btn-medley-outline-light { background: transparent; border: $hairline solid $light-divider; color: $light-text; }
+.btn-medley-sm { height: $button-h-sm; }
+.btn-row { display: flex; gap: $card-gap; flex-wrap: wrap; align-items: center; }
+.btn-stack { display: flex; flex-direction: column; gap: $card-gap; align-items: flex-start; }
+
+// Medley ModelPill (TopBar.tsx): px 12, py 7, radius 20, 14pt semibold.
+// Used for in-row and in-card secondary actions.
+.btn-pill {
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 13.46px 23.08px;
+  border-radius: $radius-chip;
+  font-size: $fs-pill;
   font-weight: 600;
+  flex-shrink: 0;
 }
-.btn-ghost {
-  background: transparent;
-  color: $text;
-  border: 1px solid #2d3134;
-  border-radius: $radius-button;
-  text-align: center;
-  padding: 13px 0;
-  font-size: $fs-item;
+.btn-pill-black { background: $black-btn; color: $white-btn; }
+.btn-pill-outline-dark { border: $hairline solid $outline-dark; color: $text; }
+.btn-pill-outline-light { border: $hairline solid $light-divider; color: $light-text; }
+
+// Medley InputBar single (InputBar.tsx): h 56, radius 26, pl 14, pr 8,
+// gap 10, dark input fill; send circle 36 with 20 arrow glyph.
+.composer {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 19.23px;
+  height: $composer-h;
+  border-radius: $radius-input;
+  padding: 0 15.38px 0 26.92px;
+  background: $input-bg;
+  box-shadow: 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
 }
+.composer-light { background: $white-btn; border: $hairline solid $light-divider; }
+.composer-label { flex: 1; font-size: $fs-item; font-weight: 600; color: $text; }
+.composer-light .composer-label { color: $light-text; }
+.composer-send {
+  box-sizing: border-box;
+  width: $composer-btn;
+  height: $composer-btn;
+  border-radius: 50%;
+  background: $accent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.composer-light .composer-send { background: $black-btn; }
+.composer-send-img { width: $icon; height: $icon; }
+
+// Medley SuggestionRow badge (Chat.tsx): rounded 6, px 6, py 2, 11pt bold.
 .chip {
   display: inline-block;
   background: $pill;
   color: $text;
-  border-radius: $radius-chip;
-  padding: 4px 10px;
-  font-size: $fs-caption;
-  margin: 2px 4px 2px 0;
+  border-radius: 11.54px;
+  padding: 3.85px 11.54px;
+  font-size: 21.15px;
+  font-weight: 700;
+  margin: 3.85px 7.69px 3.85px 0;
 }
 .chip-accent { background: rgba(226, 161, 129, 0.22); color: $accent; }
+
+// Medley SuggestionRow (Chat.tsx): gap 12, py 12, border-b, 15pt medium.
 .input-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 13px 0;
-  border-bottom: 1px solid $divider;
+  gap: $card-gap;
+  padding: $bubble-py 0;
+  border-bottom: $hairline solid $divider;
 }
 .input-row:last-child { border-bottom: none; }
-.input-label { font-size: $fs-item; color: $sub; flex-shrink: 0; margin-right: 12px; }
+.page-light .input-row { border-color: $light-divider; }
+.input-label { font-size: $fs-item; color: $sub; flex-shrink: 0; }
 .input-value { font-size: $fs-item; text-align: right; flex: 1; color: $text; }
 .field-input { font-size: $fs-item; text-align: right; flex: 1; border: none; outline: none; background: transparent; color: $text; }
 .disclaimer {
   color: $sub;
   font-size: $fs-caption;
   line-height: 1.7;
-  border-top: 1px solid $divider;
-  margin-top: 12px;
-  padding-top: 10px;
+  border-top: $hairline solid $divider;
+  margin-top: $card-gap;
+  padding-top: 13.46px;
 }
 .sihua-lu { color: $sihua-lu; font-weight: 600; }
 .sihua-quan { color: $sihua-quan; font-weight: 600; }
 .sihua-ke { color: $sihua-ke; font-weight: 600; }
 .sihua-ji { color: $sihua-ji; font-weight: 600; }
 
-// Brand dot cluster (Medley header mark): green / blue / pink, 8px.
-.brand-dots { display: flex; align-items: center; }
-.brand-dot { width: 8px; height: 8px; border-radius: 50%; margin-right: 3px; }
-.brand-dot-green { background: $logo-green; }
-.brand-dot-blue { background: $logo-blue; }
-.brand-dot-pink { background: $logo-pink; }
-.brand-name { font-size: 17px; font-weight: 700; color: $text; margin-left: 5px; }
+// Brand dot cluster (Model.tsx BrandDots, size 8): diagonal cluster,
+// 22×15 box; dots at (0,bottom), (7,3.5), (14,0) in pt.
+.brand-dots { position: relative; width: $brand-cluster-w; height: $brand-cluster-h; flex-shrink: 0; }
+.brand-dot { position: absolute; width: $brand-dot-size; height: $brand-dot-size; border-radius: 50%; }
+.brand-dot-green { left: 0; bottom: 0; background: $logo-green; }
+.brand-dot-blue { left: 13.46px; top: 6.73px; background: $logo-blue; }
+.brand-dot-pink { right: 0; top: 0; background: $logo-pink; }
+.brand-name { font-size: $fs-brand; font-weight: 700; color: $text; margin-left: 15.38px; }

@@ -1,39 +1,45 @@
 @import '../../styles/variables.scss';
 
-.chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 16px; }
+// Chart: Medley dark card grid. Palace cells use card radius (16);
+// the grid's own gutters use the Medley 10pt gap token (gap-2.5):
+// col = (350 - 3*10) / 4 = 80pt, palace horizontal padding 10 leaves
+// 60pt content, which fits the head line branch 13 + name 15 = 56pt.
+// At gap 12 / padding 12 the content was 54.5pt and the head wrapped
+// to two lines — visibly broken. Real cards keep padding 16.
+.chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 19.23px; margin-bottom: $section-gap; }
 .palace {
   background: $card;
-  border: 1px solid $border-glass;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.22);
-  border-radius: 12px;
-  padding: 8px;
-  min-height: 118px;
+  border: $hairline solid $border-glass;
+  box-shadow: 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
+  border-radius: $radius-card;
+  padding: $bubble-px 19.23px;
 }
-.palace.current { border: 2px solid $accent; box-shadow: 0 0 0 1px rgba(226, 161, 129, 0.35), 0 4px 14px rgba(0, 0, 0, 0.22); }
+.palace.current { border: 3.85px solid $accent; box-shadow: 0 0 0 1.92px rgba(226, 161, 129, 0.35), 0 19.23px 50.00px rgba(0, 0, 0, 0.16); }
 .palace-head { display: flex; justify-content: space-between; align-items: baseline; }
 .palace-branch { font-size: $fs-secondary; color: $sub; }
 .palace-name { font-size: $fs-item; font-weight: 600; color: $text; }
-.palace-tag { font-size: $fs-caption; color: $brand-dot; margin-right: 4px; font-weight: 600; }
-.star-major { font-size: $fs-item; font-weight: 600; margin-top: 4px; color: $text; }
-.star-bright { font-size: $fs-caption; color: $sub; margin-left: 2px; font-weight: 400; }
-.star-others { font-size: $fs-caption; color: #c3c7ce; margin-top: 4px; line-height: 1.5; }
-.shensha { font-size: $fs-caption; color: $sub; margin-top: 6px; line-height: 1.5; }
-.daxian-age { font-size: $fs-caption; color: $sub; margin-top: 4px; }
+.palace-tag { font-size: $fs-caption; color: $brand-dot; margin-right: 7.69px; font-weight: 600; }
+.star-major { font-size: $fs-item; font-weight: 600; margin-top: 7.69px; color: $text; }
+.star-bright { font-size: $fs-caption; color: $sub; margin-left: 3.85px; font-weight: 400; }
+.star-others { font-size: $fs-caption; color: #c3c7ce; margin-top: 7.69px; line-height: 1.5; }
+.shensha { font-size: $fs-caption; color: $sub; margin-top: 11.54px; line-height: 1.5; }
+.daxian-age { font-size: $fs-caption; color: $sub; margin-top: 7.69px; }
 .chart-center {
   grid-column: 2 / span 2;
   grid-row: 2 / span 2;
   background: $card-bubble;
-  border: 1px solid $border-glass;
-  border-radius: 12px;
-  padding: 14px;
+  border: $hairline solid $border-glass;
+  border-radius: $radius-card;
+  padding: $bubble-px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
-.center-dots { margin-bottom: 10px; }
-.center-name { font-size: $fs-section; font-weight: 700; margin-bottom: 8px; color: $text; }
+.center-dots { margin-bottom: 19.23px; }
+.center-name { font-size: $fs-section; font-weight: 700; margin-bottom: 15.38px; color: $text; }
 .center-line { font-size: $fs-secondary; line-height: 1.7; color: #d8d8de; }
-.daxian-row { padding: 8px 0; border-bottom: 1px solid $divider; font-size: $fs-item; color: $text; }
+.daxian-row { padding: $bubble-py 0; border-bottom: $hairline solid $divider; font-size: $fs-item; color: $text; }
 .daxian-row:last-child { border-bottom: none; }
-.liuyue-row { padding: 6px 0; border-bottom: 1px solid $divider; font-size: $fs-item; color: $text; }
+.liuyue-row { padding: $bubble-py 0; border-bottom: $hairline solid $divider; font-size: $fs-item; color: $text; }
 .liuyue-row:last-child { border-bottom: none; }
+.chart-actions { margin-bottom: $card-gap; }

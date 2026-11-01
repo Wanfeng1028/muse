@@ -7,6 +7,7 @@ import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
 import { Card, Disclaimer } from '../../components/ui';
 import { BannerAd } from '../../components/ads';
+import arrowUp from '../../assets/arrow-up.png';
 import {
   callFn, cloudConfigured, tempFileURL,
   type AppConfig, type MembershipStatus, type SavedChart,
@@ -100,7 +101,7 @@ export default function Interpret() {
       <View className='page'>
         <Card title='还没有命盘'>
           <Text className='muted'>请先在首页排盘，解读会基于该盘生成。AI 解读还需先在命盘图页把当前盘保存到命盘历史。</Text>
-          <View className='btn' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
+          <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
         </Card>
       </View>
     );
@@ -109,9 +110,10 @@ export default function Interpret() {
   const patterns = detectPatterns(chart);
   return (
     <View className='page'>
-      <Card title='格局判断'>
+      <View className='chat-msg'>
+        <View className='chat-meta'><View className='chat-dot' /><Text>格局判断</Text></View>
         {patterns.length === 0 ? (
-          <Text className='muted'>本盘未触发格局库中的常见组合，仍宜以各宫主星与三方四正综合看。</Text>
+          <View className='chat-bubble'><Text>本盘未触发格局库中的常见组合，仍宜以各宫主星与三方四正综合看。</Text></View>
         ) : patterns.map((p) => (
           <View key={p.name} className='pattern-card' style={{ marginBottom: '10px', paddingLeft: '10px' }}>
             <Text className='pattern-name'>{p.name}</Text>
@@ -120,57 +122,66 @@ export default function Interpret() {
           </View>
         ))}
         <Disclaimer />
-      </Card>
+      </View>
       {dims.map((d) => (
-        <Card key={d.id} title={`${d.title}（${d.palaceName}）`}>
-          <Text className='dim-body'>{d.body}</Text>
+        <View key={d.id} className='chat-msg'>
+          <View className='chat-meta'><View className='chat-dot' /><Text>{d.title} · {d.palaceName}</Text></View>
+          <View className='chat-bubble'><Text>{d.body}</Text></View>
           <Disclaimer />
-        </Card>
+        </View>
       ))}
-      <Card title='AI 解盘（云开发对话 token 主力，额度不足时切换 BotsRouter 备用）'>
+      <View className='chat-msg'>
+        <View className='chat-meta'><View className='chat-dot' /><Text>AI 解盘</Text></View>
+        <Text className='muted'>云开发对话 token 主力，额度不足时切换 BotsRouter 备用</Text>
         {!cloudConfigured() ? (
           <Text className='muted'>云开发未配置：AI 解读需环境 ID 后开通，当前不展示虚假解读。</Text>
         ) : !defaultChartId ? (
           <Text className='muted'>请先在命盘图页点“保存到我的命盘”，AI 解读基于已保存的命盘进行（同一命盘按盘 hash 缓存，命中不扣费）。</Text>
         ) : (
           <View>
-            <View className='btn' onClick={aiInterpret}>{busy === 'interpret' ? '生成中…' : 'AI 解盘（本盘）'}</View>
-            {aiText ? <Text className='dim-body' style={{ display: 'block', marginTop: '12px' }}>{aiText}</Text> : null}
+            <View className='btn-medley btn-medley-white' onClick={aiInterpret}>{busy === 'interpret' ? '生成中…' : 'AI 解盘（本盘）'}</View>
+            {aiText ? <View className='chat-msg'><View className='chat-bubble'><Text>{aiText}</Text></View></View> : null}
             {aiMeta ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiMeta}</Text> : null}
             {aiError ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiError}</Text> : null}
             <Disclaimer />
           </View>
         )}
-      </Card>
-      <Card title='AI 问答（就本盘提问，不缓存）'>
+      </View>
+      <View className='chat-msg'>
+        <View className='chat-meta'><View className='chat-dot' /><Text>AI 问答</Text></View>
+        <Text className='muted'>就本盘提问，不缓存</Text>
         {!cloudConfigured() ? (
           <Text className='muted'>云开发未配置，AI 问答暂不可用。</Text>
         ) : !defaultChartId ? (
           <Text className='muted'>请先在命盘图页保存当前命盘。</Text>
         ) : (
           <View>
-            <View className='input-row'>
-              <Text className='input-label'>问题</Text>
-              <Input className='field-input' placeholder='例如：今年财帛方面宜注意什么' value={question} onInput={(e) => setQuestion(e.detail.value)} />
+            <View className='composer ask-composer'>
+              <Input className='composer-input' placeholder='例如：今年财帛方面宜注意什么' value={question} onInput={(e) => setQuestion(e.detail.value)} />
+              <View className='composer-send' onClick={aiAsk}>
+                <Image className='composer-send-img' src={arrowUp} mode='aspectFit' />
+              </View>
             </View>
-            <View className='btn' style={{ marginTop: '12px' }} onClick={aiAsk}>{busy === 'ask' ? '思考中…' : '提问'}</View>
-            {askAnswer ? <Text className='dim-body' style={{ display: 'block', marginTop: '12px' }}>{askAnswer}</Text> : null}
+            {busy === 'ask' ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>思考中…</Text> : null}
+            {askAnswer ? <View className='chat-msg'><View className='chat-bubble'><Text>{askAnswer}</Text></View></View> : null}
             <Disclaimer />
           </View>
         )}
-      </Card>
-      <Card title='今日运势配图（AI 生图，按日期 + 盘 hash 缓存）'>
+      </View>
+      <View className='chat-msg'>
+        <View className='chat-meta'><View className='chat-dot' /><Text>今日运势配图</Text></View>
+        <Text className='muted'>AI 生图，按日期 + 盘 hash 缓存</Text>
         {!cloudConfigured() ? (
           <Text className='muted'>云开发未配置，生图暂不可用。</Text>
         ) : !defaultChartId ? (
           <Text className='muted'>请先在命盘图页保存当前命盘。</Text>
         ) : (
           <View>
-            <View className='btn-ghost' onClick={dailyImage}>{busy === 'daily' ? '生成中…' : '生成今日运势配图'}</View>
+            <View className='btn-medley btn-medley-outline' onClick={dailyImage}>{busy === 'daily' ? '生成中…' : '生成今日运势配图'}</View>
             {dailyUrl ? <Image src={dailyUrl} style={{ width: '100%', height: '220px', marginTop: '12px', borderRadius: '16px' }} /> : null}
           </View>
         )}
-      </Card>
+      </View>
       {tier === 'free' ? <BannerAd unitId={adSlotLive(config, 'bannerInterpret')} /> : null}
     </View>
   );

@@ -1,13 +1,27 @@
-import { View, Text } from '@tarojs/components';
+import { View, Text, Image } from '@tarojs/components';
 import type { ReactNode } from 'react';
 import { DISCLAIMER } from '../lib/chart';
+import arrowUp from '../assets/arrow-up.png';
 import './ui.scss';
 
-export function Card({ title, children }: { title?: string; children: ReactNode }) {
+export function Card({ title, children, light }: { title?: string; children: ReactNode; light?: boolean }) {
   return (
-    <View className='card'>
+    <View className={light ? 'card card-light' : 'card'}>
       {title ? <View className='card-title'>{title}</View> : null}
       {children}
+    </View>
+  );
+}
+
+// Medley InputBar single (composer): 56 bar + 36 send circle.
+// The home submit action lives here, not in a full-width white button.
+export function ComposerBar({ label, onClick, light }: { label: string; onClick: () => void; light?: boolean }) {
+  return (
+    <View className={light ? 'composer composer-light' : 'composer'} onClick={onClick}>
+      <Text className='composer-label'>{label}</Text>
+      <View className='composer-send'>
+        <Image className='composer-send-img' src={arrowUp} mode='aspectFit' />
+      </View>
     </View>
   );
 }

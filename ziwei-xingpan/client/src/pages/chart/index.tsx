@@ -86,7 +86,7 @@ export default function ChartPage() {
       <View className='page'>
         <Card title='还没有命盘'>
           <Text className='muted'>请先在首页填写出生信息并排盘。</Text>
-          <View className='btn' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
+          <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
         </Card>
       </View>
     );
@@ -130,12 +130,14 @@ export default function ChartPage() {
         })}
       </View>
 
-      <View className='btn' style={{ marginBottom: '12px' }} onClick={saveChart}>
-        {saving ? '保存中…' : saved ? '已保存，去“我的 → 命盘历史”查看' : '保存到我的命盘'}
+      <View className='btn-row chart-actions'>
+        <View className='btn-medley btn-medley-white' onClick={saveChart}>
+          {saving ? '保存中…' : saved ? '已保存，去“我的 → 命盘历史”查看' : '保存到我的命盘'}
+        </View>
+        {saved ? (
+          <View className='btn-medley btn-medley-outline' onClick={() => Taro.switchTab({ url: '/pages/mine/index' })}>去我的页查看命盘历史</View>
+        ) : null}
       </View>
-      {saved ? (
-        <View className='btn-ghost' style={{ marginBottom: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/mine/index' })}>去我的页查看命盘历史</View>
-      ) : null}
 
       <Card title='大运'>
         {chart.daXians.map((d, i) => (

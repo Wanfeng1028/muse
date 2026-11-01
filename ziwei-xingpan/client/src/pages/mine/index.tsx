@@ -272,7 +272,7 @@ export default function Mine() {
   }
 
   function backBtn() {
-    return <View className='btn-ghost' style={{ marginBottom: '12px' }} onClick={() => setSection('main')}>返回我的</View>;
+    return <View className='btn-medley btn-medley-outline-light' style={{ marginBottom: '12px' }} onClick={() => setSection('main')}>返回我的</View>;
   }
 
   function unconfiguredNote() {
@@ -286,7 +286,7 @@ export default function Mine() {
   }
 
   const header = (
-    <Card>
+    <Card light>
       <View style={{ display: 'flex', alignItems: 'center' }}>
         <View className='avatar-geo'>
           <View className='brand-dots'>
@@ -306,29 +306,29 @@ export default function Mine() {
         </View>
       </View>
       {configured && !user ? (
-        <View className='btn' style={{ marginTop: '12px' }} onClick={() => refreshAll()}>登录</View>
+        <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={() => refreshAll()}>登录</View>
       ) : null}
-      <View className='btn-ghost' style={{ marginTop: '12px' }} onClick={() => refreshAll()}>刷新</View>
+      <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={() => refreshAll()}>刷新</View>
       {notice ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{notice}</Text> : null}
     </Card>
   );
 
   if (section === 'member') {
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='会员中心'>
+        <Card light title='会员中心'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('会员') ? <Text className='muted'>会员状态加载失败，请点“我的”页刷新重试。</Text> : null}
           {membership ? (
             <View>
               <Text className='muted'>当前有效档位：{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}（原始档位 {membership.rawTier}）</Text>
               <Text className='muted' style={{ display: 'block' }}>到期：{formatDateTime(membership.expiresAt)}；连续包月：{membership.autoRenew ? '已开启' : '未开启'}</Text>
-              {membership.autoRenew ? <View className='btn-ghost' style={{ marginTop: '12px' }} onClick={cancelRenew}>取消连续包月（到期降回普通）</View> : null}
+              {membership.autoRenew ? <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={cancelRenew}>取消连续包月（到期降回普通）</View> : null}
             </View>
           ) : null}
         </Card>
-        <Card title='购买会员（价目来自云端配置）'>
+        <Card light title='购买会员（价目来自云端配置）'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('配置') ? <Text className='muted'>价目加载失败，不展示价格，请刷新重试。</Text> : null}
           {config ? PLANS.map((plan) => {
@@ -339,16 +339,16 @@ export default function Mine() {
                 <Text className='input-label mine-row-label'>{PLAN_NAMES[plan]}（{p.days} 天）</Text>
                 <View style={{ display: 'flex', alignItems: 'center' }}>
                   <Text className='input-value' style={{ marginRight: '10px' }}>{formatYuan(p.fen)}</Text>
-                  <View className='btn-mini' onClick={() => buy(plan)}>{busy === 'buy-' + plan ? '处理中…' : '购买'}</View>
+                  <View className='btn-pill btn-pill-black' onClick={() => buy(plan)}>{busy === 'buy-' + plan ? '处理中…' : '购买'}</View>
                 </View>
               </View>
             );
           }) : null}
           {config?.pricing.cancelNote ? <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>{config.pricing.cancelNote}</Text> : null}
         </Card>
-        <Card title='积分兑换 Pro'>
-          <View className='btn-ghost' style={{ marginBottom: '10px' }} onClick={() => redeem('pro7d')}>{busy === 'redeem-pro7d' ? '处理中…' : '300 积分兑换 7 天 Pro'}</View>
-          <View className='btn-ghost' onClick={() => redeem('pro30d')}>{busy === 'redeem-pro30d' ? '处理中…' : '1500 积分兑换 30 天 Pro'}</View>
+        <Card light title='积分兑换 Pro'>
+          <View className='btn-medley btn-medley-outline-light' style={{ marginBottom: '10px' }} onClick={() => redeem('pro7d')}>{busy === 'redeem-pro7d' ? '处理中…' : '300 积分兑换 7 天 Pro'}</View>
+          <View className='btn-medley btn-medley-outline-light' onClick={() => redeem('pro30d')}>{busy === 'redeem-pro30d' ? '处理中…' : '1500 积分兑换 30 天 Pro'}</View>
         </Card>
         <Disclaimer />
       </View>
@@ -358,19 +358,19 @@ export default function Mine() {
   if (section === 'points') {
     const videoOpen = !!config && config.ads.enabled && !isPlaceholderAdUnit(config.ads.rewardedVideo);
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='积分中心'>
+        <Card light title='积分中心'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('积分') ? <Text className='muted'>积分加载失败，请刷新重试。</Text> : null}
-          {balance !== null ? <Text className='mine-name'>当前积分：{balance}</Text> : null}
+          {balance !== null ? <Text className='mine-balance'>当前积分：{balance}</Text> : null}
           <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>积分永不过期。视频与分享领取由客户端动作触发、服务端按日限校验。</Text>
-          <View className='btn-ghost' style={{ marginTop: '12px' }} onClick={() => earn('signin')}>{busy === 'earn-signin' ? '处理中…' : '每日签到 +10'}</View>
-          <View className='btn-ghost' style={{ marginTop: '10px' }} onClick={watchVideo}>{videoOpen ? '看激励视频 +20（每日上限 5 次）' : '激励视频暂未开通（流量主 UV 未达 1000）'}</View>
-          <View className='btn-ghost' style={{ marginTop: '10px' }} onClick={() => earn('share')}>{busy === 'earn-share' ? '处理中…' : '分享海报 +5（每日 1 次）'}</View>
-          <View className='btn-ghost' style={{ marginTop: '10px' }} onClick={() => earn('profile')}>{busy === 'earn-profile' ? '处理中…' : (user?.profileBonusClaimed ? '完善资料 +30（已领取）' : '完善资料 +30（一次，需先在设置填昵称）')}</View>
+          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={() => earn('signin')}>{busy === 'earn-signin' ? '处理中…' : '每日签到 +10'}</View>
+          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={watchVideo}>{videoOpen ? '看激励视频 +20（每日上限 5 次）' : '激励视频暂未开通（流量主 UV 未达 1000）'}</View>
+          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => earn('share')}>{busy === 'earn-share' ? '处理中…' : '分享海报 +5（每日 1 次）'}</View>
+          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => earn('profile')}>{busy === 'earn-profile' ? '处理中…' : (user?.profileBonusClaimed ? '完善资料 +30（已领取）' : '完善资料 +30（一次，需先在设置填昵称）')}</View>
         </Card>
-        <Card title='积分账本（最近 50 条）'>
+        <Card light title='积分账本（最近 50 条）'>
           {ledger.length === 0 ? <Text className='muted'>暂无积分记录。</Text> : ledger.map((e, i) => (
             <View key={i} className='input-row'>
               <Text className='input-label mine-row-label'>{RULE_LABELS[e.rule] || e.rule}</Text>
@@ -385,9 +385,9 @@ export default function Mine() {
 
   if (section === 'invite') {
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='邀请中心'>
+        <Card light title='邀请中心'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('邀请') ? <Text className='muted'>邀请数据加载失败，请刷新重试。</Text> : null}
           {invite ? (
@@ -396,7 +396,7 @@ export default function Mine() {
                 <Text className='input-label mine-row-label'>我的邀请码</Text>
                 <Text className='input-value'>{invite.inviteCode || '—'}</Text>
               </View>
-              <View className='btn-ghost' style={{ marginTop: '10px' }} onClick={copyCode}>复制邀请码</View>
+              <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={copyCode}>复制邀请码</View>
               <Text className='muted' style={{ display: 'block', marginTop: '10px' }}>
                 成功邀请：{invite.successCount} 人；下一阶梯：{invite.nextTier ? `邀 ${invite.nextTier.count} 人 → ${invite.nextTier.days} 天 ${invite.nextTier.tier.toUpperCase()}` : '全部阶梯已达成'}
                 ；已发放阶梯：{invite.grantedTiers.length ? invite.grantedTiers.join('、') : '无'}
@@ -405,17 +405,17 @@ export default function Mine() {
             </View>
           ) : null}
         </Card>
-        <Card title='绑定邀请码（被邀人注册 +50 积分）'>
+        <Card light title='绑定邀请码（被邀人注册 +50 积分）'>
           <View className='input-row'>
             <Text className='input-label'>邀请码</Text>
             <Input className='field-input' placeholder='填写邀请人的码' value={bindCode} onInput={(e) => setBindCode(e.detail.value)} />
           </View>
-          <View className='btn' style={{ marginTop: '12px' }} onClick={bindInvite}>绑定</View>
-          <View className='btn-ghost' style={{ marginTop: '10px' }} onClick={settleInvite}>结算我的邀请（核查被邀人是否已排盘）</View>
+          <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={bindInvite}>绑定</View>
+          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={settleInvite}>结算我的邀请（核查被邀人是否已排盘）</View>
           {user?.invitedBy ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>已绑定邀请人，不可重复绑定。</Text> : null}
         </Card>
-        <Card title='邀请海报小程序码'>
-          <View className='btn-ghost' onClick={loadQr}>获取小程序码</View>
+        <Card light title='邀请海报小程序码'>
+          <View className='btn-medley btn-medley-outline-light' onClick={loadQr}>获取小程序码</View>
           {qrUrl ? <Image src={qrUrl} style={{ width: '200px', height: '200px', marginTop: '12px' }} /> : null}
           {qrNote ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{qrNote}</Text> : null}
           <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>完整分享海报（含邀请二维码）在三期随海报功能提供；此处先提供小程序码原图。</Text>
@@ -427,9 +427,9 @@ export default function Mine() {
 
   if (section === 'orders') {
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='我的订单'>
+        <Card light title='我的订单'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('订单') ? <Text className='muted'>订单加载失败，请刷新重试。</Text> : null}
           {orders.length === 0 ? <Text className='muted'>暂无订单。</Text> : orders.map((o) => (
@@ -449,9 +449,9 @@ export default function Mine() {
 
   if (section === 'settings') {
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='设置'>
+        <Card light title='设置'>
           {unconfiguredNote()}{needLoginNote()}
           <View className='input-row'>
             <Text className='input-label'>昵称</Text>
@@ -472,7 +472,7 @@ export default function Mine() {
             <Switch checked={isMinorSwitch} onChange={(e) => setIsMinorSwitch(e.detail.value)} />
           </View>
           {user?.minor ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>当前账号已标记为未成年人：AI 解读、付费会员、积分兑换付费内容均不可用。清除标记需填写成年出生年份后保存。</Text> : null}
-          <View className='btn' style={{ marginTop: '12px' }} onClick={saveSettings}>保存资料</View>
+          <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={saveSettings}>保存资料</View>
           <Text className='muted' style={{ display: 'block', marginTop: '10px' }}>设备指纹（防刷用，本机安装标识，非真实设备号）：{deviceFingerprint()}</Text>
           <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；命盘管理请到命盘历史；出生年份可在下方填写，用于未成年人门禁换算（未满 18 岁不可使用付费解读与付费会员）。</Text>
         </Card>
@@ -483,19 +483,19 @@ export default function Mine() {
 
   if (section === 'feedback') {
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='意见反馈'>
+        <Card light title='意见反馈'>
           {unconfiguredNote()}{needLoginNote()}
           <View className='input-row'>
             <Text className='input-label'>联系方式（可选）</Text>
             <Input className='field-input' placeholder='邮箱或微信号' value={fbContact} onInput={(e) => setFbContact(e.detail.value)} />
           </View>
           <Textarea className='field-textarea' placeholder='请描述问题或建议（1–1000 字）' value={fbContent} onInput={(e) => setFbContent(e.detail.value)} />
-          <View className='btn' style={{ marginTop: '12px' }} onClick={submitFeedback}>提交反馈</View>
+          <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={submitFeedback}>提交反馈</View>
           <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>反馈由运营在云端处理；未回复的项状态保持“待处理”，不伪造回复。</Text>
         </Card>
-        <Card title='我的反馈'>
+        <Card light title='我的反馈'>
           {feedbacks.length === 0 ? <Text className='muted'>暂无反馈记录。</Text> : feedbacks.map((f, i) => (
             <View key={i} className='input-row'>
               <View style={{ flex: 1 }}>
@@ -512,9 +512,9 @@ export default function Mine() {
 
   if (section === 'charts') {
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='命盘历史（多盘管理）'>
+        <Card light title='命盘历史（多盘管理）'>
           {unconfiguredNote()}{needLoginNote()}
           {failedHas('命盘') ? <Text className='muted'>命盘历史加载失败，请刷新重试。</Text> : null}
           {savedCharts.length === 0 ? <Text className='muted'>暂无保存的命盘。请先在首页排盘，再到命盘图页点“保存到我的命盘”。</Text> : savedCharts.map((c) => (
@@ -524,9 +524,9 @@ export default function Mine() {
                 <Text className='input-value'>{formatDateTime(c.createdAt)}</Text>
               </View>
               <View style={{ display: 'flex', marginTop: '8px' }}>
-                <View className='btn-mini' style={{ marginRight: '8px' }} onClick={() => loadSavedChart(c)}>载入此盘</View>
-                {!c.isDefault ? <View className='btn-mini' style={{ marginRight: '8px' }} onClick={() => chartAction('setDefault', c._id)}>设为默认</View> : null}
-                <View className='btn-mini' onClick={() => removeChart(c._id)}>删除</View>
+                <View className='btn-pill btn-pill-black' style={{ marginRight: '8px' }} onClick={() => loadSavedChart(c)}>载入此盘</View>
+                {!c.isDefault ? <View className='btn-pill btn-pill-black' style={{ marginRight: '8px' }} onClick={() => chartAction('setDefault', c._id)}>设为默认</View> : null}
+                <View className='btn-pill btn-pill-black' onClick={() => removeChart(c._id)}>删除</View>
               </View>
             </View>
           ))}
@@ -541,9 +541,9 @@ export default function Mine() {
     const b = savedCharts.find((c) => c._id === compareB) || null;
     const palaces = ['命宫', '财帛宫', '官禄宫', '夫妻宫', '疾厄宫', '福德宫'];
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='合盘对照（两盘主星对照）'>
+        <Card light title='合盘对照（两盘主星对照）'>
           {unconfiguredNote()}{needLoginNote()}
           {savedCharts.length < 2 ? (
             <Text className='muted'>合盘需要至少两张已保存的命盘，请先保存两张盘再来对照。</Text>
@@ -578,7 +578,7 @@ export default function Mine() {
 
   if (section === 'poster') {
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
         <PosterCard chart={localChart} inviteCode={invite?.inviteCode || ''} />
       </View>
@@ -588,9 +588,9 @@ export default function Mine() {
   if (section === 'legal') {
     const tab = LEGAL_TABS.find((t) => t.key === legalTab) || LEGAL_TABS[0];
     return (
-      <View className='page'>
+      <View className='page page-light'>
         {backBtn()}
-        <Card title='关于 / 隐私 / 条款'>
+        <Card light title='关于 / 隐私 / 条款'>
           <View style={{ display: 'flex', flexWrap: 'wrap' }}>
             {LEGAL_TABS.map((t) => (
               <Text key={t.key} className={t.key === legalTab ? 'chip chip-accent' : 'chip'} onClick={() => setLegalTab(t.key)}>{t.label}</Text>
@@ -616,9 +616,9 @@ export default function Mine() {
     { label: '关于（含数据来源）', section: 'legal' },
   ];
   return (
-    <View className='page'>
+    <View className='page page-light'>
       {header}
-      <Card title='我的服务'>
+      <Card light title='我的服务'>
         {ROWS.map((r) => (
           <View key={r.section} className='input-row' onClick={() => setSection(r.section)}>
             <Text className='input-label mine-row-label'>{r.label}</Text>

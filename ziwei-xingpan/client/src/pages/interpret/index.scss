@@ -1,8 +1,35 @@
 @import '../../styles/variables.scss';
 
-// Interpret page: Medley dark chat/card line. Each dimension is a glass
-// card; the pattern card carries an accent edge. Disclaimer stays fixed
-// at the bottom of every card (rendered by the Disclaimer component).
+// Interpret: Medley chat-dark-lisbon flow. AiMeta header (12 semibold,
+// gap 6) + user-bubble body (16, leading 1.35, px 16 py 12, radius 20
+// with 6 top-right corner). Pattern cards keep the accent edge.
+.chat-msg { margin: 15.38px 0; }
+.chat-meta {
+  display: flex;
+  align-items: center;
+  gap: 11.54px;
+  font-size: $fs-meta;
+  font-weight: 600;
+  color: $text;
+  margin: 30.77px 0 15.38px;
+}
+.chat-bubble {
+  background: $card-bubble;
+  border-radius: $radius-bubble;
+  border-top-right-radius: 11.54px;
+  padding: $bubble-py $bubble-px;
+  font-size: $fs-body;
+  line-height: 1.35;
+  color: $text;
+}
+.chat-dot {
+  width: 15.38px;
+  height: 15.38px;
+  border-radius: 50%;
+  background: $accent;
+  flex-shrink: 0;
+}
 .pattern-name { font-weight: 600; color: $text; font-size: $fs-item; }
-.pattern-card { border-left: 3px solid $accent; }
-.dim-body { line-height: 1.7; color: $sub; font-size: $fs-secondary; }
+.pattern-card { border-left: 5.77px solid $accent; }
+.ask-composer { margin-top: $card-gap; }
+.ask-composer .composer-input { flex: 1; font-size: $fs-item; color: $text; border: none; outline: none; background: transparent; }

@@ -1,48 +1,42 @@
 @import '../../styles/variables.scss';
 
-// Mine page: static shell, Medley dark look. The avatar is a geometric
-// composition (ring + brand-dot cluster), never a letter badge.
+// Mine (light): Medley credits-light. Avatar ties to TopBar height
+// (48); name is pageTitle (20 bold); balance is hugeNumber (51).
+// The avatar stays a geometric composition (ring + brand-dot
+// cluster), never a letter badge.
 .avatar-geo {
-  width: 56px;
-  height: 56px;
-  border-radius: 28px;
-  background: $input-bg;
-  border: 1px solid $border-glass;
+  box-sizing: border-box;
+  width: $topbar-h;
+  height: $topbar-h;
+  border-radius: 46.15px;
+  background: $light-bubble;
+  border: $hairline solid $light-divider;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
 }
-.mine-name { font-size: 18px; font-weight: 600; display: block; color: $text; }
-.mine-row-label { color: $text; }
-.mine-arrow { color: $sub; }
-.btn-mini {
-  background: $white-btn;
-  color: $black-btn;
-  border-radius: $radius-button;
-  text-align: center;
-  padding: 8px 16px;
-  font-size: $fs-secondary;
-  font-weight: 600;
-  flex-shrink: 0;
-}
+.mine-name { font-size: $fs-page; font-weight: 700; display: block; color: $light-text; }
+.mine-balance { font-size: $fs-huge; font-weight: 600; line-height: 1; display: block; color: $light-text; }
+.mine-row-label { color: $light-text; }
+.mine-arrow { color: $light-sub; }
 .field-textarea {
   width: 100%;
-  min-height: 120px;
+  min-height: 230.77px;
   box-sizing: border-box;
-  background: $input-bg;
-  border: 1px solid $border-glass;
+  background: $light-card;
+  border: $hairline solid $light-divider;
   border-radius: $radius-card;
-  padding: 12px;
-  margin-top: 12px;
+  padding: $bubble-py;
+  margin-top: $card-gap;
   font-size: $fs-item;
-  color: $text;
+  color: $light-text;
 }
 .legal-body {
   display: block;
   white-space: pre-wrap;
-  color: $text;
+  color: $light-text;
   font-size: $fs-secondary;
   line-height: 1.8;
-  margin-top: 12px;
+  margin-top: $card-gap;
 }

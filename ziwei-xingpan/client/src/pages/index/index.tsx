@@ -7,7 +7,7 @@ import {
   branchFromClock, formatDate, parseDate, previewCorrections, saveInput,
   shichenLabel, shichenRange, shiftDate, loadInput, type BirthFormInput,
 } from '../../lib/chart';
-import { Card } from '../../components/ui';
+import { Card, ComposerBar } from '../../components/ui';
 import { BannerAd } from '../../components/ads';
 import { callFn, cloudConfigured, type AppConfig, type MembershipStatus } from '../../lib/cloud';
 import { adSlotLive } from '../../lib/ads';
@@ -101,7 +101,7 @@ export default function Home() {
   }
 
   return (
-    <View className='page'>
+    <View className='page page-welcome'>
       <View className='hero'>
         <View className='hero-brand'>
           <View className='brand-dots'>
@@ -169,13 +169,13 @@ export default function Home() {
               校正后 {String(preview.solar.hour).padStart(2, '0')}:{String(preview.solar.minute).padStart(2, '0')}，
               对应{shichenLabel(preview.solarBranch ?? branch)}{preview.solar.dayOffset !== 0 ? `（日期偏移 ${preview.solar.dayOffset} 天）` : ''}。
             </Text>
-            <View className='btn-ghost' onClick={applySolar}>应用真太阳时校正</View>
+            <View className='btn-pill btn-pill-outline-dark' onClick={applySolar}>应用真太阳时校正</View>
           </View>
         ) : null}
         {preview.isDst ? (
           <View className='corr'>
             <Text className='muted'>{preview.dstNote}减 1 小时后为 {preview.clockShifted}。</Text>
-            <View className='btn-ghost' onClick={applyDst}>夏令时减 1 小时</View>
+            <View className='btn-pill btn-pill-outline-dark' onClick={applyDst}>夏令时减 1 小时</View>
           </View>
         ) : (
           <Text className='muted'>该日期不在中国大陆夏令时期间，无需夏令时换算。</Text>
@@ -183,15 +183,15 @@ export default function Home() {
         {corrections.length > 0 ? (
           <View className='corr'>
             <Text className='muted'>已应用：{corrections.join('、')}</Text>
-            <View className='btn-ghost' onClick={undoCorrections}>撤销全部校正</View>
+            <View className='btn-pill btn-pill-outline-dark' onClick={undoCorrections}>撤销全部校正</View>
           </View>
         ) : null}
         <Text className='caption'>说明：真太阳时按出生地经度与均时差计算；夏令时按中国大陆通行口径表判定。两者都不自动生效。</Text>
       </Card>
 
-      <View className='btn' onClick={submit}>开始排盘</View>
+      <View className='home-submit'><ComposerBar label='开始排盘' onClick={submit} /></View>
       {hasStored ? (
-        <View className='btn-ghost' style={{ marginTop: '12px' }} onClick={() => Taro.navigateTo({ url: '/pages/chart/index' })}>查看上次命盘</View>
+        <View className='btn-medley btn-medley-outline home-secondary' onClick={() => Taro.navigateTo({ url: '/pages/chart/index' })}>查看上次命盘</View>
       ) : null}
       <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>地支对照：{BRANCHES.join(' ')}；时辰以两小时为一档，23:00 后属次日子时口径由排盘引擎处理。</Text>
       {adTier === 'free' ? <BannerAd unitId={adSlotLive(adConfig, 'bannerHome')} /> : null}
