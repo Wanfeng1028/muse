@@ -1,0 +1,23 @@
+@import '../../styles/variables.scss';
+
+.demo-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.demo-panel {
+  margin-top: 23.08px;
+  padding: 12px 23.08px;
+  border: 1px solid $border-glass;
+  border-radius: $radius-card;
+  background: $input-bg;
+}
+
+.demo-panel-row {
+  padding: 16px 0;
+  border-bottom: 1px solid $divider;
+  font-size: $fs-item;
+}
+
+.demo-panel-row:last-of-type { border-bottom: none; }

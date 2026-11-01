@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Input, Textarea, Picker, Image, Switch } from '@tarojs/components';
+import { View, Text, Input, Textarea, Picker, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { Card, Disclaimer } from '../../components/ui';
+import { Toggle, ParticleBurst, LongPressConfirm } from '../../components/interactions';
 import { PosterCard } from '../../components/poster';
 import starMark from '../../assets/logo/star-mark.png';
 import { loadChart, STORAGE_INPUT, STORAGE_CHART } from '../../lib/chart';
@@ -50,6 +51,7 @@ export default function Mine() {
   const [genderIdx, setGenderIdx] = useState(0);
   const [birthYearStr, setBirthYearStr] = useState('');
   const [isMinorSwitch, setIsMinorSwitch] = useState(false);
+  const [signinBurst, setSigninBurst] = useState(0);
   const [bindCode, setBindCode] = useState('');
   const [fbContent, setFbContent] = useState('');
   const [fbContact, setFbContact] = useState('');
@@ -147,7 +149,11 @@ export default function Mine() {
     setBusy('earn-' + rule);
     const res = await callFn<{ delta: number; balance: number }>('points', { action: 'earn', rule, deviceFingerprint: deviceFingerprint() });
     setBusy('');
-    if (res.ok) { toast('已领取 +' + res.data.delta + ' 积分'); refreshAll(); }
+    if (res.ok) {
+      toast('已领取 +' + res.data.delta + ' 积分');
+      if (rule === 'signin') setSigninBurst((n) => n + 1);
+      refreshAll();
+    }
     else if (res.code === 'DAILY_LIMIT_REACHED') toast('今日领取次数已达上限');
     else if (res.code === 'ALREADY_CLAIMED') toast('该奖励已领取过');
     else if (res.code === 'DEVICE_MISMATCH') toast('设备与登录设备不一致，拒绝领取');
@@ -250,8 +256,8 @@ export default function Mine() {
   }
 
   async function removeChart(chartId: string) {
-    const modal = await Taro.showModal({ title: '删除命盘', content: '删除后不可恢复，确定删除这张命盘吗？' });
-    if (modal.confirm) chartAction('remove', chartId);
+    // 删除确认已由长按按钮本身承担（按满进度才触发），不再弹二次确认框。
+    chartAction('remove', chartId);
   }
 
   function loadSavedChart(c: SavedChart) {
@@ -362,7 +368,9 @@ export default function Mine() {
           {failedHas('积分') ? <Text className='muted'>积分加载失败，请刷新重试。</Text> : null}
           {balance !== null ? <Text className='mine-balance'>当前积分：{balance}</Text> : null}
           <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>积分永不过期。视频与分享领取由客户端动作触发、服务端按日限校验。</Text>
-          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={() => earn('signin')}>{busy === 'earn-signin' ? '处理中…' : '每日签到 +10'}</View>
+          <ParticleBurst burstKey={signinBurst}>
+            <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={() => earn('signin')}>{busy === 'earn-signin' ? '处理中…' : '每日签到 +10'}</View>
+          </ParticleBurst>
           <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={watchVideo}>{videoOpen ? '看激励视频 +20（每日上限 5 次）' : '激励视频暂未开通（流量主 UV 未达 1000）'}</View>
           <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => earn('share')}>{busy === 'earn-share' ? '处理中…' : '分享海报 +5（每日 1 次）'}</View>
           <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => earn('profile')}>{busy === 'earn-profile' ? '处理中…' : (user?.profileBonusClaimed ? '完善资料 +30（已领取）' : '完善资料 +30（一次，需先在设置填昵称）')}</View>
@@ -466,7 +474,7 @@ export default function Mine() {
           </View>
           <View className='input-row'>
             <Text className='input-label'>我是未成年人</Text>
-            <Switch checked={isMinorSwitch} onChange={(e) => setIsMinorSwitch(e.detail.value)} />
+            <Toggle checked={isMinorSwitch} onChange={setIsMinorSwitch} />
           </View>
           {user?.minor ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>当前账号已标记为未成年人：AI 解读、付费会员、积分兑换付费内容均不可用。清除标记需填写成年出生年份后保存。</Text> : null}
           <View className='btn-medley btn-medley-dark' style={{ marginTop: '12px' }} onClick={saveSettings}>保存资料</View>
@@ -523,7 +531,7 @@ export default function Mine() {
               <View style={{ display: 'flex', marginTop: '8px' }}>
                 <View className='btn-pill btn-pill-black' style={{ marginRight: '8px' }} onClick={() => loadSavedChart(c)}>载入此盘</View>
                 {!c.isDefault ? <View className='btn-pill btn-pill-black' style={{ marginRight: '8px' }} onClick={() => chartAction('setDefault', c._id)}>设为默认</View> : null}
-                <View className='btn-pill btn-pill-black' onClick={() => removeChart(c._id)}>删除</View>
+                <LongPressConfirm hint='长按删除' onConfirm={() => removeChart(c._id)}>删除</LongPressConfirm>
               </View>
             </View>
           ))}
@@ -622,6 +630,10 @@ export default function Mine() {
             <Text className='mine-arrow'>›</Text>
           </View>
         ))}
+        <View className='input-row' onClick={() => Taro.navigateTo({ url: '/pages/demo/index' })}>
+          <Text className='input-label mine-row-label'>组件演示</Text>
+          <Text className='mine-arrow'>›</Text>
+        </View>
       </Card>
       <Text className='caption'>
         数据来源：排盘引擎移植自 Renhuai123/ziwei-doushu（MIT，见引擎目录 LICENSE 与 SOURCE.md）。

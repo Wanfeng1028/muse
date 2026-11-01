@@ -6,6 +6,7 @@ import { buildDimensions } from '../../lib/interpret';
 import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
 import { Card, Disclaimer } from '../../components/ui';
+import { LoadingButton } from '../../components/interactions';
 import { BannerAd } from '../../components/ads';
 import arrowUp from '../../assets/arrow-up.png';
 import {
@@ -139,7 +140,7 @@ export default function Interpret() {
           <Text className='muted'>请先在命盘图页点“保存到我的命盘”，AI 解读基于已保存的命盘进行（同一命盘按盘 hash 缓存，命中不扣费）。</Text>
         ) : (
           <View>
-            <View className='btn-medley btn-medley-white' onClick={aiInterpret}>{busy === 'interpret' ? '生成中…' : 'AI 解盘（本盘）'}</View>
+            <LoadingButton loading={busy === 'interpret'} onClick={aiInterpret} className='btn-medley btn-medley-white'>AI 解盘（本盘）</LoadingButton>
             {aiText ? <View className='chat-msg'><View className='chat-bubble'><Text>{aiText}</Text></View></View> : null}
             {aiMeta ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiMeta}</Text> : null}
             {aiError ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiError}</Text> : null}

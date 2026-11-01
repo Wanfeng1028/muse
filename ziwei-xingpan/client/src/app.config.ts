@@ -5,6 +5,7 @@ export default {
     'pages/interpret/index',
     'pages/knowledge/index',
     'pages/mine/index',
+    'pages/demo/index',
   ],
   tabBar: {
     color: '#9a9ba2',
