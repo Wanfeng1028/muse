@@ -19,13 +19,16 @@ import {
   type LedgerEntry, type InviteInfo, type AppConfig, type SavedChart,
 } from '../../lib/cloud';
 import { PRIVACY_POLICY, TERMS_OF_SERVICE, MINOR_PROTECTION, ABOUT_TEXT } from '../../lib/legal';
+import { resolvePricing, chatTokenValueLabel } from '../../lib/pricing';
+import { useCompareCharge } from '../../lib/use-compare-charge';
+import { takeMineSection } from '../../lib/nav';
 import './index.scss';
 
 type Section = 'main' | 'member' | 'points' | 'invite' | 'orders' | 'settings' | 'feedback' | 'legal' | 'charts' | 'compare' | 'poster';
 type LegalTab = 'privacy' | 'terms' | 'minor' | 'about';
 
 const GENDERS = ['未知', '男', '女'];
-const PLANS = ['proMonthly', 'proContinuous', 'maxMonthly', 'maxContinuous'];
+const PLANS = ['plusMonthly', 'proMonthly', 'maxMonthly'];
 const LEGAL_TABS: Array<{ key: LegalTab; label: string; text: string }> = [
   { key: 'privacy', label: '隐私政策', text: PRIVACY_POLICY },
   { key: 'terms', label: '用户协议', text: TERMS_OF_SERVICE },
@@ -33,9 +36,27 @@ const LEGAL_TABS: Array<{ key: LegalTab; label: string; text: string }> = [
   { key: 'about', label: '关于（含数据来源）', text: ABOUT_TEXT },
 ];
 
+// Tier benefit line from the cloud pricing tiers doc (flags only; the
+// numbers live in config-seed.js / lib/pricing.ts).
+function tierBenefitsText(tiers: Record<string, any> | undefined, tier: string): string {
+  const t = tiers ? tiers[tier] : null;
+  if (!t) return '';
+  const parts: string[] = [];
+  if (t.noAllAds) parts.push('去全部广告');
+  else {
+    if (t.noBannerAds) parts.push('去横幅广告');
+    if (t.noInterstitialAds) parts.push('去插屏广告');
+  }
+  if (t.hdExportFree) parts.push('高清导出免费');
+  if (t.annualFortuneFree) parts.push('年度运势免费');
+  if (t.earlyAccess) parts.push('优先体验');
+  return parts.join('、');
+}
+
 export default function Mine() {
   const [theme, applyTheme] = useTheme();
   const [section, setSection] = useState<Section>('main');
+  const [rechargeYuan, setRechargeYuan] = useState('');
   const [legalTab, setLegalTab] = useState<LegalTab>('privacy');
   const [user, setUser] = useState<CloudUser | null>(null);
   const [membership, setMembership] = useState<MembershipStatus | null>(null);
@@ -49,6 +70,9 @@ export default function Mine() {
   const [localChart, setLocalChart] = useState<ZiweiChart | null>(null);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
+  // Shared compare-charge gate (same hook as the standalone compare
+  // page): 60 points per view, results locked until paid.
+  const compareCharge = useCompareCharge(compareA, compareB, () => setCompareB(''));
   const [notice, setNotice] = useState('');
   const [failed, setFailed] = useState<string[]>([]);
   const [busy, setBusy] = useState('');
@@ -107,7 +131,12 @@ export default function Mine() {
   // Same tab-staleness rule as Home: local chart reloads on every show
   // (cheap, no cloud calls); cloud refresh stays mount-only + the manual
   // 刷新 button.
-  useDidShow(() => { setLocalChart(loadChart()); });
+  useDidShow(() => {
+    setLocalChart(loadChart());
+    const target = takeMineSection();
+    const sections = ['main', 'member', 'points', 'invite', 'orders', 'settings', 'feedback', 'legal', 'charts', 'compare', 'poster'];
+    if (target && sections.indexOf(target) >= 0) setSection(target as Section);
+  });
 
   function toast(title: string) {
     Taro.showToast({ title, icon: 'none' });
@@ -141,6 +170,46 @@ export default function Mine() {
         paySign: String(pay.paySign),
       });
       toast('支付成功，会员到账请刷新查看');
+      refreshAll();
+    } catch {
+      toast('支付未完成，订单仍为待支付');
+      refreshAll();
+    }
+  }
+
+  async function buyRecharge() {
+    const yuan = Math.floor(Number(rechargeYuan) || 0);
+    if (yuan < 1) {
+      toast('充值金额须为 1 元起的整数元');
+      return;
+    }
+    setBusy('buy-recharge');
+    const res = await callFn<{ orderId: string; outTradeNo: string; amountFen: number; payment: any }>('order', { action: 'create', plan: 'recharge', yuan });
+    setBusy('');
+    if (!res.ok) {
+      if (res.code === 'PAY_NOT_CONFIGURED') {
+        toast('微信支付未配置，订单已建为待支付，可在订单中查看');
+        refreshAll();
+        return;
+      }
+      toast('下单失败：' + res.code);
+      return;
+    }
+    if (!res.data.payment) {
+      toast('下单成功，待支付（订单号 ' + res.data.outTradeNo + '）');
+      refreshAll();
+      return;
+    }
+    const pay = res.data.payment;
+    try {
+      await Taro.requestPayment({
+        timeStamp: String(pay.timeStamp),
+        nonceStr: String(pay.nonceStr),
+        package: String(pay.package),
+        signType: (pay.signType as any) || 'RSA',
+        paySign: String(pay.paySign),
+      });
+      toast('支付成功，积分到账请刷新查看');
       refreshAll();
     } catch {
       toast('支付未完成，订单仍为待支付');
@@ -304,7 +373,7 @@ export default function Mine() {
         <View style={{ marginLeft: '12px', flex: 1 }}>
           <Text className='mine-name'>{user?.nickname || '星命盘用户'}</Text>
           {membership ? (
-            <Text className='muted'>会员：<Text className={membership.tier === 'free' ? 'mine-tier-free' : membership.tier === 'max' ? 'mine-tier-max' : 'mine-tier-pro'}>{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}</Text>{membership.expiresAt ? '，到期 ' + formatDateTime(membership.expiresAt) : ''}{membership.autoRenew ? '（连续包月）' : ''}</Text>
+            <Text className='muted'>会员：<Text className={membership.tier === 'free' ? 'mine-tier-free' : membership.tier === 'plus' ? 'mine-tier-plus' : membership.tier === 'max' ? 'mine-tier-max' : 'mine-tier-pro'}>{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}</Text>{membership.expiresAt ? '，到期 ' + formatDateTime(membership.expiresAt) : ''}{membership.autoRenew ? '（连续包月）' : ''}</Text>
           ) : (
             <Text className='muted'>{configured ? '登录后可查看会员与积分。' : '云开发未配置，账号功能暂不可用。'}</Text>
           )}
@@ -341,17 +410,29 @@ export default function Mine() {
           {config ? PLANS.map((plan) => {
             const p = config.pricing.plans[plan];
             if (!p) return null;
+            const pricing = resolvePricing(config);
+            const benefits = tierBenefitsText(config.pricing.tiers, p.tier);
             return (
-              <View key={plan} className='input-row'>
-                <Text className='input-label mine-row-label'>{PLAN_NAMES[plan]}（{p.days} 天）</Text>
-                <View style={{ display: 'flex', alignItems: 'center' }}>
-                  <Text className='input-value mine-price' style={{ marginRight: '10px' }}>{formatYuan(p.fen)}</Text>
-                  <View className='btn-pill btn-pill-black' onClick={() => buy(plan)}>{busy === 'buy-' + plan ? '处理中…' : '购买'}</View>
+              <View key={plan} style={{ marginBottom: '12px' }}>
+                <View className='input-row'>
+                  <Text className='input-label mine-row-label'>{PLAN_NAMES[plan]}（{p.days} 天）</Text>
+                  <View style={{ display: 'flex', alignItems: 'center' }}>
+                    <Text className='input-value mine-price' style={{ marginRight: '10px' }}>{formatYuan(p.fen)}</Text>
+                    <View className='btn-pill btn-pill-black' onClick={() => buy(plan)}>{busy === 'buy-' + plan ? '处理中…' : '购买'}</View>
+                  </View>
                 </View>
+                <Text className='muted' style={{ display: 'block' }}>得 {p.pointsGrant} 积分，{chatTokenValueLabel(p.pointsGrant, pricing.chat)}{benefits ? '；' + benefits : ''}</Text>
               </View>
             );
           }) : null}
           {config?.pricing.cancelNote ? <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>{config.pricing.cancelNote}</Text> : null}
+        </Card>
+        <Card light title='单独充值积分'>
+          <Text className='muted'>1 元 = 50 积分，1 元起充；充值积分永不过期，可用于对话超额与全部功能消费。</Text>
+          <View style={{ display: 'flex', alignItems: 'center', marginTop: '12px' }}>
+            <Input className='input-field' type='number' value={rechargeYuan} onInput={(e) => setRechargeYuan(e.detail.value)} placeholder='输入元数（整数，≥1）' style={{ flex: 1, marginRight: '10px' }} />
+            <View className='btn-pill btn-pill-black' onClick={() => buyRecharge()}>{busy === 'buy-recharge' ? '处理中…' : '充值'}</View>
+          </View>
         </Card>
         <Card light title='积分兑换 Pro'>
           <View className='btn-medley btn-medley-outline-light' style={{ marginBottom: '10px' }} onClick={() => redeem('pro7d')}>{busy === 'redeem-pro7d' ? '处理中…' : '300 积分兑换 7 天 Pro'}</View>
@@ -378,7 +459,7 @@ export default function Mine() {
             <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={() => earn('signin')}>{busy === 'earn-signin' ? '处理中…' : '每日签到 +10'}</View>
           </ParticleBurst>
           <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={watchVideo}>{videoOpen ? '看激励视频 +20（每日上限 5 次）' : '激励视频暂未开通（流量主 UV 未达 1000）'}</View>
-          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => earn('share')}>{busy === 'earn-share' ? '处理中…' : '分享海报 +5（每日 1 次）'}</View>
+          <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => setSection('poster')}>去分享海报 +5（成功分享到账，每日 1 次）</View>
           <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={() => earn('profile')}>{busy === 'earn-profile' ? '处理中…' : (user?.profileBonusClaimed ? '完善资料 +30（已领取）' : '完善资料 +30（一次，需先在设置填昵称）')}</View>
         </Card>
         <Card light title='积分账本（最近 50 条）'>
@@ -567,7 +648,8 @@ export default function Mine() {
         {backBtn()}
         <Card light title='合盘对照（两盘主星对照）'>
           {unconfiguredNote()}{needLoginNote()}
-          <CompareView charts={savedCharts} aId={compareA} bId={compareB} onA={setCompareA} onB={setCompareB} labelClass='input-label mine-row-label' />
+          {compareCharge.note ? <Text className='muted' style={{ display: 'block', marginBottom: '8px' }}>{compareCharge.note}</Text> : null}
+          <CompareView charts={savedCharts} aId={compareA} bId={compareB} onA={setCompareA} onB={setCompareB} labelClass='input-label mine-row-label' locked={compareCharge.locked} />
         </Card>
         <Disclaimer />
         {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
@@ -609,7 +691,7 @@ export default function Mine() {
   // Spaced divider-free service cards (s6 pattern): color dot + bold title
   // + one-line sub + violet arrow. No divider lines, big whitespace.
   const ROWS: Array<{ label: string; sub: string; icon: IconName; section: Section }> = [
-    { label: '会员中心', sub: 'Pro / Max 订阅与连续包月', icon: 'crown', section: 'member' },
+    { label: '会员中心', sub: 'Plus / Pro / Max 月付，付费即赠积分', icon: 'crown', section: 'member' },
     { label: '积分中心', sub: '签到、视频、邀请赚积分', icon: 'coins', section: 'points' },
     { label: '邀请中心', sub: '邀请码与阶梯奖励', icon: 'users', section: 'invite' },
     { label: '档案管理', sub: '已保存的命盘', icon: 'history', section: 'charts' },
@@ -636,6 +718,38 @@ export default function Mine() {
             <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
           </View>
         ))}
+        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/profiles/index' })}>
+          <IconBadge name='users' dark={theme === 'dark'} />
+          <View className='svc-body'>
+            <Text className='svc-title'>人物档案（命例库）</Text>
+            <Text className='svc-sub'>一次录入，多人多盘免重填</Text>
+          </View>
+          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
+        </View>
+        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>
+          <IconBadge name='message-square' dark={theme === 'dark'} />
+          <View className='svc-body'>
+            <Text className='svc-title'>AI 对话</Text>
+            <Text className='svc-sub'>结合本盘聊天，每日 2M tokens 免费</Text>
+          </View>
+          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
+        </View>
+        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/persona/index' })}>
+          <IconBadge name='star' dark={theme === 'dark'} />
+          <View className='svc-body'>
+            <Text className='svc-title'>人格形象</Text>
+            <Text className='svc-sub'>按主星预设免费，AI 定制 100 积分</Text>
+          </View>
+          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
+        </View>
+        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/annual/index' })}>
+          <IconBadge name='sun' dark={theme === 'dark'} />
+          <View className='svc-body'>
+            <Text className='svc-title'>年度运势</Text>
+            <Text className='svc-sub'>流年四化与大限，100 积分/次</Text>
+          </View>
+          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
+        </View>
         <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/demo/index' })}>
           <IconBadge name='layout-grid' dark={theme === 'dark'} />
           <View className='svc-body'>

@@ -3,6 +3,8 @@ import { View, Text, Canvas } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { Card, Disclaimer } from './ui';
 import { callFn, tempFileURL, type AiImageResult } from '../lib/cloud';
+import { shareChart, defaultShareEarn } from '../lib/share';
+import { EARN_GUIDE } from '../lib/pricing';
 import { DISCLAIMER } from '../lib/chart';
 import type { ZiweiChart } from '../engine/types';
 
@@ -32,7 +34,16 @@ async function downloadToLocal(url: string): Promise<string | null> {
   }
 }
 
-export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; inviteCode: string }) {
+// profileId/version are optional: the WeChat share button only appears
+// when they are provided (profiles detail passes them; the mine poster
+// section has no archive context, so it shows no share button there --
+// sharing from mine goes through profiles, never with an invented link).
+export function PosterCard({ chart, inviteCode, profileId, version }: {
+  chart: ZiweiChart | null;
+  inviteCode: string;
+  profileId?: string;
+  version?: number;
+}) {
   const [bgPath, setBgPath] = useState('');
   const [qrPath, setQrPath] = useState('');
   const [qrNote, setQrNote] = useState('');
@@ -126,14 +137,27 @@ export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; in
       prompt: '星命盘分享海报背景，中国风星空，简洁留白，深色，适配竖版海报',
     });
     setBusy(false);
-    if (!res.ok) { toast('AI 背景生成失败：' + res.code); return; }
+    if (!res.ok) {
+      if (res.code === 'INSUFFICIENT_POINTS') toast('积分不足：AI 背景需 40 积分。' + EARN_GUIDE);
+      else if (res.code === 'MINOR_PAID_BLOCKED') toast('未成年人不可使用付费生图。');
+      else toast('AI 背景生成失败：' + res.code + '（未扣费）');
+      return;
+    }
     const url = await tempFileURL(res.data.fileID);
     if (!url) { toast('AI 背景链接获取失败'); return; }
     const local = await downloadToLocal(url);
     if (!local) { toast('AI 背景下载失败'); return; }
     setBgPath(local);
     draw(local, qrPath);
-    setNote('AI 背景已应用' + (res.data.cached ? '（缓存复用，未重复生图）' : ''));
+    setNote('AI 背景已应用' + (res.data.cached ? '（缓存复用，未扣积分）' : res.data.chargedPoints ? '（已扣 ' + res.data.chargedPoints + ' 积分）' : ''));
+  }
+
+  async function sharePoster() {
+    if (!chart || !profileId || version === undefined) return;
+    setBusy(true);
+    const result = await shareChart({ profileId, version, name: chart.birthInfo.name || '未具名' }, defaultShareEarn);
+    setBusy(false);
+    setNote(result.shared ? '已分享' + (result.granted ? '，+' + result.granted + ' 积分（每日 1 次）' : '') : '分享未完成：' + result.note + '（未发积分）');
   }
 
   async function savePoster() {
@@ -155,7 +179,10 @@ export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; in
       {!chart ? <Text className='muted'>请先在首页排盘，再生成分享海报。</Text> : null}
       <Canvas canvasId={CANVAS_ID} style={{ width: '300px', height: '420px', background: '#111518', borderRadius: '16px' }} />
       <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={generatePoster}>{busy ? '生成中…' : '生成海报'}</View>
-      <View className='btn-medley btn-medley-outline-light' hoverClass='btn-press' style={{ marginTop: '10px' }} onClick={aiBackground}>AI 背景（云开发省图 token，生图结果缓存复用）</View>
+      <View className='btn-medley btn-medley-outline-light' hoverClass='btn-press' style={{ marginTop: '10px' }} onClick={aiBackground}>AI 背景（40 积分/张，缓存免费复用）</View>
+      {profileId && version !== undefined ? (
+        <View className='btn-medley btn-medley-outline-light' hoverClass='btn-press' style={{ marginTop: '10px' }} onClick={sharePoster}>{busy ? '分享中…' : '微信分享（只读链接，成功分享 +5 积分/日）'}</View>
+      ) : null}
       <View className='btn-medley btn-medley-outline-light' hoverClass='btn-press' style={{ marginTop: '10px' }} onClick={savePoster}>保存海报到相册</View>
       {qrNote ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{qrNote}</Text> : null}
       {note ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{note}</Text> : null}

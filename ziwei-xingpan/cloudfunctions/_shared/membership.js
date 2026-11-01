@@ -29,12 +29,13 @@ function extendedExpiry(membership, days, now) {
   return new Date(base.getTime() + days * 24 * 60 * 60 * 1000);
 }
 
-// Tier rank for the no-downgrade grant rule (free < pro < max).
+// Tier rank for the no-downgrade grant rule (free < plus < pro < max).
+// 2026-11-01: Plus tier added (pure-points model).
 // A reward, points redemption or purchase must never downgrade a user who
 // already holds a higher effective tier: in that case the higher tier is
 // kept and only its expiry is extended by `days`. Otherwise the granted
 // tier applies with the extended expiry. Pure function.
-const TIER_RANK = { free: 0, pro: 1, max: 2 };
+const TIER_RANK = { free: 0, plus: 1, pro: 2, max: 3 };
 
 function grantTier(membership, tier, days, now) {
   const current = now || new Date();

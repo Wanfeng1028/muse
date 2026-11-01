@@ -3,7 +3,7 @@
 // Interpret: Medley chat-dark-lisbon flow. AiMeta header (12 semibold,
 // gap 6) + user-bubble body (16, leading 1.35, px 16 py 12, radius 20
 // with 6 top-right corner). Pattern cards keep the accent edge.
-.chat-msg { margin: 15.38px 0; }
+.interp-msg { margin: 15.38px 0; display: block; }
 .chat-meta {
   display: flex;
   align-items: center;
@@ -13,7 +13,7 @@
   color: $text;
   margin: 30.77px 0 15.38px;
 }
-.chat-bubble {
+.interp-bubble {
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.0) 50%),
     $card-bubble;

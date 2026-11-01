@@ -10,6 +10,12 @@ export default {
     // Birth form (source BirthForm) + compare (source heming, two charts).
     'pages/birth/index',
     'pages/compare/index',
+    // Chat-agent round (2026-11-01): profiles (命例库) + chat (轻量纯对话)
+    // + persona (人格形象) + annual (年度运势).
+    'pages/profiles/index',
+    'pages/chat/index',
+    'pages/persona/index',
+    'pages/annual/index',
   ],
   tabBar: {
     custom: true,

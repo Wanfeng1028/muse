@@ -197,6 +197,7 @@ export interface AiImageResult {
   provider: string;
   degraded: boolean;
   degradedReason?: string | null;
+  chargedPoints?: number;
 }
 export interface AppConfig {
   ads: {
@@ -207,8 +208,9 @@ export interface AppConfig {
     enabled: boolean;
   };
   pricing: {
-    tiers: Record<string, { monthlyFen: number; continuousFen: number; name: string }>;
-    plans: Record<string, { tier: string; days: number; fen: number; continuous: boolean }>;
+    tiers: Record<string, { name: string; pointsGrant: number; noBannerAds: boolean; noInterstitialAds: boolean; noAllAds: boolean; hdExportFree: boolean; annualFortuneFree: boolean; earlyAccess: boolean }>;
+    plans: Record<string, { tier: string; days: number; fen: number; pointsGrant: number; billingCycle: string; continuous: boolean }>;
+    recharge: { pointsPerYuan: number; minYuan: number };
     cancelNote: string;
   };
   pointsRules: {
@@ -228,17 +230,28 @@ export const RULE_LABELS: Record<string, string> = {
   profile: '完善资料',
   share: '分享海报',
   inviteeBonus: '被邀奖励',
+  membership: '会员赠送积分',
+  recharge: '积分充值',
+  refund: '失败退款',
+  chatOverage: '对话超额',
   advancedInterpret: '高级解读',
   aiInterpret: 'AI 解读',
+  dimInterpret: '维度解读',
+  compare: '合盘对照',
+  chatImage: '对话内生图',
+  posterBg: '海报背景 AI 生成',
+  hdExport: '高清命盘图导出',
+  annualFortune: '年度运势',
+  aiPersona: 'AI 定制形象',
   pro7d: '7 天 Pro',
   pro30d: '30 天 Pro',
 };
 
 export const PLAN_NAMES: Record<string, string> = {
+  plusMonthly: 'Plus 月付',
   proMonthly: 'Pro 月付',
-  proContinuous: 'Pro 连续包月',
   maxMonthly: 'Max 月付',
-  maxContinuous: 'Max 连续包月',
+  recharge: '积分充值',
 };
 
 export const ORDER_STATUS_NAMES: Record<string, string> = {

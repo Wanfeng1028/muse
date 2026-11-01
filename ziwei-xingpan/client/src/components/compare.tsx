@@ -14,13 +14,17 @@ export function palaceMajors(c: SavedChart, palaceName: string): string {
   return majors.length ? majors.join(' ') : '无主星';
 }
 
-export default function CompareView({ charts, aId, bId, onA, onB, labelClass }: {
+export default function CompareView({ charts, aId, bId, onA, onB, labelClass, locked }: {
   charts: SavedChart[];
   aId: string;
   bId: string;
   onA: (id: string) => void;
   onB: (id: string) => void;
   labelClass?: string;
+  // locked=true hides the six-palace results (pickers stay visible).
+  // Callers set it while the 60-point compare charge is pending or
+  // unpaid, so results are never shown before payment.
+  locked?: boolean;
 }) {
   const label = labelClass || 'input-label';
   const a = charts.find((c) => c._id === aId) || null;
@@ -42,7 +46,7 @@ export default function CompareView({ charts, aId, bId, onA, onB, labelClass }: 
           <Text className='input-value'>{b ? b.name : '请选择'}</Text>
         </Picker>
       </View>
-      {a && b ? PALACES.map((p) => (
+      {a && b && !locked ? PALACES.map((p) => (
         <View key={p} className='input-row'>
           <Text className={label}>{p}</Text>
           <Text className='input-value'>{palaceMajors(a, p)} ｜ {palaceMajors(b, p)}</Text>

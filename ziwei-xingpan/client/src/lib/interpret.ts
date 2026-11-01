@@ -6,6 +6,9 @@ export interface Dimension {
   id: string;
   title: string;
   palaceName: string;
+  // brief = star line only (free short version); body = brief +
+  // generic note (full paid text). body text is unchanged.
+  brief: string;
   body: string;
 }
 
@@ -72,11 +75,20 @@ export function buildDimensions(chart: ZiweiChart): Dimension[] {
       p = palaceByName(chart, d.palace);
     }
     const palaceName = p?.name ?? d.palace;
+    const brief = starSummary(p);
     return {
       id: d.id,
       title: d.title,
       palaceName,
-      body: `${starSummary(p)}${genericNote(d.title)}`,
+      brief,
+      body: `${brief}${genericNote(d.title)}`,
     };
   });
+}
+
+// Free short version of one dimension (star line only). Used by the
+// interpret page lock card; the full body stays behind the 20-point
+// (per dim) / 100-point (all) unlock.
+export function dimBrief(chart: ZiweiChart, dimId: string): string {
+  return buildDimensions(chart).find((d) => d.id === dimId)?.brief ?? '';
 }

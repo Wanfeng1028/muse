@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { View, Text } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, Canvas } from '@tarojs/components';
+import Taro, { getCurrentInstance } from '@tarojs/taro';
 import { Solar } from 'lunar-javascript';
 import { loadChart, loadInput, stemBranchLabel, branchLabel, type BirthFormInput } from '../../lib/chart';
 import { callFn, cloudConfigured } from '../../lib/cloud';
@@ -12,6 +12,9 @@ import type { Palace, ZiweiChart } from '../../engine/types';
 import { Ambient, AmbientLight, Card, Disclaimer, SegmentedControl } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import { goInterpret } from '../../lib/nav';
+import { parseShareParams } from '../../lib/share';
+import { getProfile, latestChart, createProfile } from '../../lib/profiles';
+import { localTier, localBalance, localSpend, hdExportCost, EARN_GUIDE, PRICING, type Tier } from '../../lib/pricing';
 import { buildDimensions } from '../../lib/interpret';
 import './index.scss';
 
@@ -195,16 +198,49 @@ function ChartGrid({ chart, input, selectedBranch, onSelect, liunianBranch, xiao
   );
 }
 
+// Resolve a read-only share target from the page query (?share=1&
+// readonly=1&profile=<id>&v=<version>). Returns null for a normal
+// visit or an unresolvable target. The shared chart is NEVER written
+// to zw_chart_v1: the original stays untouched.
+function shareTarget(): { input: BirthFormInput; chart: ZiweiChart; name: string; version: number } | null {
+  try {
+    const params = (getCurrentInstance().router?.params || {}) as Record<string, string>;
+    const parsed = parseShareParams(params);
+    if (!parsed.readonly || !parsed.profileId) return null;
+    const profile = getProfile(parsed.profileId);
+    if (!profile) return null;
+    const v = parsed.version != null
+      ? profile.charts.find((c) => c.version === parsed.version)
+      : latestChart(profile);
+    if (!v) return null;
+    return { input: v.input, chart: v.chart, name: profile.name, version: v.version };
+  } catch {
+    return null;
+  }
+}
+
 export default function ChartPage() {
   const [theme] = useTheme();
-  const [chart, setChart] = useState<ZiweiChart | null>(null);
-  const [input, setInput] = useState(loadInput());
+  const [share] = useState(shareTarget);
+  const [chart, setChart] = useState<ZiweiChart | null>(share ? share.chart : loadChart());
+  const [input, setInput] = useState<BirthFormInput | null>(share ? share.input : loadInput());
+  const [shareError, setShareError] = useState('');
+  const [exporting, setExporting] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const [seg, setSeg] = useState(0);
   const [fullScreen, setFullScreen] = useState(false);
-  useEffect(() => { setChart(loadChart()); setInput(loadInput()); }, []);
+  useEffect(() => {
+    if (share) return;
+    const params = (getCurrentInstance().router?.params || {}) as Record<string, string>;
+    const parsed = parseShareParams(params);
+    if (parsed.readonly && parsed.profileId) {
+      setShareError('分享的档案或版本不存在或已被删除，原盘未改动；下方显示的是你本地的命盘。');
+    }
+    setChart(loadChart());
+    setInput(loadInput());
+  }, []);
 
   async function saveChart() {
     if (!chart || !input) return;
@@ -225,6 +261,146 @@ export default function ChartPage() {
       Taro.showToast({ title: '已保存到我的命盘', icon: 'none' });
     } else {
       Taro.showToast({ title: '保存失败：' + res.code, icon: 'none' });
+    }
+  }
+
+  // Read-only share: copy the shared chart into MY OWN archive as a
+  // new profile. The original archive is never touched.
+  function saveSharedAsProfile() {
+    if (!input) return;
+    const created = createProfile(input);
+    Taro.showToast({ title: '已存为我的档案「' + created.name + '」', icon: 'none' });
+    Taro.navigateTo({ url: '/pages/profiles/index' });
+  }
+
+  // HD export (1200x1200 canvas, same 4x4 GRID mapping as the on-screen
+  // plate, center 2x2 merged). Order matters: draw (free) -> balance
+  // pre-check (blocks insufficient users before delivery) -> save to
+  // album (delivery) -> charge. A failed save therefore never charges,
+  // and no client-callable refund endpoint is needed. The only leak is
+  // a balance race between pre-check and charge (single user, seconds).
+  function drawHdCanvas(): Promise<void> {
+    return new Promise((resolve, reject) => {
+      try {
+        const ctx = Taro.createCanvasContext('hd-export-canvas');
+        const SIZE = 1200;
+        const CELL = 300;
+        ctx.setFillStyle('#111518');
+        ctx.fillRect(0, 0, SIZE, SIZE);
+        const byBranch = (b: number) => chart!.palaces.find((x) => x.branch === b)!;
+        const starColor = (t: string) => (t === 'major' ? '#ffffff' : t === 'lucky' ? '#5ec8a7' : t === 'sha' ? '#fd6718' : '#8fb0d8');
+        GRID.forEach((b, i) => {
+          const x = (i % 4) * CELL;
+          const y = Math.floor(i / 4) * CELL;
+          if (b === null) {
+            if (i !== 5) return;
+            // Center 2x2 block.
+            ctx.setFillStyle('#0d0e10');
+            ctx.fillRect(x, y, CELL * 2, CELL * 2);
+            ctx.setStrokeStyle('#2a2e33');
+            ctx.strokeRect(x, y, CELL * 2, CELL * 2);
+            ctx.setFillStyle('#ffffff');
+            ctx.setFontSize(44);
+            ctx.setTextAlign('center');
+            ctx.fillText((chart!.birthInfo.name || '未具名') + ' · ' + (chart!.birthInfo.gender === 'male' ? '男' : '女'), x + CELL, y + 90);
+            ctx.setFillStyle('#b9bec6');
+            ctx.setFontSize(30);
+            ctx.fillText('农历 ' + chart!.lunarInfo.lunarYear + ' 年 ' + Math.abs(chart!.lunarInfo.lunarMonth) + ' 月 ' + chart!.lunarInfo.lunarDay + ' 日' + (chart!.lunarInfo.isLeapMonth ? '（闰月）' : ''), x + CELL, y + 150);
+            ctx.fillText(chart!.wuxingJuName + ' · 命主 ' + chart!.mingZhu + ' · 身主 ' + chart!.shenZhu, x + CELL, y + 210);
+            ctx.fillText('命宫 ' + branchLabel(chart!.mingGongBranch) + ' · 身宫 ' + branchLabel(chart!.shenGongBranch), x + CELL, y + 270);
+            ctx.setFillStyle('#8db4ff');
+            ctx.setFontSize(26);
+            ctx.fillText('星命盘 · 仅供娱乐参考', x + CELL, y + 540);
+            return;
+          }
+          const pal = byBranch(b);
+          ctx.setStrokeStyle('#2a2e33');
+          ctx.strokeRect(x, y, CELL, CELL);
+          ctx.setFillStyle('#e3ac45');
+          ctx.setFontSize(34);
+          ctx.setTextAlign('left');
+          ctx.fillText(pal.name + ' ' + branchLabel(pal.branch), x + 16, y + 44);
+          const majors = pal.stars.filter((st) => st.type === 'major');
+          const others = pal.stars.filter((st) => st.type !== 'major');
+          const lines = [...majors, ...others].slice(0, 8);
+          ctx.setFontSize(26);
+          lines.forEach((st, li) => {
+            ctx.setFillStyle(starColor(st.type));
+            const sihua = st.siHua ? '·' + st.siHua : '';
+            ctx.fillText(st.name + (st.brightness || '') + sihua, x + 16, y + 84 + li * 30);
+          });
+          if (pal.stars.length > 8) {
+            ctx.setFillStyle('#b9bec6');
+            ctx.fillText('…', x + 16, y + 84 + 8 * 30);
+          }
+        });
+        ctx.draw(false, () => resolve());
+      } catch (e) {
+        reject(e);
+      }
+    });
+  }
+
+  async function exportHd() {
+    if (!chart || exporting) return;
+    setExporting(true);
+    try {
+      let tier: Tier = 'free';
+      if (cloudConfigured()) {
+        const st = await callFn<{ tier: string }>('membership', { action: 'status' });
+        if (st.ok && st.data.tier) tier = st.data.tier as Tier;
+      } else {
+        tier = localTier().tier;
+      }
+      const cost = hdExportCost(tier, PRICING);
+      await drawHdCanvas();
+      // Balance pre-check (free read) before delivery.
+      if (cost > 0) {
+        let balance = 0;
+        if (cloudConfigured()) {
+          const bal = await callFn<{ balance: number }>('points', { action: 'balance' });
+          balance = bal.ok ? bal.data.balance : 0;
+        } else {
+          balance = localBalance();
+        }
+        if (balance < cost) {
+          Taro.showToast({ title: '积分不足：高清导出需 40 积分，当前 ' + balance + '。' + EARN_GUIDE, icon: 'none', duration: 4000 });
+          return;
+        }
+      }
+      const tmp = await Taro.canvasToTempFilePath({ canvasId: 'hd-export-canvas', destWidth: 1200, destHeight: 1200, fileType: 'jpg', quality: 0.92 });
+      if (Taro.getEnv() === Taro.ENV_TYPE.WEB) {
+        const a = document.createElement('a');
+        a.href = tmp.tempFilePath;
+        a.download = 'xingmingpan-hd.jpg';
+        a.click();
+      } else {
+        await Taro.saveImageToPhotosAlbum({ filePath: tmp.tempFilePath });
+      }
+      // Charge only after successful delivery.
+      let charged = 0;
+      if (cost > 0) {
+        if (cloudConfigured()) {
+          const r = await callFn<{ delta: number; balance: number }>('points', { action: 'spend', rule: 'hdExport' });
+          if (!r.ok) {
+            Taro.showToast({ title: '图片已保存，但扣费失败（余额变动），请稍后重试。', icon: 'none', duration: 4000 });
+            return;
+          }
+          charged = cost;
+        } else {
+          const r = localSpend('hdExport', PRICING, tier);
+          if (!r.ok) {
+            Taro.showToast({ title: '图片已保存，但扣费失败（余额变动），请稍后重试。', icon: 'none', duration: 4000 });
+            return;
+          }
+          charged = r.charged;
+        }
+      }
+      Taro.showToast({ title: charged > 0 ? '高清命盘图已保存，已扣 ' + charged + ' 积分。' : '高清命盘图已保存（Max 免费）。', icon: 'none' });
+    } catch (e) {
+      Taro.showToast({ title: '导出失败：' + (e as Error).message + '（未扣费）', icon: 'none' });
+    } finally {
+      setExporting(false);
     }
   }
 
@@ -315,6 +491,12 @@ export default function ChartPage() {
       <View style={{ marginBottom: '12px' }}>
         <SegmentedControl options={SEGMENTS} value={seg} onChange={onSegment} tone={theme === 'light' ? 'light' : 'dark'} />
       </View>
+      {share ? (
+        <Text className='muted' style={{ display: 'block', marginBottom: '12px' }}>只读分享盘 · 来自「{share.name}」版本 {share.version}，不改原盘。</Text>
+      ) : null}
+      {shareError ? (
+        <Text className='muted' style={{ display: 'block', marginBottom: '12px' }}>{shareError}</Text>
+      ) : null}
       <View className='chart-plate'>
         <ChartGrid
           chart={chart}
@@ -331,16 +513,29 @@ export default function ChartPage() {
       {renderDetail(false)}
 
       <View className='btn-row chart-actions'>
-        <View className='btn-medley btn-medley-white' onClick={saveChart}>
-          {saving ? '保存中…' : saved ? '已保存，去“我的 → 档案管理”查看' : '保存到我的命盘'}
-        </View>
+        {share ? (
+          <View className='btn-medley btn-medley-white' onClick={saveSharedAsProfile}>存为我的档案</View>
+        ) : (
+          <View className='btn-medley btn-medley-white' onClick={saveChart}>
+            {saving ? '保存中…' : saved ? '已保存，去“我的 → 档案管理”查看' : '保存到我的命盘'}
+          </View>
+        )}
         <View className='btn-medley btn-medley-outline' onClick={() => setFullScreen(true)}>全屏查看</View>
-        {saved ? (
+        <View className='btn-medley btn-medley-outline' onClick={exportHd}>{exporting ? '导出中…' : '高清导出（40 积分，Max 免费）'}</View>
+        <View className='btn-medley btn-medley-outline' onClick={() => Taro.navigateTo({ url: '/pages/annual/index' })}>年度运势</View>
+        {saved && !share ? (
           <View className='btn-medley btn-medley-outline' onClick={() => Taro.switchTab({ url: '/pages/mine/index' })}>去我的页查看档案管理</View>
         ) : null}
       </View>
+      {/* Hidden export canvas (off-screen, never displayed). */}
+      <Canvas canvasId='hd-export-canvas' style={{ position: 'absolute', left: '-9999px', top: '0', width: '1200px', height: '1200px' }} />
 
-      <View className='btn-medley btn-medley-dark chart-ai-cta' hoverClass='btn-press' onClick={() => goInterpret()}>AI 解读星盘</View>
+      {/* Read-only share: the interpret page reads local storage, not
+          the shared chart, so its CTA is hidden here; save the shared
+          chart as an archive first, then interpret it normally. */}
+      {share ? null : (
+        <View className='btn-medley btn-medley-dark chart-ai-cta' hoverClass='btn-press' onClick={() => goInterpret()}>AI 解读星盘</View>
+      )}
 
       <View id='chart-daxian'>
       <Card title='大运'>

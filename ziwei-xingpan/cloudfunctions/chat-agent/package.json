@@ -1,0 +1,1 @@
+{"dependencies":{"@cloudbase/node-sdk":"^3.18.3","wx-server-sdk":"^3.0.0"},"description":"星命盘云函数 chat-agent","main":"index.js","name":"chat-agent","version":"1.0.0"}

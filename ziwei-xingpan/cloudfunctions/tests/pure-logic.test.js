@@ -175,11 +175,20 @@ check('botsrouter chat request shape', function () {
 
 // --- config seed integrity: prices match PLAN, no real secrets ---
 check('config seed prices match PLAN and contain only placeholders', function () {
+  // 2026-11-01 pure-points pricing (user-confirmed 19:40): the old
+  // pro/max continuous plans are gone; three monthly tiers + recharge.
   const pricing = seed.SEED_CONFIGS.find(function (d) { return d._id === 'pricing'; });
-  assert.strictEqual(pricing.plans.proMonthly.fen, 1800);
-  assert.strictEqual(pricing.plans.proContinuous.fen, 1500);
-  assert.strictEqual(pricing.plans.maxMonthly.fen, 3800);
-  assert.strictEqual(pricing.plans.maxContinuous.fen, 3200);
+  assert.strictEqual(pricing.plans.plusMonthly.fen, 1990);
+  assert.strictEqual(pricing.plans.plusMonthly.pointsGrant, 1000);
+  assert.strictEqual(pricing.plans.plusMonthly.billingCycle, 'monthly');
+  assert.strictEqual(pricing.plans.proMonthly.fen, 3490);
+  assert.strictEqual(pricing.plans.proMonthly.pointsGrant, 2000);
+  assert.strictEqual(pricing.plans.maxMonthly.fen, 6990);
+  assert.strictEqual(pricing.plans.maxMonthly.pointsGrant, 4000);
+  assert.strictEqual(pricing.plans.proContinuous, undefined);
+  assert.strictEqual(pricing.plans.maxContinuous, undefined);
+  assert.strictEqual(pricing.recharge.pointsPerYuan, 50);
+  assert.strictEqual(pricing.recharge.minYuan, 1);
   const ads = seed.SEED_CONFIGS.find(function (d) { return d._id === 'ads'; });
   Object.keys(ads).forEach(function (k) {
     if (typeof ads[k] === 'string' && k !== '_id') {
@@ -191,6 +200,34 @@ check('config seed prices match PLAN and contain only placeholders', function ()
   assert.strictEqual(ai.cloudbaseChatModel, 'deepseek-v4-flash');
   const dump = JSON.stringify(seed.SEED_CONFIGS);
   assert.ok(dump.indexOf('sk-') === -1, 'seed must not contain any API key');
+});
+
+// --- new spend rules (2026-11-01 pure-points pricing) ---
+check('new spend rules match the final price table', () => {
+  assert.strictEqual(points.SPEND_RULES.dimInterpret.delta, -20);
+  assert.strictEqual(points.SPEND_RULES.aiPersona.delta, -100);
+  assert.strictEqual(points.SPEND_RULES.compare.delta, -60);
+  assert.strictEqual(points.SPEND_RULES.chatImage.delta, -40);
+  assert.strictEqual(points.SPEND_RULES.posterBg.delta, -40);
+  assert.strictEqual(points.SPEND_RULES.hdExport.delta, -40);
+  assert.strictEqual(points.SPEND_RULES.annualFortune.delta, -100);
+  assert.strictEqual(points.SPEND_RULES.advancedInterpret.delta, -100);
+});
+
+check('spend rules parity: points.js vs config-seed.js', () => {
+  const seedSpend = seed.SEED_CONFIGS.find((c) => c._id === 'pointsRules');
+  const rules = seedSpend ? seedSpend.spend : null;
+  assert.ok(rules, 'seed must carry spend rules');
+  Object.keys(points.SPEND_RULES).forEach((k) => {
+    assert.ok(rules[k] !== undefined, 'seed missing spend rule ' + k);
+    assert.strictEqual(rules[k].delta, points.SPEND_RULES[k].delta, 'spend delta mismatch for ' + k);
+  });
+});
+
+check('legacy spend rules unchanged', () => {
+  assert.strictEqual(points.SPEND_RULES.aiInterpret.delta, -30);
+  assert.strictEqual(points.SPEND_RULES.pro7d.delta, -300);
+  assert.strictEqual(points.SPEND_RULES.pro30d.delta, -1500);
 });
 
 console.log(passed + ' pure-logic checks passed');

@@ -22,9 +22,11 @@ export function adSlotLive(config: AppConfig | null, slot: 'bannerHome' | 'banne
 
 let interstitialShownThisSession = false;
 
-export async function showInterstitialOnce(config: AppConfig | null): Promise<boolean> {
+// suppress: Pro/Max hide the interstitial slot (see lib/pricing
+// hideInterstitial); the caller computes it from the membership tier.
+export async function showInterstitialOnce(config: AppConfig | null, suppress?: boolean): Promise<boolean> {
   const adUnitId = adSlotLive(config, 'interstitial');
-  if (!adUnitId || interstitialShownThisSession) return false;
+  if (!adUnitId || interstitialShownThisSession || suppress) return false;
   interstitialShownThisSession = true;
   const createAd = (Taro as any).createInterstitialAd;
   if (typeof createAd !== 'function') return false;

@@ -31,3 +31,28 @@ export function takeDimTarget(): string | undefined {
 export function goKnowledge() {
   Taro.switchTab({ url: '/pages/knowledge/index' });
 }
+
+// 我的页同样是 Tab 页：goMine(section) 先存后切，我的页显示时
+// 取走并落到对应 section（与 goInterpret 同一模式）。
+const MINE_KEY = 'zw_mine_section';
+
+export function goMine(section?: string) {
+  try {
+    if (section) Taro.setStorageSync(MINE_KEY, section);
+    else Taro.removeStorageSync(MINE_KEY);
+  } catch {
+    // 存储不可用时仍切 Tab，只是丢深链落点，不阻断主流程。
+  }
+  Taro.switchTab({ url: '/pages/mine/index' });
+}
+
+// 读一次即清除；我的页 section 为 main 时不调用（不提前消费）。
+export function takeMineSection(): string | undefined {
+  try {
+    const v = Taro.getStorageSync(MINE_KEY) as string | undefined;
+    if (v) Taro.removeStorageSync(MINE_KEY);
+    return v || undefined;
+  } catch {
+    return undefined;
+  }
+}

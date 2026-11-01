@@ -116,8 +116,10 @@ isMinor 为 true 时标记未成年人，且仅凭成年出生年份可清除该
 
 出参 data：`{ text, cached, provider, degraded, degradedReason, quotaUsedToday, quotaBudget, chargedPoints, disclaimer }`。
 缓存：interpret 按盘 hash + 类型查 aiCache，命中返回 cached:true 且不扣费；
-ask 不缓存。计费：Max 不限次免费；Pro 每月 20 次免费，超了按 AI 解读
-30 积分扣；其他档位每次 30 积分，余额不足返回 `INSUFFICIENT_POINTS`。
+ask 不缓存。计费（遗留 ai 入口，本轮未动；新对话 chat-agent 走 token
+模型，见 docs/chat-agent.md §4）：Max 不限次免费；Pro 每月 20 次免费，
+超了按 AI 解读 30 积分扣；其他档位每次 30 积分，余额不足返回
+`INSUFFICIENT_POINTS`。
 额度：当日 CloudBase 用量达阈值（默认 85%）自动降级 BotsRouter，
 响应标注 degraded:true 与原因。主备均失败返回 `AI_UNAVAILABLE`，
 不返回伪造文本。每条解读附免责声明。

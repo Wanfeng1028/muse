@@ -1,0 +1,9 @@
+@import '../../styles/variables.scss';
+
+.profile-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: $hairline solid $light-divider; }
+.profile-row:last-child { border-bottom: none; }
+.profile-name { font-size: $fs-item; font-weight: 600; color: $light-text; }
+.profile-section { font-size: $fs-item; font-weight: 600; color: $light-text; }
+.profile-version { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: $hairline solid $light-divider; }
+.profile-version:last-child { border-bottom: none; }
+.profile-version-label { font-size: $fs-item; color: $light-text; }

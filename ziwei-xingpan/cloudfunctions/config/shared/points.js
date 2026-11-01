@@ -14,10 +14,23 @@ const EARN_RULES = {
 };
 
 const SPEND_RULES = {
-  advancedInterpret: { delta: -50, label: '高级解读' },
+  advancedInterpret: { delta: -100, label: '高级解读' },
   aiInterpret: { delta: -30, label: 'AI 解读' },
   pro7d: { delta: -300, label: '7 天 Pro' },
-  pro30d: { delta: -1500, label: '30 天 Pro' }
+  pro30d: { delta: -1500, label: '30 天 Pro' },
+  // 2026-11-01 chat-agent round (pure-points model, per the 2026-11-01
+  // 19:30 correction; the earlier flat "AI chat 10/round" idea is void:
+  // chat text is free up to a daily token quota, then 1 point per 1000
+  // tokens, so chat has NO flat spend rule here).
+  // Same minor gate and balance check as the other spend rules
+  // (see points/index.js). One yuan = 100 points.
+  dimInterpret: { delta: -20, label: '维度解读' },
+  aiPersona: { delta: -100, label: 'AI 定制形象' },
+  compare: { delta: -60, label: '合盘对照' },
+  chatImage: { delta: -40, label: '对话内生图' },
+  posterBg: { delta: -40, label: '海报背景 AI 生成' },
+  hdExport: { delta: -40, label: '高清命盘图导出' },
+  annualFortune: { delta: -100, label: '年度运势' }
 };
 
 // Date key in Asia/Shanghai, e.g. '2026-11-01'. Pure function of a Date.

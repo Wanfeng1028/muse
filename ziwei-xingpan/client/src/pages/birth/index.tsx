@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { View, Text, Picker, Input, Button, Image } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import { PROVINCES } from '../../engine/cities';
 import { BRANCHES } from '../../engine/constants';
 import {
@@ -8,6 +8,7 @@ import {
   shichenLabel, shichenRange, shiftDate, loadInput, type BirthFormInput,
 } from '../../lib/chart';
 import { Ambient, AmbientLight, Card, ComposerBar, SegmentedControl } from '../../components/ui';
+import { getProfile, createProfile, addChartVersion, PROFILE_PICK_KEY, PROFILE_VERSION_TARGET_KEY } from '../../lib/profiles';
 import { useTheme } from '../../lib/theme';
 import starMark from '../../assets/logo/star-mark.png';
 import './index.scss';
@@ -23,6 +24,9 @@ export default function Birth() {
   const [provIdx, setProvIdx] = useState(0);
   const [cityIdx, setCityIdx] = useState(0);
   const [corrections, setCorrections] = useState<string[]>([]);
+  const [versionTarget, setVersionTarget] = useState<string | null>(null);
+  const [versionTargetName, setVersionTargetName] = useState('');
+  const [profileNote, setProfileNote] = useState('');
   const [orig, setOrig] = useState<{ date: string; time: string; branch: number } | null>(null);
 
   const provinces = useMemo(() => PROVINCES.map((p) => p.name), []);
@@ -42,6 +46,77 @@ export default function Birth() {
   };
   const preview = previewCorrections(draft);
   const hasStored = !!loadInput();
+
+  // Pick result + version target are read ONCE on show and cleared
+  // immediately (same pattern as lib/nav.ts takeDimTarget): the mode
+  // then lives in component state, so returning from the chart page
+  // keeps it, while abandoning the page drops it (no stale target).
+  function fillFromInput(input: BirthFormInput) {
+    setName(input.name || '');
+    setGenderIdx(input.gender === 'female' ? 1 : 0);
+    setDate(input.date);
+    setTime(String(input.clockHour).padStart(2, '0') + ':' + String(input.clockMinute).padStart(2, '0'));
+    const pi = PROVINCES.findIndex((pr) => pr.name === input.province);
+    setProvIdx(pi >= 0 ? pi : 0);
+    const cities = pi >= 0 ? PROVINCES[pi].cities : [];
+    const ci = cities.findIndex((c) => c.name === input.city);
+    setCityIdx(ci >= 0 ? ci : 0);
+    setCorrections(input.corrections || []);
+    setOrig({
+      date: input.originalDate || input.date,
+      time: String(input.originalClockHour).padStart(2, '0') + ':' + String(input.originalClockMinute).padStart(2, '0'),
+      branch: branchFromClock(input.originalClockHour),
+    });
+  }
+
+  useDidShow(() => {
+    try {
+      const pick = Taro.getStorageSync(PROFILE_PICK_KEY) as { profileId: string; version: number } | undefined;
+      if (pick) {
+        Taro.removeStorageSync(PROFILE_PICK_KEY);
+        const p = getProfile(pick.profileId);
+        const v = p ? p.charts.find((c) => c.version === pick.version) : null;
+        if (v) {
+          fillFromInput(v.input);
+          setProfileNote('已填入档案「' + p!.name + '」版本 ' + v.version + '，可直接排盘或再校正。');
+        }
+      }
+    } catch {
+      // Storage failure: stay on the blank form, do not crash.
+    }
+    try {
+      const target = Taro.getStorageSync(PROFILE_VERSION_TARGET_KEY) as string | undefined;
+      if (target) {
+        Taro.removeStorageSync(PROFILE_VERSION_TARGET_KEY);
+        const p = getProfile(target);
+        if (p) {
+          fillFromInput(p.input);
+          setVersionTarget(p.id);
+          setVersionTargetName(p.name);
+          setProfileNote('正在为「' + p.name + '」新增版本：保存为档案将追加版本而非新建档案。');
+        }
+      }
+    } catch {
+      // Storage failure: stay on the blank form, do not crash.
+    }
+  });
+
+  function saveAsProfile() {
+    if (versionTarget) {
+      const v = addChartVersion(versionTarget, draft, '');
+      if (!v) {
+        Taro.showToast({ title: '追加版本失败：档案不存在', icon: 'none' });
+        return;
+      }
+      setVersionTarget(null);
+      setVersionTargetName('');
+      Taro.showToast({ title: '已为「' + versionTargetName + '」追加版本 ' + v.version, icon: 'none' });
+      Taro.navigateBack();
+      return;
+    }
+    const created = createProfile(draft);
+    Taro.showToast({ title: '已保存为档案「' + created.name + '」', icon: 'none' });
+  }
 
   function captureOrig() {
     if (!orig) setOrig({ date, time, branch });
@@ -108,6 +183,8 @@ export default function Birth() {
         <Text className='hero-sub2'>出生信息填好后，点开始排盘即可看到命盘图。</Text>
       </View>
       <Card title='出生信息'>
+        {profileNote ? <Text className='muted' style={{ display: 'block', marginBottom: '12px' }}>{profileNote}</Text> : null}
+        <View className='btn-medley btn-medley-outline-light' style={{ marginBottom: '12px' }} onClick={() => Taro.navigateTo({ url: '/pages/profiles/index?pick=1' })}>从档案选择（免重填）</View>
         <View className='input-row'>
           <Text className='input-label'>姓名（可选）</Text>
           <Input className='field-input' placeholder='不填也可排盘' value={name} onInput={(e) => setName(e.detail.value)} />
@@ -214,6 +291,7 @@ export default function Birth() {
       {hasStored ? (
         <View className='btn-medley btn-medley-outline home-secondary' onClick={() => Taro.navigateTo({ url: '/pages/chart/index' })}>查看上次命盘</View>
       ) : null}
+      <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '10px' }} onClick={saveAsProfile}>{versionTarget ? '保存为档案（追加版本）' : '保存为档案'}</View>
       <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>地支对照：{BRANCHES.join(' ')}；时辰以两小时为一档，23:00 后属次日子时口径由排盘引擎处理。</Text>
       <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>从首页的排盘入口来到这里；排盘完成后可在命盘图页查看，也可在首页查看命宫与今年运限。</Text>
     </View>

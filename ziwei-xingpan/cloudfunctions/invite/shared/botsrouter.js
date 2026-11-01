@@ -11,12 +11,16 @@ const https = require('https');
 
 const DEFAULT_BASE_URL = 'https://api.botsarena.tech/v1';
 
-function buildChatRequest(model, messages) {
-  return {
+function buildChatRequest(model, messages, maxTokens) {
+  const req = {
     model: model,
     messages: messages,
     temperature: 0.7
   };
+  if (typeof maxTokens === 'number' && maxTokens > 0) {
+    req.max_tokens = maxTokens;
+  }
+  return req;
 }
 
 function parseChatResponse(body) {
@@ -75,7 +79,7 @@ async function chatCompletions(options) {
     throw err;
   }
   const baseUrl = options.baseUrl || DEFAULT_BASE_URL;
-  const payload = buildChatRequest(options.model, options.messages);
+  const payload = buildChatRequest(options.model, options.messages, options.maxTokens);
   const body = await postJson(baseUrl, '/chat/completions', apiKey, payload);
   return parseChatResponse(body);
 }

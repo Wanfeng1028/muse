@@ -53,10 +53,12 @@
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | openid | string | 下单用户 |
-| plan | string | proMonthly / proContinuous / maxMonthly / maxContinuous |
-| tier | string | pro / max |
-| days | number | 会员天数（30） |
-| continuous | boolean | 是否连续包月 |
+| plan | string | plusMonthly / proMonthly / maxMonthly / recharge |
+| tier | string | plus / pro / max（recharge 订单为空） |
+| days | number | 会员天数（30；recharge 订单为 0） |
+| continuous | boolean | 是否连续包月（新档位均为 false；月付，积分一次性到账） |
+| yuan | number | 充值元数（仅 recharge 订单） |
+| pointsGrant | number | 本单赠送积分数（档位 plans.pointsGrant 或充值 yuan × pointsPerYuan） |
 | amountFen | number | 金额（分），与 configs.pricing 一致 |
 | outTradeNo | string | 商户订单号，ZW + 时间戳 + 随机数 |
 | status | string | pending / paid / failed / closed |
@@ -71,7 +73,7 @@
 |---|---|---|
 | openid | string | 用户 |
 | type | string | earn / spend |
-| rule | string | signin / video / invite / profile / share / inviteeBonus / advancedInterpret / aiInterpret / pro7d / pro30d |
+| rule | string | signin / video / invite / profile / share / inviteeBonus / advancedInterpret / aiInterpret / pro7d / pro30d / dimInterpret / aiPersona / compare / chatImage / posterBg / hdExport / annualFortune / membership / recharge / refund / chatOverage |
 | delta | number | 正数为得、负数为花 |
 | dayKey | string | Asia/Shanghai 日期，如 2026-11-01（日限用） |
 | deviceFingerprint | string | 领取/消费时设备指纹 |
@@ -153,20 +155,41 @@
 
 索引建议：`openid + createdAt`。
 
-## configs（配置种子，5 条文档）
+## configs（配置种子，6 条文档）
 
 `_id` 即配置键，内容见 `cloudfunctions/_shared/config-seed.js`：
 
 | _id | 内容 |
 |---|---|
-| pricing | tiers（free/pro/max 月费与连续包月价）+ plans（proMonthly 1800 分、proContinuous 1500 分、maxMonthly 3800 分、maxContinuous 3200 分）+ 取消说明 |
+| pricing | tiers（free/plus/pro/max，含 pointsGrant 与 noBannerAds/noInterstitialAds/noAllAds/hdExportFree/annualFortuneFree/earlyAccess 标志）+ plans（plusMonthly 1990 分/1000 积分、proMonthly 3490 分/2000 积分、maxMonthly 6990 分/4000 积分，billingCycle monthly）+ recharge（pointsPerYuan 50，minYuan 1）+ 取消说明 |
 | ads | bannerHome / bannerInterpret / rewardedVideo / interstitial，全部为 PLACEHOLDER 占位 ID，enabled=false |
-| pointsRules | 得（签到 10/视频 20 日限 5/邀请 100/完善资料 30 一次/分享 5 日限 1/被邀 50）与花（高级解读 50/AI 解读 30/7 天 Pro 300/30 天 Pro 1500），永不过期 |
+| pointsRules | 得（签到 10/视频 20 日限 5/邀请 100/完善资料 30 一次/分享 5 日限 1/被邀 50）与花（全量解读 100/AI 解读 30/单维解读 20/合盘 60/对话内生图 40/海报背景 40/高清导出 40/年度运势 100/人格形象 AI 定制 100/7 天 Pro 300/30 天 Pro 1500），永不过期 |
 | ai | cloudbaseChatModel deepseek-v4-flash、cloudbaseImageModel HY-Image-3.0-Plus-4090-Tob-v1.0、botsrouterChatModel deepseek-v4.1-flash、botsrouterImageModel 留空、proMonthlyAiLimit 20、免责声明 |
 | quota | dailyTokenBudget 1000000、thresholdPercent 85 |
+| chat | dailyTokenQuota 2000000、dailyCallCap 100、historyRounds 10、maxOutputTokens 2000、pointsPerMillionTokens 10 |
 
 索引建议：`_id` 为主键，无需另建。密钥、AppID、商户号绝不进本集合，
 一律走云函数环境配置。
+
+## chatLogs（对话审计日志，只增不改）
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| openid | string | 对话用户 |
+| dayKey | string | 自然日（YYYY-MM-DD，用于免费额度与频次统计） |
+| kind | string | chat / image |
+| outcome | string | ok / template-fallback / output-flagged / failed / blocked（注入/离题/限流/余额不足均审计） |
+| question | string | 用户问题截断 500 字（注入拒绝时亦审计，不回显作指令） |
+| summary | string | 本盘关键数据摘要截断 500 字 |
+| totalTokens | number | 本轮总 tokens（上游 usage 或估算） |
+| quotaCoveredTokens | number | 免费额度覆盖的 tokens |
+| chargedPoints | number | 实扣积分（未成年人恒 0） |
+| shortfallPoints | number | 余额封顶时的短缺积分（永不透支的审计痕迹） |
+| provider | string | cloudbase / botsrouter / template |
+| degraded | boolean | 是否降级或模板回退 |
+| truncated | boolean | 是否因额度触顶截断 |
+
+系统提示词永不入日志。索引建议：`openid + dayKey`。
 
 ## quotaLogs（用量日志，只增不改）
 

@@ -1,8 +1,14 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Input, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
-import { loadChart } from '../../lib/chart';
+import { loadChart, loadInput, type BirthFormInput } from '../../lib/chart';
 import { buildDimensions } from '../../lib/interpret';
+import { profileChartKey } from '../../lib/profiles';
+import {
+  resolvePricing, localSpend, isDimUnlocked, unlockDimLocal,
+  isAllUnlocked, unlockAllLocal, hideBanner, hideInterstitial,
+  EARN_GUIDE, type Tier,
+} from '../../lib/pricing';
 import { recordReport } from '../../lib/reports';
 import { takeDimTarget } from '../../lib/nav';
 import { detectPatterns } from '../../engine/patterns';
@@ -24,6 +30,8 @@ import './index.scss';
 export default function Interpret() {
   const [theme] = useTheme();
   const [chart, setChart] = useState<ZiweiChart | null>(null);
+  const [input, setInput] = useState<BirthFormInput | null>(null);
+  const [, setUnlockTick] = useState(0);
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [tier, setTier] = useState<string | null>(null);
   const [defaultChartId, setDefaultChartId] = useState('');
@@ -41,19 +49,22 @@ export default function Interpret() {
   useDidShow(() => {
     const c = loadChart();
     setChart(c);
+    setInput(loadInput());
     if (c) recordReport();
   });
 
   useEffect(() => {
     async function boot() {
       if (!cloudConfigured()) return;
+      // Membership first: the interstitial suppress flag depends on tier.
+      const m = await callFn<MembershipStatus>('membership', { action: 'status' });
+      const tierValue = (m.ok && m.data ? m.data.tier : 'free') as Tier;
+      if (m.ok && m.data) setTier(m.data.tier);
       const c = await callFn<AppConfig>('config', { action: 'get' });
       if (c.ok && c.data) {
         setConfig(c.data);
-        showInterstitialOnce(c.data);
+        showInterstitialOnce(c.data, hideInterstitial(tierValue, resolvePricing(c.data)));
       }
-      const m = await callFn<MembershipStatus>('membership', { action: 'status' });
-      if (m.ok && m.data) setTier(m.data.tier);
       const list = await callFn<{ charts: SavedChart[] }>('charts', { action: 'list' });
       if (list.ok && list.data) {
         const d = list.data.charts.find((x) => x.isDefault) || list.data.charts[0];
@@ -65,6 +76,56 @@ export default function Interpret() {
 
   function toast(title: string) {
     Taro.showToast({ title, icon: 'none' });
+  }
+
+  // Dimension unlocks (pure-points model: no tier exempts dimension
+  // fees; Pro/Max only remove ads / grant free HD export / annual).
+  // Cloud has no dimension-unlock set yet, so a successful cloud
+  // spend is mirrored into the local unlock set (pending-17 migrates
+  // it server-side); the unlock CHECK reads the local set in both
+  // modes, so a paid unlock is never charged twice.
+  const chartKey = input ? profileChartKey(input) : '';
+  function dimUnlocked(dimId: string): boolean {
+    if (!chartKey) return false;
+    return isDimUnlocked(chartKey, dimId) || isAllUnlocked(chartKey);
+  }
+  async function unlockDim(dimId: string) {
+    if (!chartKey || dimUnlocked(dimId)) return;
+    setBusy('unlock-' + dimId);
+    try {
+      if (cloudConfigured()) {
+        const r = await callFn<{ delta: number; balance: number }>('points', { action: 'spend', rule: 'dimInterpret' });
+        if (!r.ok) { toast('积分不足：单维解读需 20 积分。' + EARN_GUIDE); return; }
+        unlockDimLocal(chartKey, dimId);
+      } else {
+        const r = localSpend('dimInterpret');
+        if (!r.ok) { toast('积分不足：单维解读需 20 积分，当前 ' + ('balance' in r ? r.balance : 0) + '。' + EARN_GUIDE); return; }
+        unlockDimLocal(chartKey, dimId);
+      }
+      setUnlockTick((t) => t + 1);
+      toast('已解锁本维（同盘同维永久免费）。');
+    } finally {
+      setBusy('');
+    }
+  }
+  async function unlockAll() {
+    if (!chartKey || isAllUnlocked(chartKey)) return;
+    setBusy('unlock-all');
+    try {
+      if (cloudConfigured()) {
+        const r = await callFn<{ delta: number; balance: number }>('points', { action: 'spend', rule: 'advancedInterpret' });
+        if (!r.ok) { toast('积分不足：全量解读需 100 积分。' + EARN_GUIDE); return; }
+        unlockAllLocal(chartKey);
+      } else {
+        const r = localSpend('advancedInterpret');
+        if (!r.ok) { toast('积分不足：全量解读需 100 积分，当前 ' + ('balance' in r ? r.balance : 0) + '。' + EARN_GUIDE); return; }
+        unlockAllLocal(chartKey);
+      }
+      setUnlockTick((t) => t + 1);
+      toast('已解锁全部 13 维。');
+    } finally {
+      setBusy('');
+    }
   }
 
   function explainAiError(code: string): string {
@@ -147,10 +208,10 @@ export default function Interpret() {
   return (
     <View className={'page theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
-      <View className='chat-msg'>
+      <View className='interp-msg'>
         <View className='chat-meta'><View className='chat-dot' /><Text>格局判断</Text></View>
         {patterns.length === 0 ? (
-          <View className='chat-bubble'><Text>本盘未触发格局库中的常见组合，仍宜以各宫主星与三方四正综合看。</Text></View>
+          <View className='interp-bubble'><Text>本盘未触发格局库中的常见组合，仍宜以各宫主星与三方四正综合看。</Text></View>
         ) : patterns.map((p) => (
           <View key={p.name} className='pattern-card' style={{ marginBottom: '10px', paddingLeft: '10px' }}>
             <Text className='pattern-name'>{p.name}</Text>
@@ -160,14 +221,28 @@ export default function Interpret() {
         ))}
         <Disclaimer />
       </View>
-      {dims.map((d) => (
-        <View key={d.id} id={'dim-' + d.id} className='chat-msg'>
-          <View className='chat-meta'><View className='chat-dot' /><Text>{d.title} · {d.palaceName}</Text></View>
-          <View className='chat-bubble'><Text>{d.body}</Text></View>
-          <Disclaimer />
-        </View>
-      ))}
-      <View className='chat-msg'>
+      {dims.map((d) => {
+        const unlocked = dimUnlocked(d.id);
+        return (
+          <View key={d.id} id={'dim-' + d.id} className='interp-msg'>
+            <View className='chat-meta'><View className='chat-dot' /><Text>{d.title} · {d.palaceName}</Text></View>
+            <View className='interp-bubble'><Text>{d.brief}</Text></View>
+            {unlocked ? (
+              <View className='interp-bubble' style={{ marginTop: '8px' }}><Text>{d.body}</Text></View>
+            ) : (
+              <View style={{ marginTop: '8px' }}>
+                <Text className='muted'>完整解读需解锁（同盘同维永久免费；全量 100 积分解锁全部 13 维）。</Text>
+                <View style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                  <LoadingButton loading={busy === 'unlock-' + d.id} onClick={() => unlockDim(d.id)} className='btn-medley btn-medley-white'>解锁本维（20 积分）</LoadingButton>
+                  <LoadingButton loading={busy === 'unlock-all'} onClick={unlockAll} className='btn-medley btn-medley-outline'>解锁全部（100 积分）</LoadingButton>
+                </View>
+              </View>
+            )}
+            <Disclaimer />
+          </View>
+        );
+      })}
+      <View className='interp-msg'>
         <View className='chat-meta'><View className='chat-dot' /><Text>AI 解盘</Text></View>
         <Text className='muted'>云开发对话 token 主力，额度不足时切换 BotsRouter 备用</Text>
         {!cloudConfigured() ? (
@@ -177,14 +252,14 @@ export default function Interpret() {
         ) : (
           <View>
             <LoadingButton loading={busy === 'interpret'} onClick={aiInterpret} className='btn-medley btn-medley-white'>AI 解盘（本盘）</LoadingButton>
-            {aiText ? <View className='chat-msg'><View className='chat-bubble'><Text>{aiText}</Text></View></View> : null}
+            {aiText ? <View className='interp-msg'><View className='interp-bubble'><Text>{aiText}</Text></View></View> : null}
             {aiMeta ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiMeta}</Text> : null}
             {aiError ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiError}</Text> : null}
             <Disclaimer />
           </View>
         )}
       </View>
-      <View className='chat-msg'>
+      <View className='interp-msg'>
         <View className='chat-meta'><View className='chat-dot' /><Text>AI 问答</Text></View>
         <Text className='muted'>就本盘提问，不缓存</Text>
         {!cloudConfigured() ? (
@@ -200,12 +275,12 @@ export default function Interpret() {
               </View>
             </View>
             {busy === 'ask' ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>思考中…</Text> : null}
-            {askAnswer ? <View className='chat-msg'><View className='chat-bubble'><Text>{askAnswer}</Text></View></View> : null}
+            {askAnswer ? <View className='interp-msg'><View className='interp-bubble'><Text>{askAnswer}</Text></View></View> : null}
             <Disclaimer />
           </View>
         )}
       </View>
-      <View className='chat-msg'>
+      <View className='interp-msg'>
         <View className='chat-meta'><View className='chat-dot' /><Text>今日运势配图</Text></View>
         <Text className='muted'>AI 生图，按日期 + 盘 hash 缓存</Text>
         {!cloudConfigured() ? (
@@ -219,7 +294,7 @@ export default function Interpret() {
           </View>
         )}
       </View>
-      {tier === 'free' ? <BannerAd unitId={adSlotLive(config, 'bannerInterpret')} /> : null}
+      {tier && !hideBanner(tier as Tier, resolvePricing(config)) ? <BannerAd unitId={adSlotLive(config, 'bannerInterpret')} /> : null}
       {/* H5 fallback mount (weapp injects the custom tabBar natively). */}
       {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
     </View>

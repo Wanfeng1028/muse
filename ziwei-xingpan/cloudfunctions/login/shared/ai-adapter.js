@@ -32,7 +32,11 @@ function notConfigured(message) {
   return err;
 }
 
-async function cloudbaseChat(messages, model) {
+// maxTokens is optional and only used by the chat-agent budget cap:
+// when provided it is passed through to the provider (CloudBase
+// generateText options; BotsRouter max_tokens). Callers that do not
+// pass it (ai, aiImage) keep their exact current behavior.
+async function cloudbaseChat(messages, model, maxTokens) {
   const envId = cloudbaseEnvId();
   if (!envId) {
     throw notConfigured('CLOUDBASE_ENV_ID_NOT_CONFIGURED');
@@ -46,7 +50,11 @@ async function cloudbaseChat(messages, model) {
   const app = cloudbase.init({ env: envId });
   const ai = app.ai();
   const chatModel = ai.createModel('cloudbase');
-  const result = await chatModel.generateText({ model: model, messages: messages });
+  const genOptions = { model: model, messages: messages };
+  if (typeof maxTokens === 'number' && maxTokens > 0) {
+    genOptions.maxTokens = maxTokens;
+  }
+  const result = await chatModel.generateText(genOptions);
   if (!result || typeof result.text !== 'string') {
     throw new Error('CLOUDBASE_EMPTY_RESPONSE');
   }
@@ -81,7 +89,7 @@ async function generateTextWithFallback(options) {
   const errors = [];
   if (!options.forceFallback) {
     try {
-      const primary = await cloudbaseChat(options.messages, options.cloudbaseModel);
+      const primary = await cloudbaseChat(options.messages, options.cloudbaseModel, options.maxTokens);
       return {
         text: primary.text, usage: primary.usage,
         provider: 'cloudbase', degraded: false, reason: null
@@ -97,7 +105,8 @@ async function generateTextWithFallback(options) {
       apiKey: options.botsrouterApiKey,
       baseUrl: options.botsrouterBaseUrl,
       model: options.botsrouterModel,
-      messages: options.messages
+      messages: options.messages,
+      maxTokens: options.maxTokens
     });
     return {
       text: fallback.text, usage: fallback.usage,

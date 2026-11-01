@@ -18,7 +18,7 @@
 
 const cloud = require('wx-server-sdk');
 const { ok, fail, requireOpenid } = require('./shared/errors');
-const { getConfigDoc, getMembership, upsertMembership, getUser } = require('./shared/db-helpers');
+const { getConfigDoc, getMembership, upsertMembership, getUser, appendLedger } = require('./shared/db-helpers');
 const { grantTier } = require('./shared/membership');
 const { SEED_CONFIGS } = require('./shared/config-seed');
 
@@ -66,9 +66,26 @@ async function handlePayCallback(event) {
       data: { status: 'paid', paidAt: new Date(), updatedAt: new Date() }
     });
     const pricing = await getConfigDoc(db, 'pricing', SEED_CONFIGS);
-    const plan = pricing.doc && pricing.doc.plans ? pricing.doc.plans[order.plan] : null;
-    if (plan) {
-      await grantMembership(order.openid, plan);
+    // Points are locked at purchase time: the callback prefers the
+    // order's stored pointsGrant (written by create) and only falls back
+    // to the current pricing doc for orders created before that field
+    // existed. Recomputing from the live doc would over/under-credit
+    // the user if an admin changed prices between create and pay.
+    if (order.plan === 'recharge') {
+      const rate = (pricing.doc && pricing.doc.recharge && pricing.doc.recharge.pointsPerYuan) || 50;
+      const points = typeof order.pointsGrant === 'number' ? order.pointsGrant : (order.yuan || 0) * rate;
+      if (points > 0) {
+        await appendLedger(db, { openid: order.openid, rule: 'recharge', delta: points, orderId: order._id, yuan: order.yuan });
+      }
+    } else {
+      const plan = pricing.doc && pricing.doc.plans ? pricing.doc.plans[order.plan] : null;
+      if (plan) {
+        await grantMembership(order.openid, plan);
+        const grant = typeof order.pointsGrant === 'number' ? order.pointsGrant : plan.pointsGrant;
+        if (grant > 0) {
+          await appendLedger(db, { openid: order.openid, rule: 'membership', delta: grant, plan: order.plan, orderId: order._id });
+        }
+      }
     }
   } else if (returnCode !== 'SUCCESS' && order.status === 'pending') {
     await db.collection('orders').doc(order._id).update({
@@ -108,10 +125,24 @@ exports.main = async (event, context) => {
         return fail('MINOR_PURCHASE_BLOCKED', '未成年人不可购买付费会员，免费功能仍可正常使用');
       }
       const pricing = await getConfigDoc(db, 'pricing', SEED_CONFIGS);
-      if (!pricing.doc || !pricing.doc.plans || !pricing.doc.plans[event.plan]) {
-        return fail('UNKNOWN_PLAN', '未知套餐: ' + String(event.plan), { fromSeed: pricing.fromSeed });
+      // Plan 'recharge' is standalone points recharge: variable yuan
+      // amount, min 1 yuan, points = yuan * recharge.pointsPerYuan.
+      // It goes through the same minor gate above as membership plans.
+      let plan;
+      let yuan = 0;
+      if (event.plan === 'recharge') {
+        const rechargeCfg = (pricing.doc && pricing.doc.recharge) || { pointsPerYuan: 50, minYuan: 1 };
+        yuan = Math.floor(Number(event.yuan) || 0);
+        if (yuan < (rechargeCfg.minYuan || 1)) {
+          return fail('INVALID_RECHARGE_AMOUNT', '充值金额须为 ' + (rechargeCfg.minYuan || 1) + ' 元起的整数元', { fromSeed: pricing.fromSeed });
+        }
+        plan = { tier: '', days: 0, fen: yuan * 100, pointsGrant: yuan * (rechargeCfg.pointsPerYuan || 50), billingCycle: 'recharge', continuous: false };
+      } else {
+        if (!pricing.doc || !pricing.doc.plans || !pricing.doc.plans[event.plan]) {
+          return fail('UNKNOWN_PLAN', '未知套餐: ' + String(event.plan), { fromSeed: pricing.fromSeed });
+        }
+        plan = pricing.doc.plans[event.plan];
       }
-      const plan = pricing.doc.plans[event.plan];
       const tradeNo = outTradeNo();
       const now = new Date();
       const orderDoc = {
@@ -120,6 +151,12 @@ exports.main = async (event, context) => {
         amountFen: plan.fen, outTradeNo: tradeNo,
         status: 'pending', createdAt: now, updatedAt: now
       };
+      if (event.plan === 'recharge') {
+        orderDoc.yuan = yuan;
+      }
+      // Stored for the pay callback: the granted points are locked at
+      // purchase time, not recomputed from the live pricing doc at pay.
+      orderDoc.pointsGrant = plan.pointsGrant;
       const added = await db.collection('orders').add({ data: orderDoc });
       const cfg = payConfig();
       if (!cfg.subMchId || !cfg.envId) {
@@ -128,7 +165,7 @@ exports.main = async (event, context) => {
           { orderId: added._id, outTradeNo: tradeNo, amountFen: plan.fen, fromSeed: pricing.fromSeed });
       }
       const res = await cloud.cloudPay.unifiedOrder({
-        body: '紫微星盘-' + plan.tier + '-' + plan.days + '天',
+        body: event.plan === 'recharge' ? '星命盘-积分充值-' + yuan + '元' : '星命盘-' + plan.tier + '-' + plan.days + '天',
         outTradeNo: tradeNo,
         spbillCreateIp: '127.0.0.1',
         subMchId: cfg.subMchId,
