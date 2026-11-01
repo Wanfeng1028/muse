@@ -108,7 +108,7 @@ const SEED_CONFIGS = [
     _id: 'chat',
     // Lightweight pure chat (19:30 correction: no multi-step tool loop).
     // Chat text only; image generation is charged separately
-    // (chatImage 20/image). Token quota resets each natural day.
+    // (chatImage 40/image). Token quota resets each natural day.
     // Overage billing (19:41 correction): 10 points per 1,000,000
     // tokens, settled on actual usage, rounded up to whole points.
     // (1 point therefore covers 100,000 tokens of overage.)
