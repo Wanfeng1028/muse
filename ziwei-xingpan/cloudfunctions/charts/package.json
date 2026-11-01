@@ -1,0 +1,9 @@
+{
+  "name": "charts",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "紫微星盘云函数 charts",
+  "dependencies": {
+    "wx-server-sdk": "^3.0.0"
+  }
+}
