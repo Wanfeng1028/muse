@@ -302,7 +302,7 @@ export default function Mine() {
           <Image className='avatar-mark' src={starMark} mode='aspectFit' />
         </View>
         <View style={{ marginLeft: '12px', flex: 1 }}>
-          <Text className='mine-name'>{user?.nickname || '紫微星盘用户'}</Text>
+          <Text className='mine-name'>{user?.nickname || '星命盘用户'}</Text>
           {membership ? (
             <Text className='muted'>会员：<Text className={membership.tier === 'free' ? 'mine-tier-free' : membership.tier === 'max' ? 'mine-tier-max' : 'mine-tier-pro'}>{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}</Text>{membership.expiresAt ? '，到期 ' + formatDateTime(membership.expiresAt) : ''}{membership.autoRenew ? '（连续包月）' : ''}</Text>
           ) : (

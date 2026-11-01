@@ -1,4 +1,4 @@
-// In-app legal texts for 紫微星盘. These are the same texts published in
+// In-app legal texts for 星命盘. These are the same texts published in
 // docs/privacy-policy.md, docs/terms.md and docs/minor-protection.md in the
 // phase-4 submission pack: one wording, two presentations. If the wording
 // changes, change it here and in docs/ together.
@@ -28,7 +28,7 @@ export const PRIVACY_POLICY = `隐私政策
 export const TERMS_OF_SERVICE = `用户协议
 
 1. 服务内容
-紫微星盘是一款传统文化学习与娱乐参考工具，提供排盘、命盘解读、知识科普、命盘历史、合盘对照、AI 解读与分享海报功能。
+星命盘是一款传统文化学习与娱乐参考工具，提供排盘、命盘解读、知识科普、命盘历史、合盘对照、AI 解读与分享海报功能。
 
 2. 会员与积分
 会员档位与价格以购买页展示的云端价目为准：普通免费；Pro 每月 18 元、连续包月每月 15 元；Max 每月 38 元、连续包月每月 32 元。连续包月可随时取消，取消后当前周期到期降回普通。积分永不过期，获取与消费规则以积分中心展示的云端规则为准。
@@ -56,9 +56,9 @@ export const MINOR_PROTECTION = `未成年人保护说明
 4. 家长与监护
 如你是未成年人的监护人，发现账号异常消费或信息问题，请通过意见反馈提交说明，运营核对后处理。`;
 
-export const ABOUT_TEXT = `关于紫微星盘
+export const ABOUT_TEXT = `关于星命盘
 
-紫微星盘：你的命盘，一眼看懂。
+星命盘：你的命盘，一眼看懂。
 
 排盘引擎移植自 Renhuai123/ziwei-doushu（MIT 协议，引擎目录保留 LICENSE 与来源说明）。知识库与解读文本均为自写，不使用倪师原话（CC BY-NC-SA，非商用授权，本商业小程序不移植、不抄录）。
 

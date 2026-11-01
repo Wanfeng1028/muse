@@ -63,7 +63,7 @@ export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; in
     });
     ctx.setFillStyle('#f5f5f7');
     ctx.setFontSize(22);
-    ctx.fillText('紫微星盘', 66, 36);
+    ctx.fillText('星命盘', 66, 36);
     ctx.setFontSize(15);
     ctx.fillText('你的命盘，一眼看懂', 24, 70);
     ctx.setFillStyle('#9a9ba2');
@@ -80,7 +80,7 @@ export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; in
       ctx.drawImage(qr, 24, 316, 84, 84);
       ctx.setFillStyle('#9a9ba2');
       ctx.setFontSize(11);
-      ctx.fillText('扫码打开紫微星盘', 116, 350);
+      ctx.fillText('扫码打开星命盘', 116, 350);
     } else {
       ctx.setFillStyle('#9a9ba2');
       ctx.setFontSize(11);
@@ -123,7 +123,7 @@ export function PosterCard({ chart, inviteCode }: { chart: ZiweiChart | null; in
     setBusy(true);
     const res = await callFn<AiImageResult>('aiImage', {
       kind: 'poster',
-      prompt: '紫微星盘分享海报背景，中国风星空，简洁留白，深色，适配竖版海报',
+      prompt: '星命盘分享海报背景，中国风星空，简洁留白，深色，适配竖版海报',
     });
     setBusy(false);
     if (!res.ok) { toast('AI 背景生成失败：' + res.code); return; }

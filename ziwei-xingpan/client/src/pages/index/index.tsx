@@ -111,7 +111,7 @@ export default function Home() {
       <View className='hero'>
         <View className='hero-brand'>
           <Image className='brand-mark' src={starMark} mode='aspectFit' />
-          <Text className='brand-name'>紫微星盘</Text>
+          <Text className='brand-name'>星命盘</Text>
         </View>
         <Text className='home-date'>{header.dateLabel} {header.weekday} · {header.lunarLabel}</Text>
         <View className='hero-title-row'>

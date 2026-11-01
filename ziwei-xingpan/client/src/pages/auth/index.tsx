@@ -116,7 +116,7 @@ export default function Auth() {
       </View>
       <View className='auth-brand'>
         <Image className='auth-brand-mark' src={starMark} mode='aspectFit' />
-        <Text className='brand-name'>紫微星盘</Text>
+        <Text className='brand-name'>星命盘</Text>
       </View>
       <Text className='auth-title'>{mode === 'terms' ? '服务条款' : mode === 'privacy' ? '隐私政策' : mode === 'forgot' ? '找回密码' : mode === 'register' ? '注册账号' : '欢迎回来'}</Text>
       {mode === 'terms' || mode === 'privacy' ? null : (

@@ -1,4 +1,4 @@
-# 紫微星盘云函数 API
+# 星命盘云函数 API
 
 调用方式：小程序端 `wx.cloud.callFunction({ name, data })`。
 通用信封：成功 `{ code: 0, data }`；失败 `{ code, message, ... }`。

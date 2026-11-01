@@ -1,7 +1,7 @@
 import Taro from '@tarojs/taro';
 import type { ZiweiChart } from '../engine/types';
 
-// Cloud function client layer for 紫微星盘.
+// Cloud function client layer for 星命盘.
 // Rules:
 // - No AppID, merchant id, ad unit id or price is hardcoded here. Prices,
 //   points rules and ad unit ids come from the `config` cloud function.

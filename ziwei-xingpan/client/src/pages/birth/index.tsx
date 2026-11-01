@@ -98,7 +98,7 @@ export default function Birth() {
       <View className='hero'>
         <View className='hero-brand'>
           <Image className='brand-mark' src={starMark} mode='aspectFit' />
-          <Text className='brand-name'>紫微星盘</Text>
+          <Text className='brand-name'>星命盘</Text>
         </View>
         <View className='hero-title-row'>
           <Text className='hero-title'>填写出生信息</Text>

@@ -34,6 +34,6 @@ export default {
     backgroundColor: '#f5f6f8',
     navigationBarBackgroundColor: '#f5f6f8',
     navigationBarTextStyle: 'black',
-    navigationBarTitleText: '紫微星盘',
+    navigationBarTitleText: '星命盘',
   },
 };
