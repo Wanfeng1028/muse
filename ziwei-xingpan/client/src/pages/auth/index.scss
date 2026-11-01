@@ -5,10 +5,10 @@
 // capsule (user's login spec); primary = Gemini blue gradient.
 .auth-back { display: flex; align-items: center; gap: 11.54px; margin-bottom: 30.77px; }
 .auth-back-text { font-size: $fs-item; font-weight: 600; color: $light-sub; }
-.auth-brand { display: flex; align-items: center; margin-bottom: 30.77px; }
+.auth-brand { display: flex; align-items: center; justify-content: center; margin-bottom: 30.77px; }
 .auth-brand-mark { width: 48px; height: 48px; flex-shrink: 0; }
-.auth-title { display: block; font-size: $fs-hero; font-weight: 600; line-height: 1.15; color: $light-text; }
-.auth-sub { display: block; margin-top: 23.08px; margin-bottom: 30.77px; font-size: $fs-item; line-height: 1.6; color: $light-sub; }
+.auth-title { display: block; text-align: center; font-size: $fs-hero; font-weight: 600; line-height: 1.15; color: $light-text; }
+.auth-sub { display: block; text-align: center; margin-top: 23.08px; margin-bottom: 30.77px; font-size: $fs-item; line-height: 1.6; color: $light-sub; }
 .auth-row {
   display: flex;
   align-items: center;
