@@ -1,0 +1,22 @@
+@import '../../styles/variables.scss';
+
+// Knowledge tabs: Medley segmented control (dark input pill container,
+// active tab is the dark pill). Tab labels reuse .chip sizing.
+.seg {
+  display: flex;
+  background: $input-bg;
+  border: 1px solid $border-glass;
+  border-radius: $radius-input;
+  padding: 3px;
+  margin-bottom: 12px;
+}
+.seg-tab {
+  flex: 1;
+  text-align: center;
+  padding: 6px 0;
+  font-size: 14px;
+  color: $sub;
+  border-radius: 16px;
+}
+.seg-tab-active { background: $pill; color: $text; font-weight: 600; }
+.know-body { line-height: 1.7; color: $sub; font-size: $fs-secondary; }

@@ -92,8 +92,20 @@ export default function Home() {
   return (
     <View className='page'>
       <View className='hero'>
-        <Text className='hero-title'>紫微星盘</Text>
-        <Text className='hero-sub'>你的命盘，一眼看懂。排盘在本地完成，不走服务器。</Text>
+        <View className='hero-brand'>
+          <View className='brand-dots'>
+            <View className='brand-dot brand-dot-green' />
+            <View className='brand-dot brand-dot-blue' />
+            <View className='brand-dot brand-dot-pink' />
+            <Text className='brand-name'>紫微星盘</Text>
+          </View>
+        </View>
+        <View className='hero-title-row'>
+          <Text className='hero-title'>你的命盘，一眼看懂</Text>
+          <View className='hero-cursor' />
+        </View>
+        <Text className='hero-sub'>排盘在本地完成，不走服务器。</Text>
+        <Text className='hero-sub2'>出生信息填好后，点开始排盘即可看到命盘图。</Text>
       </View>
       <Card title='出生信息'>
         <View className='input-row'>

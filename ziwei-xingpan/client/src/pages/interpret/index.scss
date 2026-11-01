@@ -1,0 +1,8 @@
+@import '../../styles/variables.scss';
+
+// Interpret page: Medley dark chat/card line. Each dimension is a glass
+// card; the pattern card carries an accent edge. Disclaimer stays fixed
+// at the bottom of every card (rendered by the Disclaimer component).
+.pattern-name { font-weight: 600; color: $text; font-size: $fs-item; }
+.pattern-card { border-left: 3px solid $accent; }
+.dim-body { line-height: 1.7; color: $sub; font-size: $fs-secondary; }

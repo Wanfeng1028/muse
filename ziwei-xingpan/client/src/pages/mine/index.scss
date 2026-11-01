@@ -1,0 +1,18 @@
+@import '../../styles/variables.scss';
+
+// Mine page: static shell, Medley dark look. The avatar is a geometric
+// composition (ring + brand-dot cluster), never a letter badge.
+.avatar-geo {
+  width: 56px;
+  height: 56px;
+  border-radius: 28px;
+  background: $input-bg;
+  border: 1px solid $border-glass;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.mine-name { font-size: 18px; font-weight: 600; display: block; color: $text; }
+.mine-row-label { color: $text; }
+.mine-arrow { color: $sub; }

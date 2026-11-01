@@ -85,6 +85,11 @@ export default function ChartPage() {
             if (i === 5) {
               return (
                 <View key='center' className='chart-center'>
+                  <View className='brand-dots center-dots'>
+                    <View className='brand-dot brand-dot-green' />
+                    <View className='brand-dot brand-dot-blue' />
+                    <View className='brand-dot brand-dot-pink' />
+                  </View>
                   <Text className='center-name'>{chart.birthInfo.name || '未具名'} · {chart.birthInfo.gender === 'male' ? '男' : '女'}</Text>
                   <Text className='center-line'>农历 {chart.lunarInfo.lunarYear} 年 {Math.abs(chart.lunarInfo.lunarMonth)} 月 {chart.lunarInfo.lunarDay} 日{chart.lunarInfo.isLeapMonth ? '（闰月）' : ''}</Text>
                   <Text className='center-line'>{chart.wuxingJuName} · 命主 {chart.mingZhu} · 身主 {chart.shenZhu}</Text>

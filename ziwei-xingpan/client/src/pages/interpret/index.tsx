@@ -6,6 +6,7 @@ import { buildDimensions } from '../../lib/interpret';
 import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
 import { Card, Disclaimer } from '../../components/ui';
+import './index.scss';
 
 export default function Interpret() {
   const [chart, setChart] = useState<ZiweiChart | null>(null);
@@ -28,8 +29,8 @@ export default function Interpret() {
         {patterns.length === 0 ? (
           <Text className='muted'>本盘未触发格局库中的常见组合，仍宜以各宫主星与三方四正综合看。</Text>
         ) : patterns.map((p) => (
-          <View key={p.name} style={{ marginBottom: '10px' }}>
-            <Text style={{ fontWeight: 600 }}>{p.name}</Text>
+          <View key={p.name} className='pattern-card' style={{ marginBottom: '10px', paddingLeft: '10px' }}>
+            <Text className='pattern-name'>{p.name}</Text>
             <Text className='muted' style={{ display: 'block', marginTop: '4px' }}>{p.description}</Text>
             <Text className='caption' style={{ display: 'block' }}>涉及：{p.palaces.join('、')}</Text>
           </View>
@@ -38,7 +39,7 @@ export default function Interpret() {
       </Card>
       {dims.map((d) => (
         <Card key={d.id} title={`${d.title}（${d.palaceName}）`}>
-          <Text className='muted' style={{ lineHeight: 1.7 }}>{d.body}</Text>
+          <Text className='dim-body'>{d.body}</Text>
           <Disclaimer />
         </Card>
       ))}

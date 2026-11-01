@@ -1,6 +1,18 @@
 @import '../../styles/variables.scss';
-.hero { margin-bottom: 16px; }
-.hero-title { font-size: 28px; font-weight: 700; display: block; }
-.hero-sub { color: $sub; font-size: $fs-secondary; line-height: 1.6; display: block; margin-top: 6px; }
+
+.hero { margin-bottom: 16px; padding-top: 8px; }
+.hero-brand { margin-bottom: 20px; }
+.hero-title-row { display: flex; align-items: baseline; }
+.hero-title { font-size: $fs-welcome; font-weight: 600; line-height: 1.15; color: $text; }
+.hero-cursor {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: $cursor-dot;
+  margin-left: 8px;
+  flex-shrink: 0;
+}
+.hero-sub { color: $sub-light; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 12px; }
+.hero-sub2 { color: $sub-dim; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 2px; }
 .corr { margin-top: 12px; }
 .corr .btn-ghost { margin-top: 8px; }

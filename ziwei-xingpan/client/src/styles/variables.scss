@@ -1,16 +1,22 @@
-// Medley app tokens, converted to SCSS variables (read-only source:
+// Medley app tokens, dark theme (read-only source:
 // DesignRepoForMuse/UIDesign/app/medley/src/tokens/index.ts + index.css).
-// Only the light-theme set is used in phase 1; values are copied, not invented.
-$bg: #f5f6f8;
-$card: #ffffff;
-$card-dark: #1e1f23;
-$text: #17181c;
-$text-dark: #f5f5f7;
-$sub: #6b6c72;
-$sub-dark: #9a9ba2;
-$dim: #9a9ba2;
-$divider: #e6e7ea;
-$divider-dark: #2a2c31;
+// v1.9 values: darkBg #111518, welcome base #0D0E10, darkCard #1e1f23.
+// Phase 2 (2026-11-01): whole mini-program switches to the dark Medley
+// line; the light set is kept only as reference and is not used.
+$bg: #111518;
+$bg-welcome: #0d0e10;
+$card: #1e1f23;
+$card-bubble: #191a1e;
+$input-bg: #1f2024;
+$row: #2f3034;
+$pill: #303135;
+$text: #f5f5f7;
+$sub: #9a9ba2;
+$dim: #6b6c72;
+$sub-light: #b0b4b6;
+$sub-dim: #8d9195;
+$divider: #2a2c31;
+$border-glass: rgba(255, 255, 255, 0.08);
 $accent: #e2a181;
 $brand-dot: #fd6718;
 $cursor-dot: #6ea9dd;
@@ -18,10 +24,13 @@ $logo-green: #5ec8a7;
 $logo-blue: #8fb0d8;
 $logo-pink: #d98cb4;
 $black-btn: #111214;
+$white-btn: #ffffff;
 $radius-card: 16px;
 $radius-button: 26px;
 $radius-chip: 20px;
 $radius-input: 26px;
+$fs-welcome: 38px;
+$fs-greeting: 28px;
 $fs-page: 20px;
 $fs-section: 16px;
 $fs-body: 16px;
@@ -29,3 +38,15 @@ $fs-item: 15px;
 $fs-secondary: 13px;
 $fs-caption: 12px;
 $page-padding: 20px;
+// Ambient glows, photo-9 provenance (welcome-dark.tsx): warm lower-left,
+// green lower-right, blue upper-right. Alpha kept low so body text
+// contrast is not tinted.
+$glow-warm: rgba(114, 66, 40, 0.55);
+$glow-green: rgba(38, 94, 78, 0.55);
+$glow-blue: rgba(52, 86, 120, 0.45);
+// Four-transformation colours, brightened for the dark card (the light
+// set #2f7d4f / #b7791f / #6ea9dd / #c0392b fails on #1e1f23).
+$sihua-lu: #5ec88a;
+$sihua-quan: #e3ac45;
+$sihua-ke: #93c8f0;
+$sihua-ji: #f08080;

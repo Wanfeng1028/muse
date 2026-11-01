@@ -48,16 +48,17 @@ famous.ts，以及许可红线内容 lib/nihai/*、docs/tianji-ziwei、lib/hemin
 
 ## UI 基底
 
-UIDesign app/medley 设计系统（只读来源）：tokens 转为 src/styles/variables.scss（浅色主题为主，
-含卡片 16px、胶囊按钮 26px、药丸标签 20px 等）；卡片、胶囊按钮、药丸标签、底部 TabBar 按 Medley
-规格手写，未引入重型 UI 库。
+UIDesign app/medley 设计系统（只读来源）：tokens 转为 src/styles/variables.scss（深色主题为主：
+底 #111518、卡 #1e1f23、胶囊按钮 26px、药丸标签 20px、品牌三色点、宝石蓝光标 #6ea9dd、
+暖/绿/蓝三处环境光；对照与残留见 MEDLEY-COMPARISON.md）；卡片、胶囊按钮、药丸标签、底部 TabBar
+按 Medley 规格手写，未引入重型 UI 库。TabBar 图标为矢量重绘几何形（房子/对话/书本/头像），
+81x81 PNG 在 src/assets/tabbar/，app.config.ts 已配 iconPath/selectedIconPath。
 
 ## 已知缺口（二期及以后）
 
 - 账号（微信登录）、会员、微信支付、积分、邀请：我的页仅静态壳，未接。
 - AI 解盘/问答、广告位、分享海报、命盘历史/合盘：三期内容，一期无。
 - 出生地区县级选择：源项目区县表不在 lib/ziwei 目录内，一期只到地级市/直辖市区一级。
-- TabBar 未配图标文件（仅文字），开发者工具预览正常；上架前可补图标资源。
 - 命盘图中央区用 CSS grid 实现（2x2 跨格），需在真机/开发者工具复核低版本基础库的 grid 表现；
   若遇不支持，改回“中央信息卡片置于宫格上方”的布局即可，数据层不受影响。
 - 免责声明文案（每处解读下方固定）：
