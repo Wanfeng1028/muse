@@ -37,6 +37,8 @@ def get_settings() -> Settings:
     """读取环境变量并构造 Settings（带缓存）。"""
     raw_db = os.environ.get("LEDGER_DB", DEFAULT_DB)
     host = os.environ.get("LEDGER_HOST", DEFAULT_HOST)
+    if not host.strip():
+        raise ValueError(f"LEDGER_HOST 非法: {host!r}，不能为空")
 
     port_raw = os.environ.get("LEDGER_PORT", str(DEFAULT_PORT))
     try:

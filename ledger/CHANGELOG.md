@@ -1,5 +1,26 @@
 # 更新日志
 
+## v2.17.32 - 2026-11-01
+
+### 新增
+- `src/ledger/config.py` 的 `get_settings` 在读取 `LEDGER_HOST` 后增加校验：取值为空串或纯空白时抛出 `ValueError`，文案为 `LEDGER_HOST 非法: '<原始值>'，不能为空`。
+
+### 不变
+- 未设置 `LEDGER_HOST` 时仍默认 `127.0.0.1`。
+- `0.0.0.0`、`localhost` 原样透传；带空白填充的 `127.0.0.1` 原样透传，不做 trim。
+- 不做 IP/域名格式校验。
+- `db_path`、`port`、`log_level`、`base_currency` 一字不动。
+- 无迁移、无新依赖、无新端点、无 UI 改动。
+
+### 测试
+- 新增 `tests/test_config_host_invalid.py`，7 例全绿：空串/三空格/Tab 参数化 3 例抛错且文案含 `LEDGER_HOST` 与原值 repr；缺省 `127.0.0.1`；`0.0.0.0` 与 `localhost` 透传；带空白填充原样透传。
+- 靶向合跑：新测 7 + port 旧测 + config 深测 14 = 27 项全绿。
+- `ruff check` 与 `ruff format` 在 `config.py` 与新测试文件上全洁（import 分组经 `ruff --fix` 修正）。
+
+### 补充
+- 真实服务冒烟（18571 端口、隔离库）：`LEDGER_HOST` 空串与三空格启动均 exit 1，终行文案逐字相符；合法 host 起服后 `/api/health` 返回 `status ok` 且 `version 2.17.31`（冒烟在升版前做，属预期）、`/api/ready` 返回 `ready true`；冒烟后服务已停、端口复查已关、冒烟库已删。
+- 升版四处统一为 `2.17.32`：`src/ledger/__init__.py`、`pyproject.toml`、`tests/test_version_consistency_v21715.py` 的 `EXPECTED_VERSION`、`CHANGELOG.md` 顶条。
+
 ## v2.17.31 - 2026-10-31
 
 ### 新增
