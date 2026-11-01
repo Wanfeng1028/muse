@@ -3,6 +3,7 @@ import { View, Text, Input, Textarea, Picker, Image, Switch } from '@tarojs/comp
 import Taro from '@tarojs/taro';
 import { Card, Disclaimer } from '../../components/ui';
 import { PosterCard } from '../../components/poster';
+import starMark from '../../assets/logo/star-mark.png';
 import { loadChart, STORAGE_INPUT, STORAGE_CHART } from '../../lib/chart';
 import type { ZiweiChart } from '../../engine/types';
 import {
@@ -289,11 +290,7 @@ export default function Mine() {
     <Card light>
       <View style={{ display: 'flex', alignItems: 'center' }}>
         <View className='avatar-geo'>
-          <View className='brand-dots'>
-            <View className='brand-dot brand-dot-green' />
-            <View className='brand-dot brand-dot-blue' />
-            <View className='brand-dot brand-dot-pink' />
-          </View>
+          <Image className='avatar-mark' src={starMark} mode='aspectFit' />
         </View>
         <View style={{ marginLeft: '12px', flex: 1 }}>
           <Text className='mine-name'>{user?.nickname || '紫微星盘用户'}</Text>

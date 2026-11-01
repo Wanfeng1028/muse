@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Picker, Input, Button } from '@tarojs/components';
+import { View, Text, Picker, Input, Button, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { PROVINCES } from '../../engine/cities';
 import { BRANCHES } from '../../engine/constants';
@@ -8,6 +8,7 @@ import {
   shichenLabel, shichenRange, shiftDate, loadInput, type BirthFormInput,
 } from '../../lib/chart';
 import { Card, ComposerBar } from '../../components/ui';
+import starMark from '../../assets/logo/star-mark.png';
 import { BannerAd } from '../../components/ads';
 import { callFn, cloudConfigured, type AppConfig, type MembershipStatus } from '../../lib/cloud';
 import { adSlotLive } from '../../lib/ads';
@@ -104,11 +105,7 @@ export default function Home() {
     <View className='page page-welcome'>
       <View className='hero'>
         <View className='hero-brand'>
-          <View className='brand-dots'>
-            <View className='brand-dot brand-dot-green' />
-            <View className='brand-dot brand-dot-blue' />
-            <View className='brand-dot brand-dot-pink' />
-          </View>
+          <Image className='brand-mark' src={starMark} mode='aspectFit' />
           <Text className='brand-name'>紫微星盘</Text>
         </View>
         <View className='hero-title-row'>

@@ -5,6 +5,7 @@
 // welcome mt-3/mt-1 (12/4) rhythms.
 .hero { margin-bottom: $section-gap; }
 .hero-brand { display: flex; align-items: center; margin-bottom: $section-gap; }
+.brand-mark { width: 48px; height: 48px; flex-shrink: 0; }
 .hero-title-row { display: flex; align-items: baseline; }
 .hero-title { font-size: $fs-welcome; font-weight: 600; line-height: 1.15; color: $text; }
 .hero-cursor {
