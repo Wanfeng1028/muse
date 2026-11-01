@@ -7,18 +7,8 @@ export default {
     'pages/mine/index',
     'pages/auth/index',
     'pages/demo/index',
-    // Portal round: birth form moved out of home + 11 portal pages.
+    // Birth form (source BirthForm) + compare (source heming, two charts).
     'pages/birth/index',
-    'pages/fortune/index',
-    'pages/bazi/index',
-    'pages/calendar/index',
-    'pages/wish/index',
-    'pages/dice/index',
-    'pages/tarot/index',
-    'pages/liuyao/index',
-    'pages/dream/index',
-    'pages/mbti/index',
-    'pages/astrologers/index',
     'pages/compare/index',
   ],
   tabBar: {

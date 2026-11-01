@@ -8,7 +8,6 @@ import CustomTabBar from '../../custom-tab-bar';
 import { Toggle, ParticleBurst, LongPressConfirm } from '../../components/interactions';
 import { PosterCard } from '../../components/poster';
 import CompareView from '../../components/compare';
-import { loadReports, type ReportItem } from '../../lib/tools';
 import starMark from '../../assets/logo/star-mark.png';
 import { loadChart, STORAGE_INPUT, STORAGE_CHART } from '../../lib/chart';
 import type { ZiweiChart } from '../../engine/types';
@@ -22,7 +21,7 @@ import {
 import { PRIVACY_POLICY, TERMS_OF_SERVICE, MINOR_PROTECTION, ABOUT_TEXT } from '../../lib/legal';
 import './index.scss';
 
-type Section = 'main' | 'member' | 'points' | 'invite' | 'orders' | 'settings' | 'feedback' | 'legal' | 'charts' | 'compare' | 'poster' | 'reports';
+type Section = 'main' | 'member' | 'points' | 'invite' | 'orders' | 'settings' | 'feedback' | 'legal' | 'charts' | 'compare' | 'poster';
 type LegalTab = 'privacy' | 'terms' | 'minor' | 'about';
 
 const GENDERS = ['未知', '男', '女'];
@@ -47,7 +46,6 @@ export default function Mine() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [feedbacks, setFeedbacks] = useState<Array<{ content: string; contact: string; status: string; createdAt: string }>>([]);
   const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
-  const [reports, setReports] = useState<ReportItem[]>([]);
   const [localChart, setLocalChart] = useState<ZiweiChart | null>(null);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -70,7 +68,6 @@ export default function Mine() {
 
   async function refreshAll() {
     setLocalChart(loadChart());
-    setReports(loadReports());
     if (!configured) {
       setNotice('云开发未配置：登录、会员、积分、邀请、订单功能需用户提供云开发环境 ID 后开通；下方各入口均如实显示未配置状态，不展示虚假数据。');
       return;
@@ -107,10 +104,10 @@ export default function Mine() {
 
   useEffect(() => { refreshAll(); }, []);
 
-  // Same tab-staleness rule as Home: local chart + local report history
-  // reload on every show (cheap, no cloud calls); cloud refresh stays
-  // mount-only + the manual 刷新 button.
-  useDidShow(() => { setLocalChart(loadChart()); setReports(loadReports()); });
+  // Same tab-staleness rule as Home: local chart reloads on every show
+  // (cheap, no cloud calls); cloud refresh stays mount-only + the manual
+  // 刷新 button.
+  useDidShow(() => { setLocalChart(loadChart()); });
 
   function toast(title: string) {
     Taro.showToast({ title, icon: 'none' });
@@ -578,26 +575,6 @@ export default function Mine() {
     );
   }
 
-  if (section === 'reports') {
-    return (
-      <View className={'page page-light theme-' + theme}>
-      {theme === 'light' ? <AmbientLight /> : <Ambient />}
-        {backBtn()}
-        <Card light title='报告记录'>
-          <Text className='muted'>这里只记你自己打开过的解读（本地记录，按日期去重），不编造浏览数据。</Text>
-          {reports.length === 0 ? <EmptyState title='暂无报告记录' hint='到解读页打开一次命盘解读，这里就会记下一条。' actionLabel='去解读页' onAction={() => Taro.switchTab({ url: '/pages/interpret/index' })} /> : reports.map((r, i) => (
-            <View key={i} className='input-row'>
-              <Text className='input-label mine-row-label'>{r.title}</Text>
-              <Text className='input-value'>{r.date}</Text>
-            </View>
-          ))}
-        </Card>
-        <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
-      </View>
-    );
-  }
-
   if (section === 'poster') {
     return (
       <View className={'page page-light theme-' + theme}>
@@ -637,7 +614,6 @@ export default function Mine() {
     { label: '邀请中心', sub: '邀请码与阶梯奖励', icon: 'users', section: 'invite' },
     { label: '档案管理', sub: '已保存的命盘', icon: 'history', section: 'charts' },
     { label: '合盘对照', sub: '双方六宫主星对照', icon: 'layers', section: 'compare' },
-    { label: '报告记录', sub: '自己打开过的解读', icon: 'clipboard-list', section: 'reports' },
     { label: '分享海报', sub: '命盘海报与邀请码', icon: 'share-2', section: 'poster' },
     { label: '我的订单', sub: '购买与支付记录', icon: 'clipboard-list', section: 'orders' },
     { label: '设置', sub: '资料、未成年人标记', icon: 'settings', section: 'settings' },
@@ -648,16 +624,6 @@ export default function Mine() {
     <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
       {header}
-      <Card light title='星币'>
-        {unconfiguredNote()}
-        {balance !== null ? <Text className='mine-balance'>当前星币：{balance}</Text> : null}
-        <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>星币与积分同一余额；充值需微信支付商户配置，当前未开通，不展示虚假购买入口。</Text>
-        <View className='btn-row' style={{ marginTop: '12px' }}>
-          <View className='btn-medley btn-medley-outline-light' onClick={() => setSection('points')}>签到领星币</View>
-          <View className='btn-medley btn-medley-outline-light' onClick={() => setSection('points')}>分享领星币</View>
-          <View className='btn-medley btn-medley-outline-light' onClick={() => toast('星币充值需微信支付商户配置，待用户提供后开通')}>充值</View>
-        </View>
-      </Card>
       <Text className='svc-heading'>我的服务</Text>
       <View className='svc-grid'>
         {ROWS.map((r) => (

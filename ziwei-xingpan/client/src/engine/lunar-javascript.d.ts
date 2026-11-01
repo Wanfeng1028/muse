@@ -13,7 +13,7 @@ declare module 'lunar-javascript' {
     getDayZhi(): string;
     /** 换算成公历(2026-08-05 补声明:lib/ziwei/share.ts 早在用，只是从前靠 as any 绕过) */
     getSolar(): Solar;
-    // 门户轮补声明（2026-11-01 于 lunar-javascript 1.7.3 实测存在）：
+    // 补声明（2026-11-01 于 lunar-javascript 1.7.3 实测存在）：
     // 干支须分开取（getDayGanZhi 合并方法不存在）；节日、节气、
     // 宜忌、星宿、冲煞、日生肖均实测返回真实值。
     getYearShengXiao(): string;

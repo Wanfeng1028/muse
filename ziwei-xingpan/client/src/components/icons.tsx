@@ -129,10 +129,6 @@ import ic_lock_blue from '../assets/lucide/png/lock-blue.png';
 import ic_lock_sky from '../assets/lucide/png/lock-sky.png';
 import ic_lock_gray from '../assets/lucide/png/lock-gray.png';
 import ic_lock_white from '../assets/lucide/png/lock-white.png';
-import ic_calendar_blue from '../assets/lucide/png/calendar-blue.png';
-import ic_calendar_sky from '../assets/lucide/png/calendar-sky.png';
-import ic_calendar_gray from '../assets/lucide/png/calendar-gray.png';
-import ic_calendar_white from '../assets/lucide/png/calendar-white.png';
 import ic_map_pin_blue from '../assets/lucide/png/map-pin-blue.png';
 import ic_map_pin_sky from '../assets/lucide/png/map-pin-sky.png';
 import ic_map_pin_gray from '../assets/lucide/png/map-pin-gray.png';
@@ -141,10 +137,6 @@ import ic_clock_blue from '../assets/lucide/png/clock-blue.png';
 import ic_clock_sky from '../assets/lucide/png/clock-sky.png';
 import ic_clock_gray from '../assets/lucide/png/clock-gray.png';
 import ic_clock_white from '../assets/lucide/png/clock-white.png';
-import ic_sparkles_blue from '../assets/lucide/png/sparkles-blue.png';
-import ic_sparkles_sky from '../assets/lucide/png/sparkles-sky.png';
-import ic_sparkles_gray from '../assets/lucide/png/sparkles-gray.png';
-import ic_sparkles_white from '../assets/lucide/png/sparkles-white.png';
 import ic_arrow_up_blue from '../assets/lucide/png/arrow-up-blue.png';
 import ic_arrow_up_sky from '../assets/lucide/png/arrow-up-sky.png';
 import ic_arrow_up_gray from '../assets/lucide/png/arrow-up-gray.png';
@@ -153,10 +145,6 @@ import ic_arrow_right_blue from '../assets/lucide/png/arrow-right-blue.png';
 import ic_arrow_right_sky from '../assets/lucide/png/arrow-right-sky.png';
 import ic_arrow_right_gray from '../assets/lucide/png/arrow-right-gray.png';
 import ic_arrow_right_white from '../assets/lucide/png/arrow-right-white.png';
-import ic_moon_blue from '../assets/lucide/png/moon-blue.png';
-import ic_moon_sky from '../assets/lucide/png/moon-sky.png';
-import ic_moon_gray from '../assets/lucide/png/moon-gray.png';
-import ic_moon_white from '../assets/lucide/png/moon-white.png';
 import ic_sun_blue from '../assets/lucide/png/sun-blue.png';
 import ic_sun_sky from '../assets/lucide/png/sun-sky.png';
 import ic_sun_gray from '../assets/lucide/png/sun-gray.png';
@@ -169,10 +157,6 @@ import ic_star_blue from '../assets/lucide/png/star-blue.png';
 import ic_star_sky from '../assets/lucide/png/star-sky.png';
 import ic_star_gray from '../assets/lucide/png/star-gray.png';
 import ic_star_white from '../assets/lucide/png/star-white.png';
-import ic_gift_blue from '../assets/lucide/png/gift-blue.png';
-import ic_gift_sky from '../assets/lucide/png/gift-sky.png';
-import ic_gift_gray from '../assets/lucide/png/gift-gray.png';
-import ic_gift_white from '../assets/lucide/png/gift-white.png';
 import ic_pen_line_blue from '../assets/lucide/png/pen-line-blue.png';
 import ic_pen_line_sky from '../assets/lucide/png/pen-line-sky.png';
 import ic_pen_line_gray from '../assets/lucide/png/pen-line-gray.png';
@@ -197,36 +181,8 @@ import ic_minus_blue from '../assets/lucide/png/minus-blue.png';
 import ic_minus_sky from '../assets/lucide/png/minus-sky.png';
 import ic_minus_gray from '../assets/lucide/png/minus-gray.png';
 import ic_minus_white from '../assets/lucide/png/minus-white.png';
-import ic_dices_blue from '../assets/lucide/png/dices-blue.png';
-import ic_dices_sky from '../assets/lucide/png/dices-sky.png';
-import ic_dices_gray from '../assets/lucide/png/dices-gray.png';
-import ic_dices_white from '../assets/lucide/png/dices-white.png';
-import ic_heart_blue from '../assets/lucide/png/heart-blue.png';
-import ic_heart_sky from '../assets/lucide/png/heart-sky.png';
-import ic_heart_gray from '../assets/lucide/png/heart-gray.png';
-import ic_heart_white from '../assets/lucide/png/heart-white.png';
-import ic_briefcase_blue from '../assets/lucide/png/briefcase-blue.png';
-import ic_briefcase_sky from '../assets/lucide/png/briefcase-sky.png';
-import ic_briefcase_gray from '../assets/lucide/png/briefcase-gray.png';
-import ic_briefcase_white from '../assets/lucide/png/briefcase-white.png';
-import ic_graduation_cap_blue from '../assets/lucide/png/graduation-cap-blue.png';
-import ic_graduation_cap_sky from '../assets/lucide/png/graduation-cap-sky.png';
-import ic_graduation_cap_gray from '../assets/lucide/png/graduation-cap-gray.png';
-import ic_graduation_cap_white from '../assets/lucide/png/graduation-cap-white.png';
-import ic_hand_heart_blue from '../assets/lucide/png/hand-heart-blue.png';
-import ic_hand_heart_sky from '../assets/lucide/png/hand-heart-sky.png';
-import ic_hand_heart_gray from '../assets/lucide/png/hand-heart-gray.png';
-import ic_hand_heart_white from '../assets/lucide/png/hand-heart-white.png';
-import ic_brain_blue from '../assets/lucide/png/brain-blue.png';
-import ic_brain_sky from '../assets/lucide/png/brain-sky.png';
-import ic_brain_gray from '../assets/lucide/png/brain-gray.png';
-import ic_brain_white from '../assets/lucide/png/brain-white.png';
-import ic_scroll_blue from '../assets/lucide/png/scroll-blue.png';
-import ic_scroll_sky from '../assets/lucide/png/scroll-sky.png';
-import ic_scroll_gray from '../assets/lucide/png/scroll-gray.png';
-import ic_scroll_white from '../assets/lucide/png/scroll-white.png';
 
-export const ICON_NAMES = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'calendar', 'map-pin', 'clock', 'sparkles', 'arrow-up', 'arrow-right', 'moon', 'sun', 'inbox', 'star', 'gift', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus', 'dices', 'heart', 'briefcase', 'graduation-cap', 'hand-heart', 'brain', 'scroll'] as const;
+export const ICON_NAMES = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'map-pin', 'clock', 'arrow-up', 'arrow-right', 'sun', 'inbox', 'star', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus'] as const;
 export type IconName = typeof ICON_NAMES[number];
 export type IconTone = 'blue' | 'sky' | 'gray' | 'white';
 const SRC: Record<IconName, Record<IconTone, string>> = {
@@ -260,30 +216,19 @@ const SRC: Record<IconName, Record<IconTone, string>> = {
   'eye-off': { blue: ic_eye_off_blue, sky: ic_eye_off_sky, gray: ic_eye_off_gray, white: ic_eye_off_white },
   'mail': { blue: ic_mail_blue, sky: ic_mail_sky, gray: ic_mail_gray, white: ic_mail_white },
   'lock': { blue: ic_lock_blue, sky: ic_lock_sky, gray: ic_lock_gray, white: ic_lock_white },
-  'calendar': { blue: ic_calendar_blue, sky: ic_calendar_sky, gray: ic_calendar_gray, white: ic_calendar_white },
   'map-pin': { blue: ic_map_pin_blue, sky: ic_map_pin_sky, gray: ic_map_pin_gray, white: ic_map_pin_white },
   'clock': { blue: ic_clock_blue, sky: ic_clock_sky, gray: ic_clock_gray, white: ic_clock_white },
-  'sparkles': { blue: ic_sparkles_blue, sky: ic_sparkles_sky, gray: ic_sparkles_gray, white: ic_sparkles_white },
   'arrow-up': { blue: ic_arrow_up_blue, sky: ic_arrow_up_sky, gray: ic_arrow_up_gray, white: ic_arrow_up_white },
   'arrow-right': { blue: ic_arrow_right_blue, sky: ic_arrow_right_sky, gray: ic_arrow_right_gray, white: ic_arrow_right_white },
-  'moon': { blue: ic_moon_blue, sky: ic_moon_sky, gray: ic_moon_gray, white: ic_moon_white },
   'sun': { blue: ic_sun_blue, sky: ic_sun_sky, gray: ic_sun_gray, white: ic_sun_white },
   'inbox': { blue: ic_inbox_blue, sky: ic_inbox_sky, gray: ic_inbox_gray, white: ic_inbox_white },
   'star': { blue: ic_star_blue, sky: ic_star_sky, gray: ic_star_gray, white: ic_star_white },
-  'gift': { blue: ic_gift_blue, sky: ic_gift_sky, gray: ic_gift_gray, white: ic_gift_white },
   'pen-line': { blue: ic_pen_line_blue, sky: ic_pen_line_sky, gray: ic_pen_line_gray, white: ic_pen_line_white },
   'zap': { blue: ic_zap_blue, sky: ic_zap_sky, gray: ic_zap_gray, white: ic_zap_white },
   'save': { blue: ic_save_blue, sky: ic_save_sky, gray: ic_save_gray, white: ic_save_white },
   'search': { blue: ic_search_blue, sky: ic_search_sky, gray: ic_search_gray, white: ic_search_white },
   'plus': { blue: ic_plus_blue, sky: ic_plus_sky, gray: ic_plus_gray, white: ic_plus_white },
   'minus': { blue: ic_minus_blue, sky: ic_minus_sky, gray: ic_minus_gray, white: ic_minus_white },
-  'dices': { blue: ic_dices_blue, sky: ic_dices_sky, gray: ic_dices_gray, white: ic_dices_white },
-  'heart': { blue: ic_heart_blue, sky: ic_heart_sky, gray: ic_heart_gray, white: ic_heart_white },
-  'briefcase': { blue: ic_briefcase_blue, sky: ic_briefcase_sky, gray: ic_briefcase_gray, white: ic_briefcase_white },
-  'graduation-cap': { blue: ic_graduation_cap_blue, sky: ic_graduation_cap_sky, gray: ic_graduation_cap_gray, white: ic_graduation_cap_white },
-  'hand-heart': { blue: ic_hand_heart_blue, sky: ic_hand_heart_sky, gray: ic_hand_heart_gray, white: ic_hand_heart_white },
-  'brain': { blue: ic_brain_blue, sky: ic_brain_sky, gray: ic_brain_gray, white: ic_brain_white },
-  'scroll': { blue: ic_scroll_blue, sky: ic_scroll_sky, gray: ic_scroll_gray, white: ic_scroll_white },
 };
 
 export function Icon({ name, tone, size }: { name: IconName; tone: IconTone; size?: string }) {

@@ -3,7 +3,7 @@ import { View, Text, Input, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { loadChart } from '../../lib/chart';
 import { buildDimensions } from '../../lib/interpret';
-import { recordReport } from '../../lib/tools';
+import { recordReport } from '../../lib/reports';
 import { takeDimTarget } from '../../lib/nav';
 import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
@@ -110,7 +110,7 @@ export default function Interpret() {
     else toast('配图链接获取失败');
   }
 
-  // 门户报告列带 ?dim= 进来时，滚动到对应维度（本地 13 维解读，
+  // 首页维度 chips 带 ?dim= 进来时，滚动到对应维度（本地 13 维解读，
   // 无需云端）。锚点在下方每个维度气泡的 id 上。深链有两路：H5
   // 直链的 router 参数，以及 Tab 切页（switchTab 不带参数）经
   // lib/nav.ts 存储中转的落点；chart 为空时不取存储（不提前消费）。

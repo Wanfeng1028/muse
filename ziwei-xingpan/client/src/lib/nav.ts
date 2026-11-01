@@ -26,3 +26,8 @@ export function takeDimTarget(): string | undefined {
     return undefined;
   }
 }
+
+// 知识页同样是 Tab 页，只能 switchTab（无深链参数需求）。
+export function goKnowledge() {
+  Taro.switchTab({ url: '/pages/knowledge/index' });
+}

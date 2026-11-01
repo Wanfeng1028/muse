@@ -215,7 +215,7 @@ export default function Birth() {
         <View className='btn-medley btn-medley-outline home-secondary' onClick={() => Taro.navigateTo({ url: '/pages/chart/index' })}>查看上次命盘</View>
       ) : null}
       <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>地支对照：{BRANCHES.join(' ')}；时辰以两小时为一档，23:00 后属次日子时口径由排盘引擎处理。</Text>
-      <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>从首页门户的排盘入口来到这里；排盘完成后可在命盘图页查看，也可在首页门户查看今日运势。</Text>
+      <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>从首页的排盘入口来到这里；排盘完成后可在命盘图页查看，也可在首页查看命宫与今年运限。</Text>
     </View>
   );
 }

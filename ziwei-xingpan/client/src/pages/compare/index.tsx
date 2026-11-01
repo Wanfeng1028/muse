@@ -4,7 +4,6 @@ import { callFn, cloudConfigured, type SavedChart } from '../../lib/cloud';
 import { Ambient, AmbientLight, Card, Disclaimer } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import CompareView from '../../components/compare';
-import '../../styles/portal.scss';
 
 // 合盘报告页：与“我的 → 合盘对照”共用 CompareView（宫名已修正
 // 为引擎原名）。合盘数据来自云端已保存的命盘；未配置时诚实空态。
