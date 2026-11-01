@@ -1,0 +1,101 @@
+# 设计规则
+
+订立：2026-11-02。第一部分为用户当日发来的设计规则原文（Imagine — 视觉创作套件）；第二部分为同日九条裁决（用户亲令，适用于迄今所有产品）；第三部分为执行状态。裁决与原文冲突处，以裁决为准。
+
+## 第一部分：设计规则原文
+
+### 模块
+
+再次调用 read_me 并使用 modules 参数来加载详细指南：
+
+- diagram — SVG 流程图、结构图、说明图
+- mockup — UI 原型、表单、卡片、仪表板
+- interactive — 带控制的交互式解释器
+- chart — 图表、数据分析、地理地图（Chart.js、D3 色阶图）
+- art — 插图和生成艺术
+
+选择最接近的匹配。该模块包含所有相关设计指南。
+
+### 复杂度预算 — 硬性限制
+
+- 方框副标题：≤5 个词。细节放在点击穿透（sendPrompt）或下面的散文描述中 — 不在方框内。
+- 颜色：每个图表 ≤2 种渐变。如果颜色编码含义（状态、层级），添加 1 行图例。否则使用一种中性渐变。
+- 水平层级：全宽 ≤4 个方框（每个约 140px）。5+ 个方框 → 缩小到 ≤110px 或换行到 2 行或分割成概述 + 细节图。
+
+### 核心设计系统（适用于所有用例）
+
+哲学：
+
+- 无缝：用户不应察觉 claude.ai 结束和组件开始的位置。
+- 平面：无渐变、网格背景、噪点纹理或装饰效果。干净的平面表面。
+- 紧凑：内联显示本质内容。其余在文本中解释。
+- 文本放在响应中，视觉元素放在工具中 — 所有解释性文本、描述、引言和摘要必须作为正常响应文本写在工具调用之外。工具输出应仅包含视觉元素（图表、图表、交互组件）。切勿在 HTML/SVG 中放置段落解释、章节标题或描述性散文。如果用户询问“解释 X”，在响应中撰写解释，并仅使用工具提供伴随的视觉元素。用户的字体设置仅适用于响应文本，而不适用于组件内的文本。
+
+流式传输：
+
+输出逐令牌流式传输。构建代码结构，使有用内容尽早出现。
+
+- HTML：style（简短）→ 内容 HTML → script 最后。
+
+规则：
+
+- 无 HTML 注释或 CSS 注释（浪费令牌，破坏流式传输）。
+- 无低于 11px 的 font-size。
+- 无表情符号。图标 = Tabler 轮廓 webfont（5800+，已加载），例如 ti-home。仅轮廓 — 切勿使用 -filled 后缀（未加载，将渲染为空白）。继承父级的颜色 + font-size。装饰性图标添加 aria-hidden；仅图标按钮添加 aria-label。常见：ti-home ti-settings ti-user ti-search ti-x ti-check ti-plus ti-trash ti-edit ti-download ti-upload ti-file ti-folder ti-chart-bar ti-calendar ti-clock ti-arrow-right ti-arrow-left ti-chevron-down ti-external-link ti-copy ti-refresh ti-player-play ti-player-pause ti-heart ti-star ti-bell ti-mail ti-lock ti-eye ti-menu-2。不要手绘图标 SVG 路径。
+- 无渐变、投影、模糊、发光或霓虹效果。
+- 外部容器无深色/彩色背景（仅透明 — 主机提供背景）。
+- 排版：默认字体为 Anthropic Sans。对于罕见的编辑/引用时刻，使用衬线字体变量。
+- 标题：h1 = 22px，h2 = 18px，h3 = 16px — 全部 font-weight 500。标题颜色预设为主文本色 — 不要覆盖它。正文文本 = 16px，weight 400，line-height 1.7。仅两种权重：400 常规，500 粗体。切勿使用 600 或 700 — 它们在主机 UI 旁看起来过重。
+- 始终使用句首大写。切勿使用标题大小写，切勿使用全大写。这适用于所有地方，包括 SVG 文本标签和图表标题。
+- 无句子中途加粗，包括工具调用周围的响应文本中。实体名称、类名称、函数名称使用代码样式而非粗体。粗体仅用于标题和标签。
+- 组件容器为 display block，width 100%。HTML 自然填充它 — 无需包装 div。只需直接从内容开始。如果需要垂直呼吸空间，在第一个元素上添加 padding 1rem 0。
+- 切勿使用 position fixed — iframe 视口会根据流式内容高度调整自身，因此固定定位元素（模态框、覆盖层、工具提示）会将其折叠到 min-height 100px。对于模态框/覆盖层原型：将所有内容包装在正常流的伪视口 div（min-height 400px，半透明黑背景，flex 居中）中，并将模态框置于其中 — 这是一个伪视口，实际贡献布局高度。
+- 明确指定高度（相同限制）。
+- 流式传输期间无选项卡、轮播或 display none 部分 — 隐藏内容会隐形流式传输。显示所有内容垂直堆叠。（流式传输后 JS 驱动的步进器没问题。）
+- 对于任何受益于 Claude 思考的操作，使用 sendPrompt()。
+
+CSS 变量：
+
+- 表面：--surface-2（白色），--surface-1（卡片），--surface-0（页面背景）；角色色调 --bg-{accent,danger,success,warning}。
+- 文本：--text-primary（黑色），--text-secondary（柔和），--text-muted（提示）；角色 --text-{accent,danger,success,warning}。
+- 边框：--border（默认发线），--border-strong（悬停），--border-stronger；角色 --border-{accent,danger,success,warning}。
+- 排版：--font-sans，--font-voice（衬线），--font-mono。
+- 布局：--radius（8px），--pad-{sm,md,lg,xl}，--gap-{xs,sm,md,lg,xl}；对于更大的角使用字面 12px/16px。
+
+所有内容自动适应浅色/深色模式。对于 HTML 中的自定义颜色，使用 CSS 变量。
+
+深色模式为强制 — 每种颜色必须在两种模式下均有效：
+
+- 在 SVG 中：使用预构建颜色类（c-blue、c-teal、c-amber 等）用于彩色节点 — 它们自动处理浅色/深色模式。切勿为颜色编写 style 块。
+- 在 SVG 中：每个 text 元素都需要类（t、ts、th）— 切勿省略 fill 或使用 fill="inherit"。在 c-{color} 父级内，文本类会自动调整到渐变。
+- 在 HTML 中：始终为文本使用 CSS 变量（--text-primary、--text-secondary）。切勿硬编码颜色。
+
+UI 组件：
+
+- 布局宽度：组件容器宽 680px。使用 repeat(auto-fit, minmax(160px, 1fr)) 实现响应式列 — auto-fit 让网格根据可用宽度选择列数。
+- 美学：平面、干净、白色表面。最小 0.5px 边框。宽松空白。无渐变、无阴影（除功能性焦点环外）。一切应感觉原生于 claude.ai — 像属于页面，而非从其他地方嵌入。
+- 令牌：
+  - 边框：始终 0.5px solid var(--border)（或 --border-strong 用于强调）。
+  - 角半径：var(--radius) 用于大多数元素，12px 用于卡片。
+  - 卡片：白色背景（var(--surface-2)），0.5px 边框，12px 半径，padding 1rem 1.25rem。
+  - 表单元素（input、select、textarea、button、range slider）预样式化 — 直接编写裸标签。文本输入为 36px，内置悬停/焦点；范围滑块有 4px 轨道 + 18px 滑块；按钮有内置样式。
+
+## 第二部分：2026-11-02 九条裁决（用户亲令）
+
+1. 渐变：只许在用户指定的地方出现。指定清单仅两处：(a) 胶囊/按钮的 Gemini 蓝渐变 linear-gradient(89.58deg, #3186ff 0.28%, #346bf0 44.45%, #4ea0ff 99.55%)（星命盘、GoClub；源自用户博客 global.css；2026-11-01 胶囊令）；(b) Medley 欢迎页的环境光（photo-9 色层：左下暖色、右下绿色、顶部偏蓝；2026-10-30 令）。其余渐变一律改扁平。
+2. 模糊：只许在用户指定的地方出现。指定清单仅两处：(a) AirBuild 系聊天窗毛玻璃 blur 34px + saturate 1.24（AirBuild 原产品属性，1:1 令绑定）；(b) Medley 系 Liquid Glass blur 50/90/6 + saturate 1.8（iOS 质感令）。其余零模糊。
+3. 阴影：按 spec — 删全部卡片柔影，只留功能性焦点环。
+4. 字重：按 spec — 只许 400/500，全应用 600 改 500。
+5. 圆角：按 spec（通用 8px、卡片 12px），除用户指定的地方外。指定清单：登录界面全部控件 999px 胶囊（2026-10-04 定、2026-10-20 重申适用于所有产品登录界面）；星命盘全应用胶囊按钮 999px（2026-11-01 胶囊令，含分段器、主按钮、作曲框）；Spark 发送钮 34px 正圆；1:1 项目的原产品圆角（AirBuild 气泡 13px 等，1:1 令绑定）。
+6. 字号：按 spec — 标题 22/18/16、正文 16、行高 1.7、小字不低于 11px；星命盘上一轮 44/20/15/12 字阶作废。
+7. 图标库：我们的 Lucide，不换 Tabler。
+8. 深色/彩色容器：按 spec（外容器透明/浅色），除用户规定的地方外。规定清单：Medley 系深色页（欢迎页 #0D0E10 等，1:1 + photo-9 令）；AirBuild 系深色营销页（#141414/#202020/#78b7ff，AirBuild 原产品深色调，1:1 令）；Spark 深色悬浮底栏 + 深色 AI 状态卡（小红书风拍板）；星命盘深色模式整套（2026-11-01 令深浅都要做好）。不在清单上的深色/彩色容器按 spec 处理（浅色页内的深色锚点卡改浅色，我的页头区改浅色扁平、结构保留）。
+9. fixed：按 spec — 取消全部 position: fixed；悬浮底栏改原生 tabBar 或流内布局；弹窗不许 fixed。
+
+附注：原文自身有一处小矛盾（哲学称无渐变，复杂度预算又称每图最多 2 种渐变）——以本裁决为准。胶囊高度调矮（2026-11-02 00:26 用户令）随星命盘本轮一并执行，圆角与 Gemini 蓝不变。
+
+## 第三部分：执行状态
+
+- 星命盘：本轮（我的页 + 充值积分页 + 欢迎页 + 胶囊高度调矮）按九条裁决执行中。
+- 其他产品（Spark、BotsTalk、BotsRouter、GoClub、剧坊）与 UIDesign 1:1 四套：等用户开口再改（2026-11-02 00:39 用户令：“第二点你先别动”“我说改你再改”）。
+- 另：1:1 四套当前残留（web/medley 15、web/airbuild 15、app/medley 12、app/airbuild R10–R12 + 结转项），即使用户不下九条，也尚未达到 1:1（2026-11-02 00:39 用户亲口指出）。
