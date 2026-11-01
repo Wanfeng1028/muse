@@ -19,6 +19,7 @@
 | 11 | 真实广告位 ID | bannerHome / bannerInterpret / rewardedVideo / interstitial（UV 达标后） | 待 UV 达标后提供 | configs.ads 返回真实 ID 且 enabled=true |
 | 12 | 支付全链路实测 | 真实商户号下的下单、支付、回调、查询、关闭 | 待上述 1–4 齐后实测 | 实测订单号与会员到账记录 |
 | 13 | AI 与生图实测 | 真实 envId 下的主备切换、降级日志、缓存命中 | 待上述 2、7、8 齐后实测 | quotaLogs 与 aiCache/imageCache 记录 |
+| 14 | 门户 12 新页真机复核 | 门户轮新增页（birth / fortune / bazi / calendar / wish / dice / tarot / liuyao / dream / mbti / astrologers / compare）的真机复核：TabBar 尺寸、低版本栅格、浅色导航栏、环境光 fixed 行为、运势圆环与竖条、六爻爻线、MBTI 答题、AI 占星师私聊跳转 | 待上述 1、2 齐后复核（H5 预览已全量验图，真机未验） | 真机截图 12 页 + 暗色对照 |
 
 ## 不在本表内的、助理不得向用户索要的东西
 

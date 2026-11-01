@@ -116,3 +116,6 @@
 }
 .chart-fullscreen-bar { display: flex; justify-content: space-between; align-items: center; gap: 23.08px; margin-bottom: $card-gap; }
 .chart-fullscreen-title { font-size: $fs-item; font-weight: 600; color: $text; line-height: 1.5; }
+
+// Portal round: AI 解读 CTA（Gemini 渐变主按钮，置于操作行下方）。
+.chart-ai-cta { margin-bottom: $card-gap; }

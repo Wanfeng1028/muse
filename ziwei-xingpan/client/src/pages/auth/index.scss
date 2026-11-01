@@ -25,6 +25,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 16px;
   width: 100%;
   height: $button-h;
   border-radius: 999px;
@@ -32,23 +33,12 @@
   margin-top: 23.08px;
 }
 .auth-submit-text { font-size: $fs-item; font-weight: 700; color: #ffffff; }
+// Official brand mark chip on the gradient button: white circle keeps
+// the verbatim green WeChat mark legible without recoloring it.
+.auth-brand-chip { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: #ffffff; flex-shrink: 0; }
+.auth-chip-mark { width: 32px; height: 32px; display: block; }
 .auth-divider { display: flex; align-items: center; justify-content: center; margin: 30.77px 0; }
 .auth-divider-text { font-size: $fs-secondary; color: $light-dim; }
-.auth-third {
-  box-sizing: border-box;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 19.23px;
-  width: 100%;
-  height: $button-h;
-  border-radius: 999px;
-  border: 1.92px solid $light-divider;
-  background: transparent;
-  margin-bottom: 23.08px;
-}
-.auth-third-text { font-size: $fs-item; font-weight: 600; color: $light-text; }
-.auth-note { display: block; margin-top: 7.69px; font-size: $fs-caption; line-height: 1.7; color: $light-sub; }
 .auth-switch { display: flex; justify-content: center; margin-top: 23.08px; }
 
 // ---------- Dark ----------
@@ -58,7 +48,4 @@
 .page.theme-dark .auth-row { border-color: $divider; }
 .page.theme-dark .auth-input { color: $text; }
 .page.theme-dark .auth-link { color: $gemini-sky; }
-.page.theme-dark .auth-third { border-color: $outline-dark; }
-.page.theme-dark .auth-third-text { color: $text; }
-.page.theme-dark .auth-note { color: $sub; }
 .page.theme-dark .auth-divider-text { color: $dim; }

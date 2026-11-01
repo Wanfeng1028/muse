@@ -1,15 +1,13 @@
 @import '../../styles/variables.scss';
 
-// Home: Medley welcome-dark hero (brand + 43 title + 15 subs) over
-// the form card. Title block spacing uses sectionGap (28) and the
-// welcome mt-3/mt-1 (12/4) rhythms.
+// Portal home: hero rules carried from the old home (brand row + title
+// + cursor), plus portal sections. Light-first (default); dark
+// overrides at the bottom. iOS curve + reduced-motion fallback on
+// animated pieces (cursor blink, ring/bars are static CSS, no JS anim).
 .hero { margin-bottom: $section-gap; }
 .hero-brand { display: flex; align-items: center; margin-bottom: $section-gap; }
 .brand-mark { width: 48px; height: 48px; flex-shrink: 0; }
 .hero-title-row { display: flex; align-items: baseline; flex-wrap: nowrap; }
-// v3 gap 2: 38pt 一行有意例外（见 variables.scss）。nowrap + 不收缩：
-// 标题 342pt + 间距 8pt + 光标 15pt = 365pt，自内容左缘起落点
-// 20+365=385pt < 390pt 屏宽，光标伸入右侧内边距区，不折行、不裁切。
 .hero-title { font-size: $fs-hero; font-weight: 600; line-height: 1.15; color: $text; white-space: nowrap; flex-shrink: 0; }
 .hero-cursor {
   width: $cursor-dot-size;
@@ -21,21 +19,122 @@
   flex-shrink: 0;
   animation: cursor-blink 1.6s cubic-bezier(0.32, 0.72, 0, 1) infinite;
 }
-.hero-sub { color: $sub-light; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 23.08px; }
-.hero-sub2 { color: $sub-dim; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 7.69px; }
-.corr { margin-top: 23.08px; }
-.corr .btn-pill { margin-top: 15.38px; }
-.home-submit { margin-top: $section-gap; }
+.hero-sub { color: $light-sub; font-size: $fs-item; line-height: 1.6; display: block; margin-top: 23.08px; }
 .home-secondary { margin-top: $card-gap; }
 
-// ---- Productization round: segmented gender row + live preview card ----
-.preview-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 23.08px;
-  padding: 19.23px 0;
-  border-bottom: $hairline solid $divider;
+.portal-date { display: block; font-size: $fs-secondary; font-weight: 600; color: $light-sub; margin-bottom: 15.38px; }
+.portal-section-title { display: block; font-size: $fs-section; font-weight: 700; color: $light-text; margin: 30.77px 0 23.08px 0; }
+
+// ---- 今日运势：圆环（CSS conic-gradient donut，无 SVG 元素）+ 四项竖条 ----
+.fortune-top { display: flex; align-items: center; gap: 30.77px; }
+.fortune-ring {
+  width: 192.31px; height: 192.31px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
 }
-.preview-row-last { border-bottom: none; }
-.preview-accent { color: $accent; }
+.fortune-ring-inner {
+  width: 153.85px; height: 153.85px; border-radius: 50%;
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+.fortune-total { font-size: 61.54px; font-weight: 700; line-height: 1; color: $light-text; }
+.fortune-total-label { font-size: $fs-caption; color: $light-sub; margin-top: 7.69px; }
+.fortune-bars { display: flex; gap: 23.08px; flex: 1; align-items: flex-end; }
+.fortune-bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; }
+.fortune-bar-track {
+  width: 30.77px; height: 192.31px; border-radius: 15.38px;
+  background: $light-bubble; position: relative; overflow: hidden;
+}
+.fortune-bar-fill {
+  position: absolute; bottom: 0; left: 0; right: 0;
+  background: $gemini-grad; border-radius: 15.38px;
+}
+.fortune-bar-val { font-size: $fs-secondary; font-weight: 700; color: $light-text; margin-top: 11.54px; }
+.fortune-bar-label { font-size: $fs-caption; color: $light-sub; margin-top: 3.85px; }
+
+// ---- 热门功能：2x2 卡 + HOT 角标（Gemini 蓝 pill，非参照的黄色） ----
+.portal-grid-4 { display: flex; flex-wrap: wrap; gap: $card-gap; }
+.hot-card {
+  flex: 1 1 40%;
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.90), 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
+  padding: 30.77px 23.08px;
+  display: flex; flex-direction: column; align-items: center; gap: 15.38px;
+  position: relative;
+}
+.hot-badge {
+  position: absolute; top: 15.38px; right: 15.38px;
+  background: $gemini-grad; color: #ffffff;
+  font-size: 19.23px; font-weight: 700; line-height: 1;
+  padding: 7.69px 11.54px; border-radius: 999px;
+}
+.hot-label { font-size: $fs-body; font-weight: 700; color: $light-text; }
+
+// ---- 三卡与六卡阵：无分割线大留白服务卡 ----
+.portal-grid-3 { display: flex; flex-wrap: wrap; gap: $card-gap; margin-top: $card-gap; }
+.portal-tri-card {
+  flex: 1 1 28%;
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.90), 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
+  padding: 23.08px 15.38px;
+  display: flex; flex-direction: column; align-items: center; gap: 11.54px; text-align: center;
+}
+.portal-tri-title { font-size: $fs-item; font-weight: 700; color: $light-text; }
+.portal-tri-sub { font-size: $fs-caption; color: $light-sub; line-height: 1.5; }
+.portal-mini-card {
+  flex: 1 1 28%;
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  padding: 23.08px 11.54px;
+  display: flex; flex-direction: column; align-items: center; gap: 11.54px;
+}
+.portal-mini-label { font-size: $fs-item; font-weight: 600; color: $light-text; }
+
+// ---- 报告列：矢量渐变封面 + 标题 + 一句话（无照片、无参照美术） ----
+.report-list { display: flex; flex-direction: column; gap: $card-gap; }
+.report-row {
+  display: flex; align-items: center; gap: 23.08px;
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  padding: 23.08px;
+}
+.report-cover {
+  width: 96.15px; height: 96.15px; border-radius: 23.08px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.report-grad-1 { background: linear-gradient(135deg, #2a3f66 0%, #346bf0 100%); }
+.report-grad-2 { background: linear-gradient(135deg, #a84e7a 0%, #d98cb4 100%); }
+.report-grad-3 { background: linear-gradient(135deg, #8a6a1f 0%, #e3ac45 100%); }
+.report-grad-4 { background: linear-gradient(135deg, #1e4a3a 0%, #5ec8a7 100%); }
+.report-grad-5 { background: linear-gradient(135deg, #3f74ab 0%, #8fb0d8 100%); }
+.report-grad-6 { background: linear-gradient(135deg, #6b3a0d 0%, #e2a181 100%); }
+.report-grad-7 { background: linear-gradient(135deg, #4a3a6b 0%, #8b7ab8 100%); }
+.report-body { flex: 1; }
+.report-title { display: block; font-size: $fs-body; font-weight: 700; color: $light-text; }
+.report-sub { display: block; font-size: $fs-secondary; color: $light-sub; line-height: 1.5; margin-top: 7.69px; }
+
+// ---- Dark overrides ----
+.page.theme-dark .hero-title { color: $text; }
+.page.theme-dark .hero-sub { color: $sub-light; }
+.page.theme-dark .portal-date { color: $sub; }
+.page.theme-dark .portal-section-title { color: $text; }
+.page.theme-dark .fortune-total { color: $text; }
+.page.theme-dark .fortune-total-label { color: $sub; }
+.page.theme-dark .fortune-bar-track { background: $row; }
+.page.theme-dark .fortune-bar-val { color: $text; }
+.page.theme-dark .fortune-bar-label { color: $sub; }
+.page.theme-dark .hot-card, .page.theme-dark .portal-tri-card,
+.page.theme-dark .portal-mini-card, .page.theme-dark .report-row {
+  background: $card; border-color: $divider; box-shadow: none;
+}
+.page.theme-dark .hot-label, .page.theme-dark .portal-tri-title,
+.page.theme-dark .portal-mini-label, .page.theme-dark .report-title { color: $text; }
+.page.theme-dark .portal-tri-sub, .page.theme-dark .report-sub { color: $sub; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-cursor { animation: none; }
+}

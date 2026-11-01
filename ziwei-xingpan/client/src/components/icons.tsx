@@ -129,14 +129,6 @@ import ic_lock_blue from '../assets/lucide/png/lock-blue.png';
 import ic_lock_sky from '../assets/lucide/png/lock-sky.png';
 import ic_lock_gray from '../assets/lucide/png/lock-gray.png';
 import ic_lock_white from '../assets/lucide/png/lock-white.png';
-import ic_chrome_blue from '../assets/lucide/png/chrome-blue.png';
-import ic_chrome_sky from '../assets/lucide/png/chrome-sky.png';
-import ic_chrome_gray from '../assets/lucide/png/chrome-gray.png';
-import ic_chrome_white from '../assets/lucide/png/chrome-white.png';
-import ic_apple_blue from '../assets/lucide/png/apple-blue.png';
-import ic_apple_sky from '../assets/lucide/png/apple-sky.png';
-import ic_apple_gray from '../assets/lucide/png/apple-gray.png';
-import ic_apple_white from '../assets/lucide/png/apple-white.png';
 import ic_calendar_blue from '../assets/lucide/png/calendar-blue.png';
 import ic_calendar_sky from '../assets/lucide/png/calendar-sky.png';
 import ic_calendar_gray from '../assets/lucide/png/calendar-gray.png';
@@ -205,8 +197,36 @@ import ic_minus_blue from '../assets/lucide/png/minus-blue.png';
 import ic_minus_sky from '../assets/lucide/png/minus-sky.png';
 import ic_minus_gray from '../assets/lucide/png/minus-gray.png';
 import ic_minus_white from '../assets/lucide/png/minus-white.png';
+import ic_dices_blue from '../assets/lucide/png/dices-blue.png';
+import ic_dices_sky from '../assets/lucide/png/dices-sky.png';
+import ic_dices_gray from '../assets/lucide/png/dices-gray.png';
+import ic_dices_white from '../assets/lucide/png/dices-white.png';
+import ic_heart_blue from '../assets/lucide/png/heart-blue.png';
+import ic_heart_sky from '../assets/lucide/png/heart-sky.png';
+import ic_heart_gray from '../assets/lucide/png/heart-gray.png';
+import ic_heart_white from '../assets/lucide/png/heart-white.png';
+import ic_briefcase_blue from '../assets/lucide/png/briefcase-blue.png';
+import ic_briefcase_sky from '../assets/lucide/png/briefcase-sky.png';
+import ic_briefcase_gray from '../assets/lucide/png/briefcase-gray.png';
+import ic_briefcase_white from '../assets/lucide/png/briefcase-white.png';
+import ic_graduation_cap_blue from '../assets/lucide/png/graduation-cap-blue.png';
+import ic_graduation_cap_sky from '../assets/lucide/png/graduation-cap-sky.png';
+import ic_graduation_cap_gray from '../assets/lucide/png/graduation-cap-gray.png';
+import ic_graduation_cap_white from '../assets/lucide/png/graduation-cap-white.png';
+import ic_hand_heart_blue from '../assets/lucide/png/hand-heart-blue.png';
+import ic_hand_heart_sky from '../assets/lucide/png/hand-heart-sky.png';
+import ic_hand_heart_gray from '../assets/lucide/png/hand-heart-gray.png';
+import ic_hand_heart_white from '../assets/lucide/png/hand-heart-white.png';
+import ic_brain_blue from '../assets/lucide/png/brain-blue.png';
+import ic_brain_sky from '../assets/lucide/png/brain-sky.png';
+import ic_brain_gray from '../assets/lucide/png/brain-gray.png';
+import ic_brain_white from '../assets/lucide/png/brain-white.png';
+import ic_scroll_blue from '../assets/lucide/png/scroll-blue.png';
+import ic_scroll_sky from '../assets/lucide/png/scroll-sky.png';
+import ic_scroll_gray from '../assets/lucide/png/scroll-gray.png';
+import ic_scroll_white from '../assets/lucide/png/scroll-white.png';
 
-export const ICON_NAMES = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'chrome', 'apple', 'calendar', 'map-pin', 'clock', 'sparkles', 'arrow-up', 'arrow-right', 'moon', 'sun', 'inbox', 'star', 'gift', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus'] as const;
+export const ICON_NAMES = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'calendar', 'map-pin', 'clock', 'sparkles', 'arrow-up', 'arrow-right', 'moon', 'sun', 'inbox', 'star', 'gift', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus', 'dices', 'heart', 'briefcase', 'graduation-cap', 'hand-heart', 'brain', 'scroll'] as const;
 export type IconName = typeof ICON_NAMES[number];
 export type IconTone = 'blue' | 'sky' | 'gray' | 'white';
 const SRC: Record<IconName, Record<IconTone, string>> = {
@@ -240,8 +260,6 @@ const SRC: Record<IconName, Record<IconTone, string>> = {
   'eye-off': { blue: ic_eye_off_blue, sky: ic_eye_off_sky, gray: ic_eye_off_gray, white: ic_eye_off_white },
   'mail': { blue: ic_mail_blue, sky: ic_mail_sky, gray: ic_mail_gray, white: ic_mail_white },
   'lock': { blue: ic_lock_blue, sky: ic_lock_sky, gray: ic_lock_gray, white: ic_lock_white },
-  'chrome': { blue: ic_chrome_blue, sky: ic_chrome_sky, gray: ic_chrome_gray, white: ic_chrome_white },
-  'apple': { blue: ic_apple_blue, sky: ic_apple_sky, gray: ic_apple_gray, white: ic_apple_white },
   'calendar': { blue: ic_calendar_blue, sky: ic_calendar_sky, gray: ic_calendar_gray, white: ic_calendar_white },
   'map-pin': { blue: ic_map_pin_blue, sky: ic_map_pin_sky, gray: ic_map_pin_gray, white: ic_map_pin_white },
   'clock': { blue: ic_clock_blue, sky: ic_clock_sky, gray: ic_clock_gray, white: ic_clock_white },
@@ -259,6 +277,13 @@ const SRC: Record<IconName, Record<IconTone, string>> = {
   'search': { blue: ic_search_blue, sky: ic_search_sky, gray: ic_search_gray, white: ic_search_white },
   'plus': { blue: ic_plus_blue, sky: ic_plus_sky, gray: ic_plus_gray, white: ic_plus_white },
   'minus': { blue: ic_minus_blue, sky: ic_minus_sky, gray: ic_minus_gray, white: ic_minus_white },
+  'dices': { blue: ic_dices_blue, sky: ic_dices_sky, gray: ic_dices_gray, white: ic_dices_white },
+  'heart': { blue: ic_heart_blue, sky: ic_heart_sky, gray: ic_heart_gray, white: ic_heart_white },
+  'briefcase': { blue: ic_briefcase_blue, sky: ic_briefcase_sky, gray: ic_briefcase_gray, white: ic_briefcase_white },
+  'graduation-cap': { blue: ic_graduation_cap_blue, sky: ic_graduation_cap_sky, gray: ic_graduation_cap_gray, white: ic_graduation_cap_white },
+  'hand-heart': { blue: ic_hand_heart_blue, sky: ic_hand_heart_sky, gray: ic_hand_heart_gray, white: ic_hand_heart_white },
+  'brain': { blue: ic_brain_blue, sky: ic_brain_sky, gray: ic_brain_gray, white: ic_brain_white },
+  'scroll': { blue: ic_scroll_blue, sky: ic_scroll_sky, gray: ic_scroll_gray, white: ic_scroll_white },
 };
 
 export function Icon({ name, tone, size }: { name: IconName; tone: IconTone; size?: string }) {

@@ -1,12 +1,14 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Input, Textarea, Picker, Image } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import { View, Text, Input, Textarea, Image } from '@tarojs/components';
+import Taro, { useDidShow } from '@tarojs/taro';
 import { Ambient, AmbientLight, Card, Disclaimer, SegmentedControl, EmptyState } from '../../components/ui';
 import { Icon, IconBadge, type IconName } from '../../components/icons';
 import { useTheme } from '../../lib/theme';
 import CustomTabBar from '../../custom-tab-bar';
 import { Toggle, ParticleBurst, LongPressConfirm } from '../../components/interactions';
 import { PosterCard } from '../../components/poster';
+import CompareView from '../../components/compare';
+import { loadReports, type ReportItem } from '../../lib/tools';
 import starMark from '../../assets/logo/star-mark.png';
 import { loadChart, STORAGE_INPUT, STORAGE_CHART } from '../../lib/chart';
 import type { ZiweiChart } from '../../engine/types';
@@ -20,7 +22,7 @@ import {
 import { PRIVACY_POLICY, TERMS_OF_SERVICE, MINOR_PROTECTION, ABOUT_TEXT } from '../../lib/legal';
 import './index.scss';
 
-type Section = 'main' | 'member' | 'points' | 'invite' | 'orders' | 'settings' | 'feedback' | 'legal' | 'charts' | 'compare' | 'poster';
+type Section = 'main' | 'member' | 'points' | 'invite' | 'orders' | 'settings' | 'feedback' | 'legal' | 'charts' | 'compare' | 'poster' | 'reports';
 type LegalTab = 'privacy' | 'terms' | 'minor' | 'about';
 
 const GENDERS = ['未知', '男', '女'];
@@ -45,6 +47,7 @@ export default function Mine() {
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [feedbacks, setFeedbacks] = useState<Array<{ content: string; contact: string; status: string; createdAt: string }>>([]);
   const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
+  const [reports, setReports] = useState<ReportItem[]>([]);
   const [localChart, setLocalChart] = useState<ZiweiChart | null>(null);
   const [compareA, setCompareA] = useState('');
   const [compareB, setCompareB] = useState('');
@@ -67,6 +70,7 @@ export default function Mine() {
 
   async function refreshAll() {
     setLocalChart(loadChart());
+    setReports(loadReports());
     if (!configured) {
       setNotice('云开发未配置：登录、会员、积分、邀请、订单功能需用户提供云开发环境 ID 后开通；下方各入口均如实显示未配置状态，不展示虚假数据。');
       return;
@@ -102,6 +106,11 @@ export default function Mine() {
   }
 
   useEffect(() => { refreshAll(); }, []);
+
+  // Same tab-staleness rule as Home: local chart + local report history
+  // reload on every show (cheap, no cloud calls); cloud refresh stays
+  // mount-only + the manual 刷新 button.
+  useDidShow(() => { setLocalChart(loadChart()); setReports(loadReports()); });
 
   function toast(title: string) {
     Taro.showToast({ title, icon: 'none' });
@@ -273,13 +282,6 @@ export default function Mine() {
     } catch {
       toast('载入失败');
     }
-  }
-
-  function palaceMajors(c: SavedChart, palaceName: string): string {
-    const p = c.chartData.palaces.find((x) => x.name === palaceName);
-    if (!p) return '—';
-    const majors = p.stars.filter((s) => s.type === 'major').map((s) => s.name);
-    return majors.length ? majors.join(' ') : '无主星';
   }
 
   function backBtn() {
@@ -494,7 +496,7 @@ export default function Mine() {
           {user?.minor ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>当前账号已标记为未成年人：AI 解读、付费会员、积分兑换付费内容均不可用。清除标记需填写成年出生年份后保存。</Text> : null}
           <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={saveSettings}>保存资料</View>
           <Text className='muted' style={{ display: 'block', marginTop: '10px' }}>设备指纹（防刷用，本机安装标识，非真实设备号）：{deviceFingerprint()}</Text>
-          <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；命盘管理请到命盘历史；出生年份可在下方填写，用于未成年人门禁换算（未满 18 岁不可使用付费解读与付费会员）。</Text>
+          <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；命盘管理请到档案管理；出生年份可在下方填写，用于未成年人门禁换算（未满 18 岁不可使用付费解读与付费会员）。</Text>
         </Card>
         <Disclaimer />
         {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
@@ -507,7 +509,7 @@ export default function Mine() {
       <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
-        <Card light title='意见反馈'>
+        <Card light title='联系客服'>
           {unconfiguredNote()}{needLoginNote()}
           <View className='input-row'>
             <Text className='input-label'>联系方式（可选）</Text>
@@ -538,10 +540,10 @@ export default function Mine() {
       <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
-        <Card light title='命盘历史（多盘管理）'>
+        <Card light title='档案管理（多盘管理）'>
           {unconfiguredNote()}{needLoginNote()}
-          {failedHas('命盘') ? <Text className='muted'>命盘历史加载失败，请刷新重试。</Text> : null}
-          {savedCharts.length === 0 ? <EmptyState title='暂无保存的命盘' hint='请先在首页排盘，再到命盘图页点“保存到我的命盘”。' actionLabel='去首页排盘' onAction={() => Taro.switchTab({ url: '/pages/index/index' })} /> : savedCharts.map((c) => (
+          {failedHas('命盘') ? <Text className='muted'>档案管理加载失败，请刷新重试。</Text> : null}
+          {savedCharts.length === 0 ? <EmptyState title='暂无保存的命盘' hint='请先排盘，再到命盘图页点“保存到我的命盘”。' actionLabel='去排盘' onAction={() => Taro.navigateTo({ url: '/pages/birth/index' })} /> : savedCharts.map((c) => (
             <View key={c._id} style={{ marginBottom: '12px' }}>
               <View className='input-row'>
                 <Text className='input-label mine-row-label'>{c.name}{c.isDefault ? '（默认盘）' : ''}</Text>
@@ -562,40 +564,33 @@ export default function Mine() {
   }
 
   if (section === 'compare') {
-    const a = savedCharts.find((c) => c._id === compareA) || null;
-    const b = savedCharts.find((c) => c._id === compareB) || null;
-    const palaces = ['命宫', '财帛宫', '官禄宫', '夫妻宫', '疾厄宫', '福德宫'];
     return (
       <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <Card light title='合盘对照（两盘主星对照）'>
           {unconfiguredNote()}{needLoginNote()}
-          {savedCharts.length < 2 ? (
-            <Text className='muted'>合盘需要至少两张已保存的命盘，请先保存两张盘再来对照。</Text>
-          ) : (
-            <View>
-              <View className='input-row'>
-                <Text className='input-label'>第一张盘</Text>
-                <Picker mode='selector' range={savedCharts.map((c) => c.name)} value={savedCharts.findIndex((c) => c._id === compareA)} onChange={(e) => setCompareA(savedCharts[Number(e.detail.value)]._id)}>
-                  <Text className='input-value'>{a ? a.name : '请选择'}</Text>
-                </Picker>
-              </View>
-              <View className='input-row'>
-                <Text className='input-label'>第二张盘</Text>
-                <Picker mode='selector' range={savedCharts.map((c) => c.name)} value={savedCharts.findIndex((c) => c._id === compareB)} onChange={(e) => setCompareB(savedCharts[Number(e.detail.value)]._id)}>
-                  <Text className='input-value'>{b ? b.name : '请选择'}</Text>
-                </Picker>
-              </View>
-              {a && b ? palaces.map((p) => (
-                <View key={p} className='input-row'>
-                  <Text className='input-label mine-row-label'>{p}</Text>
-                  <Text className='input-value'>{palaceMajors(a, p)} ｜ {palaceMajors(b, p)}</Text>
-                </View>
-              )) : null}
-              <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>对照仅罗列双方各宫主星，不作合婚、关系或吉凶断言。</Text>
+          <CompareView charts={savedCharts} aId={compareA} bId={compareB} onA={setCompareA} onB={setCompareB} labelClass='input-label mine-row-label' />
+        </Card>
+        <Disclaimer />
+        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
+      </View>
+    );
+  }
+
+  if (section === 'reports') {
+    return (
+      <View className={'page page-light theme-' + theme}>
+      {theme === 'light' ? <AmbientLight /> : <Ambient />}
+        {backBtn()}
+        <Card light title='报告记录'>
+          <Text className='muted'>这里只记你自己打开过的解读（本地记录，按日期去重），不编造浏览数据。</Text>
+          {reports.length === 0 ? <EmptyState title='暂无报告记录' hint='到解读页打开一次命盘解读，这里就会记下一条。' actionLabel='去解读页' onAction={() => Taro.switchTab({ url: '/pages/interpret/index' })} /> : reports.map((r, i) => (
+            <View key={i} className='input-row'>
+              <Text className='input-label mine-row-label'>{r.title}</Text>
+              <Text className='input-value'>{r.date}</Text>
             </View>
-          )}
+          ))}
         </Card>
         <Disclaimer />
         {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
@@ -640,18 +635,29 @@ export default function Mine() {
     { label: '会员中心', sub: 'Pro / Max 订阅与连续包月', icon: 'crown', section: 'member' },
     { label: '积分中心', sub: '签到、视频、邀请赚积分', icon: 'coins', section: 'points' },
     { label: '邀请中心', sub: '邀请码与阶梯奖励', icon: 'users', section: 'invite' },
-    { label: '命盘历史', sub: '已保存的命盘', icon: 'history', section: 'charts' },
+    { label: '档案管理', sub: '已保存的命盘', icon: 'history', section: 'charts' },
     { label: '合盘对照', sub: '双方六宫主星对照', icon: 'layers', section: 'compare' },
+    { label: '报告记录', sub: '自己打开过的解读', icon: 'clipboard-list', section: 'reports' },
     { label: '分享海报', sub: '命盘海报与邀请码', icon: 'share-2', section: 'poster' },
     { label: '我的订单', sub: '购买与支付记录', icon: 'clipboard-list', section: 'orders' },
     { label: '设置', sub: '资料、未成年人标记', icon: 'settings', section: 'settings' },
-    { label: '意见反馈', sub: '告诉我们你的建议', icon: 'message-square', section: 'feedback' },
+    { label: '联系客服', sub: '告诉我们你的建议', icon: 'message-square', section: 'feedback' },
     { label: '关于（含数据来源）', sub: '协议与数据来源', icon: 'info', section: 'legal' },
   ];
   return (
     <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
       {header}
+      <Card light title='星币'>
+        {unconfiguredNote()}
+        {balance !== null ? <Text className='mine-balance'>当前星币：{balance}</Text> : null}
+        <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>星币与积分同一余额；充值需微信支付商户配置，当前未开通，不展示虚假购买入口。</Text>
+        <View className='btn-row' style={{ marginTop: '12px' }}>
+          <View className='btn-medley btn-medley-outline-light' onClick={() => setSection('points')}>签到领星币</View>
+          <View className='btn-medley btn-medley-outline-light' onClick={() => setSection('points')}>分享领星币</View>
+          <View className='btn-medley btn-medley-outline-light' onClick={() => toast('星币充值需微信支付商户配置，待用户提供后开通')}>充值</View>
+        </View>
+      </Card>
       <Text className='svc-heading'>我的服务</Text>
       <View className='svc-grid'>
         {ROWS.map((r) => (

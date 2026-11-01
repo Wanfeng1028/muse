@@ -9,8 +9,9 @@ import { getLiuNianSiHua, getLiuYueSiHua } from '../../engine/sihua';
 import { jiangQianShenName, suiQianShenName, boshiShenName } from '../../engine/shier-shen';
 import { STEMS } from '../../engine/constants';
 import type { Palace, ZiweiChart } from '../../engine/types';
-import { Ambient, AmbientLight, Card, Disclaimer } from '../../components/ui';
+import { Ambient, AmbientLight, Card, Disclaimer, SegmentedControl } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
+import { goInterpret } from '../../lib/nav';
 import { buildDimensions } from '../../lib/interpret';
 import './index.scss';
 
@@ -201,6 +202,7 @@ export default function ChartPage() {
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
+  const [seg, setSeg] = useState(0);
   const [fullScreen, setFullScreen] = useState(false);
   useEffect(() => { setChart(loadChart()); setInput(loadInput()); }, []);
 
@@ -231,11 +233,33 @@ export default function ChartPage() {
       <View className={'page theme-' + theme}>
         {theme === 'light' ? <AmbientLight /> : <Ambient />}
         <Card title='还没有命盘'>
-          <Text className='muted'>请先在首页填写出生信息并排盘。</Text>
-          <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
+          <Text className='muted'>请先填写出生信息并排盘。</Text>
+          <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.navigateTo({ url: '/pages/birth/index' })}>去排盘</View>
         </Card>
       </View>
     );
+  }
+
+  // 分段条（参照的合盘/天象/本命/行运/三限/次限分段，只借结构）：
+  // 紫微仍为核心，不做西洋轮盘与三限/次限；本命=盘面，大运/流年/
+  // 流月=滚动到对应卡片，合盘=对照页。天象对应星象日历，见首页三卡。
+  const SEGMENTS = ['本命', '大运', '流年', '流月', '合盘'];
+  function scrollToId(id: string) {
+    const q = Taro.createSelectorQuery();
+    q.selectViewport().scrollOffset();
+    q.select('#' + id).boundingClientRect();
+    q.exec((res: any[]) => {
+      const off = res?.[0];
+      const r = res?.[1];
+      if (r) Taro.pageScrollTo({ scrollTop: (off?.scrollTop ?? 0) + r.top - 12, duration: 300 });
+    });
+  }
+  function onSegment(i: number) {
+    if (i === 4) { Taro.navigateTo({ url: '/pages/compare/index' }); return; }
+    setSeg(i);
+    if (i === 0) { Taro.pageScrollTo({ scrollTop: 0, duration: 300 }); return; }
+    if (i === 1) { scrollToId('chart-daxian'); return; }
+    scrollToId('chart-liunian');
   }
 
   const byBranch = (b: number) => chart.palaces.find((p) => p.branch === b)!;
@@ -289,6 +313,9 @@ export default function ChartPage() {
   return (
     <View className={'page theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
+      <View style={{ marginBottom: '12px' }}>
+        <SegmentedControl options={SEGMENTS} value={seg} onChange={onSegment} tone={theme === 'light' ? 'light' : 'dark'} />
+      </View>
       <View className='chart-plate'>
         <ChartGrid
           chart={chart}
@@ -306,14 +333,17 @@ export default function ChartPage() {
 
       <View className='btn-row chart-actions'>
         <View className='btn-medley btn-medley-white' onClick={saveChart}>
-          {saving ? '保存中…' : saved ? '已保存，去“我的 → 命盘历史”查看' : '保存到我的命盘'}
+          {saving ? '保存中…' : saved ? '已保存，去“我的 → 档案管理”查看' : '保存到我的命盘'}
         </View>
         <View className='btn-medley btn-medley-outline' onClick={() => setFullScreen(true)}>全屏查看</View>
         {saved ? (
-          <View className='btn-medley btn-medley-outline' onClick={() => Taro.switchTab({ url: '/pages/mine/index' })}>去我的页查看命盘历史</View>
+          <View className='btn-medley btn-medley-outline' onClick={() => Taro.switchTab({ url: '/pages/mine/index' })}>去我的页查看档案管理</View>
         ) : null}
       </View>
 
+      <View className='btn-medley btn-medley-dark chart-ai-cta' hoverClass='btn-press' onClick={() => goInterpret()}>AI 解读星盘</View>
+
+      <View id='chart-daxian'>
       <Card title='大运'>
         {chart.daXians.map((d, i) => (
           <View key={`${d.startAge}-${d.palaceBranch}`} className='daxian-row'>
@@ -325,6 +355,9 @@ export default function ChartPage() {
         ))}
       </Card>
 
+      </View>
+
+      <View id='chart-liunian'>
       <Card title={`流年 / 流月（今年农历 ${liunianYear} 年，虚岁 ${liunianAge} 岁）`}>
         <Text className='muted'>
           所属大限：{dx ? `${dx.palaceName}（${dx.startAge}-${dx.endAge} 岁）` : '童限或超出范围'}；
@@ -341,6 +374,7 @@ export default function ChartPage() {
         </View>
         <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>流月按农历月序排列，月份天干用五虎遁推算。</Text>
       </Card>
+      </View>
       <Disclaimer />
 
       {fullScreen ? (

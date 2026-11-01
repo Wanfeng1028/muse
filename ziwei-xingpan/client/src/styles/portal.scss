@@ -1,0 +1,109 @@
+@import './variables.scss';
+
+// Portal new pages shared styles. Light-first (default); dark overrides
+// at the bottom. All pages render .page.page-light.theme-X, so these
+// classes sit on top of the global .card/.btn-medley/.muted set.
+.tool-lead { display: block; margin-bottom: 23.08px; }
+.tool-grid { display: flex; flex-wrap: wrap; gap: $card-gap; }
+.tool-card {
+  flex: 1 1 40%;
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  padding: 30.77px 23.08px;
+  display: flex; flex-direction: column; align-items: center; gap: 15.38px; text-align: center;
+}
+.tool-card-title { font-size: $fs-body; font-weight: 700; color: $light-text; }
+.tool-card-sub { font-size: $fs-secondary; color: $light-sub; line-height: 1.5; }
+.tool-full-card {
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  padding: 30.77px 23.08px;
+}
+.tool-big { font-size: 61.54px; font-weight: 700; line-height: 1.2; color: $light-text; }
+.tool-mid { font-size: $fs-page; font-weight: 700; color: $light-text; line-height: 1.4; }
+
+// Horizontal score bar (fortune detail / bazi wuxing).
+.bar-row { display: flex; align-items: center; gap: 15.38px; margin-top: 15.38px; }
+.bar-row-label { width: 76.92px; flex-shrink: 0; font-size: $fs-secondary; font-weight: 600; color: $light-sub; }
+.bar-row-track { flex: 1; height: 23.08px; border-radius: 11.54px; background: $light-bubble; overflow: hidden; position: relative; }
+.bar-row-fill { position: absolute; top: 0; bottom: 0; left: 0; background: $gemini-grad; border-radius: 11.54px; }
+.bar-row-val { width: 57.69px; flex-shrink: 0; text-align: right; font-size: $fs-secondary; font-weight: 700; color: $light-text; }
+
+// Calendar grid (Sunday-first, documented in PORTAL.md).
+.cal-weekdays { display: flex; }
+.cal-weekday { flex: 1; text-align: center; font-size: $fs-caption; font-weight: 600; color: $light-sub; padding: 11.54px 0; }
+.cal-week { display: flex; }
+.cal-cell {
+  flex: 1; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  border-radius: 15.38px;
+}
+.cal-cell-dim { opacity: 0.35; }
+.cal-cell-today { background: $gemini-soft; border: $hairline solid $gemini-line; }
+.cal-cell-selected { background: $gemini-grad; }
+.cal-cell-day { font-size: $fs-body; font-weight: 600; color: $light-text; }
+.cal-cell-lunar { font-size: 19.23px; color: $light-sub; margin-top: 3.85px; }
+.cal-cell-selected .cal-cell-day, .cal-cell-selected .cal-cell-lunar { color: #ffffff; }
+.cal-cell-mark { font-size: 19.23px; color: $gemini-blue; margin-top: 3.85px; }
+.cal-cell-selected .cal-cell-mark { color: #ffffff; }
+
+// Yi / Ji chips.
+.yi-row { display: flex; flex-wrap: wrap; gap: 11.54px; margin-top: 11.54px; }
+.yi-chip { font-size: $fs-secondary; color: $light-text; background: $light-bubble; border-radius: 999px; padding: 7.69px 15.38px; }
+.ji-chip { font-size: $fs-secondary; color: $light-orange; background: rgba(180, 85, 13, 0.10); border-radius: 999px; padding: 7.69px 15.38px; }
+
+// Yao lines (liuyao): yang = solid bar, yin = broken bar.
+.yao-lines { display: flex; flex-direction: column-reverse; gap: 15.38px; margin: 23.08px 0; }
+.yao-line { display: flex; align-items: center; gap: 15.38px; height: 23.08px; }
+.yao-bar { flex: 1; height: 23.08px; background: $light-text; border-radius: 11.54px; }
+.yao-bar-half { flex: 1; height: 23.08px; background: $light-text; border-radius: 11.54px; }
+.yao-label { width: 76.92px; font-size: $fs-secondary; color: $light-sub; }
+.yao-moving { color: $light-orange; font-size: $fs-secondary; font-weight: 700; }
+
+// Persona cards (astrologers).
+.persona-card {
+  display: flex; gap: 23.08px; align-items: flex-start;
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  padding: 30.77px 23.08px; margin-bottom: $card-gap;
+}
+.persona-avatar {
+  width: 115.38px; height: 115.38px; border-radius: 50%; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+}
+.persona-avatar-1 { background: linear-gradient(135deg, #2a3f66, #346bf0); }
+.persona-avatar-2 { background: linear-gradient(135deg, #a84e7a, #d98cb4); }
+.persona-avatar-3 { background: linear-gradient(135deg, #8a6a1f, #e3ac45); }
+.persona-avatar-4 { background: linear-gradient(135deg, #1e4a3a, #5ec8a7); }
+.persona-body { flex: 1; }
+.persona-name { font-size: $fs-section; font-weight: 700; color: $light-text; }
+.persona-intro { display: block; font-size: $fs-secondary; color: $light-sub; line-height: 1.6; margin-top: 7.69px; }
+
+// MBTI options.
+.qa-option {
+  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  border: $hairline solid $light-divider;
+  border-radius: $radius-card;
+  padding: 30.77px 23.08px; margin-top: $card-gap;
+}
+.qa-option-text { font-size: $fs-body; font-weight: 600; color: $light-text; line-height: 1.5; }
+
+// ---- Dark overrides ----
+.page.theme-dark .tool-card, .page.theme-dark .tool-full-card,
+.page.theme-dark .persona-card, .page.theme-dark .qa-option {
+  background: $card; border-color: $divider;
+}
+.page.theme-dark .tool-card-title, .page.theme-dark .tool-big,
+.page.theme-dark .tool-mid, .page.theme-dark .persona-name,
+.page.theme-dark .qa-option-text, .page.theme-dark .cal-cell-day,
+.page.theme-dark .bar-row-val { color: $text; }
+.page.theme-dark .tool-card-sub, .page.theme-dark .cal-weekday,
+.page.theme-dark .cal-cell-lunar, .page.theme-dark .bar-row-label,
+.page.theme-dark .persona-intro, .page.theme-dark .yao-label { color: $sub; }
+.page.theme-dark .bar-row-track { background: $row; }
+.page.theme-dark .cal-cell-today { background: $gemini-soft; }
+.page.theme-dark .cal-cell-mark { color: $gemini-sky; }
+.page.theme-dark .yi-chip { background: $row; color: $text; }
+.page.theme-dark .yao-bar, .page.theme-dark .yao-bar-half { background: $text; }

@@ -4,21 +4,24 @@ import Taro from '@tarojs/taro';
 import { Card, SegmentedControl } from '../../components/ui';
 import { Icon } from '../../components/icons';
 import { useTheme } from '../../lib/theme';
-import { cloudConfigured } from '../../lib/cloud';
+import { cloudConfigured, loginFlow } from '../../lib/cloud';
 import starMark from '../../assets/logo/star-mark.png';
+import wechatMark from '../../assets/brand/wechat.png';
 import './index.scss';
 
-// Login / register (user's standing login spec, 2026-10-04 + 2026-11-01):
-// international-app style, NO phone/SMS; email + password; login and
-// register share one page with a segmented switch; forgot-password
-// entry; Google / Apple third-party buttons; every control a 999px
-// capsule; primary button = Gemini blue gradient; Lucide icons;
-// light by default (theme-aware like every other page).
-// Honesty rule: no backend for email accounts exists yet (envId and 13
-// user items pending), so submit NEVER fakes a success — unconfigured
-// shows the unconfigured toast, configured shows that the email
-// account function is not open yet. Mode lands from ?mode=login |
-// register | forgot so screenshots can capture each state directly.
+// Login / register (mini-program rule, 2026-11-01 user correction):
+// WeChat one-tap login is PRIMARY (wx.login -> login cloud function,
+// openid from the cloud call context, no JWT invented on the client);
+// email + password is SECONDARY (same page, segmented switch,
+// forgot-password entry). NO Google / Apple buttons: a mini program
+// cannot use Google sign-in, and the old Web/App third-party spec was
+// wrongly copied here. Every control is a 999px capsule; primary =
+// Gemini blue gradient; Lucide icons; light by default.
+// Honesty rule: no backend exists yet (envId and 13 user items
+// pending), so WeChat login NEVER fakes a session — unconfigured
+// shows the unconfigured notice, configured calls the real loginFlow.
+// Mode lands from ?mode=login | register | forgot so screenshots can
+// capture each state directly.
 type Mode = 'login' | 'register' | 'forgot';
 
 function initialMode(): Mode {
@@ -40,12 +43,34 @@ export default function Auth() {
   const [nickname, setNickname] = useState('');
   const [showPwd, setShowPwd] = useState(false);
   const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
 
   const configured = cloudConfigured();
   const dark = theme === 'dark';
 
   function toast(title: string) {
     Taro.showToast({ title, icon: 'none' });
+  }
+
+  // WeChat one-tap login (PRIMARY): wx.login via loginFlow, then the
+  // login cloud function reads openid from the call context. Until the
+  // user provides AppID + envId this is honestly unconfigured — it
+  // never creates a fake session.
+  async function wechatLogin() {
+    if (!configured) {
+      setNotice('云开发未配置：微信登录需用户提供云开发环境 ID 后开通，当前不会登录任何账号。');
+      toast('云开发未配置，微信登录暂不可用');
+      return;
+    }
+    setBusy(true);
+    const res = await loginFlow({});
+    setBusy(false);
+    if (res.ok) {
+      toast('微信登录成功');
+      Taro.navigateBack();
+      return;
+    }
+    setNotice('微信登录失败：' + res.code + '。请稍后重试，或用邮箱登录。');
   }
 
   function submit() {
@@ -66,15 +91,7 @@ export default function Auth() {
       toast('云开发未配置，登录功能暂不可用');
       return;
     }
-    setNotice('邮箱账号体系尚未开通云函数，当前不会创建账号或登录；微信快捷登录随云开发开通后可用。');
-  }
-
-  function thirdParty(name: string) {
-    if (!configured) {
-      toast('云开发未配置，第三方登录暂不可用');
-      return;
-    }
-    setNotice(`${name} 登录尚未开通云函数与厂商 OAuth 配置，当前不会登录任何账号。`);
+    setNotice('邮箱账号体系尚未开通云函数，当前不会创建账号或登录；请用上方微信一键登录。');
   }
 
   function sendReset() {
@@ -102,7 +119,7 @@ export default function Auth() {
       </View>
       <Text className='auth-title'>{mode === 'forgot' ? '找回密码' : mode === 'register' ? '注册账号' : '欢迎回来'}</Text>
       <Text className='auth-sub'>
-        {mode === 'forgot' ? '输入注册邮箱，我们会把重置链接发到你的邮箱。' : '邮箱登录，无需手机号与验证码。'}
+        {mode === 'forgot' ? '输入注册邮箱，我们会把重置链接发到你的邮箱。' : '推荐微信一键登录；邮箱登录无需手机号与验证码。'}
       </Text>
 
       {mode === 'forgot' ? (
@@ -120,6 +137,19 @@ export default function Auth() {
         </Card>
       ) : (
         <View>
+          {/* WeChat one-tap login (PRIMARY): Gemini blue gradient capsule
+              + official WeChat Color mark (Simple Icons verbatim,
+              rasterized from ~/workspace/vendor-logos/svg/WeChat-color.svg,
+              shown inside a white circular chip for legibility on the
+              gradient). UI icons elsewhere stay Lucide; brand marks
+              never come from Lucide glyphs. Email login below is secondary. */}
+          <View className='auth-submit' hoverClass='btn-press' onClick={wechatLogin}>
+            <View className='auth-brand-chip'>
+              <Image className='auth-chip-mark' src={wechatMark} mode='aspectFit' />
+            </View>
+            <Text className='auth-submit-text'>{busy ? '登录中…' : '微信一键登录'}</Text>
+          </View>
+          <View className='auth-divider'><Text className='auth-divider-text'>或用邮箱登录</Text></View>
           <View style={{ marginBottom: '23.08px' }}>
             <SegmentedControl
               options={['登录', '注册']}
@@ -160,20 +190,6 @@ export default function Auth() {
             <View className='auth-submit' hoverClass='btn-press' onClick={submit}>
               <Text className='auth-submit-text'>{mode === 'register' ? '注册' : '登录'}</Text>
             </View>
-            <View className='auth-divider'><Text className='auth-divider-text'>或</Text></View>
-            <View className='auth-third' onClick={() => thirdParty('Google')}>
-              <Icon name='chrome' tone={dark ? 'sky' : 'blue'} size='40px' />
-              <Text className='auth-third-text'>使用 Google 继续</Text>
-            </View>
-            <View className='auth-third' onClick={() => thirdParty('Apple')}>
-              <Icon name='apple' tone={dark ? 'sky' : 'blue'} size='40px' />
-              <Text className='auth-third-text'>使用 Apple 继续</Text>
-            </View>
-            <Text className='auth-note'>
-              登录即代表同意《用户协议》与《隐私政策》。Lucide 无官方 Google /
-              Apple 品牌标，第三方按钮用 Lucide chrome / apple 字形 + 文字表示，
-              不仿造厂商原标。
-            </Text>
           </Card>
         </View>
       )}

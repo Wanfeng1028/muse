@@ -19,7 +19,7 @@ const SVG_DIR = path.join(HERE, '..', 'src', 'assets', 'lucide', 'svg');
 const OUT_DIR = path.join(HERE, '..', 'src', 'assets', 'lucide', 'png');
 const SHELL = process.env.HOME + '/.cache/ms-playwright/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell';
 
-const ICONS = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'chrome', 'apple', 'calendar', 'map-pin', 'clock', 'sparkles', 'arrow-up', 'arrow-right', 'moon', 'sun', 'inbox', 'star', 'gift', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus'];
+const ICONS = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'calendar', 'map-pin', 'clock', 'sparkles', 'arrow-up', 'arrow-right', 'moon', 'sun', 'inbox', 'star', 'gift', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus', 'dices', 'heart', 'briefcase', 'graduation-cap', 'hand-heart', 'brain', 'scroll'];
 const TONES = { blue: '#346bf0', sky: '#8db4ff', gray: '#9a9ba2', white: '#ffffff' };
 
 async function main() {

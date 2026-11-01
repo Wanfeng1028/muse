@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Input, Image } from '@tarojs/components';
-import Taro from '@tarojs/taro';
+import Taro, { useDidShow } from '@tarojs/taro';
 import { loadChart } from '../../lib/chart';
 import { buildDimensions } from '../../lib/interpret';
+import { recordReport } from '../../lib/tools';
+import { takeDimTarget } from '../../lib/nav';
 import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
 import { Ambient, AmbientLight, Card, Disclaimer } from '../../components/ui';
@@ -33,8 +35,16 @@ export default function Interpret() {
   const [dailyUrl, setDailyUrl] = useState('');
   const [busy, setBusy] = useState('');
 
+  // Same tab-staleness rule as Home: 解读 is a tab page, so the local
+  // chart must reload on every show, not just on mount. recordReport
+  // is day-deduped, so re-showing on the same day records nothing new.
+  useDidShow(() => {
+    const c = loadChart();
+    setChart(c);
+    if (c) recordReport();
+  });
+
   useEffect(() => {
-    setChart(loadChart());
     async function boot() {
       if (!cloudConfigured()) return;
       const c = await callFn<AppConfig>('config', { action: 'get' });
@@ -100,13 +110,34 @@ export default function Interpret() {
     else toast('配图链接获取失败');
   }
 
+  // 门户报告列带 ?dim= 进来时，滚动到对应维度（本地 13 维解读，
+  // 无需云端）。锚点在下方每个维度气泡的 id 上。深链有两路：H5
+  // 直链的 router 参数，以及 Tab 切页（switchTab 不带参数）经
+  // lib/nav.ts 存储中转的落点；chart 为空时不取存储（不提前消费）。
+  useEffect(() => {
+    if (!chart) return;
+    const dim = (Taro.getCurrentInstance().router?.params as any)?.dim as string | undefined || takeDimTarget();
+    if (!dim) return;
+    const t = setTimeout(() => {
+      const q = Taro.createSelectorQuery();
+      q.selectViewport().scrollOffset();
+      q.select('#dim-' + dim).boundingClientRect();
+      q.exec((res: any[]) => {
+        const off = res?.[0];
+        const r = res?.[1];
+        if (r) Taro.pageScrollTo({ scrollTop: (off?.scrollTop ?? 0) + r.top - 12, duration: 300 });
+      });
+    }, 500);
+    return () => clearTimeout(t);
+  }, [chart]);
+
   if (!chart) {
     return (
       <View className={'page theme-' + theme}>
         {theme === 'light' ? <AmbientLight /> : <Ambient />}
         <Card title='还没有命盘'>
-          <Text className='muted'>请先在首页排盘，解读会基于该盘生成。AI 解读还需先在命盘图页把当前盘保存到命盘历史。</Text>
-          <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
+          <Text className='muted'>请先排盘，解读会基于该盘生成。AI 解读还需先在命盘图页把当前盘保存到档案管理。</Text>
+          <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.navigateTo({ url: '/pages/birth/index' })}>去排盘</View>
         </Card>
       </View>
     );
@@ -130,7 +161,7 @@ export default function Interpret() {
         <Disclaimer />
       </View>
       {dims.map((d) => (
-        <View key={d.id} className='chat-msg'>
+        <View key={d.id} id={'dim-' + d.id} className='chat-msg'>
           <View className='chat-meta'><View className='chat-dot' /><Text>{d.title} · {d.palaceName}</Text></View>
           <View className='chat-bubble'><Text>{d.body}</Text></View>
           <Disclaimer />
