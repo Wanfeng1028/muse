@@ -29,9 +29,24 @@ export function setTheme(t: Theme): void {
   try { Taro.setStorageSync(KEY, t); } catch { /* storage unavailable: theme stays for this session only */ }
 }
 
+// Native tabBar style follows the theme (2026-11-02 rule 9: the custom
+// floating pill is gone, so the native bar must carry both modes).
+// Defensive: any platform without setTabBarStyle (or called on a
+// non-tab page) just skips; the static app.config colors stay.
+export function applyTabBarStyle(t: Theme): void {
+  try {
+    const p = Taro.setTabBarStyle(t === 'dark' ? {
+      backgroundColor: '#1e1f23', borderStyle: 'black', color: '#9a9ba2', selectedColor: '#8db4ff',
+    } : {
+      backgroundColor: '#f5f6f8', borderStyle: 'white', color: '#9a9ba2', selectedColor: '#346bf0',
+    }) as unknown as Promise<unknown> | undefined;
+    if (p && typeof p.catch === 'function') p.catch(() => {});
+  } catch { /* no tabBar on this page/platform */ }
+}
+
 export function useTheme(): [Theme, (t: Theme) => void] {
   const [theme, setThemeState] = useState<Theme>(getTheme());
-  useDidShow(() => setThemeState(getTheme()));
-  const apply = (t: Theme) => { setTheme(t); setThemeState(t); };
+  useDidShow(() => { setThemeState(getTheme()); applyTabBarStyle(getTheme()); });
+  const apply = (t: Theme) => { setTheme(t); setThemeState(t); applyTabBarStyle(t); };
   return [theme, apply];
 }

@@ -10,7 +10,7 @@
 // v3 gap 2: 38pt 一行有意例外（见 variables.scss）。nowrap + 不收缩：
 // 标题 342pt + 间距 8pt + 光标 15pt = 365pt，自内容左缘起落点
 // 20+365=385pt < 390pt 屏宽，光标伸入右侧内边距区，不折行、不裁切。
-.hero-title { font-size: $fs-hero; font-weight: 600; line-height: 1.15; color: $text; white-space: nowrap; flex-shrink: 0; }
+.hero-title { font-size: $fs-hero; font-weight: 500; line-height: 1.15; color: $text; white-space: nowrap; flex-shrink: 0; }
 .hero-cursor {
   width: $cursor-dot-size;
   height: $cursor-dot-size;

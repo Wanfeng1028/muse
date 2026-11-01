@@ -24,7 +24,6 @@ import {
   type AiResult, type AiImageResult,
 } from '../../lib/cloud';
 import { adSlotLive, showInterstitialOnce } from '../../lib/ads';
-import CustomTabBar from '../../custom-tab-bar';
 import './index.scss';
 
 export default function Interpret() {
@@ -296,7 +295,6 @@ export default function Interpret() {
       </View>
       {tier && !hideBanner(tier as Tier, resolvePricing(config)) ? <BannerAd unitId={adSlotLive(config, 'bannerInterpret')} /> : null}
       {/* H5 fallback mount (weapp injects the custom tabBar natively). */}
-      {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
     </View>
   );
 }

@@ -53,28 +53,26 @@ $sihua-ji: #f08080;
 
 // ---- Type sizes: value (Medley pt) ----
 $fs-welcome: 82.69px; // 43
-// v3 有意例外：首页中文标题 9 字在 43pt 下折两行（v2 残留 R4'），
-// 改 38pt 一行（9×38=342pt < 350pt 内容宽；光标 15pt + 间距 8pt
-// 伸入右侧 20pt 内边距区，落点 385pt < 390pt 屏宽，实测闭合）。
-$fs-hero: 73.08px; // 38，有意例外，见 MEDLEY-COMPARISON.md v3
+// 2026-11-02 spec: hero titles 22 (old 38 exception void).
+$fs-hero: 42.31px; // 22，有意例外，见 MEDLEY-COMPARISON.md v3
 $fs-greeting: 53.85px; // 28
-$fs-page: 38.46px; // 20
+$fs-page: 38.46px; // 20 (icon glyph size only: .mine-arrow; not text)
 $fs-section: 30.77px; // 16
 $fs-body: 30.77px; // 16
-$fs-item: 28.85px; // 15
-$fs-brand: 32.69px; // 17
+$fs-item: 30.77px; // 16
+$fs-brand: 34.62px; // 18
 $fs-pill: 26.92px; // 14
 $fs-secondary: 25.00px; // 13
 $fs-caption: 23.08px; // 12
-$fs-huge: 98.08px; // 51
+$fs-huge: 42.31px; // 22
 $fs-meta: 23.08px; // 12
 
-// ---- Layout round (2026-11-01): editorial type scale ----
-// pt values (rpx = pt × 750/390): display 44 / section 20 / body 15 /
-// small 12. Card titles stay 16 as a sub-level under section titles.
+// ---- Type scale (2026-11-02 spec): titles 22 / 18 / 16, body 16,
+// line-height 1.7, small >= 11. Supersedes the 2026-11-01 layout
+// round scale (display 44 / section 20 / body 15 / small 12).
 // Section rhythm: major-section top gap 40, title-to-content 12,
-// eyebrow-to-title 4. Body 15 = $fs-item, small 12 = $fs-caption.
-$fs-display: 84.62px; // 44
+// eyebrow-to-title 4. Body 16 = $fs-item, small 12 = $fs-caption.
+$fs-display: 42.31px; // 22
 $fs-eyebrow: 21.15px; // 11
 $gap-section-lg: 76.92px; // 40
 $gap-title-content: 23.08px; // 12
@@ -84,16 +82,16 @@ $gap-eyebrow-title: 7.69px; // 4
 $page-padding: 38.46px; // 20
 $section-gap: 53.85px; // 28
 $card-gap: 23.08px; // 12
-$radius-card: 30.77px; // 16
-$radius-button: 50.00px; // 26
-$radius-input: 50.00px; // 26
-$radius-bubble: 38.46px; // 20
-$radius-chip: 38.46px; // 20
+$radius-card: 23.08px; // 12
+$radius-button: 999px; // 999 capsule
+$radius-input: 999px; // 999 capsule
+$radius-bubble: 23.08px; // 12
+$radius-chip: 999px; // 999 capsule
 $radius-sheet: 46.15px; // 24
 $radius-tab: 23.08px; // 12
 $composer-h: 107.69px; // 56
 $composer-btn: 69.23px; // 36
-$button-h: 100.00px; // 52
+$button-h: 84.62px; // 44 (2026-11-02: capsule height reduced one notch from 52)
 $button-h-sm: 92.31px; // 48
 $topbar-h: 92.31px; // 48
 $bubble-px: 30.77px; // 16

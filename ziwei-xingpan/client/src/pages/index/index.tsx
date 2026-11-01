@@ -16,7 +16,6 @@ import starMark from '../../assets/logo/star-mark.png';
 import { BannerAd } from '../../components/ads';
 import { callFn, cloudConfigured, type AppConfig, type MembershipStatus } from '../../lib/cloud';
 import { adSlotLive } from '../../lib/ads';
-import CustomTabBar from '../../custom-tab-bar';
 import './index.scss';
 
 // 首页版式（2026-11-01 纠正后重做，自有版式）：
@@ -77,6 +76,19 @@ export default function Home() {
   // the user computes a chart and switches back to Home. Reload the
   // local chart on every show (same pattern as lib/theme useTheme).
   useDidShow(() => setChart(loadChart()));
+
+  // Welcome entry rule (2026-11-02 user order): no local login state
+  // means show the welcome page first; logged-in users go straight
+  // home. There is NO local login marker yet — loginFlow stores
+  // nothing locally — so until cloud联调 adds one, this defaults to
+  // showing welcome. Mount-only on purpose (never useDidShow): tab
+  // pages stay mounted, so pressing back from welcome lands on this
+  // already-mounted home and never re-bounces into a loop.
+  useEffect(() => {
+    // Automatic (not user-tapped) navigation: if the stack cannot take
+    // it, stay on home instead of surfacing an unhandled rejection.
+    Taro.navigateTo({ url: '/pages/welcome/index' }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (!cloudConfigured()) return;
@@ -221,7 +233,6 @@ export default function Home() {
 
       <Disclaimer />
       {adTier === 'free' ? <BannerAd unitId={adSlotLive(adConfig, 'bannerHome')} /> : null}
-      {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
     </View>
   );
 }

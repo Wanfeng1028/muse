@@ -18,7 +18,7 @@
   color: $light-sub;
   border-radius: $radius-tab;
 }
-.seg-tab-active { background: $light-card; color: $light-text; font-weight: 700; border: $hairline solid $light-divider; }
+.seg-tab-active { background: $light-card; color: $light-text; font-weight: 500; border: $hairline solid $light-divider; }
 // v3 gap 4: 浅色页彩色层级。分段器选中态按类着色（Medley 色相、
 // 为浅底加深至 AA）；卡片左侧 3pt 色条 + 标题同色，类色与分段器一致。
 .seg-tab-star.seg-tab-active { color: $light-blue; border-color: rgba(63, 116, 171, 0.45); }

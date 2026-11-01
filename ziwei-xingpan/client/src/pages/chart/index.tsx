@@ -485,6 +485,34 @@ export default function ChartPage() {
     </Card>
   );
 
+  // Fullscreen chart (2026-11-02 rule 9: no fixed-position popups):
+  // this is an in-flow full-page replacement, not an overlay. The
+  // normal content below is not rendered in this branch.
+  if (fullScreen) {
+    return (
+      <View className={'page theme-' + theme}>
+        <View className='chart-fullscreen'>
+          <View className='chart-fullscreen-bar'>
+            <Text className='chart-fullscreen-title'>全屏命盘（点宫位可切换选中）</Text>
+            <View className='btn-pill btn-pill-black' onClick={() => setFullScreen(false)}>关闭</View>
+          </View>
+          <View className='chart-plate'>
+            <ChartGrid
+              chart={chart}
+              input={input}
+              selectedBranch={selectedBranch}
+              onSelect={setSelected}
+              liunianBranch={liunianBranch}
+              xiaoxianBranch={xiaoxianBranch}
+              scope='chart-grid-full'
+            />
+          </View>
+          {renderDetail(true)}
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View className={'page theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
@@ -570,27 +598,6 @@ export default function ChartPage() {
       </Card>
       </View>
       <Disclaimer />
-
-      {fullScreen ? (
-        <View className='chart-fullscreen'>
-          <View className='chart-fullscreen-bar'>
-            <Text className='chart-fullscreen-title'>全屏命盘（点宫位可切换选中）</Text>
-            <View className='btn-pill btn-pill-black' onClick={() => setFullScreen(false)}>关闭</View>
-          </View>
-          <View className='chart-plate'>
-            <ChartGrid
-              chart={chart}
-              input={input}
-              selectedBranch={selectedBranch}
-              onSelect={setSelected}
-              liunianBranch={liunianBranch}
-              xiaoxianBranch={xiaoxianBranch}
-              scope='chart-grid-full'
-            />
-          </View>
-          {renderDetail(true)}
-        </View>
-      ) : null}
     </View>
   );
 }

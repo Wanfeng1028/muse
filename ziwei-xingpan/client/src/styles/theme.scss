@@ -15,9 +15,8 @@
 .page.theme-light.page-welcome { background: $light-bg; }
 .page.theme-light .muted, .page.theme-light .caption { color: $light-sub; }
 .page.theme-light .card {
-  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  background: $light-card;
   border: $hairline solid $light-divider;
-  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.90), 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
 .page.theme-light .card-title { color: $light-text; }
 .page.theme-light .brand-name { color: $light-text; }
@@ -25,13 +24,13 @@
 .page.theme-light .input-row { border-color: $light-divider; }
 .page.theme-light .input-label { color: $light-sub; }
 .page.theme-light .input-value, .page.theme-light .field-input { color: $light-text; }
+.page.theme-light .input-field { background: $light-card; border-color: $light-divider; color: $light-text; }
 .page.theme-light .btn-medley-outline { border-color: $light-divider; color: $light-text; }
 .page.theme-light .btn-medley-white { border: $hairline solid $light-divider; }
 .page.theme-light .btn-pill-outline-dark { border-color: $light-divider; color: $light-text; }
 .page.theme-light .composer {
   background: $white-btn;
   border: $hairline solid $light-divider;
-  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
 .page.theme-light .composer-label { color: $light-text; }
 .page.theme-light .hero-title { color: $light-text; }
@@ -46,14 +45,12 @@
 // selected label renders grey on the blue gradient.
 .page.theme-light .segctl-dark .segctl-opt-active, .page.theme-light .segctl-light .segctl-opt-active { color: #ffffff; }
 .page.theme-light .chart-plate {
-  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  background: $light-card;
   border: $hairline solid $light-divider;
-  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
 .page.theme-light .palace {
-  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  background: $light-card;
   border: $hairline solid $light-divider;
-  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
 .page.theme-light .palace-branch, .page.theme-light .shensha, .page.theme-light .daxian-age { color: $light-sub; }
 .page.theme-light .palace-name, .page.theme-light .star-major { color: $light-text; }
@@ -86,7 +83,6 @@
 .page.theme-light .chat-bubble {
   background: $white-btn;
   border: $hairline solid $light-divider;
-  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
   color: $light-text;
 }
 .page.theme-light .chat-dot { background: $gemini-blue; }
@@ -95,10 +91,13 @@
 .page.theme-light .ask-composer .composer-input { color: $light-text; }
 
 // ---------- DARK (settings toggle): re-skin light-baseline pages ----------
+// Page background (2026-11-02 fix): the light rule sets $light-bg but
+// no dark counterpart existed, so dark pages showed the white body
+// behind near-white text. $bg #111518 matches the Medley dark base.
+.page.theme-dark { background: $bg; color: $text; }
 .page.theme-dark .card-light {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 45%, rgba(0, 0, 0, 0.10)), $card;
+  background: $card;
   border: $hairline solid rgba(255, 255, 255, 0.10);
-  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.09), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
 }
 .page.theme-dark .muted, .page.theme-dark .caption { color: $sub; }
 .page.theme-dark .card-title { color: $text; }
@@ -115,7 +114,6 @@
 .page.theme-dark .svc-card {
   background: $card;
   border: $hairline solid rgba(255, 255, 255, 0.10);
-  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.09), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
 }
 .page.theme-dark .svc-title { color: $text; }
 .page.theme-dark .svc-sub { color: $sub; }

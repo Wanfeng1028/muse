@@ -1,10 +1,10 @@
 @import '../../styles/variables.scss';
 
-.persona-card { border-radius: 24px; padding: 24px 20px; text-align: center; color: #ffffff; }
+.persona-card { border-radius: 23.08px; padding: 24px 20px; text-align: center; color: #ffffff; }
 .persona-star { display: flex; justify-content: center; margin-bottom: 12px; }
-.persona-name { display: block; font-size: 28px; font-weight: 700; line-height: 1.2; }
-.persona-title { display: block; font-size: $fs-item; font-weight: 600; margin-top: 4px; opacity: 0.95; }
+.persona-name { display: block; font-size: 30.77px; font-weight: 500; line-height: 1.2; }
+.persona-title { display: block; font-size: $fs-item; font-weight: 500; margin-top: 4px; opacity: 0.95; }
 .persona-motif { display: block; font-size: $fs-meta; margin-top: 8px; opacity: 0.85; }
 .persona-note { display: block; font-size: $fs-body; line-height: 1.5; margin-top: 8px; opacity: 0.95; }
 .persona-foot { display: block; font-size: $fs-meta; margin-top: 12px; opacity: 0.7; }
-.persona-custom { width: 100%; border-radius: 16px; margin-top: 12px; }
+.persona-custom { width: 100%; border-radius: 15.38px; margin-top: 12px; }

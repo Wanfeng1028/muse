@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react';
 import { View, Text, Input, Textarea, Image } from '@tarojs/components';
 import Taro, { useDidShow } from '@tarojs/taro';
 import { Ambient, AmbientLight, Card, Disclaimer, SegmentedControl, EmptyState } from '../../components/ui';
-import { Icon, IconBadge, type IconName } from '../../components/icons';
+import { Icon, type IconName } from '../../components/icons';
+import { listProfiles } from '../../lib/profiles';
 import { useTheme } from '../../lib/theme';
-import CustomTabBar from '../../custom-tab-bar';
 import { Toggle, ParticleBurst, LongPressConfirm } from '../../components/interactions';
 import { PosterCard } from '../../components/poster';
 import CompareView from '../../components/compare';
@@ -364,83 +364,137 @@ export default function Mine() {
     return <Text className='muted'>请先点上方“登录”按钮，登录后这里才会加载真实数据。</Text>;
   }
 
-  const header = (
-    <Card light>
-      <Text className='sec-eyebrow'>01 · Account</Text>
-      <View style={{ display: 'flex', alignItems: 'center' }} onClick={() => { if (!user) Taro.navigateTo({ url: '/pages/auth/index' }); }}>
-        <View className='avatar-geo'>
-          <Image className='avatar-mark' src={starMark} mode='aspectFit' />
+  // Reference-mode hero stats (photo-21 structure only): all three
+  // numbers come from real local state. This product has no social
+  // graph, so no follow/fans/likes are shown. Archives = local
+  // profiles + cloud-saved charts; unlocked dims = local unlock sets
+  // (an all-unlocked chart counts as its 13 dims; dims already covered
+  // by an all-unlock are not double-counted).
+  const profileCount = listProfiles().length + savedCharts.length;
+  let unlockedDims = 0;
+  try {
+    const dimSet = (Taro.getStorageSync('zw_unlock_dim_v1') as Record<string, boolean>) || {};
+    const allSet = (Taro.getStorageSync('zw_unlock_all_v1') as Record<string, boolean>) || {};
+    const dimKeys = Object.keys(dimSet).filter((k) => dimSet[k]);
+    const allKeys = Object.keys(allSet).filter((k) => allSet[k]);
+    const covered = dimKeys.filter((k) => allSet[k.slice(0, k.lastIndexOf('|'))]).length;
+    unlockedDims = dimKeys.length - covered + allKeys.length * 13;
+  } catch {
+    unlockedDims = 0;
+  }
+  function tierDisplayName(): string {
+    if (!configured) return '未配置';
+    if (!membership) return user ? '普通' : '未登录';
+    return membership.tier === 'free' ? '普通' : membership.tier.toUpperCase();
+  }
+  const tierName = tierDisplayName();
+  function tierSubText(): string {
+    if (!configured) return '云开发未配置，会员功能暂不可用';
+    if (!membership) return user ? '普通档 · 基础功能' : '登录后查看会员与积分';
+    return tierBenefitsText(config?.pricing.tiers, membership.tier) || '基础功能';
+  }
+  const tierSub = tierSubText();
+  const hero = (
+    <View className='mine-hero'>
+      <Text className='mine-hero-title'>我的</Text>
+      <View className='mine-avatar' onClick={() => { if (!user) Taro.navigateTo({ url: '/pages/auth/index' }); }}>
+        <Image className='mine-avatar-mark' src={starMark} mode='aspectFit' />
+      </View>
+      <Text className='mine-hero-name'>{user?.nickname || '星命盘用户'}</Text>
+      <View className='mine-stats'>
+        <View className='mine-stat'>
+          <Text className='mine-stat-num'>{balance !== null ? balance : '—'}</Text>
+          <Text className='mine-stat-label'>积分余额</Text>
         </View>
-        <View style={{ marginLeft: '12px', flex: 1 }}>
-          <Text className='mine-name'>{user?.nickname || '星命盘用户'}</Text>
-          {membership ? (
-            <Text className='muted'>会员：<Text className={membership.tier === 'free' ? 'mine-tier-free' : membership.tier === 'plus' ? 'mine-tier-plus' : membership.tier === 'max' ? 'mine-tier-max' : 'mine-tier-pro'}>{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}</Text>{membership.expiresAt ? '，到期 ' + formatDateTime(membership.expiresAt) : ''}{membership.autoRenew ? '（连续包月）' : ''}</Text>
-          ) : (
-            <Text className='muted'>{configured ? '登录后可查看会员与积分。' : '云开发未配置，账号功能暂不可用。'}</Text>
-          )}
-          {balance !== null ? <Text className='muted' style={{ display: 'block' }}>积分：<Text className='mine-points-num'>{balance}</Text>（永不过期）</Text> : null}
+        <View className='mine-stat'>
+          <Text className='mine-stat-num'>{profileCount}</Text>
+          <Text className='mine-stat-label'>档案数</Text>
+        </View>
+        <View className='mine-stat'>
+          <Text className='mine-stat-num'>{unlockedDims}</Text>
+          <Text className='mine-stat-label'>已解锁解读</Text>
         </View>
       </View>
-      {!user ? (
-        <View className='btn-medley btn-medley-dark' hoverClass='btn-press' style={{ marginTop: '12px' }} onClick={() => Taro.navigateTo({ url: '/pages/auth/index' })}>登录 / 注册</View>
-      ) : null}
-      <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={() => refreshAll()}>刷新</View>
-      {notice ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{notice}</Text> : null}
-    </Card>
+    </View>
   );
 
+  function mineRow(icon: IconName, tint: string, title: string, sub: string, onRow: (() => void) | null, right?: React.ReactNode) {
+    return (
+      <View className='mine-row' onClick={onRow || undefined}>
+        <View className={'mine-badge ' + tint}>
+          <Icon name={icon} tone={theme === 'dark' ? 'sky' : 'blue'} size='40px' />
+        </View>
+        <View className='mine-row-body'>
+          <Text className='mine-row-title'>{title}</Text>
+          <Text className='mine-row-sub'>{sub}</Text>
+        </View>
+        {right}
+      </View>
+    );
+  }
+  function mineArrow() {
+    return (
+      <View className='mine-row-arrow'>
+        <Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' />
+      </View>
+    );
+  }
+
   if (section === 'member') {
+    // Recharge + membership, same simple-premium language as the mine
+    // main view: airy white cards, big balance number, tier cards with
+    // real config prices only. No discounts invented; when cloud config
+    // is absent no prices are shown at all (honest gate, as before).
     return (
       <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
-        <Card light title='会员中心'>
-          {unconfiguredNote()}{needLoginNote()}
-          {failedHas('会员') ? <Text className='muted'>会员状态加载失败，请点“我的”页刷新重试。</Text> : null}
+        <View className='mine-bal-hero'>
+          <Text className='mine-bal-label'>积分余额</Text>
+          {balance !== null ? <Text className='mine-bal-num'>{balance}</Text> : null}
           {membership ? (
-            <View>
-              <Text className='muted'>当前有效档位：{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}（原始档位 {membership.rawTier}）</Text>
-              <Text className='muted' style={{ display: 'block' }}>到期：{formatDateTime(membership.expiresAt)}；连续包月：{membership.autoRenew ? '已开启' : '未开启'}</Text>
-              {membership.autoRenew ? <View className='btn-medley btn-medley-outline-light' style={{ marginTop: '12px' }} onClick={cancelRenew}>取消连续包月（到期降回普通）</View> : null}
-            </View>
-          ) : null}
-        </Card>
-        <Card light title='购买会员（价目来自云端配置）'>
-          {unconfiguredNote()}{needLoginNote()}
-          {failedHas('配置') ? <Text className='muted'>价目加载失败，不展示价格，请刷新重试。</Text> : null}
-          {config ? PLANS.map((plan) => {
-            const p = config.pricing.plans[plan];
-            if (!p) return null;
-            const pricing = resolvePricing(config);
-            const benefits = tierBenefitsText(config.pricing.tiers, p.tier);
-            return (
-              <View key={plan} style={{ marginBottom: '12px' }}>
-                <View className='input-row'>
-                  <Text className='input-label mine-row-label'>{PLAN_NAMES[plan]}（{p.days} 天）</Text>
-                  <View style={{ display: 'flex', alignItems: 'center' }}>
-                    <Text className='input-value mine-price' style={{ marginRight: '10px' }}>{formatYuan(p.fen)}</Text>
-                    <View className='btn-pill btn-pill-black' onClick={() => buy(plan)}>{busy === 'buy-' + plan ? '处理中…' : '购买'}</View>
-                  </View>
-                </View>
-                <Text className='muted' style={{ display: 'block' }}>得 {p.pointsGrant} 积分，{chatTokenValueLabel(p.pointsGrant, pricing.chat)}{benefits ? '；' + benefits : ''}</Text>
+            <Text className='mine-bal-sub'>当前档位：{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}（原始档位 {membership.rawTier}）{membership.expiresAt ? '，到期 ' + formatDateTime(membership.expiresAt) : ''}{membership.autoRenew ? '（连续包月）' : ''}</Text>
+          ) : (
+            <Text className='mine-bal-sub'>{configured ? '登录后可查看会员与积分。' : '云开发未配置，账号功能暂不可用。'}</Text>
+          )}
+          {membership?.autoRenew ? <View className='mine-row-btn-outline' style={{ marginTop: '12px' }} onClick={cancelRenew}>取消连续包月（到期降回普通）</View> : null}
+        </View>
+        {unconfiguredNote()}{needLoginNote()}
+        {failedHas('会员') ? <Text className='muted'>会员状态加载失败，请点“我的”页刷新重试。</Text> : null}
+        {failedHas('配置') ? <Text className='muted'>价目加载失败，不展示价格，请刷新重试。</Text> : null}
+        {config ? PLANS.map((plan) => {
+          const p = config.pricing.plans[plan];
+          if (!p) return null;
+          const pricing = resolvePricing(config);
+          const benefits = tierBenefitsText(config.pricing.tiers, p.tier);
+          return (
+            <View key={plan} className='mine-tier-card'>
+              <View className='mine-tier-top'>
+                <Text className='mine-tier-name'>{PLAN_NAMES[plan]}（{p.days} 天）</Text>
+                <Text className='mine-tier-price'>{formatYuan(p.fen)}</Text>
               </View>
-            );
-          }) : null}
-          {config?.pricing.cancelNote ? <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>{config.pricing.cancelNote}</Text> : null}
-        </Card>
-        <Card light title='单独充值积分'>
-          <Text className='muted'>1 元 = 50 积分，1 元起充；充值积分永不过期，可用于对话超额与全部功能消费。</Text>
+              <Text className='mine-tier-grant'>得 {p.pointsGrant} 积分，{chatTokenValueLabel(p.pointsGrant, pricing.chat)}</Text>
+              {benefits ? <Text className='mine-tier-benefits'>{benefits}</Text> : null}
+              <View className='mine-row-btn mine-tier-buy' onClick={() => buy(plan)}>{busy === 'buy-' + plan ? '处理中…' : '购买'}</View>
+            </View>
+          );
+        }) : null}
+        {config ? <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>价目来自云端配置。</Text> : null}
+        {config?.pricing.cancelNote ? <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>{config.pricing.cancelNote}</Text> : null}
+        <View className='mine-tier-card'>
+          <Text className='mine-tier-name'>单独充值积分</Text>
+          <Text className='mine-tier-benefits'>1 元 = 50 积分，1 元起充；充值积分永不过期，可用于对话超额与全部功能消费。</Text>
           <View style={{ display: 'flex', alignItems: 'center', marginTop: '12px' }}>
             <Input className='input-field' type='number' value={rechargeYuan} onInput={(e) => setRechargeYuan(e.detail.value)} placeholder='输入元数（整数，≥1）' style={{ flex: 1, marginRight: '10px' }} />
-            <View className='btn-pill btn-pill-black' onClick={() => buyRecharge()}>{busy === 'buy-recharge' ? '处理中…' : '充值'}</View>
+            <View className='mine-row-btn' onClick={() => buyRecharge()}>{busy === 'buy-recharge' ? '处理中…' : '充值'}</View>
           </View>
-        </Card>
-        <Card light title='积分兑换 Pro'>
-          <View className='btn-medley btn-medley-outline-light' style={{ marginBottom: '10px' }} onClick={() => redeem('pro7d')}>{busy === 'redeem-pro7d' ? '处理中…' : '300 积分兑换 7 天 Pro'}</View>
-          <View className='btn-medley btn-medley-outline-light' onClick={() => redeem('pro30d')}>{busy === 'redeem-pro30d' ? '处理中…' : '1500 积分兑换 30 天 Pro'}</View>
-        </Card>
+        </View>
+        <View className='mine-tier-card'>
+          <Text className='mine-tier-name'>积分兑换 Pro</Text>
+          <View className='mine-row-btn-outline' style={{ marginTop: '12px' }} onClick={() => redeem('pro7d')}>{busy === 'redeem-pro7d' ? '处理中…' : '300 积分兑换 7 天 Pro'}</View>
+          <View className='mine-row-btn-outline' style={{ marginTop: '10px' }} onClick={() => redeem('pro30d')}>{busy === 'redeem-pro30d' ? '处理中…' : '1500 积分兑换 30 天 Pro'}</View>
+        </View>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -472,7 +526,6 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -516,7 +569,6 @@ export default function Mine() {
           <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>完整分享海报（含邀请二维码）在三期随海报功能提供；此处先提供小程序码原图。</Text>
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -540,7 +592,6 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -578,7 +629,6 @@ export default function Mine() {
           <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；命盘管理请到档案管理；出生年份可在下方填写，用于未成年人门禁换算（未满 18 岁不可使用付费解读与付费会员）。</Text>
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -609,7 +659,6 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -637,7 +686,6 @@ export default function Mine() {
           ))}
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -653,7 +701,6 @@ export default function Mine() {
           <CompareView charts={savedCharts} aId={compareA} bId={compareB} onA={setCompareA} onB={setCompareB} labelClass='input-label mine-row-label' locked={compareCharge.locked} />
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -664,7 +711,6 @@ export default function Mine() {
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
         {backBtn()}
         <PosterCard chart={localChart} inviteCode={invite?.inviteCode || ''} />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
@@ -684,91 +730,82 @@ export default function Mine() {
           <Text className='legal-body'>{tab.text}</Text>
         </Card>
         <Disclaimer />
-        {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
       </View>
     );
   }
 
-  // Spaced divider-free service cards (s6 pattern): color dot + bold title
-  // + one-line sub + violet arrow. No divider lines, big whitespace.
-  const ROWS: Array<{ label: string; sub: string; icon: IconName; section: Section }> = [
-    { label: '会员中心', sub: 'Plus / Pro / Max 月付，付费即赠积分', icon: 'crown', section: 'member' },
-    { label: '积分中心', sub: '签到、视频、邀请赚积分', icon: 'coins', section: 'points' },
-    { label: '邀请中心', sub: '邀请码与阶梯奖励', icon: 'users', section: 'invite' },
-    { label: '档案管理', sub: '已保存的命盘', icon: 'history', section: 'charts' },
-    { label: '合盘对照', sub: '双方六宫主星对照', icon: 'layers', section: 'compare' },
-    { label: '分享海报', sub: '命盘海报与邀请码', icon: 'share-2', section: 'poster' },
-    { label: '我的订单', sub: '购买与支付记录', icon: 'clipboard-list', section: 'orders' },
-    { label: '设置', sub: '资料、未成年人标记', icon: 'settings', section: 'settings' },
-    { label: '联系客服', sub: '告诉我们你的建议', icon: 'message-square', section: 'feedback' },
-    { label: '关于（含数据来源）', sub: '协议与数据来源', icon: 'info', section: 'legal' },
-  ];
+  // Reference-mode mine main view (photo-21 structure, Medley-simple
+  // premium finish): light wash hero + white group cards. Colors are
+  // Gemini blue only; points copy is ours only (积分， never 星币）.
   return (
     <View className={'page page-light theme-' + theme}>
       {theme === 'light' ? <AmbientLight /> : <Ambient />}
-      {header}
-      <View className='svc-head'>
-        <Text className='sec-eyebrow'>02 · Services</Text>
-        <Text className='svc-heading'>我的服务</Text>
+      {hero}
+      {notice ? <Text className='muted mine-notice'>{notice}</Text> : null}
+      {!user ? (
+        <View className='mine-group'>
+          {mineRow('log-in', 't-blue', '登录 / 注册', '微信一键登录或邮箱登录', () => Taro.navigateTo({ url: '/pages/auth/index' }), mineArrow())}
+        </View>
+      ) : null}
+      <View className='mine-group'>
+        {mineRow('crown', 't-blue', '会员中心', tierSub, () => setSection('member'), (<View style={{ display: 'flex', alignItems: 'center' }}><Text className='mine-row-right'>{tierName}</Text>{mineArrow()}</View>))}
+        <View className='mine-row' onClick={() => setSection('points')}>
+          <View className='mine-badge t-blue'>
+            <Icon name='coins' tone={theme === 'dark' ? 'sky' : 'blue'} size='40px' />
+          </View>
+          <View className='mine-row-body'>
+            <Text className='mine-row-title'>积分中心</Text>
+            <Text className='mine-row-sub'>签到、视频、邀请赚积分</Text>
+          </View>
+          <Text className='mine-row-right'>{balance !== null ? balance + ' 积分' : '—'}</Text>
+          <View className='mine-row-btn' onClick={(e) => { e.stopPropagation(); setSection('member'); }}>充值</View>
+        </View>
       </View>
-      <View className='svc-grid'>
-        {ROWS.map((r) => (
-          <View key={r.section} className='svc-card' onClick={() => setSection(r.section)}>
-            <IconBadge name={r.icon} dark={theme === 'dark'} />
-            <View className='svc-body'>
-              <Text className='svc-title'>{r.label}</Text>
-              <Text className='svc-sub'>{r.sub}</Text>
-            </View>
-            <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
+      <View className='mine-group'>
+        <View className='mine-row'>
+          <View className='mine-badge t-sky'>
+            <Icon name='check' tone={theme === 'dark' ? 'sky' : 'blue'} size='40px' />
           </View>
-        ))}
-        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/profiles/index' })}>
-          <IconBadge name='users' dark={theme === 'dark'} />
-          <View className='svc-body'>
-            <Text className='svc-title'>人物档案（命例库）</Text>
-            <Text className='svc-sub'>一次录入，多人多盘免重填</Text>
+          <View className='mine-row-body'>
+            <Text className='mine-row-title'>签到</Text>
+            <Text className='mine-row-sub'>+10 积分/日</Text>
           </View>
-          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
+          <View className='mine-row-btn' onClick={() => { if (!configured) toast('云开发未配置，签到暂不可用'); else earn('signin'); }}>{busy === 'earn-signin' ? '处理中…' : '签到'}</View>
         </View>
-        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>
-          <IconBadge name='message-square' dark={theme === 'dark'} />
-          <View className='svc-body'>
-            <Text className='svc-title'>AI 对话</Text>
-            <Text className='svc-sub'>结合本盘聊天，每日 2M tokens 免费</Text>
+        <View className='mine-row'>
+          <View className='mine-badge t-sky'>
+            <Icon name='share-2' tone={theme === 'dark' ? 'sky' : 'blue'} size='40px' />
           </View>
-          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
-        </View>
-        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/persona/index' })}>
-          <IconBadge name='star' dark={theme === 'dark'} />
-          <View className='svc-body'>
-            <Text className='svc-title'>人格形象</Text>
-            <Text className='svc-sub'>按主星预设免费，AI 定制 100 积分</Text>
+          <View className='mine-row-body'>
+            <Text className='mine-row-title'>分享</Text>
+            <Text className='mine-row-sub'>+5 积分/日</Text>
           </View>
-          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
+          <View className='mine-row-btn' onClick={() => { if (!configured) toast('云开发未配置，分享暂不可用'); else setSection('poster'); }}>分享</View>
         </View>
-        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/annual/index' })}>
-          <IconBadge name='sun' dark={theme === 'dark'} />
-          <View className='svc-body'>
-            <Text className='svc-title'>年度运势</Text>
-            <Text className='svc-sub'>流年四化与大限，100 积分/次</Text>
-          </View>
-          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
-        </View>
-        <View className='svc-card' onClick={() => Taro.navigateTo({ url: '/pages/demo/index' })}>
-          <IconBadge name='layout-grid' dark={theme === 'dark'} />
-          <View className='svc-body'>
-            <Text className='svc-title'>组件演示</Text>
-            <Text className='svc-sub'>6 个交互组件演示</Text>
-          </View>
-          <View className='svc-arrow-img'><Icon name='chevron-right' tone={theme === 'dark' ? 'sky' : 'blue'} size='38px' /></View>
-        </View>
+      </View>
+      <View className='mine-group'>
+        {mineRow('history', 't-slate', '档案管理', '已保存的命盘', () => setSection('charts'), mineArrow())}
+        {mineRow('layers', 't-slate', '合盘对照', '双方六宫主星对照', () => setSection('compare'), mineArrow())}
+        {mineRow('settings', 't-slate', '设置', '资料、未成年人标记', () => setSection('settings'), mineArrow())}
+        {mineRow('message-square', 't-slate', '联系客服', '告诉我们你的建议', () => setSection('feedback'), mineArrow())}
+        {mineRow('info', 't-slate', '关于（含数据来源）', '协议与数据来源', () => setSection('legal'), mineArrow())}
+      </View>
+      <View className='mine-group'>
+        {mineRow('users', 't-blue', '邀请中心', '邀请码与阶梯奖励', () => setSection('invite'), mineArrow())}
+        {mineRow('share-2', 't-blue', '分享海报', '命盘海报与邀请码', () => setSection('poster'), mineArrow())}
+        {mineRow('clipboard-list', 't-blue', '我的订单', '购买与支付记录', () => setSection('orders'), mineArrow())}
+        {mineRow('users', 't-blue', '人物档案（命例库）', '一次录入，多人多盘免重填', () => Taro.navigateTo({ url: '/pages/profiles/index' }), mineArrow())}
+        {mineRow('message-square', 't-blue', 'AI 对话', '结合本盘聊天，每日 2M tokens 免费', () => Taro.navigateTo({ url: '/pages/chat/index' }), mineArrow())}
+        {mineRow('star', 't-blue', '人格形象', '按主星预设免费，AI 定制 100 积分', () => Taro.navigateTo({ url: '/pages/persona/index' }), mineArrow())}
+        {mineRow('sun', 't-blue', '年度运势', '流年四化与大限，100 积分/次', () => Taro.navigateTo({ url: '/pages/annual/index' }), mineArrow())}
+        {mineRow('layout-grid', 't-blue', '组件演示', '6 个交互组件演示', () => Taro.navigateTo({ url: '/pages/demo/index' }), mineArrow())}
+        {mineRow('refresh-cw', 't-blue', '刷新数据', '重新加载会员、积分与档案', () => refreshAll(), mineArrow())}
       </View>
       <Text className='caption'>
         数据来源：排盘引擎移植自 Renhuai123/ziwei-doushu（MIT，见引擎目录 LICENSE 与 SOURCE.md）。
         内容源自传统紫微斗数文化，仅供学习与娱乐参考，不构成人生决策建议。
       </Text>
       {/* H5 fallback mount (weapp injects the custom tabBar natively). */}
-      {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
     </View>
   );
 }

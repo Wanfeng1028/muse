@@ -23,7 +23,7 @@ $ios-curve: cubic-bezier(0.32, 0.72, 0, 1);
   flex-shrink: 0;
   width: 98px;
   height: 62px;
-  border-radius: 50px;
+  border-radius: 999px;
   background: #76777b;
   transition: background 0.35s $ios-curve;
 }
@@ -37,7 +37,6 @@ $ios-curve: cubic-bezier(0.32, 0.72, 0, 1);
   height: 54px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
   transition: transform 0.35s $ios-curve;
 }
 .ios-toggle.is-on .ios-toggle-knob { transform: translateX(36px); }
@@ -76,7 +75,7 @@ $ios-curve: cubic-bezier(0.32, 0.72, 0, 1);
   background: $black-btn;
   color: $white-btn;
   font-size: $fs-pill;
-  font-weight: 600;
+  font-weight: 500;
   flex-shrink: 0;
 }
 .longpress-hint { font-size: $fs-caption; font-weight: 400; opacity: 0.65; }
@@ -117,7 +116,7 @@ $ios-curve: cubic-bezier(0.32, 0.72, 0, 1);
   left: 0;
   width: 48px;
   height: 5px;
-  border-radius: 3px;
+  border-radius: 15.38px;
   background: $text;
   transition: transform 0.35s $ios-curve, opacity 0.25s ease-out;
 }

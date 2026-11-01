@@ -16,7 +16,7 @@
 .page-light .hero-brand { display: flex; align-items: center; margin-bottom: 38.46px; }
 .brand-mark { width: 48px; height: 48px; flex-shrink: 0; }
 .page-light .hero-title-row { display: block; }
-.page-light .hero-title { display: inline; font-size: $fs-display; font-weight: 600; line-height: 1.15; color: $text; white-space: normal; }
+.page-light .hero-title { display: inline; font-size: $fs-display; font-weight: 500; line-height: 1.15; color: $text; white-space: normal; }
 .page-light .hero-cursor {
   display: inline-block;
   width: $cursor-dot-size;
@@ -29,43 +29,41 @@
 .page-light .hero-sub { color: $light-sub; font-size: $fs-item; line-height: 1.7; display: block; margin-top: 30.77px; }
 .home-secondary { margin-top: $card-gap; }
 
-.home-date { display: block; font-size: $fs-secondary; font-weight: 600; color: $light-sub; margin-bottom: 23.08px; }
+.home-date { display: block; font-size: $fs-secondary; font-weight: 500; color: $light-sub; margin-bottom: 23.08px; }
 .home-sec-head { margin-top: $gap-section-lg; }
-.home-section-title { display: block; font-size: 38.46px; font-weight: 700; color: $light-text; margin: 0 0 $gap-title-content 0; }
+.home-section-title { display: block; font-size: 34.62px; font-weight: 500; color: $light-text; margin: 0 0 $gap-title-content 0; }
 
-// ---- 命盘锚点：深色卡（Medley 深色欢迎卡 pattern），两态下均为视觉锚点 ----
+// ---- 命盘锚点：浅色卡（2026-11-02 规则 8：浅色页内深色锚点卡改浅色；深色模式仍为深卡），两态下均为视觉锚点 ----
 .home-ming-card {
-  background: #141519;
+  background: $light-card;
+  border: $hairline solid $light-divider;
   border-radius: $radius-card;
-  box-shadow: 0 15.38px 38.46px rgba(23, 24, 28, 0.18);
   padding: 38.46px 30.77px;
 }
-.home-ming-kicker { display: block; font-size: $fs-secondary; font-weight: 600; color: #8db4ff; }
-.home-ming-majors { display: block; font-size: 42.31px; font-weight: 700; line-height: 1.3; color: #ffffff; margin-top: 11.54px; }
-.home-ming-meta { display: block; font-size: $fs-secondary; color: #b8bdc9; line-height: 1.6; margin-top: 11.54px; }
-// 深色卡上的次按钮：btn-medley-outline-light 在亮色主题下是深色字，
-// 在深色卡上不可见，故单独立白字描边样式（两态通用）。
-.home-ming-btn { background: transparent; border: $hairline solid rgba(255, 255, 255, 0.45); color: #ffffff; }
+.home-ming-kicker { display: block; font-size: $fs-secondary; font-weight: 500; color: $gemini-blue; }
+.home-ming-majors { display: block; font-size: 42.31px; font-weight: 500; line-height: 1.3; color: $light-text; margin-top: 11.54px; }
+.home-ming-meta { display: block; font-size: $fs-secondary; color: $light-sub; line-height: 1.7; margin-top: 11.54px; }
+// 锚点卡次按钮：亮色卡用深色描边，深色卡用白字描边（深色覆盖）。
+.home-ming-btn { background: transparent; border: $hairline solid $light-divider; color: $light-text; }
 
-// ---- 流年·流月双卡 + 双入口 tiles：浅色卡配方（白渐变 + 细线 + 柔影） ----
+// ---- 流年·流月双卡 + 双入口 tiles：浅色卡配方（扁平白 + 细线） ----
 // 布局轮密度：锚点卡最松（20/16pt），双卡居中（14/10pt），
 // tiles 纵向放开（16/8pt）但内容居中收敛。
 .home-yun-row, .home-tile-row { display: flex; gap: $card-gap; }
 .home-yun-card, .home-tile {
   flex: 1;
-  background: linear-gradient(180deg, #ffffff, #f3f4f6), $light-card;
+  background: $light-card;
   border: $hairline solid $light-divider;
   border-radius: $radius-card;
-  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.90), 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
 .home-yun-card { padding: 26.92px 19.23px; }
 .home-tile { padding: 30.77px 15.38px; }
-.home-yun-kicker { display: block; font-size: $fs-caption; font-weight: 600; color: $light-sub; }
-.home-yun-palace { display: block; font-size: $fs-body; font-weight: 700; color: $light-text; margin-top: 11.54px; }
-.home-yun-stars { display: block; font-size: $fs-secondary; color: $light-text; line-height: 1.5; margin-top: 7.69px; }
-.home-yun-sihua { display: block; font-size: $fs-caption; color: $light-sub; line-height: 1.6; margin-top: 7.69px; }
+.home-yun-kicker { display: block; font-size: $fs-caption; font-weight: 500; color: $light-sub; }
+.home-yun-palace { display: block; font-size: $fs-body; font-weight: 500; color: $light-text; margin-top: 11.54px; }
+.home-yun-stars { display: block; font-size: $fs-secondary; color: $light-text; line-height: 1.7; margin-top: 7.69px; }
+.home-yun-sihua { display: block; font-size: $fs-caption; color: $light-sub; line-height: 1.7; margin-top: 7.69px; }
 .home-tile { display: flex; flex-direction: column; align-items: center; gap: 11.54px; text-align: center; }
-.home-tile-title { font-size: $fs-item; font-weight: 700; color: $light-text; }
+.home-tile-title { font-size: $fs-item; font-weight: 500; color: $light-text; }
 .home-tile-sub { font-size: $fs-caption; color: $light-sub; line-height: 1.5; }
 
 // ---- Dark overrides ----
@@ -74,10 +72,14 @@
 .page.theme-dark .home-date { color: $sub; }
 .page.theme-dark .home-section-title { color: $text; }
 .page.theme-dark .home-ming-card {
-  background: linear-gradient(180deg, #1c2b52, #141519);
+  background: $card;
   border: $hairline solid rgba(141, 180, 255, 0.35);
   box-shadow: none;
 }
+.page.theme-dark .home-ming-kicker { color: #8db4ff; }
+.page.theme-dark .home-ming-majors { color: #ffffff; }
+.page.theme-dark .home-ming-meta { color: #b8bdc9; }
+.page.theme-dark .home-ming-btn { border-color: rgba(255, 255, 255, 0.45); color: #ffffff; }
 .page.theme-dark .home-yun-card, .page.theme-dark .home-tile {
   background: $card; border-color: $divider; box-shadow: none;
 }

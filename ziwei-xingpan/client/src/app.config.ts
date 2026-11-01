@@ -16,23 +16,24 @@ export default {
     'pages/chat/index',
     'pages/persona/index',
     'pages/annual/index',
+    // Welcome splash (2026-11-02 user order): shown on first launch
+    // when no local login marker exists (see home mount-only guard).
+    'pages/welcome/index',
   ],
   tabBar: {
-    custom: true,
-    // List kept for compatibility (WeChat requires list items even with a
-    // custom tabBar); the floating pill in src/custom-tab-bar/ is what
-    // actually renders, with Lucide PNG icons (not the old PNGs below,
-    // which are opaque squares painted on #111518 and only fit the old
-    // native dark bar).
+    // 2026-11-02 rule 9: the floating custom pill is gone (it was
+    // position:fixed). Native tabBar renders from this list; icons
+    // are the central Lucide PNGs (gray unselected, Gemini blue
+    // selected). Dark-mode colors follow via lib/theme setTabBarStyle.
     color: '#9a9ba2',
     selectedColor: '#346bf0',
     backgroundColor: '#f5f6f8',
     borderStyle: 'white',
     list: [
-      { pagePath: 'pages/index/index', text: '首页', iconPath: 'assets/tabbar/home.png', selectedIconPath: 'assets/tabbar/home-active.png' },
-      { pagePath: 'pages/interpret/index', text: '解读', iconPath: 'assets/tabbar/chat.png', selectedIconPath: 'assets/tabbar/chat-active.png' },
-      { pagePath: 'pages/knowledge/index', text: '知识', iconPath: 'assets/tabbar/book.png', selectedIconPath: 'assets/tabbar/book-active.png' },
-      { pagePath: 'pages/mine/index', text: '我的', iconPath: 'assets/tabbar/mine.png', selectedIconPath: 'assets/tabbar/mine-active.png' },
+      { pagePath: 'pages/index/index', text: '首页', iconPath: 'assets/lucide/png/home-gray.png', selectedIconPath: 'assets/lucide/png/home-blue.png' },
+      { pagePath: 'pages/interpret/index', text: '解读', iconPath: 'assets/lucide/png/message-circle-gray.png', selectedIconPath: 'assets/lucide/png/message-circle-blue.png' },
+      { pagePath: 'pages/knowledge/index', text: '知识', iconPath: 'assets/lucide/png/book-open-gray.png', selectedIconPath: 'assets/lucide/png/book-open-blue.png' },
+      { pagePath: 'pages/mine/index', text: '我的', iconPath: 'assets/lucide/png/user-gray.png', selectedIconPath: 'assets/lucide/png/user-blue.png' },
     ],
   },
   window: {

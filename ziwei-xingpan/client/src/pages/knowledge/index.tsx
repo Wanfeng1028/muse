@@ -4,7 +4,6 @@ import Taro from '@tarojs/taro';
 import { STAR_ENTRIES, PALACE_ENTRIES, SIHUA_ENTRIES, PATTERN_ENTRIES } from '../../lib/knowledge';
 import { Ambient, AmbientLight, Card, Cover } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
-import CustomTabBar from '../../custom-tab-bar';
 import './index.scss';
 
 const TABS = [
@@ -37,7 +36,6 @@ export default function Knowledge() {
         </View>
       ))}
       {/* H5 fallback mount (weapp injects the custom tabBar natively). */}
-      {Taro.getEnv() === Taro.ENV_TYPE.WEB ? <CustomTabBar /> : null}
     </View>
   );
 }

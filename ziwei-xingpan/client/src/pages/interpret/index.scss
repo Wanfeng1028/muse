@@ -14,22 +14,19 @@
   align-items: center;
   gap: 11.54px;
   font-size: $fs-secondary;
-  font-weight: 600;
+  font-weight: 500;
   color: $text;
   margin: 53.85px 0 15.38px;
 }
 .ambient + .interp-msg .chat-meta, .ambient-light + .interp-msg .chat-meta { margin-top: 15.38px; }
 .interp-bubble {
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.0) 50%),
-    $card-bubble;
+  background: $card-bubble;
   border: $hairline solid rgba(255, 255, 255, 0.07);
-  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.07);
   border-radius: $radius-bubble;
-  border-top-right-radius: 11.54px;
+  border-top-right-radius: 15.38px;
   padding: $bubble-py $bubble-px;
   font-size: $fs-body;
-  line-height: 1.35;
+  line-height: 1.7;
   color: $text;
 }
 // 已解锁的第二只泡泡（正文）比简述泡泡更松，读起来是展开态。
@@ -41,7 +38,7 @@
   background: $accent;
   flex-shrink: 0;
 }
-.pattern-name { font-weight: 600; color: $text; font-size: $fs-item; }
+.pattern-name { font-weight: 500; color: $text; font-size: $fs-item; }
 .pattern-card { border-left: 5.77px solid $accent; }
 .ask-composer { margin-top: $card-gap; }
 .ask-composer .composer-input { flex: 1; font-size: $fs-item; color: $text; border: none; outline: none; background: transparent; }

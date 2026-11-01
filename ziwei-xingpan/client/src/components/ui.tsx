@@ -4,14 +4,18 @@ import { DISCLAIMER } from '../lib/chart';
 import { Icon } from './icons';
 import './ui.scss';
 
-// v3 ambient layers (gap 1 / gap 4 light half). Pure background Views:
-// no handlers, no text, no layout effect beyond the fixed layer itself.
+// v3 ambient layers REMOVED (2026-11-02 rules 1+9: the layers were
+// fixed-position radial gradients — both banned). The exports stay
+// as documented no-ops so the dozen page call sites need no churn;
+// they render nothing. Re-enable only if the user re-allows fixed
+// gradient layers.
 export function Ambient({ welcome }: { welcome?: boolean }) {
-  return <View className={welcome ? 'ambient ambient-welcome' : 'ambient'} />;
+  void welcome;
+  return null;
 }
 
 export function AmbientLight() {
-  return <View className='ambient-light' />;
+  return null;
 }
 
 export function Card({ title, children, light }: { title?: string; children: ReactNode; light?: boolean }) {
