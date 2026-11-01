@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, Picker, Input, Button } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { PROVINCES } from '../../engine/cities';
@@ -8,6 +8,9 @@ import {
   shichenLabel, shichenRange, shiftDate, loadInput, type BirthFormInput,
 } from '../../lib/chart';
 import { Card } from '../../components/ui';
+import { BannerAd } from '../../components/ads';
+import { callFn, cloudConfigured, type AppConfig, type MembershipStatus } from '../../lib/cloud';
+import { adSlotLive } from '../../lib/ads';
 import './index.scss';
 
 const GENDERS = ['男', '女'];
@@ -21,6 +24,14 @@ export default function Home() {
   const [cityIdx, setCityIdx] = useState(0);
   const [corrections, setCorrections] = useState<string[]>([]);
   const [orig, setOrig] = useState<{ date: string; time: string; branch: number } | null>(null);
+  const [adConfig, setAdConfig] = useState<AppConfig | null>(null);
+  const [adTier, setAdTier] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!cloudConfigured()) return;
+    callFn<AppConfig>('config', { action: 'get' }).then((c) => { if (c.ok && c.data) setAdConfig(c.data); });
+    callFn<MembershipStatus>('membership', { action: 'status' }).then((m) => { if (m.ok && m.data) setAdTier(m.data.tier); });
+  }, []);
 
   const provinces = useMemo(() => PROVINCES.map((p) => p.name), []);
   const cities = useMemo(() => PROVINCES[provIdx]?.cities ?? [], [provIdx]);
@@ -183,6 +194,7 @@ export default function Home() {
         <View className='btn-ghost' style={{ marginTop: '12px' }} onClick={() => Taro.navigateTo({ url: '/pages/chart/index' })}>查看上次命盘</View>
       ) : null}
       <Text className='caption' style={{ display: 'block', marginTop: '12px' }}>地支对照：{BRANCHES.join(' ')}；时辰以两小时为一档，23:00 后属次日子时口径由排盘引擎处理。</Text>
+      {adTier === 'free' ? <BannerAd unitId={adSlotLive(adConfig, 'bannerHome')} /> : null}
     </View>
   );
 }

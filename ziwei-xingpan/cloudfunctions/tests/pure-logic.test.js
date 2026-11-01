@@ -11,6 +11,7 @@ const points = require('../_shared/points');
 const invite = require('../_shared/invite');
 const membership = require('../_shared/membership');
 const quota = require('../_shared/quota');
+const minor = require('../_shared/minor');
 const botsrouter = require('../_shared/botsrouter');
 const seed = require('../_shared/config-seed');
 
@@ -126,6 +127,32 @@ check('grantTier on expired membership grants fresh', function () {
   assert.strictEqual(g.tier, 'pro');
   assert.strictEqual(g.expiresAt.toISOString(), '2026-11-08T00:00:00.000Z');
 });
+// --- minor gate: resolveMinor ---
+check('minor gate: birthYear implies minor under 18', function () {
+  const now = new Date('2026-11-01T00:00:00Z');
+  assert.strictEqual(minor.resolveMinor(null, { birthYear: 2010 }, now).minor, true);
+  assert.strictEqual(minor.resolveMinor(null, { birthYear: 2008 }, now).minor, false);
+  assert.strictEqual(minor.resolveMinor(null, { birthYear: 2009 }, now).minor, true);
+});
+check('minor gate: explicit isMinor sticks over adult birthYear', function () {
+  const now = new Date('2026-11-01T00:00:00Z');
+  assert.strictEqual(minor.resolveMinor(null, { birthYear: 1990, isMinor: true }, now).minor, true);
+});
+check('minor gate: adult birthYear clears a stored minor flag, silence keeps it', function () {
+  const now = new Date('2026-11-01T00:00:00Z');
+  const stored = { minor: true, birthYear: 2010 };
+  assert.strictEqual(minor.resolveMinor(stored, { birthYear: 1990 }, now).minor, false);
+  assert.strictEqual(minor.resolveMinor(stored, {}, now).minor, true);
+  assert.strictEqual(minor.resolveMinor(null, {}, now).minor, false);
+});
+check('minor gate: invalid birthYear is ignored', function () {
+  const now = new Date('2026-11-01T00:00:00Z');
+  assert.strictEqual(minor.resolveMinor(null, { birthYear: 1800 }, now).birthYear, null);
+  assert.strictEqual(minor.resolveMinor(null, { birthYear: '2010' }, now).birthYear, null);
+  assert.strictEqual(minor.isMinorByBirthYear(2010, 2026), true);
+  assert.strictEqual(minor.isMinorByBirthYear(1800, 2026), null);
+});
+
 check('quota degrades at 85 percent by default', function () {
   assert.strictEqual(quota.shouldDegrade(850000, 1000000), true);
   assert.strictEqual(quota.shouldDegrade(849999, 1000000), false);

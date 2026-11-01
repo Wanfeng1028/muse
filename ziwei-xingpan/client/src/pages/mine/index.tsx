@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Input, Textarea, Picker, Image } from '@tarojs/components';
+import { View, Text, Input, Textarea, Picker, Image, Switch } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { Card, Disclaimer } from '../../components/ui';
+import { PosterCard } from '../../components/poster';
+import { loadChart, STORAGE_INPUT, STORAGE_CHART } from '../../lib/chart';
+import type { ZiweiChart } from '../../engine/types';
 import {
   callFn, loginFlow, cloudConfigured, deviceFingerprint, tempFileURL,
   formatYuan, formatDateTime, isPlaceholderAdUnit,
   RULE_LABELS, PLAN_NAMES, ORDER_STATUS_NAMES,
   type CloudUser, type MembershipStatus, type OrderDoc,
-  type LedgerEntry, type InviteInfo, type AppConfig,
+  type LedgerEntry, type InviteInfo, type AppConfig, type SavedChart,
 } from '../../lib/cloud';
 import { PRIVACY_POLICY, TERMS_OF_SERVICE, MINOR_PROTECTION, ABOUT_TEXT } from '../../lib/legal';
 import './index.scss';
 
-type Section = 'main' | 'member' | 'points' | 'invite' | 'orders' | 'settings' | 'feedback' | 'legal';
+type Section = 'main' | 'member' | 'points' | 'invite' | 'orders' | 'settings' | 'feedback' | 'legal' | 'charts' | 'compare' | 'poster';
 type LegalTab = 'privacy' | 'terms' | 'minor' | 'about';
 
 const GENDERS = ['未知', '男', '女'];
@@ -35,11 +38,17 @@ export default function Mine() {
   const [orders, setOrders] = useState<OrderDoc[]>([]);
   const [config, setConfig] = useState<AppConfig | null>(null);
   const [feedbacks, setFeedbacks] = useState<Array<{ content: string; contact: string; status: string; createdAt: string }>>([]);
+  const [savedCharts, setSavedCharts] = useState<SavedChart[]>([]);
+  const [localChart, setLocalChart] = useState<ZiweiChart | null>(null);
+  const [compareA, setCompareA] = useState('');
+  const [compareB, setCompareB] = useState('');
   const [notice, setNotice] = useState('');
   const [failed, setFailed] = useState<string[]>([]);
   const [busy, setBusy] = useState('');
   const [nickname, setNickname] = useState('');
   const [genderIdx, setGenderIdx] = useState(0);
+  const [birthYearStr, setBirthYearStr] = useState('');
+  const [isMinorSwitch, setIsMinorSwitch] = useState(false);
   const [bindCode, setBindCode] = useState('');
   const [fbContent, setFbContent] = useState('');
   const [fbContact, setFbContact] = useState('');
@@ -50,6 +59,7 @@ export default function Mine() {
   const failedHas = (k: string) => failed.indexOf(k) !== -1;
 
   async function refreshAll() {
+    setLocalChart(loadChart());
     if (!configured) {
       setNotice('云开发未配置：登录、会员、积分、邀请、订单功能需用户提供云开发环境 ID 后开通；下方各入口均如实显示未配置状态，不展示虚假数据。');
       return;
@@ -63,6 +73,8 @@ export default function Mine() {
     setUser(login.data.user);
     if (login.data.user.nickname) setNickname(login.data.user.nickname);
     if (login.data.user.gender) setGenderIdx(login.data.user.gender);
+    if (login.data.user.birthYear) setBirthYearStr(String(login.data.user.birthYear));
+    setIsMinorSwitch(!!login.data.user.minor);
     const fails: string[] = [];
     const m = await callFn<MembershipStatus>('membership', { action: 'status' });
     if (m.ok) setMembership(m.data); else fails.push('会员');
@@ -76,6 +88,8 @@ export default function Mine() {
     if (c.ok) setConfig(c.data); else fails.push('配置');
     const f = await callFn<{ feedbacks: Array<{ content: string; contact: string; status: string; createdAt: string }> }>('feedback', { action: 'list' });
     if (f.ok) setFeedbacks(f.data.feedbacks); else fails.push('反馈');
+    const ch = await callFn<{ charts: SavedChart[] }>('charts', { action: 'list' });
+    if (ch.ok) setSavedCharts(ch.data.charts); else fails.push('命盘');
     setFailed(fails);
     if (fails.length > 0) setNotice('以下数据加载失败（不是空数据）：' + fails.join('、') + '。请稍后点“刷新”重试。');
   }
@@ -210,7 +224,13 @@ export default function Mine() {
   }
 
   async function saveSettings() {
-    const res = await loginFlow({ nickname: nickname || undefined, gender: genderIdx });
+    const year = parseInt(birthYearStr, 10);
+    const res = await loginFlow({
+      nickname: nickname || undefined,
+      gender: genderIdx,
+      birthYear: Number.isNaN(year) ? undefined : year,
+      isMinor: isMinorSwitch || undefined,
+    });
     if (res.ok) { setUser(res.data.user); toast('资料已保存'); refreshAll(); }
     else toast('保存失败：' + res.code);
   }
@@ -220,6 +240,35 @@ export default function Mine() {
     const res = await callFn<{ feedbackId: string }>('feedback', { action: 'create', content: fbContent.trim(), contact: fbContact.trim() });
     if (res.ok) { toast('反馈已提交'); setFbContent(''); setFbContact(''); refreshAll(); }
     else toast('提交失败：' + res.code);
+  }
+
+  async function chartAction(action: string, chartId: string) {
+    const res = await callFn<{ chartId: string }>('charts', { action, chartId });
+    if (res.ok) { toast(action === 'remove' ? '已删除' : '已设为默认盘'); refreshAll(); }
+    else toast('操作失败：' + res.code);
+  }
+
+  async function removeChart(chartId: string) {
+    const modal = await Taro.showModal({ title: '删除命盘', content: '删除后不可恢复，确定删除这张命盘吗？' });
+    if (modal.confirm) chartAction('remove', chartId);
+  }
+
+  function loadSavedChart(c: SavedChart) {
+    try {
+      Taro.setStorageSync(STORAGE_INPUT, c.birthParams);
+      Taro.setStorageSync(STORAGE_CHART, c.chartData);
+      setLocalChart(c.chartData);
+      toast('已载入该盘，可到命盘图页查看');
+    } catch {
+      toast('载入失败');
+    }
+  }
+
+  function palaceMajors(c: SavedChart, palaceName: string): string {
+    const p = c.chartData.palaces.find((x) => x.name === palaceName);
+    if (!p) return '—';
+    const majors = p.stars.filter((s) => s.type === 'major').map((s) => s.name);
+    return majors.length ? majors.join(' ') : '无主星';
   }
 
   function backBtn() {
@@ -414,9 +463,18 @@ export default function Mine() {
               <Text className='input-value'>{GENDERS[genderIdx]}</Text>
             </Picker>
           </View>
+          <View className='input-row'>
+            <Text className='input-label'>出生年份</Text>
+            <Input className='field-input' type='number' placeholder='例如 1998（用于未成年人门禁）' value={birthYearStr} onInput={(e) => setBirthYearStr(e.detail.value)} />
+          </View>
+          <View className='input-row'>
+            <Text className='input-label'>我是未成年人</Text>
+            <Switch checked={isMinorSwitch} onChange={(e) => setIsMinorSwitch(e.detail.value)} />
+          </View>
+          {user?.minor ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>当前账号已标记为未成年人：AI 解读、付费会员、积分兑换付费内容均不可用。清除标记需填写成年出生年份后保存。</Text> : null}
           <View className='btn' style={{ marginTop: '12px' }} onClick={saveSettings}>保存资料</View>
           <Text className='muted' style={{ display: 'block', marginTop: '10px' }}>设备指纹（防刷用，本机安装标识，非真实设备号）：{deviceFingerprint()}</Text>
-          <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；删除命盘请到三期命盘历史中操作（本期命盘历史尚未接入）。</Text>
+          <Text className='muted' style={{ display: 'block', marginTop: '6px' }}>取消连续包月请到会员中心操作；命盘管理请到命盘历史；出生年份可在下方填写，用于未成年人门禁换算（未满 18 岁不可使用付费解读与付费会员）。</Text>
         </Card>
         <Disclaimer />
       </View>
@@ -452,6 +510,81 @@ export default function Mine() {
     );
   }
 
+  if (section === 'charts') {
+    return (
+      <View className='page'>
+        {backBtn()}
+        <Card title='命盘历史（多盘管理）'>
+          {unconfiguredNote()}{needLoginNote()}
+          {failedHas('命盘') ? <Text className='muted'>命盘历史加载失败，请刷新重试。</Text> : null}
+          {savedCharts.length === 0 ? <Text className='muted'>暂无保存的命盘。请先在首页排盘，再到命盘图页点“保存到我的命盘”。</Text> : savedCharts.map((c) => (
+            <View key={c._id} style={{ marginBottom: '12px' }}>
+              <View className='input-row'>
+                <Text className='input-label mine-row-label'>{c.name}{c.isDefault ? '（默认盘）' : ''}</Text>
+                <Text className='input-value'>{formatDateTime(c.createdAt)}</Text>
+              </View>
+              <View style={{ display: 'flex', marginTop: '8px' }}>
+                <View className='btn-mini' style={{ marginRight: '8px' }} onClick={() => loadSavedChart(c)}>载入此盘</View>
+                {!c.isDefault ? <View className='btn-mini' style={{ marginRight: '8px' }} onClick={() => chartAction('setDefault', c._id)}>设为默认</View> : null}
+                <View className='btn-mini' onClick={() => removeChart(c._id)}>删除</View>
+              </View>
+            </View>
+          ))}
+        </Card>
+        <Disclaimer />
+      </View>
+    );
+  }
+
+  if (section === 'compare') {
+    const a = savedCharts.find((c) => c._id === compareA) || null;
+    const b = savedCharts.find((c) => c._id === compareB) || null;
+    const palaces = ['命宫', '财帛宫', '官禄宫', '夫妻宫', '疾厄宫', '福德宫'];
+    return (
+      <View className='page'>
+        {backBtn()}
+        <Card title='合盘对照（两盘主星对照）'>
+          {unconfiguredNote()}{needLoginNote()}
+          {savedCharts.length < 2 ? (
+            <Text className='muted'>合盘需要至少两张已保存的命盘，请先保存两张盘再来对照。</Text>
+          ) : (
+            <View>
+              <View className='input-row'>
+                <Text className='input-label'>第一张盘</Text>
+                <Picker mode='selector' range={savedCharts.map((c) => c.name)} value={savedCharts.findIndex((c) => c._id === compareA)} onChange={(e) => setCompareA(savedCharts[Number(e.detail.value)]._id)}>
+                  <Text className='input-value'>{a ? a.name : '请选择'}</Text>
+                </Picker>
+              </View>
+              <View className='input-row'>
+                <Text className='input-label'>第二张盘</Text>
+                <Picker mode='selector' range={savedCharts.map((c) => c.name)} value={savedCharts.findIndex((c) => c._id === compareB)} onChange={(e) => setCompareB(savedCharts[Number(e.detail.value)]._id)}>
+                  <Text className='input-value'>{b ? b.name : '请选择'}</Text>
+                </Picker>
+              </View>
+              {a && b ? palaces.map((p) => (
+                <View key={p} className='input-row'>
+                  <Text className='input-label mine-row-label'>{p}</Text>
+                  <Text className='input-value'>{palaceMajors(a, p)} ｜ {palaceMajors(b, p)}</Text>
+                </View>
+              )) : null}
+              <Text className='caption' style={{ display: 'block', marginTop: '8px' }}>对照仅罗列双方各宫主星，不作合婚、关系或吉凶断言。</Text>
+            </View>
+          )}
+        </Card>
+        <Disclaimer />
+      </View>
+    );
+  }
+
+  if (section === 'poster') {
+    return (
+      <View className='page'>
+        {backBtn()}
+        <PosterCard chart={localChart} inviteCode={invite?.inviteCode || ''} />
+      </View>
+    );
+  }
+
   if (section === 'legal') {
     const tab = LEGAL_TABS.find((t) => t.key === legalTab) || LEGAL_TABS[0];
     return (
@@ -474,6 +607,9 @@ export default function Mine() {
     { label: '会员中心', section: 'member' },
     { label: '积分中心', section: 'points' },
     { label: '邀请中心', section: 'invite' },
+    { label: '命盘历史', section: 'charts' },
+    { label: '合盘对照', section: 'compare' },
+    { label: '分享海报', section: 'poster' },
     { label: '我的订单', section: 'orders' },
     { label: '设置', section: 'settings' },
     { label: '意见反馈', section: 'feedback' },

@@ -84,6 +84,13 @@ exports.main = async (event, context) => {
       if (!def) {
         return fail('INVALID_RULE', '未知消费规则: ' + String(rule));
       }
+      // Minor gate: no points redemption for paid content (advanced
+      // interpretation, AI interpretation, Pro trials). Earning points
+      // is unaffected. AI interpretation via the ai function is gated
+      // there as well, so the two paths cannot bypass each other.
+      if (user.minor) {
+        return fail('MINOR_PAID_BLOCKED', '未成年人不可用积分兑换付费内容');
+      }
       const check = canSpend(rule, user.pointsBalance || 0);
       if (!check.allowed) {
         return fail(check.reason, '积分不足');

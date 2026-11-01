@@ -74,5 +74,32 @@ if (calls.length === 0) {
   console.error('FAIL no callFn call sites found in client source');
   process.exit(1);
 }
+
+// Second pass: dynamic actions passed as plain string arguments to
+// *Action helpers (e.g. chartAction('setDefault', id)) cannot be tied to
+// one callFn site by the scan above. Each such literal must still exist
+// in at least one cloud function source file.
+const serverSources = fs.readdirSync(root, { withFileTypes: true })
+  .filter(function (e) { return e.isDirectory() && fs.existsSync(path.join(root, e.name, 'index.js')); })
+  .map(function (e) { return fs.readFileSync(path.join(root, e.name, 'index.js'), 'utf8'); })
+  .join('\n');
+const dynamicRe = /Action\(\s*'([^']+)'/g;
+const dynamicSeen = new Set();
+for (const file of files) {
+  const text = fs.readFileSync(file, 'utf8');
+  let m;
+  while ((m = dynamicRe.exec(text)) !== null) {
+    if (dynamicSeen.has(m[1])) {
+      continue;
+    }
+    dynamicSeen.add(m[1]);
+    if (serverSources.indexOf("'" + m[1] + "'") === -1) {
+      console.error('FAIL dynamic action missing: ' + m[1] + ' (from ' + path.relative(clientSrc, file) + ')');
+      failures++;
+    } else {
+      console.log('PASS dynamic action ' + m[1]);
+    }
+  }
+}
 console.log(seen.size + ' distinct call sites checked, ' + failures + ' failures');
 process.exit(failures ? 1 : 0);

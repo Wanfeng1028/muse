@@ -74,6 +74,13 @@ exports.main = async (event, context) => {
     if (!user) {
       return fail('USER_NOT_FOUND', '用户不存在，请先调用 login');
     }
+    // Minor gate (before cache: a cached text must not bypass the gate).
+    // Minors get no AI interpretation at all, including Pro monthly free
+    // uses, because AI interpretation is a paid-content service. Free
+    // local interpretation and knowledge content are unaffected.
+    if (user.minor) {
+      return fail('MINOR_AI_BLOCKED', '未成年人不可使用 AI 解读（含会员免费额度），基础解读与知识科普仍可免费使用');
+    }
     const action = event.action;
     if (action !== 'interpret' && action !== 'ask') {
       return fail('UNKNOWN_ACTION', '未知 action: ' + String(action));

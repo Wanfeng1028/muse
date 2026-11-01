@@ -25,14 +25,24 @@
 | BOTSROUTER_API_KEY_NOT_CONFIGURED | 备用通道密钥未配置 |
 | BOTSROUTER_IMAGE_MODEL_NOT_CONFIGURED | 备用生图模型未配置（种子故意留空） |
 | SELF_INVITE / ALREADY_BOUND / INVITE_CODE_NOT_FOUND | 自绑 / 已绑 / 邀请码不存在 |
+| MINOR_AI_BLOCKED | 未成年人不可使用 AI 解读（含会员免费额度），在缓存命中前拦截 |
+| MINOR_PURCHASE_BLOCKED | 未成年人不可购买付费会员（order.create 要求先 login 且用户非未成年人） |
+| MINOR_PAID_BLOCKED | 未成年人不可用积分兑换付费内容（points.spend 全规则拦截） |
 
 ## login
 
-入参：`{ nickname?, avatarUrl?, gender?, deviceFingerprint? }`
-（gender 0 未知 / 1 男 / 2 女）。
+入参：`{ nickname?, avatarUrl?, gender?, deviceFingerprint?, birthYear?, isMinor? }`
+（gender 0 未知 / 1 男 / 2 女；birthYear 为出生年份整数，非法值忽略；
+isMinor 为 true 时标记未成年人，且仅凭成年出生年份可清除该标记）。
 
 出参 data：`{ openid, isNew, user }`。新用户分配专属邀请码
 （openid 哈希派生，冲突重试），`_id` 即 openid，初始积分 0。
+
+未成年人门禁（服务端强制，客户端提示仅作展示）：`ai` 在缓存命中前
+拦截未成年人（MINOR_AI_BLOCKED）；`order.create` 要求用户记录存在且
+非未成年人（MINOR_PURCHASE_BLOCKED）；`points.spend` 对未成年人全规则
+拦截（MINOR_PAID_BLOCKED）。免费排盘、基础解读、知识科普、命盘历史
+不受门禁影响。
 
 ## charts
 

@@ -17,6 +17,8 @@
 | nickname | string | 昵称（最长 64） |
 | avatarUrl | string | 头像 URL（最长 512） |
 | gender | number | 0 未知 / 1 男 / 2 女 |
+| birthYear | number \| null | 出生年份（未成年人门禁换算用，1900–当年之外的非法值不存） |
+| minor | boolean | 是否未成年人：主动声明或出生年份换算未满 18 岁；声明后仅凭成年出生年份可清除 |
 | deviceFingerprint | string | 设备指纹，防刷用（最长 128） |
 | inviteCode | string | 本人专属邀请码，如 ZW + 8 位 |
 | invitedBy | string | 邀请人 openid，未绑定为空串 |

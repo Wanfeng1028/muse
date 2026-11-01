@@ -1,21 +1,105 @@
 import { useEffect, useState } from 'react';
-import { View, Text } from '@tarojs/components';
+import { View, Text, Input, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { loadChart } from '../../lib/chart';
 import { buildDimensions } from '../../lib/interpret';
 import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
 import { Card, Disclaimer } from '../../components/ui';
+import { BannerAd } from '../../components/ads';
+import {
+  callFn, cloudConfigured, tempFileURL,
+  type AppConfig, type MembershipStatus, type SavedChart,
+  type AiResult, type AiImageResult,
+} from '../../lib/cloud';
+import { adSlotLive, showInterstitialOnce } from '../../lib/ads';
 import './index.scss';
 
 export default function Interpret() {
   const [chart, setChart] = useState<ZiweiChart | null>(null);
-  useEffect(() => { setChart(loadChart()); }, []);
+  const [config, setConfig] = useState<AppConfig | null>(null);
+  const [tier, setTier] = useState<string | null>(null);
+  const [defaultChartId, setDefaultChartId] = useState('');
+  const [aiText, setAiText] = useState('');
+  const [aiMeta, setAiMeta] = useState('');
+  const [aiError, setAiError] = useState('');
+  const [question, setQuestion] = useState('');
+  const [askAnswer, setAskAnswer] = useState('');
+  const [dailyUrl, setDailyUrl] = useState('');
+  const [busy, setBusy] = useState('');
+
+  useEffect(() => {
+    setChart(loadChart());
+    async function boot() {
+      if (!cloudConfigured()) return;
+      const c = await callFn<AppConfig>('config', { action: 'get' });
+      if (c.ok && c.data) {
+        setConfig(c.data);
+        showInterstitialOnce(c.data);
+      }
+      const m = await callFn<MembershipStatus>('membership', { action: 'status' });
+      if (m.ok && m.data) setTier(m.data.tier);
+      const list = await callFn<{ charts: SavedChart[] }>('charts', { action: 'list' });
+      if (list.ok && list.data) {
+        const d = list.data.charts.find((x) => x.isDefault) || list.data.charts[0];
+        if (d) setDefaultChartId(d._id);
+      }
+    }
+    boot();
+  }, []);
+
+  function toast(title: string) {
+    Taro.showToast({ title, icon: 'none' });
+  }
+
+  function explainAiError(code: string): string {
+    if (code === 'MINOR_AI_BLOCKED') return '未成年人不可使用 AI 解读（含会员免费额度），基础解读与知识科普仍可免费使用。';
+    if (code === 'INSUFFICIENT_POINTS') return '积分不足：AI 解读需 30 积分（Max 不限次、Pro 每月 20 次免费），请到“我的 → 积分中心”领取或兑换。';
+    if (code === 'AI_UNAVAILABLE') return 'AI 服务暂不可用（主备通道均失败），请稍后重试；未扣积分、未返回伪造文本。';
+    if (code === 'CHART_NOT_FOUND') return '命盘不存在或不属于当前用户，请先在命盘图页保存当前命盘。';
+    return 'AI 调用失败：' + code;
+  }
+
+  async function aiInterpret() {
+    if (!defaultChartId) { toast('请先在命盘图页保存当前命盘'); return; }
+    setBusy('interpret');
+    setAiError('');
+    const res = await callFn<AiResult>('ai', { action: 'interpret', chartId: defaultChartId, interpretType: 'full' });
+    setBusy('');
+    if (!res.ok) { setAiError(explainAiError(res.code)); return; }
+    setAiText(res.data.text);
+    setAiMeta('通道：' + res.data.provider + (res.data.cached ? '（缓存命中，未扣费、未重复调模型）' : '')
+      + (res.data.degraded ? '（已降级到备用通道：' + (res.data.degradedReason || '') + '）' : '')
+      + '；本次扣积分：' + (res.data.chargedPoints || 0));
+  }
+
+  async function aiAsk() {
+    if (!defaultChartId) { toast('请先在命盘图页保存当前命盘'); return; }
+    if (!question.trim()) { toast('请先填写问题'); return; }
+    setBusy('ask');
+    setAiError('');
+    const res = await callFn<AiResult>('ai', { action: 'ask', chartId: defaultChartId, question: question.trim() });
+    setBusy('');
+    if (!res.ok) { setAiError(explainAiError(res.code)); return; }
+    setAskAnswer(res.data.text);
+  }
+
+  async function dailyImage() {
+    if (!defaultChartId) { toast('请先在命盘图页保存当前命盘'); return; }
+    setBusy('daily');
+    const res = await callFn<AiImageResult>('aiImage', { chartId: defaultChartId, kind: 'daily' });
+    setBusy('');
+    if (!res.ok) { toast('今日运势配图失败：' + res.code); return; }
+    const url = await tempFileURL(res.data.fileID);
+    if (url) setDailyUrl(url);
+    else toast('配图链接获取失败');
+  }
+
   if (!chart) {
     return (
       <View className='page'>
         <Card title='还没有命盘'>
-          <Text className='muted'>请先在首页排盘，解读会基于该盘生成。</Text>
+          <Text className='muted'>请先在首页排盘，解读会基于该盘生成。AI 解读还需先在命盘图页把当前盘保存到命盘历史。</Text>
           <View className='btn' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
         </Card>
       </View>
@@ -43,6 +127,51 @@ export default function Interpret() {
           <Disclaimer />
         </Card>
       ))}
+      <Card title='AI 解盘（云开发对话 token 主力，额度不足时切换 BotsRouter 备用）'>
+        {!cloudConfigured() ? (
+          <Text className='muted'>云开发未配置：AI 解读需环境 ID 后开通，当前不展示虚假解读。</Text>
+        ) : !defaultChartId ? (
+          <Text className='muted'>请先在命盘图页点“保存到我的命盘”，AI 解读基于已保存的命盘进行（同一命盘按盘 hash 缓存，命中不扣费）。</Text>
+        ) : (
+          <View>
+            <View className='btn' onClick={aiInterpret}>{busy === 'interpret' ? '生成中…' : 'AI 解盘（本盘）'}</View>
+            {aiText ? <Text className='dim-body' style={{ display: 'block', marginTop: '12px' }}>{aiText}</Text> : null}
+            {aiMeta ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiMeta}</Text> : null}
+            {aiError ? <Text className='muted' style={{ display: 'block', marginTop: '8px' }}>{aiError}</Text> : null}
+            <Disclaimer />
+          </View>
+        )}
+      </Card>
+      <Card title='AI 问答（就本盘提问，不缓存）'>
+        {!cloudConfigured() ? (
+          <Text className='muted'>云开发未配置，AI 问答暂不可用。</Text>
+        ) : !defaultChartId ? (
+          <Text className='muted'>请先在命盘图页保存当前命盘。</Text>
+        ) : (
+          <View>
+            <View className='input-row'>
+              <Text className='input-label'>问题</Text>
+              <Input className='field-input' placeholder='例如：今年财帛方面宜注意什么' value={question} onInput={(e) => setQuestion(e.detail.value)} />
+            </View>
+            <View className='btn' style={{ marginTop: '12px' }} onClick={aiAsk}>{busy === 'ask' ? '思考中…' : '提问'}</View>
+            {askAnswer ? <Text className='dim-body' style={{ display: 'block', marginTop: '12px' }}>{askAnswer}</Text> : null}
+            <Disclaimer />
+          </View>
+        )}
+      </Card>
+      <Card title='今日运势配图（AI 生图，按日期 + 盘 hash 缓存）'>
+        {!cloudConfigured() ? (
+          <Text className='muted'>云开发未配置，生图暂不可用。</Text>
+        ) : !defaultChartId ? (
+          <Text className='muted'>请先在命盘图页保存当前命盘。</Text>
+        ) : (
+          <View>
+            <View className='btn-ghost' onClick={dailyImage}>{busy === 'daily' ? '生成中…' : '生成今日运势配图'}</View>
+            {dailyUrl ? <Image src={dailyUrl} style={{ width: '100%', height: '220px', marginTop: '12px', borderRadius: '16px' }} /> : null}
+          </View>
+        )}
+      </Card>
+      {tier === 'free' ? <BannerAd unitId={adSlotLive(config, 'bannerInterpret')} /> : null}
     </View>
   );
 }

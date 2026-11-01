@@ -18,7 +18,7 @@
 
 const cloud = require('wx-server-sdk');
 const { ok, fail, requireOpenid } = require('./shared/errors');
-const { getConfigDoc, getMembership, upsertMembership } = require('./shared/db-helpers');
+const { getConfigDoc, getMembership, upsertMembership, getUser } = require('./shared/db-helpers');
 const { grantTier } = require('./shared/membership');
 const { SEED_CONFIGS } = require('./shared/config-seed');
 
@@ -96,6 +96,17 @@ exports.main = async (event, context) => {
       return ok({ orders: res.data });
     }
     if (action === 'create') {
+      // Minor gate: paid membership purchase is refused for minors.
+      // The user record is required here (call login first, per API doc);
+      // without it the gate cannot be evaluated, so the order is refused
+      // rather than silently allowed.
+      const buyer = await getUser(db, openid);
+      if (!buyer) {
+        return fail('USER_NOT_FOUND', '用户不存在，请先调用 login');
+      }
+      if (buyer.minor) {
+        return fail('MINOR_PURCHASE_BLOCKED', '未成年人不可购买付费会员，免费功能仍可正常使用');
+      }
       const pricing = await getConfigDoc(db, 'pricing', SEED_CONFIGS);
       if (!pricing.doc || !pricing.doc.plans || !pricing.doc.plans[event.plan]) {
         return fail('UNKNOWN_PLAN', '未知套餐: ' + String(event.plan), { fromSeed: pricing.fromSeed });

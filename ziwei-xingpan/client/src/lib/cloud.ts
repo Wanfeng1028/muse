@@ -1,4 +1,5 @@
 import Taro from '@tarojs/taro';
+import type { ZiweiChart } from '../engine/types';
 
 // Cloud function client layer for 紫微星盘.
 // Rules:
@@ -100,6 +101,8 @@ export async function loginFlow(profile: {
   nickname?: string;
   avatarUrl?: string;
   gender?: number;
+  birthYear?: number;
+  isMinor?: boolean;
 }): Promise<CloudResult<{ openid: string; isNew: boolean; user: CloudUser }>> {
   try {
     await Taro.login();
@@ -110,6 +113,8 @@ export async function loginFlow(profile: {
     nickname: profile.nickname || '',
     avatarUrl: profile.avatarUrl || '',
     gender: profile.gender || 0,
+    birthYear: profile.birthYear || 0,
+    isMinor: profile.isMinor || false,
     deviceFingerprint: deviceFingerprint(),
   });
 }
@@ -119,6 +124,8 @@ export interface CloudUser {
   nickname?: string;
   avatarUrl?: string;
   gender?: number;
+  birthYear?: number | null;
+  minor?: boolean;
   inviteCode?: string;
   invitedBy?: string;
   pointsBalance?: number;
@@ -161,6 +168,36 @@ export interface InviteInfo {
   grantedTiers: number[];
 }
 
+export interface SavedChart {
+  _id: string;
+  name: string;
+  birthParams: Record<string, unknown>;
+  chartData: ZiweiChart;
+  chartHash: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AiResult {
+  text: string;
+  cached: boolean;
+  provider: string;
+  degraded: boolean;
+  degradedReason?: string | null;
+  quotaUsedToday?: number;
+  quotaBudget?: number;
+  chargedPoints?: number;
+  disclaimer: string;
+}
+
+export interface AiImageResult {
+  fileID: string;
+  cached: boolean;
+  provider: string;
+  degraded: boolean;
+  degradedReason?: string | null;
+}
 export interface AppConfig {
   ads: {
     bannerHome: string;

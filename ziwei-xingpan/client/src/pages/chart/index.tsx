@@ -3,6 +3,7 @@ import { View, Text } from '@tarojs/components';
 import Taro from '@tarojs/taro';
 import { Solar } from 'lunar-javascript';
 import { loadChart, loadInput, stemBranchLabel, branchLabel, formatDate } from '../../lib/chart';
+import { callFn, cloudConfigured } from '../../lib/cloud';
 import { getDaXianIndexForYear, getDaXianStartYear } from '../../engine/yunxian-context';
 import { getLiuNianSiHua, getLiuYueSiHua } from '../../engine/sihua';
 import { jiangQianShenName, suiQianShenName, boshiShenName } from '../../engine/shier-shen';
@@ -54,7 +55,31 @@ function PalaceCell({ p, chart }: { p: Palace; chart: ZiweiChart }) {
 export default function ChartPage() {
   const [chart, setChart] = useState<ZiweiChart | null>(null);
   const [input, setInput] = useState(loadInput());
+  const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
   useEffect(() => { setChart(loadChart()); setInput(loadInput()); }, []);
+
+  async function saveChart() {
+    if (!chart || !input) return;
+    if (!cloudConfigured()) {
+      Taro.showToast({ title: '云开发未配置，命盘历史需环境 ID 后开通', icon: 'none' });
+      return;
+    }
+    setSaving(true);
+    const res = await callFn<{ chartId: string }>('charts', {
+      action: 'create',
+      name: chart.birthInfo.name || '我的命盘',
+      birthParams: input,
+      chartData: chart,
+    });
+    setSaving(false);
+    if (res.ok) {
+      setSaved(true);
+      Taro.showToast({ title: '已保存到我的命盘', icon: 'none' });
+    } else {
+      Taro.showToast({ title: '保存失败：' + res.code, icon: 'none' });
+    }
+  }
 
   if (!chart) {
     return (
@@ -104,6 +129,13 @@ export default function ChartPage() {
           return <PalaceCell key={b} p={byBranch(b)} chart={chart} />;
         })}
       </View>
+
+      <View className='btn' style={{ marginBottom: '12px' }} onClick={saveChart}>
+        {saving ? '保存中…' : saved ? '已保存，去“我的 → 命盘历史”查看' : '保存到我的命盘'}
+      </View>
+      {saved ? (
+        <View className='btn-ghost' style={{ marginBottom: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/mine/index' })}>去我的页查看命盘历史</View>
+      ) : null}
 
       <Card title='大运'>
         {chart.daXians.map((d, i) => (

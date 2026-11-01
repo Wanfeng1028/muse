@@ -84,8 +84,8 @@
 ## 本地检查
 
 - 语法：`for f in login charts membership order points invite ai aiImage config feedback; do node --check $f/index.js; done`
-- 纯逻辑测试：`node cloudfunctions/tests/pure-logic.test.js`（16 项，含积分规则、
-  邀请阶梯、盘 hash、缓存键、额度阈值、种子价目、不降级发放）
+- 纯逻辑测试：`node cloudfunctions/tests/pure-logic.test.js`（20 项，含积分规则、
+  邀请阶梯、盘 hash、缓存键、额度阈值、种子价目、不降级发放、未成年人门禁）
 - 接口契约检查：`node cloudfunctions/tests/contract-check.js`（客户端每个
   callFn 调用点在服务端都有对应函数与 action，无真实云环境时以此
   代替联调；真实云端调用仍需 envId 后复测）
