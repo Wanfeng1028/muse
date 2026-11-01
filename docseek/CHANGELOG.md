@@ -1,3 +1,21 @@
+## Unreleased（2026-11-02）——CLI serve --port 超范围返回错误
+
+问题
+
+serve --port 大于 65535 的值此前被静默接受，且超大值经 static_cast<int> 截断后可能 wraps 成看似合法的端口，调用方传错参数无法在解析期发现。
+
+修复
+
+docseek/src/main.cpp 的 serve --port 分支：解析结果先存入 long long 变量，尾随字符校验不变；再加范围校验，值小于 0 或大于 65535 时打印错误：--port 参数无效并 return 1；通过后才把值赋给 serveOpts.port。0 表示自动分配端口的既有语义保留；负数、尾随字符、缺参的既有报错文案与 return 1 一字不动；其他分支一字不动。
+
+验证
+
+cmake --build build --target docseek 成功；重建后的二进制在 1 文档小库上检查通过：serve --port 70000、9999999999、-1、65535x、65536、abc 均退出码 1 且 stderr 为错误：--port 参数无效；合法端口真实服务冒烟：建 1 文档库并索引成功，起 serve 后 /api/health 返回 ok 且版本 0.37.0，/api/search?q=hello 命中该文档，随后服务已停、端口复查已关。
+
+无变更
+
+无测试锁定旧语义；本轮未新增 gtest 文件（CLI 参数校验历来走真实二进制检查）；本轮未运行全量 ctest；无版本变更、无 schema 变更、无 UI 改动。
+
 ## Unreleased（2026-10-31）——CLI --max-mb 非正数返回错误
 
 ### 问题

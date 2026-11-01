@@ -737,16 +737,17 @@ int main(int argc, char** argv) {
             try {
                 const std::string raw = argv[++i];
                 std::size_t pos = 0;
-                serveOpts.port = static_cast<int>(std::stoll(raw, &pos));
+                const long long llPort = std::stoll(raw, &pos);
                 if (pos != raw.size()) {
                     std::cerr << "错误：--port 参数无效\n";
                     return 1;
                 }
+                if (llPort < 0 || llPort > 65535) {
+                    std::cerr << "错误：--port 参数无效\n";
+                    return 1;
+                }
+                serveOpts.port = static_cast<int>(llPort);
             } catch (...) {
-                std::cerr << "错误：--port 参数无效\n";
-                return 1;
-            }
-            if (serveOpts.port < 0) {
                 std::cerr << "错误：--port 参数无效\n";
                 return 1;
             }
