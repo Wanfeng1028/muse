@@ -5,6 +5,7 @@ import { Card, SegmentedControl } from '../../components/ui';
 import { Icon } from '../../components/icons';
 import { useTheme } from '../../lib/theme';
 import { cloudConfigured, loginFlow } from '../../lib/cloud';
+import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '../../lib/legal';
 import starMark from '../../assets/logo/star-mark.png';
 import wechatMark from '../../assets/brand/wechat.png';
 import './index.scss';
@@ -20,16 +21,16 @@ import './index.scss';
 // Honesty rule: no backend exists yet (envId and 13 user items
 // pending), so WeChat login NEVER fakes a session — unconfigured
 // shows the unconfigured notice, configured calls the real loginFlow.
-// Mode lands from ?mode=login | register | forgot so screenshots can
-// capture each state directly.
-type Mode = 'login' | 'register' | 'forgot';
+// Mode lands from ?mode=login | register | forgot | terms | privacy so
+// screenshots can capture each state directly.
+type Mode = 'login' | 'register' | 'forgot' | 'terms' | 'privacy';
 
 function initialMode(): Mode {
   try {
     // Taro's router params are loosely typed (same any-as-API pattern as
     // currentPath in custom-tab-bar); guarded by the value check below.
     const m = (Taro.getCurrentInstance() as any)?.router?.params?.mode;
-    if (m === 'register' || m === 'forgot') return m;
+    if (m === 'register' || m === 'forgot' || m === 'terms' || m === 'privacy') return m;
   } catch { /* default login */ }
   return 'login';
 }
@@ -109,7 +110,7 @@ export default function Auth() {
 
   return (
     <View className={'page theme-' + theme}>
-      <View className='auth-back' onClick={() => Taro.navigateBack()}>
+      <View className='auth-back' onClick={() => { if (mode === 'terms' || mode === 'privacy') setMode('login'); else Taro.navigateBack(); }}>
         <Icon name='chevron-left' tone={dark ? 'sky' : 'blue'} size='40px' />
         <Text className='auth-back-text'>返回</Text>
       </View>
@@ -117,12 +118,21 @@ export default function Auth() {
         <Image className='auth-brand-mark' src={starMark} mode='aspectFit' />
         <Text className='brand-name'>紫微星盘</Text>
       </View>
-      <Text className='auth-title'>{mode === 'forgot' ? '找回密码' : mode === 'register' ? '注册账号' : '欢迎回来'}</Text>
-      <Text className='auth-sub'>
-        {mode === 'forgot' ? '输入注册邮箱，我们会把重置链接发到你的邮箱。' : '推荐微信一键登录；邮箱登录无需手机号与验证码。'}
-      </Text>
+      <Text className='auth-title'>{mode === 'terms' ? '服务条款' : mode === 'privacy' ? '隐私政策' : mode === 'forgot' ? '找回密码' : mode === 'register' ? '注册账号' : '欢迎回来'}</Text>
+      {mode === 'terms' || mode === 'privacy' ? null : (
+        <Text className='auth-sub'>
+          {mode === 'forgot' ? '输入注册邮箱，我们会把重置链接发到你的邮箱。' : '推荐微信一键登录；邮箱登录无需手机号与验证码。'}
+        </Text>
+      )}
 
-      {mode === 'forgot' ? (
+      {mode === 'terms' || mode === 'privacy' ? (
+        <View>
+          <Text className='auth-legal-body'>{mode === 'terms' ? TERMS_OF_SERVICE : PRIVACY_POLICY}</Text>
+          <View className='auth-submit' hoverClass='btn-press' onClick={() => setMode('login')}>
+            <Text className='auth-submit-text'>返回登录</Text>
+          </View>
+        </View>
+      ) : mode === 'forgot' ? (
         <Card>
           <View className='auth-row'>
             <Icon name='mail' tone={dark ? 'sky' : 'blue'} size='40px' />
@@ -137,19 +147,6 @@ export default function Auth() {
         </Card>
       ) : (
         <View>
-          {/* WeChat one-tap login (PRIMARY): Gemini blue gradient capsule
-              + official WeChat Color mark (Simple Icons verbatim,
-              rasterized from ~/workspace/vendor-logos/svg/WeChat-color.svg,
-              shown inside a white circular chip for legibility on the
-              gradient). UI icons elsewhere stay Lucide; brand marks
-              never come from Lucide glyphs. Email login below is secondary. */}
-          <View className='auth-submit' hoverClass='btn-press' onClick={wechatLogin}>
-            <View className='auth-brand-chip'>
-              <Image className='auth-chip-mark' src={wechatMark} mode='aspectFit' />
-            </View>
-            <Text className='auth-submit-text'>{busy ? '登录中…' : '微信一键登录'}</Text>
-          </View>
-          <View className='auth-divider'><Text className='auth-divider-text'>或用邮箱登录</Text></View>
           <View style={{ marginBottom: '23.08px' }}>
             <SegmentedControl
               options={['登录', '注册']}
@@ -191,12 +188,36 @@ export default function Auth() {
               <Text className='auth-submit-text'>{mode === 'register' ? '注册' : '登录'}</Text>
             </View>
           </Card>
+          <View className='auth-divider'><Text className='auth-divider-text'>或用微信登录</Text></View>
+          {/* WeChat one-tap login (PRIMARY, recommended; placed below email
+              per user order 2026-11-01): Gemini blue gradient capsule
+              + official WeChat Color mark (Simple Icons verbatim,
+              rasterized from ~/workspace/vendor-logos/svg/WeChat-color.svg,
+              shown inside a white circular chip for legibility on the
+              gradient). UI icons elsewhere stay Lucide; brand marks
+              never come from Lucide glyphs. */}
+          <View className='auth-submit' hoverClass='btn-press' onClick={wechatLogin}>
+            <View className='auth-brand-chip'>
+              <Image className='auth-chip-mark' src={wechatMark} mode='aspectFit' />
+            </View>
+            <Text className='auth-submit-text'>{busy ? '登录中…' : '微信一键登录'}</Text>
+          </View>
+          <View className='auth-agreement'>
+            <Text className='auth-agreement-text'>登录/注册即代表你已阅读并同意</Text>
+            <Text className='auth-agreement-link' onClick={() => setMode('terms')}>《服务条款》</Text>
+            <Text className='auth-agreement-text'>与</Text>
+            <Text className='auth-agreement-link' onClick={() => setMode('privacy')}>《隐私政策》</Text>
+          </View>
         </View>
       )}
-      {notice ? <Text className='muted' style={{ display: 'block', marginTop: '23.08px' }}>{notice}</Text> : null}
-      <Text className='caption' style={{ display: 'block', marginTop: '23.08px' }}>
-        账号体系说明：当前版本账号功能依赖云开发（环境 ID 待用户提供）；未开通前本页只做表单与提示，不产生任何登录态。
-      </Text>
+      {mode === 'terms' || mode === 'privacy' ? null : (
+        <View>
+          {notice ? <Text className='muted' style={{ display: 'block', marginTop: '23.08px' }}>{notice}</Text> : null}
+          <Text className='caption' style={{ display: 'block', marginTop: '23.08px' }}>
+            账号体系说明：当前版本账号功能依赖云开发（环境 ID 待用户提供）；未开通前本页只做表单与提示，不产生任何登录态。
+          </Text>
+        </View>
+      )}
     </View>
   );
 }

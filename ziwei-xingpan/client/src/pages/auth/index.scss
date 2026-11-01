@@ -40,6 +40,10 @@
 .auth-divider { display: flex; align-items: center; justify-content: center; margin: 30.77px 0; }
 .auth-divider-text { font-size: $fs-secondary; color: $light-dim; }
 .auth-switch { display: flex; justify-content: center; margin-top: 23.08px; }
+.auth-agreement { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; margin-top: 30.77px; }
+.auth-agreement-text { font-size: $fs-secondary; line-height: 1.6; color: $light-sub; }
+.auth-agreement-link { font-size: $fs-secondary; font-weight: 600; line-height: 1.6; color: $gemini-blue; }
+.auth-legal-body { display: block; white-space: pre-wrap; font-size: $fs-body; line-height: 1.8; color: $light-text; }
 
 // ---------- Dark ----------
 .page.theme-dark .auth-back-text { color: $sub; }
@@ -49,3 +53,6 @@
 .page.theme-dark .auth-input { color: $text; }
 .page.theme-dark .auth-link { color: $gemini-sky; }
 .page.theme-dark .auth-divider-text { color: $dim; }
+.page.theme-dark .auth-agreement-text { color: $sub; }
+.page.theme-dark .auth-agreement-link { color: $gemini-sky; }
+.page.theme-dark .auth-legal-body { color: $text; }
