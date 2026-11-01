@@ -16,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 class UsageServiceByRunDeepTestR4 {
@@ -47,19 +48,15 @@ class UsageServiceByRunDeepTestR4 {
     }
 
     @Test
-    void byRun_limitZero_defaultsTo20() {
-        Run run = persistRun("goal-zero-" + System.nanoTime(), null, null, LocalDateTime.now());
-        List<UsageService.RunUsage> result = usageService.byRun(0);
-        UsageService.RunUsage found = findById(result, run.getId());
-        assertNotNull(found);
+    void byRun_limitZero_throwsIllegalArgument() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> usageService.byRun(0));
+        assertEquals("limit 参数非法", ex.getMessage());
     }
 
     @Test
-    void byRun_negativeLimit_defaultsTo20() {
-        Run run = persistRun("goal-neg-" + System.nanoTime(), null, null, LocalDateTime.now());
-        List<UsageService.RunUsage> result = usageService.byRun(-5);
-        UsageService.RunUsage found = findById(result, run.getId());
-        assertNotNull(found);
+    void byRun_negativeLimit_throwsIllegalArgument() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> usageService.byRun(-5));
+        assertEquals("limit 参数非法", ex.getMessage());
     }
 
     @Test

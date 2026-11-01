@@ -24,6 +24,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 /**
  * UsageService 单元测试（Mockito）：覆盖空库、空值跳过、byModel 分组。
@@ -538,15 +540,10 @@ class UsageServiceTest {
     }
 
     @Test
-    void D1_byRun的limit非正用默认20() {
-        when(runRepository.findAllByOrderByCreatedAtDesc(any())).thenReturn(List.of());
-
-        usageService.byRun(0);
-
-        ArgumentCaptor<PageRequest> captor = ArgumentCaptor.forClass(PageRequest.class);
-        verify(runRepository).findAllByOrderByCreatedAtDesc(captor.capture());
-        assertThat(captor.getValue().getPageSize()).isEqualTo(20);
-        assertThat(captor.getValue().getPageNumber()).isEqualTo(0);
+    void D1_byRun的limit非正抛错() {
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> usageService.byRun(0));
+        assertEquals("limit 参数非法", ex.getMessage());
+        verify(runRepository, never()).findAllByOrderByCreatedAtDesc(any());
     }
 
     @Test

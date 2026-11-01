@@ -5,6 +5,20 @@
 
 ## [Unreleased]
 
+### Fixed（2026-11-02 深耕轮：用量按运行聚合服务层 limit 收紧）
+
+**现象**：
+控制器 GET /api/usage/by-run 对非法 limit 已返回 400，而服务层 UsageService.byRun 此前对 limit 小于等于 0 静默回落为默认 20、对大于 500 不设上限，两层口径不一致，直接调服务层的调用方传错参数无法发现。
+
+**修复**：
+在服务层 UsageService.byRun 收紧 limit 参数校验，当 limit 小于 1 或大于 500 时抛出 IllegalArgumentException，错误消息逐字为“limit 参数非法”。删除了 effectiveLimit 中间变量与不再使用的 DEFAULT_RUN_LIMIT 常量，并在 byRun 的 Javadoc 中增加了 limit 范围说明。
+
+**测试**：
+新增 UsageServiceByRunLimitValidationTest（5 例全绿）；改写 UsageServiceTest 的 D1 与 UsageServiceByRunDeepTestR4 的两个旧语义用例，将其断言改为验证抛出异常。靶向合跑 UsageServiceByRunLimitValidationTest（5 例）、UsageServiceTest（39 例）、UsageServiceByRunDeepTestR4（12 例）、UsageControllerDeepTest（20 例），合计 76 例全绿，0 失败。
+
+**未改动**：
+控制器 GET /api/usage/by-run 一字未动，HTTP 行为不变。前端 usage.js 只发 limit=20，不受影响。本轮无版本号升级、无 schema 变更、无 UI 改动。
+
 ### Fixed（2026-10-31 深耕轮：提示词库分页参数服务层收紧）
 
 - **现象**：此前 `PromptLibraryService.list(q, tag, page, size)` 服务层对分页参数执行静默归一化：page 为负变 0、size 为 0 变 20、size 超 100 截断为 100，而控制器 GET /api/prompts/page 早已按 page<0、size 不在 1 到 100 返回 400（invalid_pagination），两层口径不一致，直接调服务层的调用方传错参数无法发现。

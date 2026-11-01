@@ -37,7 +37,6 @@ public class UsageService {
     private static final Logger log = LoggerFactory.getLogger(UsageService.class);
 
     private static final int DEFAULT_DAYS = 30;
-    private static final int DEFAULT_RUN_LIMIT = 20;
     private static final int GOAL_MAX_LENGTH = 30;
 
     private final VideoTaskRepository videoTaskRepository;
@@ -327,14 +326,16 @@ public class UsageService {
         return byDay(days, null, null);
     }
     /**
-     * 按 Run 聚合，按 createdAt 倒序，默认取最近 20 条。
+     * 按 Run 聚合，按 createdAt 倒序，默认取最近 20 条；limit 必须在 1 到 500 之间，否则抛 IllegalArgumentException。
      * tokens 优先使用 Run.totalTokens，为空则回退到该 Run 下 AgentStep.tokensUsed 之和；
      * costCents 优先使用 Run.totalCostCents，为空则回退到 AgentStep.costCents 之和。
      */
     @Transactional(readOnly = true)
     public List<RunUsage> byRun(int limit) {
-        int effectiveLimit = limit <= 0 ? DEFAULT_RUN_LIMIT : limit;
-        List<RunRow> runs = runRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, effectiveLimit));
+        if (limit < 1 || limit > 500) {
+            throw new IllegalArgumentException("limit 参数非法");
+        }
+        List<RunRow> runs = runRepository.findAllByOrderByCreatedAtDesc(PageRequest.of(0, limit));
 
         List<RunUsage> result = new ArrayList<>(runs.size());
         for (RunRow run : runs) {
@@ -352,7 +353,7 @@ public class UsageService {
             }
             result.add(new RunUsage(run.getId(), goal, tokens, costCents, run.getCreatedAt()));
         }
-        log.debug("usage byRun: limit={}, {} runs", effectiveLimit, result.size());
+        log.debug("usage byRun: limit={}, {} runs", limit, result.size());
         return result;
     }
 
