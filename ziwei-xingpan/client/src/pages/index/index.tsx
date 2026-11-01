@@ -108,8 +108,8 @@ export default function Home() {
             <View className='brand-dot brand-dot-green' />
             <View className='brand-dot brand-dot-blue' />
             <View className='brand-dot brand-dot-pink' />
-            <Text className='brand-name'>紫微星盘</Text>
           </View>
+          <Text className='brand-name'>紫微星盘</Text>
         </View>
         <View className='hero-title-row'>
           <Text className='hero-title'>你的命盘，一眼看懂</Text>
