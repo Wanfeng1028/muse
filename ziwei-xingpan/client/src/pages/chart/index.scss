@@ -6,11 +6,27 @@
 // 60pt content, which fits the head line branch 13 + name 15 = 56pt.
 // At gap 12 / padding 12 the content was 54.5pt and the head wrapped
 // to two lines — visibly broken. Real cards keep padding 16.
-.chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 19.23px; margin-bottom: $section-gap; }
+// v3 gap 7 盘感：外框 plate 把 12 宫收成一个“盘”（深一档底 +
+// 1px 环线 + 圆角 20），格间隙透出 plate 底色形成层次；中央区加
+// 暖色径向辉光，与外框环线呼应。宫格本身沿用卡片玻璃处理。
+.chart-plate {
+  box-sizing: border-box;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.0) 40%),
+    #16171a;
+  border: $hairline solid rgba(255, 255, 255, 0.10);
+  box-shadow: 0 0 0 1.92px rgba(255, 255, 255, 0.03), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
+  border-radius: 38.46px;
+  padding: 19.23px;
+  margin-bottom: $section-gap;
+}
+.chart-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 19.23px; }
 .palace {
-  background: $card;
-  border: $hairline solid $border-glass;
-  box-shadow: 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 45%, rgba(0, 0, 0, 0.10)),
+    $card;
+  border: $hairline solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.09), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
   border-radius: $radius-card;
   padding: $bubble-px 19.23px;
 }
@@ -21,14 +37,23 @@
 .palace-tag { font-size: $fs-caption; color: $brand-dot; margin-right: 7.69px; font-weight: 600; }
 .star-major { font-size: $fs-item; font-weight: 600; margin-top: 7.69px; color: $text; }
 .star-bright { font-size: $fs-caption; color: $sub; margin-left: 3.85px; font-weight: 400; }
-.star-others { font-size: $fs-caption; color: #c3c7ce; margin-top: 7.69px; line-height: 1.5; }
+// v3 gap 7 星曜着色：主星白加粗；辅星 Medley logo 蓝、吉星 logo 绿、
+// 煞星品牌橙（暗卡上对比度 7.35 / 8.07 / 5.59，皆过 AA）；四化沿用 v2。
+.star-others { font-size: $fs-caption; margin-top: 7.69px; line-height: 1.5; }
+.star-minor { color: $star-minor; }
+.star-lucky { color: $star-lucky; }
+.star-sha { color: $star-sha; }
+.star-borrowed { color: #c3c7ce; }
 .shensha { font-size: $fs-caption; color: $sub; margin-top: 11.54px; line-height: 1.5; }
 .daxian-age { font-size: $fs-caption; color: $sub; margin-top: 7.69px; }
 .chart-center {
   grid-column: 2 / span 2;
   grid-row: 2 / span 2;
-  background: $card-bubble;
-  border: $hairline solid $border-glass;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(226, 161, 129, 0.16), rgba(226, 161, 129, 0) 70%),
+    $card-bubble;
+  border: $hairline solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.09);
   border-radius: $radius-card;
   padding: $bubble-px;
   display: flex;

@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, Input, Textarea, Picker, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { Card, Disclaimer } from '../../components/ui';
+import { AmbientLight, Card, Disclaimer } from '../../components/ui';
 import { Toggle, ParticleBurst, LongPressConfirm } from '../../components/interactions';
 import { PosterCard } from '../../components/poster';
 import starMark from '../../assets/logo/star-mark.png';
@@ -301,11 +301,11 @@ export default function Mine() {
         <View style={{ marginLeft: '12px', flex: 1 }}>
           <Text className='mine-name'>{user?.nickname || '紫微星盘用户'}</Text>
           {membership ? (
-            <Text className='muted'>会员：{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}{membership.expiresAt ? '，到期 ' + formatDateTime(membership.expiresAt) : ''}{membership.autoRenew ? '（连续包月）' : ''}</Text>
+            <Text className='muted'>会员：<Text className={membership.tier === 'free' ? 'mine-tier-free' : membership.tier === 'max' ? 'mine-tier-max' : 'mine-tier-pro'}>{membership.tier === 'free' ? '普通' : membership.tier.toUpperCase()}</Text>{membership.expiresAt ? '，到期 ' + formatDateTime(membership.expiresAt) : ''}{membership.autoRenew ? '（连续包月）' : ''}</Text>
           ) : (
             <Text className='muted'>{configured ? '登录后可查看会员与积分。' : '云开发未配置，账号功能暂不可用。'}</Text>
           )}
-          {balance !== null ? <Text className='muted' style={{ display: 'block' }}>积分：{balance}（永不过期）</Text> : null}
+          {balance !== null ? <Text className='muted' style={{ display: 'block' }}>积分：<Text className='mine-points-num'>{balance}</Text>（永不过期）</Text> : null}
         </View>
       </View>
       {configured && !user ? (
@@ -319,6 +319,7 @@ export default function Mine() {
   if (section === 'member') {
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='会员中心'>
           {unconfiguredNote()}{needLoginNote()}
@@ -341,7 +342,7 @@ export default function Mine() {
               <View key={plan} className='input-row'>
                 <Text className='input-label mine-row-label'>{PLAN_NAMES[plan]}（{p.days} 天）</Text>
                 <View style={{ display: 'flex', alignItems: 'center' }}>
-                  <Text className='input-value' style={{ marginRight: '10px' }}>{formatYuan(p.fen)}</Text>
+                  <Text className='input-value mine-price' style={{ marginRight: '10px' }}>{formatYuan(p.fen)}</Text>
                   <View className='btn-pill btn-pill-black' onClick={() => buy(plan)}>{busy === 'buy-' + plan ? '处理中…' : '购买'}</View>
                 </View>
               </View>
@@ -362,6 +363,7 @@ export default function Mine() {
     const videoOpen = !!config && config.ads.enabled && !isPlaceholderAdUnit(config.ads.rewardedVideo);
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='积分中心'>
           {unconfiguredNote()}{needLoginNote()}
@@ -379,7 +381,7 @@ export default function Mine() {
           {ledger.length === 0 ? <Text className='muted'>暂无积分记录。</Text> : ledger.map((e, i) => (
             <View key={i} className='input-row'>
               <Text className='input-label mine-row-label'>{RULE_LABELS[e.rule] || e.rule}</Text>
-              <Text className='input-value'>{e.delta > 0 ? '+' + e.delta : e.delta} · {formatDateTime(e.createdAt)}</Text>
+              <Text className='input-value'><Text className={e.delta > 0 ? 'mine-delta-pos' : 'mine-delta-neg'}>{e.delta > 0 ? '+' + e.delta : e.delta}</Text><Text className='muted'> · {formatDateTime(e.createdAt)}</Text></Text>
             </View>
           ))}
         </Card>
@@ -391,6 +393,7 @@ export default function Mine() {
   if (section === 'invite') {
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='邀请中心'>
           {unconfiguredNote()}{needLoginNote()}
@@ -433,6 +436,7 @@ export default function Mine() {
   if (section === 'orders') {
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='我的订单'>
           {unconfiguredNote()}{needLoginNote()}
@@ -443,7 +447,7 @@ export default function Mine() {
                 <Text className='mine-row-label'>{PLAN_NAMES[o.plan] || o.plan} · {formatYuan(o.amountFen)}</Text>
                 <Text className='muted' style={{ display: 'block' }}>订单号 {o.outTradeNo} · {formatDateTime(o.createdAt)}</Text>
               </View>
-              <Text className='input-value'>{ORDER_STATUS_NAMES[o.status] || o.status}</Text>
+              <Text className={o.status === 'paid' ? 'input-value mine-status-paid' : o.status === 'pending' ? 'input-value mine-status-pending' : 'input-value'}>{ORDER_STATUS_NAMES[o.status] || o.status}</Text>
             </View>
           ))}
         </Card>
@@ -455,6 +459,7 @@ export default function Mine() {
   if (section === 'settings') {
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='设置'>
           {unconfiguredNote()}{needLoginNote()}
@@ -489,6 +494,7 @@ export default function Mine() {
   if (section === 'feedback') {
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='意见反馈'>
           {unconfiguredNote()}{needLoginNote()}
@@ -518,6 +524,7 @@ export default function Mine() {
   if (section === 'charts') {
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='命盘历史（多盘管理）'>
           {unconfiguredNote()}{needLoginNote()}
@@ -547,6 +554,7 @@ export default function Mine() {
     const palaces = ['命宫', '财帛宫', '官禄宫', '夫妻宫', '疾厄宫', '福德宫'];
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='合盘对照（两盘主星对照）'>
           {unconfiguredNote()}{needLoginNote()}
@@ -584,6 +592,7 @@ export default function Mine() {
   if (section === 'poster') {
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <PosterCard chart={localChart} inviteCode={invite?.inviteCode || ''} />
       </View>
@@ -594,6 +603,7 @@ export default function Mine() {
     const tab = LEGAL_TABS.find((t) => t.key === legalTab) || LEGAL_TABS[0];
     return (
       <View className='page page-light'>
+      <AmbientLight />
         {backBtn()}
         <Card light title='关于 / 隐私 / 条款'>
           <View style={{ display: 'flex', flexWrap: 'wrap' }}>
@@ -622,6 +632,7 @@ export default function Mine() {
   ];
   return (
     <View className='page page-light'>
+      <AmbientLight />
       {header}
       <Card light title='我的服务'>
         {ROWS.map((r) => (

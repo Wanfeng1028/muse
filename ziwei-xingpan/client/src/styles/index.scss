@@ -7,24 +7,78 @@ page {
   font-size: $fs-body;
 }
 
-// Dark Medley page (chat-dark): flat #111518. The welcome glows live
-// only on .page-welcome, not on every dark page.
+// Dark Medley page (chat-dark): flat #111518. Ambient light lives on
+// a viewport-fixed .ambient layer (see below), not on .page-welcome:
+// v2 put px-sized ellipses in the page background and they faded out
+// before reaching the corners of a tall page, so nothing was visible.
 .page {
+  position: relative;
+  z-index: 0;
   padding: $page-padding;
   min-height: 100vh;
   box-sizing: border-box;
   background: $bg;
 }
 
-// Welcome-dark page: base #0D0E10 + the three photo-9 ambient glows
-// at Medley positions (blue 78%/30%, warm 21%/76%, green 82%/92%),
-// fading to transparent at 70%. Background only, never tints text.
+// Welcome-dark page: flat base only; the glows come from <Ambient />.
 .page-welcome {
+  background: $bg-welcome;
+}
+
+// v3 ambient layer (gap 1). Viewport-fixed so the glows sit at the
+// same screen corners on every dark page, however tall the content
+// is. Corner-anchored gradients: each corner IS a gradient centre, so
+// PIL corner sampling lands on near-full-strength tint, not on a
+// faded tail. Broad photo-9 glows (blue upper, warm lower-left,
+// green lower-right) sit underneath for mid-screen atmosphere.
+// z-index -1 inside the .page stacking context: above the page base,
+// below all content. pointer-events none so taps pass through.
+// Weapp pointer-events support is a true-device checklist item.
+.ambient {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 750px;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
   background:
-    radial-gradient(ellipse $glow-blue-w $glow-blue-h at 78% 30%, $glow-blue, rgba(52, 86, 120, 0) 70%),
-    radial-gradient(ellipse $glow-warm-w $glow-warm-h at 21% 76%, $glow-warm, rgba(114, 66, 40, 0) 70%),
-    radial-gradient(ellipse $glow-green-w $glow-green-h at 82% 92%, $glow-green, rgba(38, 94, 78, 0) 70%),
+    radial-gradient(ellipse 70% 55% at 0% 0%, $ambient-blue, rgba(52, 86, 120, 0) 70%),
+    radial-gradient(ellipse 70% 55% at 100% 0%, $ambient-blue, rgba(52, 86, 120, 0) 70%),
+    radial-gradient(ellipse 90% 50% at 78% 20%, $glow-blue, rgba(52, 86, 120, 0) 70%),
+    radial-gradient(ellipse 80% 55% at 0% 100%, $ambient-warm, rgba(114, 66, 40, 0) 70%),
+    radial-gradient(ellipse 80% 55% at 100% 100%, $ambient-green, rgba(38, 94, 78, 0) 70%),
+    radial-gradient(ellipse 80% 45% at 18% 82%, $glow-warm, rgba(114, 66, 40, 0) 70%),
+    radial-gradient(ellipse 80% 45% at 85% 88%, $glow-green, rgba(38, 94, 78, 0) 70%),
+    $bg;
+}
+.ambient-welcome {
+  background:
+    radial-gradient(ellipse 70% 55% at 0% 0%, $ambient-blue, rgba(52, 86, 120, 0) 70%),
+    radial-gradient(ellipse 70% 55% at 100% 0%, $ambient-blue, rgba(52, 86, 120, 0) 70%),
+    radial-gradient(ellipse 90% 50% at 78% 20%, $glow-blue, rgba(52, 86, 120, 0) 70%),
+    radial-gradient(ellipse 80% 55% at 0% 100%, $ambient-warm, rgba(114, 66, 40, 0) 70%),
+    radial-gradient(ellipse 80% 55% at 100% 100%, $ambient-green, rgba(38, 94, 78, 0) 70%),
+    radial-gradient(ellipse 80% 45% at 18% 82%, $glow-warm, rgba(114, 66, 40, 0) 70%),
+    radial-gradient(ellipse 80% 45% at 85% 88%, $glow-green, rgba(38, 94, 78, 0) 70%),
     $bg-welcome;
+}
+
+// Light-page wash (gap 4, light half): faint Medley pastel tints at
+// the corners only; cards stay opaque white, text contrast untouched.
+.ambient-light {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 750px;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse 70% 45% at 100% 0%, $wash-blue, rgba(143, 176, 216, 0) 70%),
+    radial-gradient(ellipse 70% 45% at 0% 100%, $wash-warm, rgba(226, 161, 129, 0) 70%),
+    radial-gradient(ellipse 70% 45% at 100% 100%, $wash-green, rgba(94, 200, 167, 0) 70%),
+    $light-bg;
 }
 
 // Light Medley page (home-light / credits-light): flat #f5f6f8.
@@ -36,21 +90,29 @@ page {
 .page-light .brand-name { color: $light-text; }
 .page-light .disclaimer { border-color: $light-divider; color: $light-sub; }
 
-// Medley card (dark) and light card. Shadow is the measured Medley
-// glass shadow (0 10px 26px rgba(0,0,0,0.16)); no backdrop-filter:
-// the mini program does not reliably support it, and over the opaque
-// fills it is a no-op in a static shot anyway.
+// Medley card (dark) and light card, v3 glass (gap 3). No real
+// refraction: weapp backdrop-filter is unreliable, so the glass is
+// faked with a layered gradient (bright top fading to a dark foot),
+// a 1px inner top highlight, the 1px translucent border and the
+// measured Medley shadow (0 10px 26px rgba(0,0,0,0.16)). Honest note:
+// this is an approximation, not Liquid Glass displacement.
 .card {
-  background: $card;
-  border: $hairline solid $border-glass;
-  box-shadow: 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
+  box-sizing: border-box;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.015) 45%, rgba(0, 0, 0, 0.10)),
+    $card;
+  border: $hairline solid rgba(255, 255, 255, 0.10);
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.09), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
   border-radius: $radius-card;
   padding: $bubble-px;
   margin-bottom: $card-gap;
 }
 .card-light {
-  background: $light-card;
+  background:
+    linear-gradient(180deg, #ffffff, #f3f4f6),
+    $light-card;
   border: $hairline solid $light-divider;
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.90), 0 15.38px 38.46px rgba(23, 24, 28, 0.06);
 }
 .card-title { font-size: $fs-section; font-weight: 700; margin-bottom: 19.23px; color: $text; }
 .muted { color: $sub; font-size: $fs-secondary; line-height: 1.6; }
@@ -106,8 +168,10 @@ page {
   height: $composer-h;
   border-radius: $radius-input;
   padding: 0 15.38px 0 26.92px;
-  background: $input-bg;
-  box-shadow: 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.0) 50%),
+    $input-bg;
+  box-shadow: inset 0 1.92px 0 rgba(255, 255, 255, 0.07), 0 19.23px 50.00px rgba(0, 0, 0, 0.16);
 }
 .composer-light { background: $white-btn; border: $hairline solid $light-divider; }
 .composer-label { flex: 1; font-size: $fs-item; font-weight: 600; color: $text; }
@@ -139,20 +203,42 @@ page {
 }
 .chip-accent { background: rgba(226, 161, 129, 0.22); color: $accent; }
 
-// Medley SuggestionRow (Chat.tsx): gap 12, py 12, border-b, 15pt medium.
+// Form rows (gap 6). Medley type scale: label = secondary 13,
+// value = body 16 semibold — label and value no longer share 15pt.
+// Row padding follows the Medley token rowPaddingY 14 (not the chat
+// SuggestionRow py 12 v2 reused): row height = 28 + 16×1.5 = 52pt.
+// v2 R7' (49 vs 46.5) is superseded by this token value.
 .input-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: $card-gap;
-  padding: $bubble-py 0;
+  padding: 26.92px 0;
   border-bottom: $hairline solid $divider;
 }
 .input-row:last-child { border-bottom: none; }
 .page-light .input-row { border-color: $light-divider; }
-.input-label { font-size: $fs-item; color: $sub; flex-shrink: 0; }
-.input-value { font-size: $fs-item; text-align: right; flex: 1; color: $text; }
-.field-input { font-size: $fs-item; text-align: right; flex: 1; border: none; outline: none; background: transparent; color: $text; }
+.input-label { font-size: $fs-secondary; font-weight: 500; line-height: 1.5; color: $sub; flex-shrink: 0; }
+.input-value { font-size: $fs-body; font-weight: 600; line-height: 1.5; text-align: right; flex: 1; color: $text; }
+.field-input { font-size: $fs-body; font-weight: 600; line-height: 1.5; text-align: right; flex: 1; border: none; outline: none; background: transparent; color: $text; }
+.page-light .input-label { color: $light-sub; }
+.page-light .input-value, .page-light .field-input { color: $light-text; }
+
+// Motion: iOS curve everywhere, reduced-motion kills it all.
+// Entrance rise (8pt, 0.6s) on hero + cards; screenshots wait past
+// the animation, so stills show the final state.
+@keyframes medley-rise {
+  from { opacity: 0; transform: translateY(15.38px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+.hero, .card { animation: medley-rise 0.6s cubic-bezier(0.32, 0.72, 0, 1) both; }
+@media (prefers-reduced-motion: reduce) {
+  .hero, .card, .hero-cursor { animation: none !important; }
+}
 .disclaimer {
   color: $sub;
   font-size: $fs-caption;

@@ -4,6 +4,16 @@ import { DISCLAIMER } from '../lib/chart';
 import arrowUp from '../assets/arrow-up.png';
 import './ui.scss';
 
+// v3 ambient layers (gap 1 / gap 4 light half). Pure background Views:
+// no handlers, no text, no layout effect beyond the fixed layer itself.
+export function Ambient({ welcome }: { welcome?: boolean }) {
+  return <View className={welcome ? 'ambient ambient-welcome' : 'ambient'} />;
+}
+
+export function AmbientLight() {
+  return <View className='ambient-light' />;
+}
+
 export function Card({ title, children, light }: { title?: string; children: ReactNode; light?: boolean }) {
   return (
     <View className={light ? 'card card-light' : 'card'}>

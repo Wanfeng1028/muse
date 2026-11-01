@@ -7,7 +7,7 @@ import {
   branchFromClock, formatDate, parseDate, previewCorrections, saveInput,
   shichenLabel, shichenRange, shiftDate, loadInput, type BirthFormInput,
 } from '../../lib/chart';
-import { Card, ComposerBar } from '../../components/ui';
+import { Ambient, Card, ComposerBar } from '../../components/ui';
 import starMark from '../../assets/logo/star-mark.png';
 import { BannerAd } from '../../components/ads';
 import { callFn, cloudConfigured, type AppConfig, type MembershipStatus } from '../../lib/cloud';
@@ -103,6 +103,7 @@ export default function Home() {
 
   return (
     <View className='page page-welcome'>
+      <Ambient welcome />
       <View className='hero'>
         <View className='hero-brand'>
           <Image className='brand-mark' src={starMark} mode='aspectFit' />

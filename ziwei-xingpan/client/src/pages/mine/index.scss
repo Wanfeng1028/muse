@@ -19,8 +19,19 @@
 .avatar-mark { width: 55.38px; height: 55.38px; }
 .mine-name { font-size: $fs-page; font-weight: 700; display: block; color: $light-text; }
 .mine-balance { font-size: $fs-huge; font-weight: 600; line-height: 1; display: block; color: $light-text; }
-.mine-row-label { color: $light-text; }
-.mine-arrow { color: $light-sub; }
+// v3 gap 6: 列表主行 = body 16 半粗（不是表单 13 标签），箭头 20 半粗。
+.mine-row-label { color: $light-text; font-size: $fs-body; font-weight: 600; line-height: 1.5; }
+.mine-arrow { color: $light-sub; font-size: $fs-page; font-weight: 600; }
+// v3 gap 4: 关键信息彩色层级（Medley 色相、浅底 AA 深色版）。
+.mine-tier-free { color: $light-sub; }
+.mine-tier-pro { color: $light-orange; }
+.mine-tier-max { color: $light-pink; }
+.mine-points-num { color: $light-green; font-weight: 700; }
+.mine-price { color: $light-orange; }
+.mine-delta-pos { color: $light-green; font-weight: 700; }
+.mine-delta-neg { color: $light-orange; font-weight: 700; }
+.mine-status-paid { color: $light-green; }
+.mine-status-pending { color: $light-orange; }
 .field-textarea {
   width: 100%;
   min-height: 230.77px;

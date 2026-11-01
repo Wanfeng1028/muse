@@ -5,7 +5,7 @@ import { loadChart } from '../../lib/chart';
 import { buildDimensions } from '../../lib/interpret';
 import { detectPatterns } from '../../engine/patterns';
 import type { ZiweiChart } from '../../engine/types';
-import { Card, Disclaimer } from '../../components/ui';
+import { Ambient, Card, Disclaimer } from '../../components/ui';
 import { LoadingButton } from '../../components/interactions';
 import { BannerAd } from '../../components/ads';
 import arrowUp from '../../assets/arrow-up.png';
@@ -100,6 +100,7 @@ export default function Interpret() {
   if (!chart) {
     return (
       <View className='page'>
+        <Ambient />
         <Card title='还没有命盘'>
           <Text className='muted'>请先在首页排盘，解读会基于该盘生成。AI 解读还需先在命盘图页把当前盘保存到命盘历史。</Text>
           <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
@@ -111,6 +112,7 @@ export default function Interpret() {
   const patterns = detectPatterns(chart);
   return (
     <View className='page'>
+      <Ambient />
       <View className='chat-msg'>
         <View className='chat-meta'><View className='chat-dot' /><Text>格局判断</Text></View>
         {patterns.length === 0 ? (

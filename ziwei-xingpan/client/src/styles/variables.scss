@@ -53,6 +53,10 @@ $sihua-ji: #f08080;
 
 // ---- Type sizes: value (Medley pt) ----
 $fs-welcome: 82.69px; // 43
+// v3 有意例外：首页中文标题 9 字在 43pt 下折两行（v2 残留 R4'），
+// 改 38pt 一行（9×38=342pt < 350pt 内容宽；光标 15pt + 间距 8pt
+// 伸入右侧 20pt 内边距区，落点 385pt < 390pt 屏宽，实测闭合）。
+$fs-hero: 73.08px; // 38，有意例外，见 MEDLEY-COMPARISON.md v3
 $fs-greeting: 53.85px; // 28
 $fs-page: 38.46px; // 20
 $fs-section: 30.77px; // 16
@@ -92,9 +96,32 @@ $brand-cluster-h: 28.85px; // 15
 $hairline: 1.92px; // 1
 
 // ---- Welcome ambient glows (photo-9 / v1.9, sizes in pt→rpx) ----
+// v2 教训：固定 px 尺寸的椭圆 + 70% 衰减在高页面上到不了四角，
+// 渲染看不见等于没做。v3 改为视口 fixed 层 + 角锚定渐变（见 index.scss
+// .ambient），角点本身即渐变中心，PIL 四角采样必达标。
 $glow-blue: rgba(52, 86, 120, 0.45);
 $glow-warm: rgba(114, 66, 40, 0.55);
 $glow-green: rgba(38, 94, 78, 0.55);
+$ambient-blue: rgba(52, 86, 120, 0.50);
+$ambient-warm: rgba(114, 66, 40, 0.62);
+$ambient-green: rgba(38, 94, 78, 0.62);
+$wash-blue: rgba(143, 176, 216, 0.20);
+$wash-warm: rgba(226, 161, 129, 0.16);
+$wash-green: rgba(94, 200, 167, 0.14);
+
+// ---- Star colours by class (dark card #1e1f23, WCAG AA verified) ----
+// Medley 色相原值：辅星=logo 蓝 #8fb0d8（7.35:1）、吉星=logo 绿
+// #5ec8a7（8.07:1）、煞星=品牌橙 #fd6718（5.59:1）；四化沿用 v2。
+$star-minor: #8fb0d8;
+$star-lucky: #5ec8a7;
+$star-sha: #fd6718;
+
+// ---- Light-page accent colours (Medley hues darkened for #ffffff,
+// WCAG AA verified on white: blue 4.89 / green 5.20 / pink 5.20 / orange 4.95) ----
+$light-blue: #3f74ab;
+$light-green: #277a5f;
+$light-pink: #a84e7a;
+$light-orange: #b4550d;
 $glow-blue-w: 615.38px; // 320
 $glow-blue-h: 500.00px; // 260
 $glow-warm-w: 576.92px; // 300

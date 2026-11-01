@@ -9,7 +9,7 @@ import { getLiuNianSiHua, getLiuYueSiHua } from '../../engine/sihua';
 import { jiangQianShenName, suiQianShenName, boshiShenName } from '../../engine/shier-shen';
 import { STEMS } from '../../engine/constants';
 import type { Palace, ZiweiChart } from '../../engine/types';
-import { Card, Disclaimer } from '../../components/ui';
+import { Ambient, Card, Disclaimer } from '../../components/ui';
 import './index.scss';
 import './index.scss';
 
@@ -19,7 +19,10 @@ const SIHUA_CLASS: Record<string, string> = { '禄': 'sihua-lu', '权': 'sihua-q
 
 function PalaceCell({ p, chart }: { p: Palace; chart: ZiweiChart }) {
   const majors = p.stars.filter((s) => s.type === 'major');
-  const others = p.stars.filter((s) => s.type !== 'major');
+  const minors = p.stars.filter((s) => s.type === 'minor');
+  const luckies = p.stars.filter((s) => s.type === 'lucky');
+  const shas = p.stars.filter((s) => s.type === 'sha');
+  const rest = p.stars.filter((s) => s.type !== 'major' && s.type !== 'minor' && s.type !== 'lucky' && s.type !== 'sha');
   const yearBranch = chart.lunarInfo.yearBranch;
   const yearStem = chart.lunarInfo.yearStem;
   const gender = chart.birthInfo.gender;
@@ -38,11 +41,20 @@ function PalaceCell({ p, chart }: { p: Palace; chart: ZiweiChart }) {
           {s.siHua ? <Text className={SIHUA_CLASS[s.siHua] ?? ''}>化{s.siHua}</Text> : null}
         </View>
       ))}
-      {others.length > 0 ? (
-        <View className='star-others'>{others.map((s) => s.name).join(' ')}</View>
+      {minors.length > 0 ? (
+        <View className='star-others star-minor'>{minors.map((s) => s.name).join(' ')}</View>
+      ) : null}
+      {luckies.length > 0 ? (
+        <View className='star-others star-lucky'>{luckies.map((s) => s.name).join(' ')}</View>
+      ) : null}
+      {shas.length > 0 ? (
+        <View className='star-others star-sha'>{shas.map((s) => s.name).join(' ')}</View>
+      ) : null}
+      {rest.length > 0 ? (
+        <View className='star-others star-borrowed'>{rest.map((s) => s.name).join(' ')}</View>
       ) : null}
       {p.isEmpty && p.borrowedStars?.length ? (
-        <View className='star-others'>借对宫：{p.borrowedStars.join(' ')}</View>
+        <View className='star-others star-borrowed'>借对宫：{p.borrowedStars.join(' ')}</View>
       ) : null}
       <View className='shensha'>
         {jiangQianShenName(yearBranch, p.branch)} · {suiQianShenName(yearBranch, p.branch)} · {boshiShenName(yearStem, gender, p.branch)}
@@ -84,6 +96,7 @@ export default function ChartPage() {
   if (!chart) {
     return (
       <View className='page'>
+        <Ambient />
         <Card title='还没有命盘'>
           <Text className='muted'>请先在首页填写出生信息并排盘。</Text>
           <View className='btn-medley btn-medley-white' style={{ marginTop: '12px' }} onClick={() => Taro.switchTab({ url: '/pages/index/index' })}>去首页排盘</View>
@@ -104,6 +117,8 @@ export default function ChartPage() {
 
   return (
     <View className='page'>
+      <Ambient />
+      <View className='chart-plate'>
       <View className='chart-grid'>
         {GRID.map((b, i) => {
           if (b === null) {
@@ -128,6 +143,7 @@ export default function ChartPage() {
           }
           return <PalaceCell key={b} p={byBranch(b)} chart={chart} />;
         })}
+      </View>
       </View>
 
       <View className='btn-row chart-actions'>

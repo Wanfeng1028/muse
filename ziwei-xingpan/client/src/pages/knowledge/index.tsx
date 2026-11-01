@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View, Text } from '@tarojs/components';
 import { STAR_ENTRIES, PALACE_ENTRIES, SIHUA_ENTRIES, PATTERN_ENTRIES } from '../../lib/knowledge';
-import { Card } from '../../components/ui';
+import { AmbientLight, Card } from '../../components/ui';
 import './index.scss';
 
 const TABS = [
@@ -16,17 +16,20 @@ export default function Knowledge() {
   const current = TABS.find((t) => t.id === tab) ?? TABS[0];
   return (
     <View className='page page-light'>
+      <AmbientLight />
       <View className='seg'>
         {TABS.map((t) => (
-          <View key={t.id} className={t.id === tab ? 'seg-tab seg-tab-active' : 'seg-tab'} onClick={() => setTab(t.id)}>
+          <View key={t.id} className={t.id === tab ? `seg-tab seg-tab-${t.id} seg-tab-active` : `seg-tab seg-tab-${t.id}`} onClick={() => setTab(t.id)}>
             {t.label}
           </View>
         ))}
       </View>
       {current.entries.map((e) => (
-        <Card light key={e.title} title={e.title}>
-          <Text className='know-body'>{e.body}</Text>
-        </Card>
+        <View key={e.title} className={`know-cat-${current.id}`}>
+          <Card light title={e.title}>
+            <Text className='know-body'>{e.body}</Text>
+          </Card>
+        </View>
       ))}
     </View>
   );
