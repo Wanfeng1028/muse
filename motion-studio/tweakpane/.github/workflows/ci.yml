@@ -1,0 +1,23 @@
+name: CI
+on:
+  pull_request:
+  release:
+    types: [released]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+          # https://github.com/npm/cli/issues/3847
+          node-version: '16.1.0'
+      - run: npm ci
+      - run: npm run setup
+      - run: npm run test --workspaces
+      - run: npm run coverage
+      - uses: coverallsapp/github-action@master
+        continue-on-error: true
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: ./coverage/lcov.info

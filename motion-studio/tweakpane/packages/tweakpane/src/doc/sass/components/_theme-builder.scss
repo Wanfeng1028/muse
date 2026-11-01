@@ -1,0 +1,64 @@
+@use '../defs';
+
+.paint {
+	background-color: var(--bg-color-secondary);
+	border-radius: 6px;
+	overflow: hidden;
+
+	&_gui {
+		border-bottom: var(--bg-color) solid 2px;
+
+		@include defs.wide() {
+			display: flex;
+		}
+	}
+	&_controller {
+		--tp-base-border-radius: 0px;
+		--tp-base-shadow-color: transparent;
+		background-color: var(--bg-color-secondary);
+
+		@include defs.nonwide() {
+			--tp-blade-value-width: 60vw;
+
+			.paneContainer {
+				width: 100%;
+			}
+		}
+	}
+	&_preview {
+		align-items: center;
+		display: flex;
+		flex: 1;
+		justify-content: center;
+		overflow: hidden;
+		padding: 32px;
+		position: relative;
+
+		.paneContainer {
+			position: static;
+		}
+		.tp-rotv {
+			position: relative;
+		}
+	}
+	&_bgImage {
+		background-color: black;
+		background: url(https://source.unsplash.com/74ft3aciAY0/900x1600) no-repeat
+			center;
+		background-size: cover;
+		inset: -16px;
+		position: absolute;
+
+		&::before {
+			background-image: radial-gradient(
+				rgba(255, 255, 255, 0.1) 1px,
+				transparent 0
+			);
+			background-position: center;
+			background-size: 16px 16px;
+			content: '';
+			inset: 0;
+			position: absolute;
+		}
+	}
+}

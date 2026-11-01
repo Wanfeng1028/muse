@@ -1,0 +1,22 @@
+{
+  "compilerOptions": {
+    //"noUnusedParameters": true,
+    //"noUnusedLocals": true,
+    "allowSyntheticDefaultImports": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitReturns": true,
+    "moduleResolution": "node",
+    "resolveJsonModule": true,
+    "removeComments": true,
+    "esModuleInterop": true,
+    "noImplicitAny": true,
+    "target": "ES2020",
+    "module": "ES2020",
+    "strict": true,
+
+    // These options are necessary so that TypeDoc can resolve references across packages
+    "composite": true,
+    "declaration": true,
+    "declarationMap": false
+  }
+}

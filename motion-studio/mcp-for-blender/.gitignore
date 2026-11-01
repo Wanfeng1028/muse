@@ -1,0 +1,38 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# macOS
+.DS_Store
+
+src/blender_mcp/config.py
+
+local_tests/
+/test_*.py
+.pytest_cache/
+
+supabase/
+
+scripts/
+
+# Legacy PyPI shim — built and published separately, see runbook
+legacy-shim/
+
+# Secrets: Premium keys live only as Edge Function secrets
+.env
+.env.*
+supabase/.env
+supabase/.temp/
+*.pem
+*.key
+.secrets/
+
+# Local eval harness (see evals/README.md)
+evals/

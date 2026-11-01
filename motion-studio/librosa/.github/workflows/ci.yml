@@ -1,0 +1,154 @@
+name: CI
+
+on:
+  push:
+    branches:
+    - main
+  pull_request:
+    branches:
+    - main
+
+concurrency:
+    group: ${{ github.workflow }}-${{ github.ref }}
+    cancel-in-progress: True
+
+jobs:
+    test:
+        name: >-
+          Python ${{ matrix.python-version }} on ${{ matrix.os }}
+          ${{ matrix.variant && format(' - {0}', matrix.variant) || '' }}
+        runs-on: ${{ matrix.os }}
+
+        strategy:
+            fail-fast: false
+            matrix:
+                include:
+                    - os: ubuntu-latest
+                      python-version: "3.12"
+                      envfile: ".github/environment-minimal.yml"
+                      channel-priority: "strict"
+                      variant: "minimal"
+
+                    - os: ubuntu-latest
+                      python-version: "3.12"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
+                    - os: ubuntu-latest
+                      python-version: "3.13"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
+                    - os: ubuntu-24.04-arm
+                      python-version: "3.14"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
+                    - os: ubuntu-latest
+                      python-version: "3.14"
+                      channel-priority: "strict"
+                      envfile: ".github/environment-ci.yml"
+
+                    - os: macos-latest
+                      python-version: "3.14"
+                      channel-priority: "flexible"
+                      envfile: ".github/environment-ci.yml"
+
+                    - os: windows-latest
+                      python-version: "3.14"
+                      channel-priority: "flexible"
+                      envfile: ".github/environment-ci.yml"
+
+        steps:
+        - uses: actions/checkout@v7
+
+        - name: Create short temp directory (Windows only)
+          if: runner.os == 'Windows'
+          run: mkdir C:\tmp
+          shell: cmd
+
+        - name: Set environment variables (Windows only)
+          if: runner.os == 'Windows'
+          run: |
+            echo "TMP=C:\tmp" >> $env:GITHUB_ENV
+            echo "TEMP=C:\tmp" >> $env:GITHUB_ENV
+          shell: pwsh
+
+        - name: Setup Miniforge
+          uses: conda-incubator/setup-miniconda@v4
+          with:
+            miniforge-version: latest
+            activate-environment: test
+            conda-remove-defaults: true
+            python-version: ${{ matrix.python-version }}
+
+        - name: Get Date
+          id: get-date
+          run: echo "today=$(/bin/date -u '+%Y%m%d')" >> $GITHUB_OUTPUT
+          shell: bash
+
+        - name: Cache Conda env
+          uses: actions/cache@v6
+          with:
+            path: ${{ env.CONDA }}/envs
+            key:
+              conda-${{ runner.os }}--${{ runner.arch }}--${{
+              steps.get-date.outputs.today }}-${{ env.CACHE_NUMBER
+              }}-${{ matrix.python-version }}-${{ hashFiles( matrix.envfile ) }}
+          env:
+            CACHE_NUMBER: 0
+          id: cache
+
+        - name: Update environment
+          run:
+            conda env update -n test -f ${{ matrix.envfile }} 
+          if: steps.cache.outputs.cache-hit != 'true'
+
+        - name: Conda info
+          shell: bash -l {0}
+          run: |
+            conda info -a
+            conda list
+            python -c "import scipy; scipy.show_config()"
+
+        - name: Install librosa
+          shell: bash -l {0}
+          run: python -m pip install --upgrade-strategy only-if-needed -e .[tests]
+
+        - name: Run pytest
+          shell: bash -l {0}
+          run: pytest --mpl-results-path=mpl_image_results/
+
+        - name: Prepare artifact directory structure
+          if: failure() && hashFiles('mpl_image_results/**') != ''
+          id: prep_artifact
+          run: |
+            PR_NUM="${{ github.event.pull_request.number || github.run_id }}"
+            ART_NAME="mpl-test-results-${{ runner.os }}--${{ runner.arch }}--${{ matrix.python-version }}-PR${PR_NUM}"
+            
+            mkdir -p "_artifact_stage/$ART_NAME"
+            mv mpl_image_results/* "_artifact_stage/$ART_NAME/"
+          
+            echo "art_name=$ART_NAME" >> "$GITHUB_OUTPUT"
+
+        - name: Upload image comparison failures if any
+          if: failure() && steps.prep_artifact.outputs.art_name != ''
+          uses: actions/upload-artifact@v7
+          with:
+            name: ${{ steps.prep_artifact.outputs.art_name }}
+            path: _artifact_stage/
+            retention-days: 7
+            compression-level: 0
+            overwrite: true
+
+
+        - name: Upload coverage to Codecov
+          uses: codecov/codecov-action@v7
+          with:
+            token: ${{ secrets.CODECOV_TOKEN }}
+            files: ./coverage.xml
+            flags: unittests
+            env_vars: OS,PYTHON
+            name: codecov-umbrella
+            fail_ci_if_error: true
+            verbose: true

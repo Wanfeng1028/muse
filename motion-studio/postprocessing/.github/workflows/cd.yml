@@ -1,0 +1,43 @@
+name: CD
+
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install pnpm and Node.js
+        uses: pnpm/setup@v2
+        with:
+          version: 11
+          runtime: node@24
+          cache: true
+      - name: Build and test
+        run: pnpm test
+      - name: Publish
+        run: |
+          package=$(node -p "require('./package.json').name")
+          version=$(node -p "require('./package.json').version")
+          if pnpm view "$package@$version" version >/dev/null 2>&1; then
+            echo "::notice::$package@$version is already published, skipping."
+            exit 0
+          fi
+          pnpm publish --ignore-scripts
+      - name: Deploy pages
+        run: pnpm run deploy
+      - uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: public
+          target-folder: public
+          single-commit: true

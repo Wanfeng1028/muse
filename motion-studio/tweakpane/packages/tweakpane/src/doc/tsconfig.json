@@ -1,0 +1,12 @@
+{
+	"extends": "../../../../tsconfig.json",
+	"compilerOptions": {
+		"baseUrl": ".",
+		"module": "ESNext",
+		"moduleResolution": "Node",
+		"paths": {
+			"@tweakpane/core": ["../../../core/src/index"],
+			"tweakpane": ["../main/ts/index"]
+		}
+	}
+}

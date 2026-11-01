@@ -1,0 +1,56 @@
+{
+  "name": "quarks.nodes",
+  "version": "0.17.1",
+  "description": "node based behavior and render system for quarks engine",
+  "type": "module",
+  "dependencies": {
+    "three.quarks": "*"
+  },
+  "devDependencies": {
+    "@types/three": "^0.182.0",
+    "@types/webxr": "^0.5.24",
+    "three": "^0.182.0"
+  },
+  "types": "./dist/types/index.d.ts",
+  "main": "./dist/quarks.nodes.cjs",
+  "module": "./dist/quarks.nodes.esm.js",
+  "exports": {
+    ".": {
+      "import": "./dist/quarks.nodes.esm.js",
+      "require": "./dist/quarks.nodes.cjs",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "rimraf dist .rollup.cache tsconfig.tsbuildinfo",
+    "build:types": "tsc --emitDeclarationOnly && node ../../scripts/fix-dts-extensions.mjs dist/types",
+    "build:js": "cross-env NODE_ENV=production rollup -c",
+    "build": "npm run clean && npm run build:types && npm run build:js",
+    "test": "jest",
+    "prettier": "prettier --write --ignore-unknown **/*.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alchemist0823/three.quarks.git"
+  },
+  "keywords": [
+    "particle",
+    "library",
+    "nodes",
+    "graph",
+    "3d",
+    "effect",
+    "math"
+  ],
+  "author": "Alchemist0823 <the.forrest.sun@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Alchemist0823/three.quarks/issues"
+  },
+  "homepage": "https://github.com/Alchemist0823/three.quarks#readme"
+}

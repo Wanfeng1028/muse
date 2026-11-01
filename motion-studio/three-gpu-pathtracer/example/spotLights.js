@@ -1,0 +1,272 @@
+import {
+	WebGPURenderer,
+	ACESFilmicToneMapping,
+	PCFSoftShadowMap,
+	Scene,
+	Box3,
+	Vector3,
+	PerspectiveCamera,
+	IESSpotLight,
+} from 'three/webgpu';
+import { IESLoader } from 'three/examples/jsm/loaders/IESLoader.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { WebGPUPathTracer } from 'three-gpu-pathtracer/webgpu';
+import { GUI } from 'three/examples/jsm/libs/lil-gui.module.min.js';
+import { getScaledSettings } from './src/getScaledSettings.js';
+import { LoaderElement } from './src/LoaderElement.js';
+import { Backdrop } from './src/Backdrop.js';
+
+const MODEL_URL = 'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/models/steampunk-robot/scene.gltf';
+const CREDITS = 'Model by Benedict Chew on Sketchfab';
+// luminaire names come from the manufacturer metadata in each file's header
+const IES_PROFILES = {
+	'None': - 1,
+	'BEGA 50988.2K3': 0,
+	'BEGA 50899.2K3': 1,
+	'BEGA 50975.6K3': 2,
+	'BEGA 51010.4K3': 3,
+	'Collingwood GL200DX4X30': 4,
+	'Cooper Lighting 210-D-CF3': 5,
+	'BEGA 84659K4': 6,
+	'Efficient Lighting DT106': 7,
+	'BEGA 84693K4': 8,
+};
+
+const IES_PROFILE_URLS = [
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/0646706b3d2d9658994fc4ad80681dec.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/06b4cfdc8805709e767b5e2e904be8ad.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/007cfb11e343e2f42e3b476be4ab684e.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/01dac7d6c646814dcda6780e7b7b4566.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/108b32f07d6d38a7a6528a6d307440df.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/1aec5958092c236d005093ca27ebe378.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/02a7562c650498ebb301153dbbf59207.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/1a936937a49c63374e6d4fbed9252b29.ies',
+	'https://raw.githubusercontent.com/gkjohnson/3d-demo-data/main/ies/00c6ce79e1d2cdf3a1fb491aaaa47ae0.ies',
+];
+
+let pathTracer, renderer, controls;
+let scene, camera, spotLight, fillLight, iesTextures;
+let loader;
+
+// gui parameters
+const params = {
+	enable: true,
+	maxBounces: 15,
+	renderScale: 1,
+	frameBudget: 250000,
+	iesProfile: 6,
+	...getScaledSettings(),
+};
+
+init();
+
+async function init() {
+
+	loader = new LoaderElement();
+	loader.attach( document.body );
+
+	// renderer
+	renderer = new WebGPURenderer();
+	renderer.init();
+	renderer.shadowMap.enabled = true;
+	renderer.shadowMap.type = PCFSoftShadowMap;
+	renderer.toneMapping = ACESFilmicToneMapping;
+	document.body.appendChild( renderer.domElement );
+
+	// path tracer
+	pathTracer = new WebGPUPathTracer( renderer );
+	pathTracer.frameBudget = params.frameBudget;
+
+	// camera
+	const aspect = window.innerWidth / window.innerHeight;
+	camera = new PerspectiveCamera( 60, aspect, 0.025, 500 );
+	camera.position.set( - 1.5, 2.2, 5.5 );
+
+	// controls
+	controls = new OrbitControls( camera, renderer.domElement );
+	controls.target.y = 0.75;
+	controls.update();
+	controls.addEventListener( 'change', () => pathTracer.updateCamera() );
+
+	// scene
+	scene = new Scene();
+
+	// load assets
+	const iesLoader = new IESLoader();
+	const [ gltf, textures ] = await Promise.all( [
+		new GLTFLoader().setMeshoptDecoder( MeshoptDecoder ).loadAsync( MODEL_URL ),
+		Promise.all( IES_PROFILE_URLS.map( url => iesLoader.loadAsync( url ) ) )
+	] );
+
+	// ies textures
+	iesTextures = textures;
+
+	// objects
+	gltf.scene.updateMatrixWorld( true );
+	gltf.scene.traverse( c => {
+
+		c.castShadow = true;
+		c.receiveShadow = true;
+
+	} );
+
+	// rest the model on the ground and scale it into view
+	const box = new Box3();
+	box.setFromObject( gltf.scene );
+	const size = box.getSize( new Vector3() );
+	gltf.scene.scale.setScalar( 3 / Math.max( size.x, size.y, size.z ) );
+	gltf.scene.updateMatrixWorld( true );
+	box.setFromObject( gltf.scene );
+	gltf.scene.position.y -= box.min.y;
+	gltf.scene.updateMatrixWorld( true );
+	scene.add( gltf.scene );
+
+	box.setFromObject( gltf.scene );
+
+	// set the backdrop
+	const dim = Math.max( size.x, size.y, size.z );// * 0.25;
+	const backdrop = new Backdrop( { width: 8 * dim, depth: 5 * dim, height: 3 * dim, curve: 2 * dim } );
+	backdrop.position.set( 0, - 1e-3, box.min.z );
+	backdrop.material.roughness = 1;
+	backdrop.receiveShadow = true;
+	scene.add( backdrop );
+
+	// spot light
+	// TODO: use PhysicalSpotLight once it can extend IESSpotLight - currently the class is only
+	// exported from "three/webgpu" and the node library resolves light nodes by exact constructor
+	// so a subclass would not rasterize
+	spotLight = new IESSpotLight( 0xff170f );
+	spotLight.position.set( 1.5, 5.0, 3 );
+	spotLight.angle = Math.PI / 4.5;
+	spotLight.decay = 0;
+	spotLight.penumbra = 1.0;
+	spotLight.distance = 0.0;
+	spotLight.intensity = 50.0;
+	spotLight.radius = 0.2;
+	spotLight.iesMap = params.iesProfile === - 1 ? null : iesTextures[ params.iesProfile ];
+
+	// spot light shadow
+	spotLight.shadow.mapSize.width = 512;
+	spotLight.shadow.mapSize.height = 512;
+	spotLight.shadow.camera.near = 0.1;
+	spotLight.shadow.camera.far = 10.0;
+	spotLight.shadow.focus = 1.0;
+	spotLight.castShadow = true;
+	scene.add( spotLight );
+
+	// spot light target
+	const targetHeight = 0.5 * ( box.max.y - box.min.y );
+	const targetObject = spotLight.target;
+	targetObject.position.x = 0;
+	targetObject.position.y = targetHeight;
+	targetObject.position.z = 0;
+	scene.add( targetObject );
+
+	// dimmer, cooler fill light from the left side of the model
+	fillLight = new IESSpotLight( 0xbfd4ff );
+	fillLight.position.set( - 2.5, 4.0, 2.5 );
+	fillLight.angle = Math.PI / 3.5;
+	fillLight.decay = 0;
+	fillLight.penumbra = 1.0;
+	fillLight.distance = 0.0;
+	fillLight.intensity = 6.0;
+	fillLight.radius = 0.5;
+	fillLight.castShadow = true;
+	fillLight.shadow.mapSize.width = 512;
+	fillLight.shadow.mapSize.height = 512;
+	fillLight.shadow.camera.near = 0.1;
+	fillLight.shadow.camera.far = 10.0;
+	fillLight.shadow.focus = 1.0;
+	scene.add( fillLight );
+
+	fillLight.target.position.set( 0, targetHeight, 0 );
+	scene.add( fillLight.target );
+
+	pathTracer.setScene( scene, camera );
+
+	loader.setPercentage( 1 );
+	loader.setCredits( CREDITS );
+	onParamsChange();
+	onResize();
+	window.addEventListener( 'resize', onResize );
+
+	// gui
+	const gui = new GUI();
+	const ptFolder = gui.addFolder( 'Path Tracing' );
+	ptFolder.add( params, 'enable' );
+	ptFolder.add( params, 'frameBudget', 50000, 2000000, 50000 ).onChange( value => {
+
+		pathTracer.frameBudget = value;
+
+	} );
+	ptFolder.add( params, 'maxBounces', 1, 50, 1 ).onChange( onParamsChange );
+	ptFolder.add( params, 'renderScale', 0.1, 1 ).onChange( onResize );
+
+	const lightFolder = gui.addFolder( 'Spot Light' );
+	lightFolder.addColor( spotLight, 'color' ).onChange( onParamsChange );
+	lightFolder.add( spotLight, 'intensity', 0.0, 200.0, 0.01 ).onChange( onParamsChange );
+	lightFolder.add( spotLight, 'radius', 0.0, 10.0 ).onChange( onParamsChange );
+	lightFolder.add( spotLight, 'decay', 0.0, 2.0 ).onChange( onParamsChange );
+	lightFolder.add( spotLight, 'distance', 0.0, 20.0 ).onChange( onParamsChange );
+	lightFolder.add( spotLight, 'angle', 0.0, Math.PI / 2.0 ).onChange( onParamsChange );
+	lightFolder.add( spotLight, 'penumbra', 0.0, 1.0 ).onChange( onParamsChange );
+	lightFolder.add( params, 'iesProfile', IES_PROFILES ).name( 'iesProfile' ).onChange( v => {
+
+		spotLight.iesMap = v === - 1 ? null : iesTextures[ v ];
+
+		// TODO: three.js does not pick up "iesMap" changes after the first compile - remove this
+		// rebuild once that is fixed
+		scene.traverse( c => {
+
+			if ( c.material ) c.material.needsUpdate = true;
+
+		} );
+
+		onParamsChange();
+
+	} );
+
+	animate();
+
+}
+
+function onResize() {
+
+	// TODO: we need to handle the interpolation of the float texture more intelligently to avoid
+	// extra bright hot spots - then this can be moved to "onParamsChange"
+	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setPixelRatio( window.devicePixelRatio * params.renderScale );
+	camera.aspect = window.innerWidth / window.innerHeight;
+	camera.updateProjectionMatrix();
+	pathTracer.updateCamera();
+
+}
+
+function onParamsChange() {
+
+	// pathTracer.renderScale = params.renderScale;
+	pathTracer.maxBounces = params.maxBounces;
+	pathTracer.updateLights();
+
+}
+
+function animate() {
+
+	requestAnimationFrame( animate );
+
+	camera.updateMatrixWorld();
+
+	if ( params.enable ) {
+
+		pathTracer.renderSample();
+		pathTracer.getSampleCountsAsync().then( counts => loader.setSamples( counts ) );
+
+	} else {
+
+		renderer.render( scene, camera );
+
+	}
+
+}

@@ -1,0 +1,2238 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+"""Core IO, DSP and utility functions."""
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, overload
+
+import lazy_loader as lazy
+import numpy as np
+import scipy
+import soundfile as sf
+import soxr
+from numba import guvectorize, jit, stencil
+
+from .. import util
+from .._cache import cache
+from ..util.decorators import future_default
+from ..util.exceptions import ParameterError
+from ..util.files import example
+from .convert import frames_to_samples, time_to_samples
+
+if TYPE_CHECKING:
+    import os
+    from typing import Any, BinaryIO, Callable, Generator
+
+    from numpy.typing import DTypeLike, NDArray
+
+    from .._typing import _Array1D, _FloatLike_co, _IntLike_co, _SequenceLike
+
+
+# Lazy-load optional dependencies
+samplerate = lazy.load("samplerate")
+resampy = lazy.load("resampy")
+
+__all__ = [
+    "load",
+    "loadx",
+    "stream",
+    "to_mono",
+    "to_stereo",
+    "to_multi",
+    "resample",
+    "get_duration",
+    "get_samplerate",
+    "autocorrelate",
+    "lpc",
+    "zero_crossings",
+    "clicks",
+    "tone",
+    "chirp",
+    "mu_compress",
+    "mu_expand",
+]
+
+
+# -- CORE ROUTINES --#
+# Load should never be cached, since we cannot verify that the contents of
+# 'path' are unchanged across calls.
+def load(
+    path: str | int | os.PathLike[Any] | sf.SoundFile | BinaryIO,
+    *,
+    sr: float | None = 22050,
+    mono: bool = True,
+    offset: float = 0.0,
+    duration: float | None = None,
+    dtype: DTypeLike = np.float32,
+    res_type: str = "soxr_hq",
+) -> tuple[np.ndarray, int | float]:
+    """Load an audio file as a floating point time series.
+
+    Audio will be automatically resampled to the given rate
+    (default ``sr=22050``).
+
+    To preserve the native sampling rate of the file, use ``sr=None``.
+
+    Parameters
+    ----------
+    path : str, int, pathlib.Path, soundfile.SoundFile, or file-like object
+        path to the input file.
+
+        Any codec supported by `soundfile` will work.
+
+        Any string file paths, or any object implementing Python's
+        file interface (e.g. `pathlib.Path`) are supported as `path`.
+
+        If the codec is supported by `soundfile`, then `path` can also be
+        an open file descriptor (int) or an existing `soundfile.SoundFile` object.
+
+    sr : number > 0 [scalar]
+        target sampling rate
+
+        'None' uses the native sampling rate
+
+    mono : bool
+        convert signal to mono
+
+    offset : float
+        start reading after this time (in seconds).
+
+        If negative, it will be interpreted relative to the end of the file.
+
+    duration : float
+        only load up to this much audio (in seconds)
+
+    dtype : numeric type
+        data type of ``y``
+
+    res_type : str
+        resample type (see note)
+
+        .. note::
+            By default, this uses `soxr`'s high-quality mode ('HQ').
+
+            For alternative resampling modes, see `resample`
+
+    Returns
+    -------
+    y : np.ndarray [shape=(n,) or (..., n)]
+        audio time series. Multi-channel is supported.
+    sr : number > 0 [scalar]
+        sampling rate of ``y``
+
+    Examples
+    --------
+    >>> # Load an ogg vorbis file
+    >>> filename = librosa.ex('trumpet')
+    >>> y, sr = librosa.load(filename)
+    >>> y
+    array([-1.407e-03, -4.461e-04, ..., -3.042e-05,  1.277e-05],
+          dtype=float32)
+    >>> sr
+    22050
+
+    >>> # Load a file and resample to 11 KHz
+    >>> filename = librosa.ex('trumpet')
+    >>> y, sr = librosa.load(filename, sr=11025)
+    >>> y
+    array([-8.746e-04, -3.363e-04, ..., -1.301e-05,  0.000e+00],
+          dtype=float32)
+    >>> sr
+    11025
+
+    >>> # Load 5 seconds of a file, starting 15 seconds in
+    >>> filename = librosa.ex('brahms')
+    >>> y, sr = librosa.load(filename, offset=15.0, duration=5.0)
+    >>> y
+    array([0.146, 0.144, ..., 0.128, 0.015], dtype=float32)
+    >>> sr
+    22050
+
+    >>> # Load using an already open SoundFile object
+    >>> import soundfile
+    >>> sfo = soundfile.SoundFile(librosa.ex('brahms'))
+    >>> y, sr = librosa.load(sfo)
+    """
+    y, sr_native = __soundfile_load(path, offset, duration, dtype)
+
+    # Final cleanup for dtype and contiguity
+    if mono:
+        y = to_mono(y)
+
+    if sr is not None:
+        y = resample(y, orig_sr=sr_native, target_sr=sr, res_type=res_type)
+
+    else:
+        sr = sr_native
+
+    return y, sr
+
+
+def __soundfile_load(path, offset, duration, dtype):
+    """Load an audio buffer using soundfile."""
+    if isinstance(path, sf.SoundFile):
+        # If the user passed an existing soundfile object,
+        # we can use it directly
+        context = path
+    else:
+        # Otherwise, create the soundfile object
+        context = sf.SoundFile(path)
+
+    with context as sf_desc:
+        sr_native = sf_desc.samplerate
+        if offset != 0:
+            if offset > 0:
+                # Seek to the start of the target read
+                sf_desc.seek(int(offset * sr_native))
+            else:
+                sf_desc.seek(-int(abs(offset) * sr_native), whence=sf.SEEK_END)
+
+        if duration is not None:
+            frame_duration = int(duration * sr_native)
+        else:
+            frame_duration = -1
+
+        # Load the target number of frames, and transpose to match librosa form
+        y = sf_desc.read(frames=frame_duration, dtype=dtype, always_2d=False).T
+
+    return y, sr_native
+
+
+def _align_step_size(target_step, target_sr, orig_sr):
+    """
+    When resampling a stream, we need to ensure that the target step size
+    remains integer-valued in the original sampling rate
+    """
+    if target_sr is None or target_sr == orig_sr:
+        return target_step
+
+    exact_native_step = (target_step * orig_sr) / target_sr
+    aligned_native_step = np.round(exact_native_step)
+
+    # Tolerances (rtol=1e-7, atol=1e-5) safely absorb precision errors from float arithmetic
+    if not np.isclose(exact_native_step, aligned_native_step, rtol=1e-7, atol=1e-5):
+        raise ParameterError(
+            f"Target block step of {target_step} samples at {target_sr} results in a "
+            f"fractional sample advance at original sampling rate {orig_sr}."
+        )
+
+    return int(aligned_native_step)
+
+
+@future_default(param_name="sr", old_default=None, new_default=22050, version="1.1.0")
+def stream(
+    path: str | int | sf.SoundFile | BinaryIO,
+    *,
+    block_length: int,
+    frame_length: int,
+    hop_length: int,
+    sr: float | None = None,
+    mono: bool = True,
+    offset: float = 0.0,
+    duration: float | None = None,
+    fill_value: float | None = None,
+    res_type: str = "soxr_hq",
+    dtype: DTypeLike = np.float32,
+) -> Generator[np.ndarray, None, None]:
+    """Stream audio in fixed-length buffers.
+
+    This is primarily useful for processing large files that won't
+    fit entirely in memory at once.
+
+    Instead of loading the entire audio signal into memory (as
+    in `load`, this function produces *blocks* of audio spanning
+    a fixed number of frames at a specified frame length and hop
+    length.
+
+    While this function strives for similar behavior to `load`,
+    there are a few caveats that users should be aware of:
+
+        1. This function does not return audio buffers directly.
+           It returns a generator, which you can iterate over
+           to produce blocks of audio.  A *block*, in this context,
+           refers to a buffer of audio which spans a given number of
+           (potentially overlapping) frames.
+        2. Automatic sample-rate conversion is supported,
+           but not all combinations of ``block_length``, ``frame_length``, and
+           ``hop_length`` will be compatible with all sampling rates.
+           Specifically, ``(block_length * hop_length * native_sr) / sr``
+           must evaluate to an exact integer, where ``native_sr`` is the original
+           sampling rate of the stream prior to resampling.
+        3. Many analyses require access to the entire signal
+           to behave correctly, such as `resample`, `cqt`, or
+           `beat_track`, so these methods will not be appropriate
+           for streamed data.
+        4. The ``block_length`` parameter specifies how many frames
+           of audio will be produced per block.  Larger values will
+           consume more memory, but will be more efficient to process
+           down-stream.  The best value will ultimately depend on your
+           application and other system constraints.
+        5. By default, most librosa analyses (e.g., short-time Fourier
+           transform) assume centered frames, which requires padding the
+           signal at the beginning and end.  This will not work correctly
+           when the signal is carved into blocks, because it would introduce
+           padding in the middle of the signal.  To disable this feature,
+           use ``center=False`` in all frame-based analyses.
+        6. If you break out of the generator loop early, the underlying audio
+           file handle and resampling buffers will remain open until the
+           generator object is garbage-collected. To explicitly release resources,
+           call the generator's ``.close()`` method.
+
+    See the examples below for proper usage of this function.
+
+    Parameters
+    ----------
+    path : str, int, sf.SoundFile, or file-like object
+        path to the input file to stream.
+
+        Any codec supported by `soundfile` is permitted here.
+
+        An existing `soundfile.SoundFile` object may also be provided.
+
+    block_length : int > 0
+        The number of frames to include in each block.
+
+        Note that at the end of the file, there may not be enough
+        data to fill an entire block, resulting in a shorter block
+        by default.  To pad the signal out so that blocks are always
+        full length, set ``fill_value`` (see below).
+
+    frame_length : int > 0
+        The number of samples per frame.
+
+    hop_length : int > 0
+        The number of samples to advance between frames.
+
+        Note that by when ``hop_length < frame_length``, neighboring frames
+        will overlap.  Similarly, the last frame of one *block* will overlap
+        with the first frame of the next *block*.
+
+    sr : number > 0 [scalar]
+        target sampling rate.  If not provided, the original sampling rate of the file will be
+        used.
+
+    mono : bool
+        Convert the signal to mono during streaming
+
+    offset : float
+        Start reading after this time (in seconds)
+
+        If negative, it will be interpreted relative to the end of the file.
+
+    duration : float
+        Only load up to this much audio (in seconds)
+
+    fill_value : float [optional]
+        If padding the signal to produce constant-length blocks,
+        this value will be used at the end of the signal.
+
+        In most cases, ``fill_value=0`` (silence) is expected, but
+        you may specify any value here.
+
+    res_type : str
+        Resample type, must be one of the following:
+
+        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+            `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
+            ``'soxr_hq'`` is the default setting of `soxr`.
+        'soxr_qq'
+            `soxr` Quick cubic interpolation (very fast, but not bandlimited)
+    dtype : numeric type
+        data type of audio buffers to be produced
+
+    Yields
+    ------
+    y : np.ndarray
+        An audio buffer of (at most)
+        ``(block_length-1) * hop_length + frame_length`` samples.
+
+    See Also
+    --------
+    load
+    get_samplerate
+    soundfile.blocks
+
+    Examples
+    --------
+    Apply a short-term Fourier transform to blocks of 256 frames
+    at a time.  Note that streaming operation requires left-aligned
+    frames, so we must set ``center=False`` to avoid padding artifacts.
+
+    >>> filename = librosa.ex('brahms')
+    >>> sr = librosa.get_samplerate(filename)
+    >>> stream = librosa.stream(filename,
+    ...                       block_length=256,
+    ...                       frame_length=4096,
+    ...                       hop_length=1024)
+    >>> for y_block in stream:
+    ...     D_block = librosa.stft(y_block, center=False)
+
+    Or compute a mel spectrogram over a stream, using a shorter frame
+    and non-overlapping windows
+
+    >>> filename = librosa.ex('brahms')
+    >>> sr = librosa.get_samplerate(filename)
+    >>> stream = librosa.stream(filename,
+    ...                         block_length=256,
+    ...                         frame_length=2048,
+    ...                         hop_length=2048)
+    >>> for y_block in stream:
+    ...     m_block = librosa.feature.melspectrogram(y=y_block, sr=sr,
+    ...                                              n_fft=2048,
+    ...                                              hop_length=2048,
+    ...                                              center=False)
+    """
+    if not util.is_positive_int(block_length):
+        raise ParameterError(f"block_length={block_length} must be a positive integer")
+    if not util.is_positive_int(frame_length):
+        raise ParameterError(f"frame_length={frame_length} must be a positive integer")
+    if not util.is_positive_int(hop_length):
+        raise ParameterError(f"hop_length={hop_length} must be a positive integer")
+
+    if sr is not None and not (np.isfinite(sr) and sr > 0):
+        raise ParameterError(f"sr={sr} must be a positive number")
+
+    if res_type not in {"soxr_vhq", "soxr_hq", "soxr_mq", "soxr_lq", "soxr_qq"}:
+        raise ParameterError(f"res_type={res_type} is not a valid soxr resampling mode for streaming")
+
+    if isinstance(path, sf.SoundFile):
+        sfo = path
+    else:
+        sfo = sf.SoundFile(path)
+
+    # Get the sample rate from the file info
+    orig_sr = sfo.samplerate
+
+    # Construct the stream
+    # Seek the soundfile object to the starting frame
+
+    target_yield_size = (block_length - 1) * hop_length + frame_length
+    target_advance = block_length * hop_length
+
+    # Determine internal channel state for buffer initialization
+    is_multichannel = sfo.channels > 1
+    process_channels = 1 if mono else sfo.channels
+
+    needs_resampling = (sr is not None) and (orig_sr != sr)
+    if sr is None:
+        sr = orig_sr
+
+    try:
+        orig_read_size = _align_step_size(target_advance, sr, orig_sr)
+
+        read_frames = int(duration * orig_sr) if duration is not None else -1
+
+        if needs_resampling:
+            resampler = soxr.ResampleStream(
+                in_rate=orig_sr,
+                out_rate=sr,
+                num_channels=process_channels,
+                dtype=dtype,
+                quality=res_type,
+            )
+
+        capacity = target_yield_size + (target_advance * 2)
+        buffer_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+        buffer = np.zeros(buffer_shape, dtype=dtype)
+        write_idx = 0
+        read_idx = 0
+
+        if offset >= 0:
+            sfo.seek(int(offset * orig_sr))
+        else:
+            sfo.seek(-int(abs(offset) * orig_sr), whence=sf.SEEK_END)
+
+        # Reusable buffer for the per-chunk mono downmix; the final short
+        # chunk writes into a truncated view of it, avoiding a fresh
+        # allocation on every block
+        mono_buffer = (
+            np.empty(orig_read_size, dtype=dtype)
+            if mono and is_multichannel
+            else None
+        )
+
+        for orig_chunk in sfo.blocks(blocksize=orig_read_size,
+                                     overlap=0,
+                                     dtype=dtype,
+                                     always_2d=False,
+                                     frames=read_frames):
+
+            if mono and is_multichannel:
+                # soundfile returns (samples, channels), to_mono expects (channels, samples)
+                assert mono_buffer is not None  # for mypy; set above under same condition
+                orig_chunk = to_mono(
+                    orig_chunk.T, out=mono_buffer[: orig_chunk.shape[0]]
+                )
+
+            if needs_resampling:
+                target_chunk = resampler.resample_chunk(orig_chunk)
+            else:
+                target_chunk = orig_chunk
+            n_incoming = target_chunk.shape[0]
+
+            if write_idx + n_incoming > capacity:
+                available = write_idx - read_idx
+                buffer[:available] = buffer[read_idx : write_idx]
+                read_idx = 0
+                write_idx = available
+
+                # The following branch should never happen, but it's here
+                # just in case something goes wrong with the input stream
+                if write_idx + n_incoming > capacity:  # pragma: no cover
+                    capacity = write_idx + n_incoming + target_yield_size
+                    new_shape = (capacity,) if process_channels == 1 else (capacity, process_channels)
+                    new_buffer = np.zeros(new_shape, dtype=dtype)
+                    new_buffer[:write_idx] = buffer[:write_idx]
+                    buffer = new_buffer
+
+            buffer[write_idx : write_idx + n_incoming] = target_chunk
+            write_idx += n_incoming
+
+            while write_idx - read_idx >= target_yield_size:
+                block = buffer[read_idx : read_idx + target_yield_size]
+                yield block.T.copy()
+                read_idx += target_advance
+
+        if process_channels == 1:
+            empty = np.empty((0,), dtype=buffer.dtype)
+        else:
+            empty = np.empty((0, process_channels), dtype=buffer.dtype)
+
+        if needs_resampling:
+            tail_chunk = resampler.resample_chunk(empty, last=True)
+        else:
+            tail_chunk = None
+
+        final_data_list = [buffer[read_idx : write_idx]]
+        if tail_chunk is not None and tail_chunk.shape[0] > 0:
+            final_data_list.append(tail_chunk)
+            remainder = np.concatenate(final_data_list, axis=0) if final_data_list else np.array([])
+        else:
+            remainder = buffer[read_idx : write_idx]
+
+        rem_idx = 0
+        while rem_idx < remainder.shape[0]:
+            current_slice = remainder[rem_idx : rem_idx + target_yield_size]
+
+            if current_slice.shape[0] < target_yield_size:
+                pad_length = target_yield_size - current_slice.shape[0]
+                pad_width = (0, pad_length) if process_channels == 1 else ((0, pad_length), (0, 0))
+                if fill_value is not None:
+                    current_slice = np.pad(current_slice,
+                                           pad_width,
+                                           mode="constant",
+                                           constant_values=fill_value)
+
+            yield current_slice.T.copy()
+            rem_idx += target_advance
+    finally:
+        # If we instantiated a new SoundFile object, we should close it.  If the
+        # user passed in an existing SoundFile object, we should leave it alone.
+        if not isinstance(path, sf.SoundFile):
+            sfo.close()
+
+
+def loadx(key: str, *, hq: bool | None = None, **kwargs: Any) -> tuple[np.ndarray, int | float]:
+    """Load an example audio file by key.
+
+    This is a wrapper around `librosa.util.example` that provides the same
+    functionality as `load`, but with the convenience of loading from the
+    built-in examples.
+
+    .. note:: This function is primarily useful for demonstration purposes,
+      and to make documentation examples more concise.
+      For general-purpose loading of audio files, use `load` instead.
+
+    Parameters
+    ----------
+    key : str
+        The identifier for the track to load
+
+    hq : bool, optional
+        If ``True``, return the high-quality version of the recording.
+        If ``False``, return the 22KHz mono version of the recording.
+
+        If not provided, `hq` is inferred based on additional parameters in `kwargs`:
+            - If `sr` is provided and greater than 22050 (or is `None`), then `hq` is set to `True`.
+            - If `mono` is provided and set to `False`, then `hq` is set to `True`.
+            - Otherwise, `hq` is set to `False`.
+
+    **kwargs : additional keyword arguments
+        Additional keyword arguments to pass to `load`
+
+    Returns
+    -------
+    y : np.ndarray [shape=(n,) or (..., n)]
+        audio time series. Multi-channel is supported.
+    sr : number > 0 [scalar]
+        sampling rate of ``y``
+
+    See Also
+    --------
+    load
+    librosa.util.example
+    librosa.util.list_examples
+
+    Examples
+    --------
+    Load the default version of the 'trumpet' example
+
+    >>> y, sr = librosa.loadx('trumpet')
+
+    Load the stereo version of the 'trumpet' example
+
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> # This is equivalent to the following more verbose code:
+    >>> y, sr = librosa.load(librosa.ex('trumpet', hq=True), mono=False)
+    """
+    if hq is None:
+        if (("sr" in kwargs and (kwargs["sr"] is None or kwargs["sr"] > 22050)) or
+            ("mono" in kwargs and kwargs["mono"] is False)
+            ):
+            hq = True
+        else:
+            hq = False
+
+    try:
+        path = example(key, hq=hq)
+    except ParameterError as exc:
+        raise ParameterError(f"Could not load example with key '{key}'.  "
+                             "Did you mean to use librosa.load instead of loadx?") from exc
+
+    return load(path, **kwargs)
+
+
+def _init_output(
+    out: np.ndarray | None, shape: tuple[int, ...], dtype: np.dtype
+) -> np.ndarray:
+    """Validate a caller-provided output buffer, or allocate a new one.
+
+    If ``out`` is ``None``, return a new zero-filled array of the given shape
+    and dtype.  Otherwise ``out`` must match ``shape`` exactly, and its dtype
+    must be able to hold ``dtype`` without loss of precision (i.e. at least as
+    precise as ``dtype``); it is zeroed in place and returned.  A caller that
+    explicitly allocates a higher-precision buffer keeps that precision.
+    """
+    if out is None:
+        return np.zeros(shape, dtype=dtype)
+    if out.shape != shape:
+        raise ParameterError(f"out has shape={out.shape}, but expected {shape}")
+    if np.promote_types(out.dtype, dtype) != out.dtype:
+        raise ParameterError(
+            f"out has dtype={out.dtype}, which cannot hold the result dtype {dtype}"
+        )
+    out[...] = 0
+    return out
+
+
+def to_mono(
+    *signals: np.ndarray,
+    pad: bool = True,
+    norm: bool = True,
+    out: np.ndarray | None = None,
+) -> np.ndarray:
+    """Convert an audio signal to mono by averaging samples across channels.
+
+    Parameters
+    ----------
+    *signals : np.ndarray [shape=(..., n)]
+        One or more signals to convert to mono.
+        Each input signal can be mono or multi-channel, and they need not all have
+        identical lengths.
+
+    pad : bool
+        If `True`, pad the output to match the length of the longest input:
+        `n_out = max(y.shape[-1] for y in signals)`.
+
+        If `False`, trim the output to match the length of the shortest input:
+        `n_out = min(y.shape[-1] for y in signals)`.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
+
+    out : np.ndarray [shape=(n_out,)] or None
+        A pre-allocated output buffer.  If provided, it must match the shape
+        ``(n_out,)``, and its dtype must be at least as precise as the result
+        dtype; it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
+
+    Returns
+    -------
+    y_mono : np.ndarray [shape=(n_out,)]
+        All signals combined together into a single mono signal.
+        If ``out`` was provided, this is the same object as ``out``.
+
+    See Also
+    --------
+    to_stereo
+    to_multi
+    util.fix_length
+
+    Notes
+    -----
+    The dtype of the output signal will be the most general type that can
+    accommodate all input signals.  If the input signals have different
+    dtypes, the output will be promoted to the most general type.
+
+    .. warning:: Any input signal with more than one channel will be
+      downmixed to mono prior to being combined with other signals.
+      This means that the following are generally not equivalent
+      for multi-channel inputs `y1` and `y2` when `norm=True`:
+
+        >>> y_mono = librosa.to_mono(y1, y2)
+        >>> y_mono = librosa.to_mono(np.vstack((y1, y2)))
+
+    Examples
+    --------
+    Downmix a stereo input
+
+    >>> y, sr = librosa.loadx('trumpet', mono=False)
+    >>> y.shape
+    (2, 117601)
+    >>> y_mono = librosa.to_mono(y)
+    >>> y_mono.shape
+    (117601,)
+
+    Mix three independent mono inputs with different lengths
+
+    >>> y_440 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y_550 = librosa.tone(550.0, sr=22050, duration=1.5)
+    >>> y_660 = librosa.tone(660.0, sr=22050, duration=2.0)
+    >>> y_mono = librosa.to_mono(y_440, y_550, y_660, pad=True)
+    >>> y_mono.shape
+    (44100,)
+    """
+    # Validate the buffer(s) and identify lengths, dtypes, etc
+    if not signals:
+        raise ParameterError("At least one signal must be provided to `to_mono`.")
+    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
+    dtype = signals[0].dtype
+    for y in signals:
+        util.valid_audio(y)
+        n_min = min(n_min, y.shape[-1])
+        n_max = max(n_max, y.shape[-1])
+        dtype = np.promote_types(dtype, y.dtype)
+
+    # Allocate and initialize the output buffer
+    if pad:
+        size = n_max
+    else:
+        size = n_min
+
+    output = _init_output(out, (size,), dtype)
+
+    if norm:
+        combine = np.mean
+    else:
+        combine = np.sum
+
+    # Now, average the signals together
+    for y in signals:
+        output += util.fix_length(
+            combine(y, axis=tuple(range(y.ndim - 1))), size=output.shape[-1], axis=-1
+        )
+    if norm:
+        # Divide by the number of input signals given
+        output /= len(signals)
+
+    return output
+
+
+def to_stereo(
+    *,
+    left: np.ndarray | None,
+    right: np.ndarray | None,
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+    out: np.ndarray | None = None,
+) -> np.ndarray:
+    """Combine two signals into a stereo signal.
+
+    Parameters
+    ----------
+    left : np.ndarray [shape=(..., n)] or None
+        Left channel signal. Multi-channel is supported.
+
+    right : np.ndarray [shape=(..., m)] or None
+        Right channel signal. Multi-channel is supported.
+
+    downmix : bool
+        If `True`, downmix the left and right channels to mono before combining.
+
+        If `False`, the left and right signals are additively combined.
+
+    pad : bool
+        If `True`, pad the shorter channel with zeros to match the length of the longer channel.
+        If `False`, the longer channel is trimmed to match the length of the shorter channel.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
+
+    out : np.ndarray [shape=(2, n_out)] or None
+        A pre-allocated output buffer.  If provided, it must match the shape
+        ``(2, n_out)``, and its dtype must be at least as precise as the result
+        dtype; it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
+
+    Returns
+    -------
+    y_stereo : np.ndarray [shape=(2, n_out)]
+        Stereo signal with left channel in the first row and right channel in the second row.
+        If ``out`` was provided, this is the same object as ``out``.
+
+    See Also
+    --------
+    to_mono
+    to_multi
+    util.fix_length
+
+    Notes
+    -----
+    At least one of `left` or `right` must be provided.
+
+    Examples
+    --------
+    Combine two mono signals into a hard-panned stereo signal
+
+    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
+    >>> y_stereo = librosa.to_stereo(left=y1, right=y2)
+
+    Upmix a mono signal into the left or right channel in stereo
+
+    >>> y_left = librosa.to_stereo(left=y1, right=None)
+    >>> y_right = librosa.to_stereo(left=None, right=y2)
+
+    Downmix a stereo signal into the left channel, and mix a third
+    mono signal into the right channel
+
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=1.0)
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=True)
+
+    Keep the original stereo signal separated, but mix a third signal into the
+    right channel:
+
+    >>> y_mix = librosa.to_stereo(left=y_stereo, right=y3, downmix=False)
+    """
+    # This flag tracks whether we had only one signal to begin with
+    onesided = True
+    if left is None and right is None:
+        raise ParameterError("At least one of 'left' or 'right' must be provided")
+
+    elif left is None:
+        # These are somewhat inefficient ways to allocate a silent channel,
+        # but it makes the logic simple and clear below
+        left = np.zeros_like(right)
+    elif right is None:
+        right = np.zeros_like(left)
+    else:
+        onesided = False
+
+    # This assert tells mypy that both arrays now exist
+    assert left is not None and right is not None
+
+    # First, deal with padding
+    if pad:
+        size = max(left.shape[-1], right.shape[-1])
+    else:
+        size = min(left.shape[-1], right.shape[-1])
+
+    # This implements either padding or trimming
+    left = util.fix_length(left, size=size, axis=-1)
+    right = util.fix_length(right, size=size, axis=-1)
+
+    # Get a compatible dtype for both channels
+    dtype = np.promote_types(left.dtype, right.dtype)
+    left = left.astype(dtype, copy=False)
+    right = right.astype(dtype, copy=False)
+
+    # Create an empty stereo output buffer
+    output = _init_output(out, (2, size), dtype)
+    if downmix:
+        # Downmix directly into the output rows to avoid a second allocation
+        to_mono(left, norm=norm, out=output[0])
+        to_mono(right, norm=norm, out=output[1])
+    else:
+        if left.ndim == 1:
+            output[0] = left
+        elif left.ndim == 2 and left.shape[0] == 2:
+            output[:] = left
+        else:
+            raise ParameterError(
+                f"left input has unsupported shape {left.shape} for downmix=False"
+            )
+
+        if right.ndim == 1:
+            output[1] += right
+        elif right.ndim == 2 and right.shape[0] == 2:
+            output[:] += right
+        else:
+            raise ParameterError(
+                f"right input has unsupported shape {right.shape} for downmix=False"
+            )
+        if norm and not onesided:
+            # Only normalize here if we had both channels on input
+            output /= 2
+
+    return output
+
+
+def to_multi(
+    *signals: np.ndarray,
+    downmix: bool = True,
+    pad: bool = True,
+    norm: bool = True,
+    out: np.ndarray | None = None,
+) -> np.ndarray:
+    """Combine multiple signals into a multi-channel signal.
+
+    Parameters
+    ----------
+    *signals : np.ndarray [shape=(..., n)]
+        One or more signals to combine into a multi-channel signal.
+        Each input signal can be mono or multi-channel, and they need not all have
+        identical lengths.
+
+    downmix : bool
+        If `True`, downmix each input signal to mono before combining.
+
+        If `False`, the input signals are additively combined, and all must have
+        identical channel layouts (shape excluding the trailing length dimension).
+
+    pad : bool
+        If `True`, pad the output to match the length of the longest input signal.
+
+        If `False`, trim the output to match the length of the shortest input signal.
+
+    norm : bool
+        If `True` (default), signals are combined by averaging.
+
+        If `False`, signals are combined by summing.
+
+    out : np.ndarray [shape=(m, n_out) or shape=(..., n_out)] or None
+        A pre-allocated output buffer.  If provided, it must match the result
+        shape, and its dtype must be at least as precise as the result dtype;
+        it is zeroed and filled in place and returned, avoiding a new
+        allocation.  If ``None`` (default), a new array is allocated.
+
+    Returns
+    -------
+    y_multi : np.ndarray [shape=(m, n_out) or shape=(..., n_out)]
+        Multi-channel combination of the input signals, where `m` corresponds
+        to the number of signals (if `downmix=True`), and `n_out` is the length
+        of the output signal determined by the padding mode.
+        If ``out`` was provided, this is the same object as ``out``.
+
+    See Also
+    --------
+    to_mono
+    to_stereo
+    util.fix_length
+
+    Examples
+    --------
+    Combine three mono signals of different lengths into a multi-channel signal
+
+    >>> y1 = librosa.tone(440.0, sr=22050, duration=1.0)
+    >>> y2 = librosa.tone(550.0, sr=22050, duration=1.0)
+    >>> y3 = librosa.tone(660.0, sr=22050, duration=2.0)
+    >>> y_multi = librosa.to_multi(y1, y2, y3, pad=True)
+    >>> y_multi.shape
+    (3, 44100)
+    """
+    # Validate the buffer(s) and identify lengths, dtypes, etc
+    if not signals:
+        raise ParameterError("At least one signal must be provided.")
+    n_min, n_max = signals[0].shape[-1], signals[0].shape[-1]
+    dtype = signals[0].dtype
+    if downmix:
+        # If all channels are downmixed to mono,
+        # then the layout will be (n_signals, n_out)
+        channel_layout = tuple((len(signals),))
+    else:
+        # If we're not downmixing, then all have to have
+        # identical channel layout
+        channel_layout = tuple(signals[0].shape[:-1])
+
+    for y in signals:
+        util.valid_audio(y)
+        n_min = min(n_min, y.shape[-1])
+        n_max = max(n_max, y.shape[-1])
+        dtype = np.promote_types(dtype, y.dtype)
+        if not downmix and y.shape[:-1] != channel_layout:
+            raise ParameterError(
+                f"Cannot combine signals with different channel layouts {y.shape[:-1]} when downmix=False"
+            )
+
+    # Allocate and initialize the output buffer
+    if pad:
+        size = n_max
+    else:
+        size = n_min
+
+    output = _init_output(out, (*channel_layout, size), dtype)
+    if downmix:
+        # Downmix each signal to mono and mix into the output
+        for i, y in enumerate(signals):
+            y = y.astype(dtype, copy=False)
+            if y.shape[-1] == size:
+                # No length adjustment needed: downmix straight into the row
+                to_mono(y, norm=norm, out=output[i])
+            else:
+                # Length differs, so fix_length must allocate; a pass-through
+                # of out= is not possible here
+                output[i] = util.fix_length(to_mono(y, norm=norm), size=size, axis=-1)
+    else:
+        # Truncate and mix into the output
+        for y in signals:
+            output += util.fix_length(y, size=size, axis=-1)
+        if norm:
+            # Divide by the number of input signals given
+            output /= len(signals)
+
+    return output
+
+
+@cache(level=20)
+def resample(
+    y: np.ndarray,
+    *,
+    orig_sr: float,
+    target_sr: float,
+    res_type: str = "soxr_hq",
+    fix: bool = True,
+    scale: bool = False,
+    axis: int = -1,
+    **kwargs: Any,
+) -> np.ndarray:
+    """Resample a time series from orig_sr to target_sr
+
+    By default, this uses a high-quality method (`soxr_hq`) for band-limited sinc
+    interpolation. The alternate ``res_type`` values listed below offer different
+    trade-offs of speed and quality.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n, ...)]
+        audio time series, with `n` samples along the specified axis.
+
+    orig_sr : number > 0 [scalar]
+        original sampling rate of ``y``
+
+    target_sr : number > 0 [scalar]
+        target sampling rate
+
+    res_type : str (default: `soxr_hq`)
+        resample type
+
+        'soxr_vhq', 'soxr_hq', 'soxr_mq' or 'soxr_lq'
+            `soxr` Very high-, High-, Medium-, Low-quality FFT-based bandlimited interpolation.
+            ``'soxr_hq'`` is the default setting of `soxr`.
+        'soxr_qq'
+            `soxr` Quick cubic interpolation (very fast, but not bandlimited)
+        'kaiser_best'
+            `resampy` high-quality mode
+        'kaiser_fast'
+            `resampy` faster method
+        'fft' or 'scipy'
+            `scipy.signal.resample` Fourier method.
+        'polyphase'
+            `scipy.signal.resample_poly` polyphase filtering. (fast)
+        'linear'
+            `samplerate` linear interpolation. (very fast, but not bandlimited)
+        'zero_order_hold'
+            `samplerate` repeat the last value between samples. (very fast, but not bandlimited)
+        'sinc_best', 'sinc_medium' or 'sinc_fastest'
+            `samplerate` high-, medium-, and low-quality bandlimited sinc interpolation.
+
+        .. note::
+            Not all options yield a bandlimited interpolator. If you use `soxr_qq`, `polyphase`,
+            `linear`, or `zero_order_hold`, you need to be aware of possible aliasing effects.
+
+        .. note::
+            `samplerate` and `resampy` are not installed with `librosa`.
+            To use `samplerate` or `resampy`, they should be installed manually::
+
+                $ pip install samplerate
+                $ pip install resampy
+
+        .. note::
+            When using ``res_type='polyphase'``, only integer sampling rates are
+            supported.
+
+    fix : bool
+        adjust the length of the resampled signal to be of size exactly
+        ``ceil(target_sr * len(y) / orig_sr)``
+
+    scale : bool
+        Scale the resampled signal so that ``y`` and ``y_hat`` have approximately
+        equal total energy.
+
+    axis : int
+        The target axis along which to resample.  Defaults to the trailing axis.
+
+    **kwargs : additional keyword arguments
+        If ``fix==True``, additional keyword arguments to pass to
+        `librosa.util.fix_length`.
+
+    Returns
+    -------
+    y_hat : np.ndarray [shape=(..., n * target_sr / orig_sr, ...)]
+        ``y`` resampled from ``orig_sr`` to ``target_sr`` along the target axis
+
+    Raises
+    ------
+    ParameterError
+        If ``res_type='polyphase'`` and ``orig_sr`` or ``target_sr`` are not both
+        integer-valued.
+
+    See Also
+    --------
+    librosa.util.fix_length
+    scipy.signal.resample
+    resampy
+    samplerate.converters.resample
+    soxr.resample
+
+    Notes
+    -----
+    This function caches at level 20.
+
+    Examples
+    --------
+    Downsample from 22 KHz to 8 KHz
+
+    >>> y, sr = librosa.loadx('trumpet', sr=22050)
+    >>> y_8k = librosa.resample(y, orig_sr=sr, target_sr=8000)
+    >>> y.shape, y_8k.shape
+    ((117601,), (42668,))
+    """
+    # First, validate the audio buffer
+    util.valid_audio(y)
+
+    if orig_sr == target_sr:
+        return y
+
+    ratio = float(target_sr) / orig_sr
+
+    n_samples = int(np.ceil(y.shape[axis] * ratio))
+
+    if res_type in ("scipy", "fft"):
+        import scipy.signal
+
+        y_hat = scipy.signal.resample(y, n_samples, axis=axis)
+    elif res_type == "polyphase":
+        if int(orig_sr) != orig_sr or int(target_sr) != target_sr:
+            raise ParameterError(
+                "polyphase resampling is only supported for integer-valued sampling rates."
+            )
+
+        import scipy.signal
+
+        # For polyphase resampling, we need up- and down-sampling ratios
+        # We can get those from the greatest common divisor of the rates
+        # as long as the rates are integrable
+        orig_sr = int(orig_sr)
+        target_sr = int(target_sr)
+        gcd = np.gcd(orig_sr, target_sr)
+        y_hat = scipy.signal.resample_poly(
+            y, target_sr // gcd, orig_sr // gcd, axis=axis
+        )
+    elif res_type in (
+        "linear",
+        "zero_order_hold",
+        "sinc_best",
+        "sinc_fastest",
+        "sinc_medium",
+    ):
+        # Use numpy to vectorize the resampler along the target axis
+        # This is because samplerate does not support ndim>2 generally.
+        y_hat = np.apply_along_axis(
+            samplerate.resample, axis=axis, arr=y, ratio=ratio, converter_type=res_type
+        )
+    elif res_type.startswith("soxr"):
+        # Use numpy to vectorize the resampler along the target axis
+        # This is because soxr does not support ndim>2 generally.
+        y_hat = np.apply_along_axis(
+            soxr.resample,
+            axis=axis,
+            arr=y,
+            in_rate=orig_sr,
+            out_rate=target_sr,
+            quality=res_type,
+        )
+    else:
+        y_hat = resampy.resample(y, orig_sr, target_sr, filter=res_type, axis=axis)
+
+    if fix:
+        y_hat = util.fix_length(y_hat, size=n_samples, axis=axis, **kwargs)
+
+    if scale:
+        y_hat /= np.sqrt(ratio)
+
+    # Match dtypes
+    return np.asarray(y_hat, dtype=y.dtype)
+
+
+def get_duration(
+    *,
+    y: np.ndarray | None = None,
+    sr: float = 22050,
+    S: np.ndarray | None = None,
+    n_fft: int = 2048,
+    hop_length: int = 512,
+    center: bool = True,
+    path: str | os.PathLike[Any] | None = None,
+) -> float:
+    """Compute the duration (in seconds) of an audio time series, feature matrix, or filename.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)] or None
+        audio time series. Multi-channel is supported.
+
+    sr : number > 0 [scalar]
+        audio sampling rate of ``y``
+
+    S : np.ndarray [shape=(..., d, t)] or None
+        STFT matrix, or any STFT-derived matrix (e.g., chromagram
+        or mel spectrogram).
+        Durations calculated from spectrogram inputs are only accurate
+        up to the frame resolution. If high precision is required,
+        it is better to use the audio time series directly.
+
+    n_fft : int > 0 [scalar]
+        length of the FFT frame used when computing ``S``
+
+    hop_length : int > 0 [ scalar]
+        number of audio samples between columns of ``S``
+
+    center : bool
+        - If ``True``, ``S[:, t]`` is centered at ``y[t * hop_length]``
+        - If ``False``, then ``S[:, t]`` begins at ``y[t * hop_length]``
+
+    path : str, path, or file-like
+        If provided, all other parameters are ignored, and the
+        duration is calculated directly from the audio file.
+        Note that this avoids loading the contents into memory,
+        and is therefore useful for querying the duration of
+        long files.
+
+        As in ``load``, this can also be an integer or open file-handle
+        that can be processed by ``soundfile``.
+
+    Returns
+    -------
+    d : float >= 0
+        Duration (in seconds) of the input time series or spectrogram.
+
+    Raises
+    ------
+    ParameterError
+        if none of ``y``, ``S``, or ``path`` are provided.
+
+    Notes
+    -----
+    `get_duration` can be applied to a file (``path``), a spectrogram (``S``),
+    or audio buffer (``y, sr``).  Only one of these three options should be
+    provided.  If you do provide multiple options (e.g., ``path`` and ``S``),
+    then ``path`` takes precedence over ``S``, and ``S`` takes precedence over
+    ``(y, sr)``.
+
+    Examples
+    --------
+    >>> # Load an example audio file
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> librosa.get_duration(y=y, sr=sr)
+    5.333378684807256
+
+    >>> # Or directly from an audio file
+    >>> librosa.get_duration(filename=librosa.ex('trumpet'))
+    5.333378684807256
+
+    >>> # Or compute duration from an STFT matrix
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> S = librosa.stft(y)
+    >>> librosa.get_duration(S=S, sr=sr)
+    5.317369614512471
+
+    >>> # Or a non-centered STFT matrix
+    >>> S_left = librosa.stft(y, center=False)
+    >>> librosa.get_duration(S=S_left, sr=sr)
+    5.224489795918367
+    """
+    if path is not None:
+        return sf.info(path).duration  # type: ignore
+
+    if y is None:
+        if S is None:
+            raise ParameterError("At least one of (y, sr), S, or path must be provided")
+
+        n_frames = S.shape[-1]
+        n_samples = n_fft + hop_length * (n_frames - 1)
+
+        # If centered, we lose half a window from each end of S
+        if center:
+            n_samples = n_samples - 2 * int(n_fft // 2)
+
+    else:
+        n_samples = y.shape[-1]
+
+    return float(n_samples) / sr
+
+
+def get_samplerate(path: str | int | sf.SoundFile | BinaryIO) -> float:
+    """Get the sampling rate for a given file.
+
+    Parameters
+    ----------
+    path : str, int, soundfile.SoundFile, or file-like
+        The path to the file to be loaded
+        As in ``load``, this can also be an integer or open file-handle
+        that can be processed by `soundfile`.
+        An existing `soundfile.SoundFile` object can also be supplied.
+
+    Returns
+    -------
+    sr : number > 0
+        The sampling rate of the given audio file
+
+    Examples
+    --------
+    Get the sampling rate for the included audio file
+
+    >>> path = librosa.ex('trumpet')
+    >>> librosa.get_samplerate(path)
+    22050
+    """
+    if isinstance(path, sf.SoundFile):
+        return path.samplerate  # type: ignore
+
+    return sf.info(path).samplerate  # type: ignore
+
+
+@cache(level=20)
+def autocorrelate(
+    y: np.ndarray, *, max_size: int | None = None, axis: int = -1
+) -> np.ndarray:
+    """Bounded-lag auto-correlation
+
+    Parameters
+    ----------
+    y : np.ndarray
+        array to autocorrelate
+    max_size : int > 0 or None
+        maximum correlation lag.
+        If unspecified, defaults to ``y.shape[axis]`` (unbounded)
+    axis : int
+        The axis along which to autocorrelate.
+        By default, the last axis (-1) is taken.
+
+    Returns
+    -------
+    z : np.ndarray
+        truncated autocorrelation ``y*y`` along the specified axis.
+        If ``max_size`` is specified, then ``z.shape[axis]`` is bounded
+        to ``max_size``.
+
+    Notes
+    -----
+    This function caches at level 20.
+
+    Examples
+    --------
+    Compute full autocorrelation of ``y``
+
+    >>> y, sr = librosa.loadx('trumpet')
+    >>> librosa.autocorrelate(y)
+    array([ 6.899e+02,  6.236e+02, ...,  3.710e-08, -1.796e-08])
+
+    Compute onset strength auto-correlation up to 4 seconds
+
+    >>> import matplotlib.pyplot as plt
+    >>> odf = librosa.onset.onset_strength(y=y, sr=sr, hop_length=512)
+    >>> ac = librosa.autocorrelate(odf, max_size=4 * sr // 512)
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(ac)
+    >>> ax.set(title='Auto-correlation', xlabel='Lag (frames)')
+    """
+    if max_size is None:
+        max_size = y.shape[axis]
+
+    max_size = int(min(max_size, y.shape[axis]))
+
+    real = not np.iscomplexobj(y)
+
+    # Pad out the signal to support full-length auto-correlation
+    n_pad = scipy.fft.next_fast_len(2 * y.shape[axis] - 1, real=real)
+
+    autocorr: np.ndarray
+    if real:
+        # Compute the power spectrum along the chosen axis
+        powspec = util.abs2(scipy.fft.rfft(y, n=n_pad, axis=axis))
+
+        # Convert back to time domain
+        autocorr = scipy.fft.irfft(powspec, n=n_pad, axis=axis)
+    else:
+        # Compute the power spectrum along the chosen axis
+        powspec = util.abs2(scipy.fft.fft(y, n=n_pad, axis=axis))
+
+        # Convert back to time domain
+        autocorr = scipy.fft.ifft(powspec, n=n_pad, axis=axis)
+
+    # Slice down to max_size
+    subslice = [slice(None)] * autocorr.ndim
+    subslice[axis] = slice(max_size)
+
+    autocorr_slice: np.ndarray = autocorr[tuple(subslice)]
+
+    return autocorr_slice
+
+
+def lpc(y: np.ndarray, *, order: int, axis: int = -1) -> np.ndarray:
+    """Linear Prediction Coefficients via Burg's method
+
+    This function applies Burg's method to estimate coefficients of a linear
+    filter on ``y`` of order ``order``.  Burg's method is an extension to the
+    Yule-Walker approach, which are both sometimes referred to as LPC parameter
+    estimation by autocorrelation.
+
+    It follows the description and implementation approach described in the
+    introduction by Marple. [#]_  N.B. This paper describes a different method, which
+    is not implemented here, but has been chosen for its clear explanation of
+    Burg's technique in its introduction.
+
+    .. [#] Larry Marple.
+           A New Autoregressive Spectrum Analysis Algorithm.
+           IEEE Transactions on Acoustics, Speech, and Signal Processing
+           vol 28, no. 4, 1980.
+
+    Parameters
+    ----------
+    y : np.ndarray [shape=(..., n)]
+        Time series to fit. Multi-channel is supported..
+    order : int > 0
+        Order of the linear filter
+    axis : int
+        Axis along which to compute the coefficients
+
+    Returns
+    -------
+    a : np.ndarray [shape=(..., order + 1)]
+        LP prediction error coefficients, i.e. filter denominator polynomial.
+        Note that the length along the specified ``axis`` will be ``order+1``.
+
+    Raises
+    ------
+    ParameterError
+        - If ``y`` is not valid audio as per `librosa.util.valid_audio`
+        - If ``order < 1`` or not integer
+    FloatingPointError
+        - If ``y`` is ill-conditioned
+
+    See Also
+    --------
+    scipy.signal.lfilter
+
+    Examples
+    --------
+    Compute LP coefficients of y at order 16 on entire series
+
+    >>> y, sr = librosa.loadx('libri1')
+    >>> librosa.lpc(y, order=16)
+
+    Compute LP coefficients, and plot LP estimate of original series
+
+    >>> import matplotlib.pyplot as plt
+    >>> import scipy
+    >>> y, sr = librosa.loadx('libri1', duration=0.020)
+    >>> a = librosa.lpc(y, order=2)
+    >>> b = np.hstack([[0], -1 * a[1:]])
+    >>> y_hat = scipy.signal.lfilter(b, [1], y)
+    >>> fig, ax = plt.subplots()
+    >>> ax.plot(y)
+    >>> ax.plot(y_hat, linestyle='--')
+    >>> ax.legend(['y', 'y_hat'])
+    >>> ax.set_title('LP Model Forward Prediction')
+    """
+    if not util.is_positive_int(order):
+        raise ParameterError(f"order={order} must be an integer > 0")
+
+    util.valid_audio(y)
+
+    # Move the lpc axis around front, because numba is silly
+    y = y.swapaxes(axis, 0)
+
+    dtype = y.dtype
+
+    shape = list(y.shape)
+    shape[0] = order + 1
+
+    ar_coeffs = np.zeros(tuple(shape), dtype=dtype)
+    ar_coeffs[0] = 1
+
+    ar_coeffs_prev = ar_coeffs.copy()
+
+    shape[0] = 1
+    reflect_coeff = np.zeros(shape, dtype=dtype)
+    den = reflect_coeff.copy()
+
+    epsilon = util.tiny(den)
+
+    # Call the helper, and swap the results back to the target axis position
+    return np.swapaxes(
+        __lpc(y, order, ar_coeffs, ar_coeffs_prev, reflect_coeff, den, epsilon), 0, axis
+    )
+
+
+@jit(nopython=True, cache=True)  # type: ignore
+def __lpc(
+    y: np.ndarray,
+    order: int,
+    ar_coeffs: np.ndarray,
+    ar_coeffs_prev: np.ndarray,
+    reflect_coeff: np.ndarray,
+    den: np.ndarray,
+    epsilon: float,
+) -> np.ndarray:
+    # This implementation follows the description of Burg's algorithm given in
+    # section III of Marple's paper referenced in the docstring.
+    #
+    # We use the Levinson-Durbin recursion to compute AR coefficients for each
+    # increasing model order by using those from the last. We maintain two
+    # arrays and then flip them each time we increase the model order so that
+    # we may use all the coefficients from the previous order while we compute
+    # those for the new one. These two arrays hold ar_coeffs for order M and
+    # order M-1.  (Corresponding to a_{M,k} and a_{M-1,k} in eqn 5)
+
+    # These two arrays hold the forward and backward prediction error. They
+    # correspond to f_{M-1,k} and b_{M-1,k} in eqns 10, 11, 13 and 14 of
+    # Marple. First they are used to compute the reflection coefficient at
+    # order M from M-1 then are used as f_{M,k} and b_{M,k} for each
+    # iteration of the below loop
+    fwd_pred_error = y[1:]
+    bwd_pred_error = y[:-1]
+
+    # DEN_{M} from eqn 16 of Marple.
+    den[0] = np.sum(fwd_pred_error**2 + bwd_pred_error**2, axis=0)
+
+    for i in range(order):
+        # can be removed if we keep the epsilon bias
+        # if np.any(den <= 0):
+        #    raise FloatingPointError("numerical error, input ill-conditioned?")
+
+        # Eqn 15 of Marple, with fwd_pred_error and bwd_pred_error
+        # corresponding to f_{M-1,k+1} and b{M-1,k} and the result as a_{M,M}
+
+        reflect_coeff[0] = np.sum(bwd_pred_error * fwd_pred_error, axis=0)
+        reflect_coeff[0] *= -2
+        reflect_coeff[0] /= den[0] + epsilon
+
+        # Now we use the reflection coefficient and the AR coefficients from
+        # the last model order to compute all of the AR coefficients for the
+        # current one.  This is the Levinson-Durbin recursion described in
+        # eqn 5.
+        # Note 1: We don't have to care about complex conjugates as our signals
+        # are all real-valued
+        # Note 2: j counts 1..order+1, i-j+1 counts order..0
+        # Note 3: The first element of ar_coeffs* is always 1, which copies in
+        # the reflection coefficient at the end of the new AR coefficient array
+        # after the preceding coefficients
+
+        ar_coeffs_prev, ar_coeffs = ar_coeffs, ar_coeffs_prev
+        for j in range(1, i + 2):
+            # reflection multiply should be broadcast
+            ar_coeffs[j] = (
+                ar_coeffs_prev[j] + reflect_coeff[0] * ar_coeffs_prev[i - j + 1]
+            )
+
+        # Update the forward and backward prediction errors corresponding to
+        # eqns 13 and 14.  We start with f_{M-1,k+1} and b_{M-1,k} and use them
+        # to compute f_{M,k} and b_{M,k}
+        fwd_pred_error_tmp = fwd_pred_error
+        fwd_pred_error = fwd_pred_error + reflect_coeff * bwd_pred_error
+        bwd_pred_error = bwd_pred_error + reflect_coeff * fwd_pred_error_tmp
+
+        # SNIP - we are now done with order M and advance. M-1 <- M
+
+        # Compute DEN_{M} using the recursion from eqn 17.
+        #
+        # reflect_coeff = a_{M-1,M-1}      (we have advanced M)
+        # den =  DEN_{M-1}                 (rhs)
+        # bwd_pred_error = b_{M-1,N-M+1}   (we have advanced M)
+        # fwd_pred_error = f_{M-1,k}       (we have advanced M)
+        # den <- DEN_{M}                   (lhs)
+        #
+
+        q = 1.0 - reflect_coeff[0] ** 2
+        den[0] = q * den[0] - bwd_pred_error[-1] ** 2 - fwd_pred_error[0] ** 2
+
+        # Shift up forward error.
+        #
+        # fwd_pred_error <- f_{M-1,k+1}
+        # bwd_pred_error <- b_{M-1,k}
+        #
+        # N.B. We do this after computing the denominator using eqn 17 but
+        # before using it in the numerator in eqn 15.
+        fwd_pred_error = fwd_pred_error[1:]
+        bwd_pred_error = bwd_pred_error[:-1]
+
+    return ar_coeffs
+
+
+@stencil  # type: ignore
+def _zc_stencil(x: np.ndarray, threshold: float, zero_pos: bool) -> NDArray[np.bool]:
+    """Stencil to compute zero crossings"""
+    x0 = x[0]
+    if -threshold <= x0 <= threshold:
+        x0 = 0
+
+    x1 = x[-1]
+    if -threshold <= x1 <= threshold:
+        x1 = 0
+
+    if zero_pos:
+        return np.signbit(x0) != np.signbit(x1)  # type: ignore
+    else:
+        return np.sign(x0) != np.sign(x1)  # type: ignore
+
+
+@guvectorize(
+    "(n),(),()->(n)",
+    cache=True,
+    nopython=True,
+)  # type: ignore
+def _zc_wrapper(
+    x: np.ndarray,
+    threshold: float,
+    zero_pos: bool,
+    y: NDArray[np.bool],
+) -> None:  # pragma: no cover
+    """Vectorized wrapper for zero crossing stencil"""
+    y[:] = _zc_stencil(x, threshold, zero_pos)
+
+
+@cache(level=20)
+def zero_crossings(
+    y: np.ndarray,
+    *,
+    threshold: float = 1e-10,
+    ref_magnitude: float | Callable | None = None,
+    pad: bool = True,
+    zero_pos: bool = True,
+    axis: int = -1,
+) -> NDArray[np.bool]:
+    """Find the zero-crossings of a signal ``y``: indices ``i`` such that ``sign(y[i]) != sign(y[j])``.
+
+    If ``y`` is multi-dimensional, then zero-crossings are computed along
+    the specified ``axis``.
+
+    Parameters
+    ----------
+    y : np.ndarray
+        The input array
+
+    threshold : float >= 0
+        If non-zero, values where ``-threshold <= y <= threshold`` are
+        clipped to 0.
+
+    ref_magnitude : float > 0 or callable
+        If numeric, the threshold is scaled relative to ``ref_magnitude``.
+
+        If callable, the threshold is scaled relative to
+        ``ref_magnitude(np.abs(y))``.
+
+    pad : bool
+        If ``True``, then ``y[0]`` is considered a valid zero-crossing.
+
+    zero_pos : bool
+        If ``True`` then the value 0 is interpreted as having positive sign.
+
+        If ``False``, then 0, -1, and +1 all have distinct signs.
+
+    axis : int
+        Axis along which to compute zero-crossings.
+
+    Returns
+    -------
+    zero_crossings : np.ndarray [shape=y.shape, dtype=bool]
+        Indicator array of zero-crossings in ``y`` along the selected axis.
+
+    Notes
+    -----
+    This function caches at level 20.
+
+    Examples
+    --------
+    >>> # Generate a time-series
+    >>> y = np.sin(np.linspace(0, 4 * 2 * np.pi, 20))
+    >>> y
+    array([  0.000e+00,   9.694e-01,   4.759e-01,  -7.357e-01,
+            -8.372e-01,   3.247e-01,   9.966e-01,   1.646e-01,
+            -9.158e-01,  -6.142e-01,   6.142e-01,   9.158e-01,
+            -1.646e-01,  -9.966e-01,  -3.247e-01,   8.372e-01,
+             7.357e-01,  -4.759e-01,  -9.694e-01,  -9.797e-16])
+    >>> # Compute zero-crossings
+    >>> z = librosa.zero_crossings(y)
+    >>> z
+    array([ True, False, False,  True, False,  True, False, False,
+            True, False,  True, False,  True, False, False,  True,
+           False,  True, False,  True], dtype=bool)
+
+    >>> # Stack y against the zero-crossing indicator
+    >>> librosa.util.stack([y, z], axis=-1)
+    array([[  0.000e+00,   1.000e+00],
+           [  9.694e-01,   0.000e+00],
+           [  4.759e-01,   0.000e+00],
+           [ -7.357e-01,   1.000e+00],
+           [ -8.372e-01,   0.000e+00],
+           [  3.247e-01,   1.000e+00],
+           [  9.966e-01,   0.000e+00],
+           [  1.646e-01,   0.000e+00],
+           [ -9.158e-01,   1.000e+00],
+           [ -6.142e-01,   0.000e+00],
+           [  6.142e-01,   1.000e+00],
+           [  9.158e-01,   0.000e+00],
+           [ -1.646e-01,   1.000e+00],
+           [ -9.966e-01,   0.000e+00],
+           [ -3.247e-01,   0.000e+00],
+           [  8.372e-01,   1.000e+00],
+           [  7.357e-01,   0.000e+00],
+           [ -4.759e-01,   1.000e+00],
+           [ -9.694e-01,   0.000e+00],
+           [ -9.797e-16,   1.000e+00]])
+
+    >>> # Find the indices of zero-crossings
+    >>> np.nonzero(z)
+    (array([ 0,  3,  5,  8, 10, 12, 15, 17, 19]),)
+    """
+    if callable(ref_magnitude):
+        threshold = threshold * ref_magnitude(np.abs(y))
+
+    elif ref_magnitude is not None:
+        threshold = threshold * ref_magnitude
+
+    yi = y.swapaxes(-1, axis)
+    z = np.empty_like(y, dtype=bool)
+    zi = z.swapaxes(-1, axis)
+
+    _zc_wrapper(yi, threshold, zero_pos, zi)
+
+    zi[..., 0] = pad
+
+    return z
+
+
+def clicks(
+    *,
+    times: _SequenceLike[_FloatLike_co] | None = None,
+    frames: _SequenceLike[_IntLike_co] | None = None,
+    sr: float = 22050,
+    hop_length: int = 512,
+    click_freq: float = 1000.0,
+    click_duration: float = 0.1,
+    click: np.ndarray | None = None,
+    length: int | None = None,
+) -> NDArray[np.float32]:
+    """Construct a "click track".
+
+    This returns a signal with the signal ``click`` sound placed at
+    each specified time.
+
+    Parameters
+    ----------
+    times : np.ndarray or None
+        times to place clicks, in seconds
+    frames : np.ndarray or None
+        frame indices to place clicks
+    sr : number > 0
+        desired sampling rate of the output signal
+    hop_length : int > 0
+        if positions are specified by ``frames``, the number of samples between frames.
+    click_freq : float > 0
+        frequency (in Hz) of the default click signal.  Default is 1KHz.
+    click_duration : float > 0
+        duration (in seconds) of the default click signal.  Default is 100ms.
+    click : np.ndarray or None
+        (optional) click signal sample to use instead of the default click.
+        Multi-channel is supported.
+    length : int > 0
+        desired number of samples in the output signal
+
+    Returns
+    -------
+    click_signal : np.ndarray
+        Synthesized click signal.
+        This will be monophonic by default, or match the number of channels to a provided ``click`` signal.
+
+    Raises
+    ------
+    ParameterError
+        - If neither ``times`` nor ``frames`` are provided.
+        - If any of ``click_freq``, ``click_duration``, or ``length`` are out of range.
+
+    Examples
+    --------
+    >>> # Sonify detected beat events
+    >>> y, sr = librosa.loadx('choice', duration=10)
+    >>> tempo, beats = librosa.beat.beat_track(y=y, sr=sr)
+    >>> y_beats = librosa.clicks(frames=beats, sr=sr)
+
+    >>> # Or generate a signal of the same length as y
+    >>> y_beats = librosa.clicks(frames=beats, sr=sr, length=len(y))
+
+    >>> # Or use timing instead of frame indices
+    >>> times = librosa.frames_to_time(beats, sr=sr)
+    >>> y_beat_times = librosa.clicks(times=times, sr=sr)
+
+    >>> # Or with a click frequency of 880Hz and a 500ms sample
+    >>> y_beat_times880 = librosa.clicks(times=times, sr=sr,
+    ...                                  click_freq=880, click_duration=0.5)
+
+    Display click waveform next to the spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True)
+    >>> S = librosa.feature.melspectrogram(y=y, sr=sr)
+    >>> librosa.display.specshow(S, vscale='dBFS[power]',
+    ...                          x_axis='time', y_axis='mel', ax=ax[0])
+    >>> librosa.display.waveshow(y_beat_times, sr=sr, label='Beat clicks',
+    ...                          ax=ax[1])
+    >>> ax[1].legend()
+    >>> ax[0].label_outer()
+    >>> ax[0].set_title(None)
+    """
+    # Compute sample positions from time or frames
+    positions: np.ndarray
+    if times is None:
+        if frames is None:
+            raise ParameterError('either "times" or "frames" must be provided')
+
+        positions = frames_to_samples(frames, hop_length=hop_length)
+    else:
+        # Convert times to positions
+        positions = time_to_samples(times, sr=sr)
+
+    if click is not None:
+        # Check that we have a well-formed audio buffer
+        util.valid_audio(click)
+
+    else:
+        # Create default click signal
+        if click_duration <= 0:
+            raise ParameterError("click_duration must be strictly positive")
+
+        if click_freq <= 0:
+            raise ParameterError("click_freq must be strictly positive")
+
+        angular_freq = 2 * np.pi * click_freq / float(sr)
+
+        click = np.logspace(0, -10, num=int(sr * click_duration), base=2.0)
+
+        click *= np.sin(angular_freq * np.arange(len(click)))
+
+    # Set default length
+    if length is None:
+        length = positions.max() + click.shape[-1]
+    else:
+        if length < 1:
+            raise ParameterError("length must be a positive integer")
+
+        # Filter out any positions past the length boundary
+        positions = positions[positions < length]
+
+    # Pre-allocate click signal
+    shape = list(click.shape)
+    shape[-1] = length
+    click_signal = np.zeros(shape, dtype=np.float32)
+
+    # Place clicks
+    for start in positions:
+        # Compute the end-point of this click
+        end = start + click.shape[-1]
+
+        if end >= length:
+            click_signal[..., start:] += click[..., : length - start]
+        else:
+            # Normally, just add a click here
+            click_signal[..., start:end] += click
+
+    return click_signal
+
+
+def tone(
+    frequency: _FloatLike_co,
+    *,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    phi: float | None = None,
+) -> _Array1D[np.float64]:
+    """Construct a pure tone (cosine) signal at a given frequency.
+
+    Parameters
+    ----------
+    frequency : float > 0
+        frequency
+    sr : number > 0
+        desired sampling rate of the output signal
+    length : int > 0
+        desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
+    duration : float > 0
+        desired duration in seconds.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
+    phi : float or None
+        phase offset, in radians. If unspecified, defaults to ``-np.pi * 0.5``.
+
+    Returns
+    -------
+    tone_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized pure sine tone signal
+
+    Raises
+    ------
+    ParameterError
+        - If ``frequency`` is not provided.
+        - If neither ``length`` nor ``duration`` are provided.
+
+    Examples
+    --------
+    Generate a pure sine tone A4
+
+    >>> tone = librosa.tone(440, duration=1, sr=22050)
+
+    Or generate the same signal using `length`
+
+    >>> tone = librosa.tone(440, sr=22050, length=22050)
+
+    Display spectrogram
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots()
+    >>> S = librosa.feature.melspectrogram(y=tone)
+    >>> librosa.display.specshow(S, vscale='dBFS[power]',
+    ...                          x_axis='time', y_axis='mel', ax=ax)
+    """
+    if frequency is None:
+        raise ParameterError('"frequency" must be provided')
+
+    # Compute signal length
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+        length = int(duration * sr)
+
+    if phi is None:
+        phi = -np.pi * 0.5
+
+    y: np.ndarray = np.cos(2 * np.pi * frequency * np.arange(length) / sr + phi)
+    return y
+
+
+def chirp(
+    *,
+    fmin: _FloatLike_co,
+    fmax: _FloatLike_co,
+    sr: float = 22050,
+    length: int | None = None,
+    duration: float | None = None,
+    linear: bool = False,
+    phi: float | None = None,
+) -> _Array1D[np.float64]:
+    """Construct a "chirp" or "sine-sweep" signal.
+
+    The chirp sweeps from frequency ``fmin`` to ``fmax`` (in Hz).
+
+    Parameters
+    ----------
+    fmin : float > 0
+        initial frequency
+
+    fmax : float > 0
+        final frequency
+
+    sr : number > 0
+        desired sampling rate of the output signal
+
+    length : int > 0
+        desired number of samples in the output signal.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
+
+    duration : float > 0
+        desired duration in seconds.
+        When both ``duration`` and ``length`` are defined,
+        ``length`` takes priority.
+
+    linear : bool
+        - If ``True``, use a linear sweep, i.e., frequency changes linearly with time
+        - If ``False``, use a exponential sweep.
+
+        Default is ``False``.
+
+    phi : float or None
+        phase offset, in radians.
+        If unspecified, defaults to ``-np.pi * 0.5``.
+
+    Returns
+    -------
+    chirp_signal : np.ndarray [shape=(length,), dtype=float64]
+        Synthesized chirp signal
+
+    Raises
+    ------
+    ParameterError
+        - If either ``fmin`` or ``fmax`` are not provided.
+        - If neither ``length`` nor ``duration`` are provided.
+
+    See Also
+    --------
+    scipy.signal.chirp
+
+    Examples
+    --------
+    Generate a exponential chirp from A2 to A8
+
+    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, sr=22050)
+
+    Or generate the same signal using ``length``
+
+    >>> exponential_chirp = librosa.chirp(fmin=110, fmax=110*64, sr=22050, length=22050)
+
+    Or generate a linear chirp instead
+
+    >>> linear_chirp = librosa.chirp(fmin=110, fmax=110*64, duration=1, linear=True, sr=22050)
+
+    Display spectrogram for both exponential and linear chirps.
+
+    >>> import matplotlib.pyplot as plt
+    >>> fig, ax = plt.subplots(nrows=2, sharex=True, sharey=True)
+    >>> S_exponential = np.abs(librosa.stft(y=exponential_chirp))
+    >>> librosa.display.specshow(S_exponential, vscale='dBFS',
+    ...                          x_axis='time', y_axis='linear', ax=ax[0])
+    >>> ax[0].set(title='Exponential chirp', xlabel=None)
+    >>> ax[0].label_outer()
+    >>> S_linear = np.abs(librosa.stft(y=linear_chirp))
+    >>> librosa.display.specshow(S_linear, vscale='dBFS',
+    ...                          x_axis='time', y_axis='linear', ax=ax[1])
+    >>> ax[1].set(title='Linear chirp')
+    """
+    if fmin is None or fmax is None:
+        raise ParameterError('both "fmin" and "fmax" must be provided')
+
+    # Compute signal duration
+    period = 1.0 / sr
+    if length is None:
+        if duration is None:
+            raise ParameterError('either "length" or "duration" must be provided')
+    else:
+        duration = period * length
+
+    if phi is None:
+        phi = -np.pi * 0.5
+
+    method = "linear" if linear else "logarithmic"
+    import scipy.signal
+    y: np.ndarray = scipy.signal.chirp(  # type: ignore[call-overload]
+        np.arange(int(duration * sr)) / sr,
+        fmin,
+        duration,
+        fmax,
+        method=method,
+        phi=phi / np.pi * 180,  # scipy.signal.chirp uses degrees for phase offset
+    )
+    return y
+
+
+def mu_compress(
+    x: np.ndarray | _FloatLike_co, *, mu: float = 255, quantize: bool = True
+) -> np.ndarray:
+    """Compression by μ-law
+
+    Given an input signal ``-1 <= x <= 1``, the mu-law compression
+    is calculated by::
+
+        sign(x) * ln(1 + mu * abs(x)) /  ln(1 + mu)
+
+    Parameters
+    ----------
+    x : np.ndarray with values in [-1, +1]
+        The input signal to compress
+
+    mu : positive number
+        The compression parameter.  Values of the form ``2**n - 1``
+        (e.g., 15, 31, 63, etc.) are most common.
+
+    quantize : bool
+        If ``True``, quantize the compressed values into ``1 + mu``
+        distinct integer values.
+
+        If ``False``, mu-law compression is applied without quantization.
+
+    Returns
+    -------
+    x_compressed : np.ndarray
+        The compressed signal.
+
+    Raises
+    ------
+    ParameterError
+        If ``x`` has values outside the range [-1, +1]
+        If ``mu <= 0``
+
+    See Also
+    --------
+    mu_expand
+
+    Examples
+    --------
+    Compression without quantization
+
+    >>> x = np.linspace(-1, 1, num=16)
+    >>> x
+    array([-1.        , -0.86666667, -0.73333333, -0.6       , -0.46666667,
+           -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
+            0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
+            1.        ])
+    >>> y = librosa.mu_compress(x, quantize=False)
+    >>> y
+    array([-1.        , -0.97430198, -0.94432361, -0.90834832, -0.86336132,
+           -0.80328309, -0.71255496, -0.52124063,  0.52124063,  0.71255496,
+            0.80328309,  0.86336132,  0.90834832,  0.94432361,  0.97430198,
+            1.        ])
+
+    Compression with quantization
+
+    >>> y = librosa.mu_compress(x, quantize=True)
+    >>> y
+    array([-128, -124, -120, -116, -110, -102,  -91,  -66,   66,   91,  102,
+           110,  116,  120,  124,  127])
+
+    Compression with quantization and a smaller range
+
+    >>> y = librosa.mu_compress(x, mu=15, quantize=True)
+    >>> y
+    array([-8, -7, -7, -6, -6, -5, -4, -2,  2,  4,  5,  6,  6,  7,  7,  7])
+    """
+    if mu <= 0:
+        raise ParameterError(
+            f"mu-law compression parameter mu={mu} must be strictly positive."
+        )
+
+    if np.any(x < -1) or np.any(x > 1):
+        raise ParameterError(f"mu-law input x={x} must be in the range [-1, +1].")
+
+    x_comp: np.ndarray = np.sign(x) * np.log1p(mu * np.abs(x)) / np.log1p(mu)
+
+    if quantize:
+        y: np.ndarray = (
+            np.digitize(
+                x_comp, np.linspace(-1, 1, num=int(1 + mu), endpoint=True), right=True
+            )
+            - int(mu + 1) // 2
+        )
+        return y
+
+    return x_comp
+
+
+@overload
+def mu_expand(x: _FloatLike_co, *, mu: float = 255.0, quantize: bool = True) -> np.floating: ...
+@overload
+def mu_expand(x: np.ndarray, *, mu: float = 255.0, quantize: bool = True) -> np.ndarray: ...
+def mu_expand(
+    x: np.ndarray | _FloatLike_co, *, mu: float = 255.0, quantize: bool = True
+) -> np.ndarray | np.floating:
+    """Expansion by μ-law
+
+    This function is the inverse of ``mu_compress``. Given a mu-law compressed
+    signal ``-1 <= x <= 1``, the mu-law expansion is calculated by::
+
+        sign(x) * (1 / mu) * ((1 + mu)**abs(x) - 1)
+
+    Parameters
+    ----------
+    x : np.ndarray
+        The compressed signal.
+        If ``quantize=True``, values must be in the range [-1, +1].
+    mu : positive number
+        The compression parameter.  Values of the form ``2**n - 1``
+        (e.g., 15, 31, 63, etc.) are most common.
+    quantize : bool
+        If ``True``, the input is assumed to be quantized to
+        ``1 + mu`` distinct integer values.
+
+    Returns
+    -------
+    x_expanded : np.ndarray with values in the range [-1, +1]
+        The mu-law expanded signal.
+
+    Raises
+    ------
+    ParameterError
+        If ``x`` has values outside the range [-1, +1] and ``quantize=False``
+        If ``mu <= 0``
+
+    See Also
+    --------
+    mu_compress
+
+    Examples
+    --------
+    Compress and expand without quantization
+
+    >>> x = np.linspace(-1, 1, num=16)
+    >>> x
+    array([-1.        , -0.86666667, -0.73333333, -0.6       , -0.46666667,
+           -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
+            0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
+            1.        ])
+    >>> y = librosa.mu_compress(x, quantize=False)
+    >>> y
+    array([-1.        , -0.97430198, -0.94432361, -0.90834832, -0.86336132,
+           -0.80328309, -0.71255496, -0.52124063,  0.52124063,  0.71255496,
+            0.80328309,  0.86336132,  0.90834832,  0.94432361,  0.97430198,
+            1.        ])
+    >>> z = librosa.mu_expand(y, quantize=False)
+    >>> z
+    array([-1.        , -0.86666667, -0.73333333, -0.6       , -0.46666667,
+           -0.33333333, -0.2       , -0.06666667,  0.06666667,  0.2       ,
+            0.33333333,  0.46666667,  0.6       ,  0.73333333,  0.86666667,
+            1.        ])
+
+    Compress and expand with quantization.  Note that this necessarily
+    incurs quantization error, particularly for values near +-1.
+
+    >>> y = librosa.mu_compress(x, quantize=True)
+    >>> y
+    array([-128, -124, -120, -116, -110, -102,  -91,  -66,   66,   91,  102,
+            110,  116,  120,  124,  127])
+    >>> z = librosa.mu_expand(y, quantize=True)
+    array([-1.        , -0.84027248, -0.70595818, -0.59301377, -0.4563785 ,
+           -0.32155973, -0.19817918, -0.06450245,  0.06450245,  0.19817918,
+            0.32155973,  0.4563785 ,  0.59301377,  0.70595818,  0.84027248,
+            0.95743702])
+    """
+    if mu <= 0:
+        raise ParameterError(
+            f"Inverse mu-law compression parameter mu={mu} must be strictly positive."
+        )
+
+    if quantize:
+        x = x * 2.0 / (1 + mu)
+
+    if np.any(x < -1) or np.any(x > 1):
+        raise ParameterError(
+            f"Inverse mu-law input x={x} must be in the range [-1, +1]."
+        )
+
+    y: np.ndarray | np.floating = np.sign(x) / mu * (np.power(1 + mu, np.abs(x)) - 1)
+    return y

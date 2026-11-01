@@ -1,0 +1,67 @@
+{
+  "name": "three.quarks",
+  "version": "0.17.1",
+  "description": "A General-Purpose Particle System for three.js",
+  "type": "module",
+  "types": "./dist/types/index.d.ts",
+  "main": "./dist/three.quarks.js",
+  "module": "./dist/three.quarks.esm.js",
+  "browser_NO_NPM": "./dist/three.quarks.min.js",
+  "exports": {
+    ".": {
+      "import": "./dist/three.quarks.esm.js",
+      "require": "./dist/three.quarks.cjs",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src",
+    "LICENSE"
+  ],
+  "scripts": {
+    "clean": "rimraf dist .rollup.cache tsconfig.tsbuildinfo",
+    "type-check": "tsc --noEmit",
+    "type-check:watch": "npm run type-check -- --watch",
+    "dev": "rollup -c -w",
+    "build:types": "tsc --emitDeclarationOnly && node ../../scripts/fix-dts-extensions.mjs dist/types",
+    "build:js": "rollup -c",
+    "yalc:publish": "node -e \"const os = require('os'); const { execSync } = require('child_process'); const homedir = os.homedir(); execSync(`yalc publish --store-folder ${homedir}/.yalc`, {stdio: 'inherit'});\"",
+    "build": "npm run clean && npm run build:types && cross-env NODE_ENV=production npm run build:js",
+    "lint": "eslint . --ext .ts",
+    "test": "jest",
+    "test:coverage": "jest --coverage",
+    "test:prod": "npm run test -- --no-cache",
+    "prepare": "husky",
+    "prettier": "prettier --write --ignore-unknown"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alchemist0823/three.quarks.git"
+  },
+  "keywords": [
+    "particle",
+    "library",
+    "3d",
+    "game",
+    "performance",
+    "math"
+  ],
+  "author": "Alchemist0823 <the.forrest.sun@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/Alchemist0823/three.quarks/issues"
+  },
+  "homepage": "https://quarks.art",
+  "peerDependencies": {
+    "three": ">=0.182.0"
+  },
+  "dependencies": {
+    "quarks.core": "*"
+  },
+  "devDependencies": {
+    "@types/jest": "^30.0.0",
+    "@types/three": "^0.182.0",
+    "three": "^0.182.0"
+  }
+}

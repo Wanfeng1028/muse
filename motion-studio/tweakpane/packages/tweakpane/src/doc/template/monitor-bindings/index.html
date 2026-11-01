@@ -1,0 +1,117 @@
+{% set pageId = 'monitor' %}
+{% set root = '../' %}
+{% set title = 'Monitor bindings' %}
+{% extends "_template.html" %}
+
+
+{% block pageHeader %}
+<div class="pageHeader">
+	<div class="pageHeader_inner">
+		<div class="pageHeader_text">
+			<h1 class="pageHeader_title">{{ title }}</h1>
+			<p>Tweakpane also has a feature for monitoring value changes.</p>
+		</div>
+		<div class="pageHeader_pane">
+			<div class="paneContainer" data-pane-monitor></div>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+
+{% block content %}
+<p>To monitor primitive value changes, use <code>addBinding()</code> with the option <code>{readonly: true}</code>.</p>
+
+<div class="main_media">
+	<div class="demo">
+		<div class="demo_code">
+			<div class="codeBlock"><pre><code class="js">const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  <strong>readonly</strong>: true,
+});</code></pre></div>
+		</div>
+		<div class="demo_result">
+			<div class="paneContainer" data-pane-primitive></div>
+		</div>
+	</div>
+</div>
+
+
+<h2 id="multiline"><a href="#multiline">Multiline</a></h2>
+<p><code>multiline</code> option provides a multiline log component. <code>rows</code> can change the display height.</p>
+
+<div class="main_media">
+	<div class="demo">
+		<div class="demo_code">
+			<div class="codeBlock"><pre><code class="js">const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  readonly: true,
+  <strong>multiline</strong>: true,
+  <strong>rows</strong>: 5,
+});</code></pre></div>
+		</div>
+		<div class="demo_result">
+			<div class="paneContainer" data-pane-multiline></div>
+		</div>
+	</div>
+</div>
+
+
+<h2 id="buffersize"><a href="#buffersize">Buffer size</a></h2>
+<p>You can use <code>bufferSize</code> option to change the buffer size.</p>
+
+<div class="main_media">
+	<div class="demo">
+		<div class="demo_code">
+			<div class="codeBlock"><pre><code class="js">const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  readonly: true,
+  <strong>bufferSize</strong>: 10,
+});</code></pre></div>
+		</div>
+		<div class="demo_result">
+			<div class="paneContainer" data-pane-buffersize></div>
+		</div>
+	</div>
+</div>
+
+
+<h2 id="interval"><a href="#interval">Interval</a></h2>
+<p>To change an interval of monitors, set <code>interval</code> option in milliseconds. The default value is 200(ms).</p>
+
+<div class="main_media">
+	<div class="demo">
+		<div class="demo_code">
+			<div class="codeBlock"><pre><code class="js">const pane = new Pane();
+pane.addBinding(PARAMS, 'time', {
+  readonly: true,
+  <strong>interval</strong>: 1000,
+});</code></pre></div>
+		</div>
+		<div class="demo_result">
+			<div class="paneContainer" data-pane-interval></div>
+		</div>
+	</div>
+</div>
+
+
+<h2 id="graph"><a href="#graph">Graph</a></h2>
+<p><code>{view: 'graph'}</code> option for number parameters provides a graph component. Pass <code>min</code> and <code>max</code> for value range.</p>
+
+<div class="main_media">
+	<div class="demo">
+		<div class="demo_code">
+			<div class="codeBlock"><pre><code class="js">const pane = new Pane();
+pane.addBinding(PARAMS, 'wave', {
+  readonly: true,
+  <strong>view: 'graph'</strong>,
+  min: -1,
+  max: +1,
+});</code></pre></div>
+		</div>
+		<div class="demo_result">
+			<div class="paneContainer" data-pane-graph></div>
+		</div>
+	</div>
+</div>
+{% endblock %}

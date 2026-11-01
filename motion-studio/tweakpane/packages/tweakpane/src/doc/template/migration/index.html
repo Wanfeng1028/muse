@@ -1,0 +1,29 @@
+{% set pageId = 'migration' %}
+{% set root = '../' %}
+{% set title = 'Migration' %}
+{% extends "_template.html" %}
+
+
+{% block pageHeader %}
+<div class="pageHeader">
+	<div class="pageHeader_inner">
+		<div class="pageHeader_text">
+			<h1 class="pageHeader_title">{{ title }}</h1>
+			<p>List of the quick migration guides.</p>
+		</div>
+	</div>
+</div>
+{% endblock %}
+
+
+{% block content %}
+<h2>Major versions</h2>
+<ul>
+	<li><a href="./v4/">Version 3.x to 4.x</a></li>
+</ul>
+
+<h2>Other libraries</h2>
+<ul>
+	<li><a href="./datgui/">From dat.GUI</a></li>
+</ul>
+{% endblock %}

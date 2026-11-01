@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Text / Split playground / Anime.js</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <link href="../../assets/css/styles.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@100..900&display=swap" rel="stylesheet">
+  <script type="importmap">
+    {
+      "imports": {
+        "tweaks": "../../../node_modules/tweaks/tweaks.js",
+        "tweaks/gui": "../../../node_modules/tweaks/gui/index.js"
+      }
+    }
+  </script>
+  <style>
+    body {
+      opacity: 0;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      gap: 2rem;
+      width: 100%;
+      min-height: 100dvh;
+      padding: 2rem;
+    }
+
+    body.is-ready {
+      opacity: 1;
+    }
+
+    main {
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      width: 100%;
+    }
+
+    article {
+      width: 100%;
+      max-width: 800px;
+      justify-self: center;
+      font-family: "Noto Sans JP", sans-serif;
+      font-weight: 400;
+      font-kerning: none;
+      font-variant-ligatures: none;
+      text-rendering: optimizeSpeed;
+    }
+
+    article h1 {
+      font-size: 3em;
+      font-weight: 600;
+      margin-bottom: .5em;
+      line-height: 1.4;
+    }
+
+    article p {
+      font-size: 1.25rem;
+      line-height: 1.5;
+      margin-bottom: 1rem;
+    }
+
+    article ul {
+      padding-left: 1rem;
+      margin-bottom: 1rem;
+    }
+
+    article a {
+      color: var(--red-1);
+      text-decoration: underline;
+    }
+
+    article a span {
+      text-decoration: underline;
+    }
+
+    .nested { color: rgba(200, 100, 100, 1) }
+    .nested .nested { color: rgba(200, 100, 100, .8) }
+    .nested .nested .nested { color: rgba(200, 100, 100, .6) }
+    .nested .nested .nested .nested { color: rgba(200, 100, 100, .4) }
+    .nested .nested .nested .nested .nested { color: rgba(200, 100, 100, .2) }
+
+    code {
+      color: rgba(200, 200, 200, 1);
+      font-family: monospace;
+    }
+
+    article span:has(~ span h1) h1,
+    article span:has(~ span p) p,
+    article span:has(~ span ul) ul {
+      margin-bottom: 0;
+    }
+
+    article span:has(p) + span:has(ul) {
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <article>
+      <h1>An all-in-one text splitter function to easily split, wrap, and clone text<br></h1>
+      <p>
+        Anime.js <code>splitText()</code> utility function is an easy to use, fully-featured, lightweight and performant modern text splitter for JavaScript.<br>
+        It does all the following in only <strong>7KB</strong>:
+      </p>
+      <ul>
+        <li>Can split text by characters, words, and lines.</li>
+        <li>Support splitting through elements like <a href="#">links with <strong>nested elements like</strong></a> <code>&lt;strong&gt;</code> tags and <span class="nested">any <span class="nested">level <span class="nested">of <span class="nested">nested <span class="nested">tags</span></span></span></span></span> automatically.</li>
+        <li>Element cloning with configurable position.</li>
+        <li>Use your own custom wrapper with a powerful templating system.</li>
+        <li>Split words in languages that don't use spaces like Chinese and Japanese この日本語の文のように.</li>
+        <li>Handles splitting ѕρє¢ιαℓ ¢нαяα¢тєяѕ and 🇪Ⓜ️🅾️🇯ℹ️s.</li>
+        <li>Is accessible for screen readers.</li>
+        <li>And is 100% responsive.</li>
+      </ul>
+      <p>
+        Check out the full documenation and learn more at <a href="https://animejs.com/documentation/text/split">animejs.com/documentation</a>.
+      </p>
+    </article>
+  </main>
+  <script type="module" src="./index.js"></script>
+</body>
+</html>

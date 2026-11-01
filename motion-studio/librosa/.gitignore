@@ -1,0 +1,55 @@
+# Compilation files
+*.py[co]
+__pycache__
+
+# Packages
+dist/
+build/
+parts/
+bin/
+var/
+sdist/
+eggs/
+develop-eggs/
+*.egg
+*.egg-info
+.installed.cfg
+
+# Data files
+*/data/*
+*.mat
+
+# OS-generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Sphinx documentation
+docs/generated/
+docs/api/generated/
+docs/_build/
+docs/auto_examples/
+docs/auto_tutorials/
+
+# IDEs / editors
+*.swp
+.idea/
+.vscode/
+
+# Testing and checkpoints
+.ipynb_checkpoints
+tests/result_images/
+.coverage
+.coverage.*
+coverage.xml
+.tox
+tmp/
+
+# Miscellaneous
+pip-log.txt # Installer logs
+*.mo #Translations
+.mr.developer.cfg #Mr Developer

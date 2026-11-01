@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>Rendering a Path Traced Video</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+				background-color: #161616;
+			}
+
+			canvas, video {
+				position: absolute;
+				left: 50%;
+				top: 50%;
+				transform: translate(-50%, -50%);
+				max-width: 100%;
+				aspect-ratio: 4 / 3;
+			}
+
+			video {
+				z-index: 1;
+				max-width: 100%;
+				display: none;
+			}
+
+			#instructions {
+				position: absolute;
+				top: 0;
+				width: 100%;
+				color: white;
+				font-family: monospace;
+				text-align: center;
+				padding: 5px 0;
+				pointer-events: none;
+			}
+		</style>
+
+	</head>
+	<body>
+		<div id="instructions">
+			Rendering and recording multiple path traced frames to an animation.
+			<br/>
+			Press "record" to begin rendering and recording a video to a webm.
+		</div>
+		<video loop controls></video>
+		<script src="./renderVideo.js" type="module"></script>
+	</body>
+</html>

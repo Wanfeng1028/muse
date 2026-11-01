@@ -1,0 +1,63 @@
+<html>
+	<head>
+		<title>PBR Path Tracing - Looking Glass Portrait Quilt Generation</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+
+		<style>
+			html, body {
+				margin: 0;
+				padding: 0;
+				background-color: #111;
+			}
+
+			/* the loader element occupies the bottom left corner */
+			#info {
+				position: absolute;
+				bottom: 0;
+				right: 0;
+				font-family: 'Courier New', Courier, monospace;
+				color: white;
+				pointer-events: none;
+			}
+
+			#distance {
+
+				opacity: 0.5;
+				background-color: rgba( 0.0, 0.0, 0.0, 0.5 );
+				padding: 5px;
+				display: inline-block;
+
+			}
+
+			#description {
+				position: absolute;
+				top: 0;
+				width: 100%;
+				color: white;
+				font-family: monospace;
+				text-align: center;
+				padding: 5px 0;
+				pointer-events: none;
+			}
+
+			a {
+				color: white;
+				pointer-events: all;
+			}
+		</style>
+
+	</head>
+	<body>
+		<div id="description">
+			WebGPU quilt rendering for hologram display on the <a href="https://lookingglassfactory.com/looking-glass-portrait">Looking Glass Portrait</a> display.
+			<br/>
+			<br/>
+
+			See <a href="https://blocks.glass/gkjohnson">blocks.glass</a> profile for prerendered images.
+		</div>
+		<div id="info">
+			<div id="distance">--</div>
+		</div>
+		<script src="./lkg.js" type="module"></script>
+	</body>
+</html>
