@@ -1,3 +1,17 @@
+## OpenAgents 第 25 轮：历史接口 before_id 非法值返回 400
+### 动机
+GET /api/rooms/:room/history 此前对 before_id 非法取值静默处理：abc、空串被忽略（等于没传），parseInt 还会把 1.5 截成 1、把 10abc 截成 10，负数则透传进 SQL 的 id < ?；本轮改为入口显式校验、非法一律拒绝，接第 24 轮 limit 收紧同款口径。
+### 落地
+仅改 botstalk/gateway/src/server.ts 的 history 分支。beforeParam 存在时必须匹配纯十进制整数字符串且解析后大于等于 1，否则返回 400 且 body 严格等于 {"error":"INVALID_BEFORE_ID"}，不调用 getRoomHistory；校验通过后 beforeId 照常传给 getRoomHistory；缺省 before_id 仍为 undefined；limit 分支、room 非空校验、排序、payload 解析、200 返回体一字不动；不改 db.ts。
+### 测试
+新增 botstalk/gateway/test/history-before-id-validation.test.ts，12 例全绿（无效 7 个：0、-1、abc、1.5、10abc、空串、5.0 各返回 400 且体严格相等；有效 5 个：before_id=7 得 6 条且 id 全小于 7、before_id=4 得 3 条且 id 全小于 4、before_id=1 得 0 条、缺省得 7 条、before_id=100 得 7 条）。靶向 3 文件 28 例全绿（新测 12、limit 旧测 12、server 4）；先红验证：临时回退网关改动后新测恰好 7 败 5 过，恢复后全绿。网关全量 vitest：83 文件 1071 例全绿（第 24 轮基线 82 文件 1059 例，恰增本轮 1 文件 12 例）。
+### 冒烟
+真实网关 18500 端口、隔离库：before_id=abc、空串、5.0 均返回体逐字为 {"error":"INVALID_BEFORE_ID"}；before_id=4 得 id 1、2、3 三条；before_id=7 得 6 条 id 1-6；缺省得 7 条；冒烟后服务已停、端口复查已关、冒烟库已删。教训：网关运行时直接往 SQLite 插种子会报 database is locked，改两段式（起服建库后停服、离线插种子、再起服测）后通过；首轮冒烟的好用例因种子未插成功而无结论，已按两段式重做，不以首轮冒烟充数。
+### 类型
+网关源码 tsc --noEmit 零错；测试 tsc 共 7 处既存错误，均在旧文件内（game-frames、pairing、werewolf，与第 24 轮一致），本轮新文件零错。
+### 已知保留
+本轮未落成独立冒烟脚本（冒烟为编排 inline 两段式实测）与 docs/OPENAGENTS_ROUND25.md；第 24 轮缺失的 docs/OPENAGENTS_ROUND24.md 与第 17 轮设备管理 Web UI 缺 CHANGELOG 与轮次文档的缺口仍在；无 Web UI 改动，视觉验收不适用；无协议版本变更。
+
 ## OpenAgents 第 24 轮：历史接口 limit 非法值返回 400
 ### 动机
 GET /api/rooms/:room/history 此前对 limit 非法取值静默回落默认 50（abc、0、负数、空串都回落），parseInt 还会把 1.5 截成 1、把 10abc 截成 10；本轮改为入口显式校验、非法一律拒绝。

@@ -164,8 +164,18 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       let beforeId: number | undefined;
       const beforeParam = parsed.searchParams.get("before_id");
       if (beforeParam !== null) {
+        if (!/^[0-9]+$/.test(beforeParam)) {
+          res.writeHead(400, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "INVALID_BEFORE_ID" }));
+          return;
+        }
         const n = Number.parseInt(beforeParam, 10);
-        if (Number.isFinite(n)) beforeId = n;
+        if (n < 1) {
+          res.writeHead(400, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "INVALID_BEFORE_ID" }));
+          return;
+        }
+        beforeId = n;
       }
       const rows = getRoomHistory(db, room, limit, beforeId);
       const sorted = [...rows].sort((a, b) => a.id - b.id);
