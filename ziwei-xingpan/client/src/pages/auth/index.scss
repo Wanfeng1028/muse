@@ -11,7 +11,10 @@
 .auth-brand { display: flex; align-items: center; justify-content: center; margin-bottom: 30.77px; }
 .auth-brand-mark { width: 48px; height: 48px; flex-shrink: 0; }
 .auth-title { display: block; text-align: center; font-size: $fs-hero; font-weight: 500; line-height: 1.15; color: $light-text; }
-.auth-sub { display: block; text-align: center; margin-top: 23.08px; margin-bottom: 30.77px; font-size: $fs-item; line-height: 1.6; color: $light-sub; }
+.auth-sub { display: block; text-align: center; margin-top: 23.08px; margin-bottom: 30.77px; font-size: $fs-secondary; line-height: 1.6; color: $light-sub; }
+// NOTE (2026-11-02 user order: subtitle must not wrap): the 23-char
+// line is 368pt at 16pt and wrapped by 2 chars; at 13pt it is
+// 299pt and fits one line on 390pt and 360pt screens.
 .auth-row {
   display: flex;
   align-items: center;
