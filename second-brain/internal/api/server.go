@@ -486,15 +486,3 @@ func parseID(w http.ResponseWriter, r *http.Request) (int64, bool) {
 	}
 	return id, true
 }
-
-// parseIntDefault 解析整数，失败返回默认值。
-func parseIntDefault(s string, def int) int {
-	if s == "" {
-		return def
-	}
-	v, err := strconv.Atoi(s)
-	if err != nil {
-		return def
-	}
-	return v
-}
