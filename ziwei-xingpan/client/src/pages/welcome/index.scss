@@ -1,10 +1,13 @@
-// Welcome page, reference pass 2026-11-02 16:14: miniappdesign
-// LivingOnboarding ported to this project's Taro stack, verbatim.
-// Every value is that file's CSS px times 750/390 (390pt screen).
-// This page deliberately does NOT use .page (which would add the
-// project's own padding/theme bg); it is a self-contained
-// reproduction. No position:fixed anywhere: chips are absolute against
-// the body wrapper (position relative), exactly as in the original.
+@import '../../styles/variables.scss';
+
+// Welcome page, adaptation round 2026-11-02 16:24: photo-27 /
+// LivingOnboarding skeleton kept, content layer swapped to this
+// product's own (see index.tsx header). Sizes stay that file's CSS
+// px times 750/390. This page deliberately does NOT use .page
+// (which would add the project's own padding/theme bg); it is a
+// self-contained page. No position:fixed anywhere: chips are absolute
+// against the body wrapper (position relative), exactly as in the
+// original.
 .welcome-ref {
   position: relative; box-sizing: border-box; min-height: 100vh; overflow: hidden;
   background:
@@ -32,24 +35,18 @@
   padding: 30.77px 28.85px 46.15px; border-radius: 38.46px; background: rgba(255, 255, 255, 0.97);
   border: 1.92px solid rgba(255, 255, 255, 0.9); box-shadow: 0 50px 115.38px rgba(38, 78, 150, 0.14);
 }
-.welcome-ref-card-head-row { display: flex; align-items: center; justify-content: space-between; }
-.welcome-ref-card-title { display: block; font-size: 32.69px; font-weight: 600; letter-spacing: -0.005em; margin-top: 28.85px; }
-.welcome-ref-head-ico { width: 32.69px; height: 32.69px; display: block; }
-.welcome-ref-head-tools { display: flex; align-items: center; gap: 15.38px; margin-left: auto; }
-.welcome-ref-head-tools .welcome-ref-head-ico { width: 30.77px; height: 30.77px; }
-.welcome-ref-skeleton { display: flex; flex-direction: column; gap: 15.38px; margin-top: 28.85px; }
-.welcome-ref-bar { display: block; height: 9.62px; border-radius: 7.69px; background: #eef1f4; }
-.welcome-ref-skeleton-short { gap: 13.46px; margin-top: 23.08px; }
-.welcome-ref-progress { height: 13.46px; margin-top: 21.15px; border-radius: 999px; background: #e9eff8; overflow: hidden; }
-.welcome-ref-progress-fill { display: block; height: 100%; width: 44%; border-radius: inherit; background: #5c8df7; }
+.welcome-ref-card-title { display: block; font-size: 32.69px; font-weight: 600; letter-spacing: -0.005em; }
+.welcome-ref-card-line { display: block; font-size: 26.92px; color: #17181a; line-height: 1.7; margin-top: 21.15px; }
+.welcome-ref-feat { margin-top: 23.08px; display: flex; flex-direction: column; gap: 11.54px; }
+.welcome-ref-feat-item { display: block; font-size: 23.08px; color: #707783; }
 .welcome-ref-better {
   position: relative; z-index: 4; align-self: flex-end; width: 440px; margin-top: -30.77px; margin-right: 23.08px;
   padding: 21.15px 25px 30.77px;
   background: #ffffff; border: 1.92px solid #eaf1fb; border-radius: 28.85px;
   box-shadow: 0 -19.23px 50px rgba(40, 70, 130, 0.06);
 }
-.welcome-ref-better-title { display: block; font-size: 22.12px; font-weight: 600; }
-.welcome-ref-skeleton-inside { margin-top: 23.08px; gap: 13.46px; }
+.welcome-ref-better-title { display: block; font-size: 22.12px; font-weight: 600; color: #346bf0; }
+.welcome-ref-better-line { display: block; font-size: 23.08px; color: #707783; line-height: 1.7; margin-top: 7.69px; }
 .welcome-ref-chip {
   position: absolute; z-index: 4; display: flex; align-items: center; gap: 11.54px; height: 51.92px;
   padding: 0 19.23px 0 7.69px; border-radius: 999px; background: rgba(255, 255, 255, 0.94);
@@ -57,26 +54,24 @@
   font-size: 17.31px; color: #3a3f46; white-space: nowrap;
 }
 .welcome-ref-chip-left { top: 319.23px; left: 34.62px; transform: rotate(-8deg); }
-.welcome-ref-chip-right { top: 430.77px; right: 103.85px; transform: rotate(8deg); }
+.welcome-ref-chip-right { top: 519.23px; right: 103.85px; transform: rotate(8deg); }
 .welcome-ref-chip-dot {
   display: flex; align-items: center; justify-content: center; width: 40.38px; height: 40.38px;
-  border-radius: 50%; color: #ffffff; flex-shrink: 0;
+  border-radius: 50%; background: #346bf0; color: #ffffff; flex-shrink: 0;
 }
-.welcome-ref-chip-dot-blue { background: #4d8bff; }
-.welcome-ref-chip-dot-violet { background: #7b63ef; }
 .welcome-ref-chip-ico { width: 23.08px; height: 23.08px; display: block; }
 .welcome-ref-pill {
   display: inline-flex; align-items: center; gap: 11.54px; height: 57.69px; margin-top: 50px;
   padding: 0 26.92px; border-radius: 999px; background: rgba(255, 255, 255, 0.7);
-  border: 1.92px solid rgba(255, 255, 255, 0.9); color: #2f6bff; font-size: 19.23px; font-weight: 600;
+  border: 1.92px solid rgba(255, 255, 255, 0.9); color: #346bf0; font-size: 19.23px; font-weight: 600;
 }
 .welcome-ref-pill-ico { width: 25px; height: 25px; display: block; }
 .welcome-ref-title { margin: 50px 0 0; text-align: center; }
 .welcome-ref-title-line { display: block; font-size: 59.62px; line-height: 1.22; font-weight: 700; letter-spacing: -0.03em; color: #101216; }
-.welcome-ref-copy { display: block; max-width: 576.92px; margin: 25px 0 0; font-size: 22.12px; line-height: 1.75; color: #707783; text-align: center; }
+.welcome-ref-copy { display: block; max-width: 619.23px; margin: 25px 0 0; font-size: 22.12px; line-height: 1.75; color: #707783; text-align: center; }
 .welcome-ref-cta {
   box-sizing: border-box; width: 100%; height: 88.46px; margin-top: 42.31px; border-radius: 999px;
-  background: #2f6bff; color: #ffffff; font-size: 23.08px; font-weight: 600;
+  background: $gemini-grad; color: #ffffff; font-size: 23.08px; font-weight: 600;
   box-shadow: 0 26.92px 50px rgba(47, 107, 255, 0.24);
   display: flex; align-items: center; justify-content: center;
 }
