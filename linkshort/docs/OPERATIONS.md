@@ -94,7 +94,7 @@ services:
 | `LINKSHORT_ADDR` | `:8080` | 监听地址，格式 `host:port`，`:8080` 表示所有网卡 8080 端口 |
 | `LINKSHORT_DB` | `./data/linkshort.db` | SQLite 数据库文件路径 |
 | `LINKSHORT_ADMIN_KEY` | 空 | 管理接口的 API Key。为空时程序自动生成 32 位 hex 并打印到日志，**重启会变**，生产环境必须显式设置 |
-| `LINKSHORT_BASE_URL` | 空 | 短链拼接用的基础 URL。为空时用请求的 Host 拼 |
+| `LINKSHORT_BASE_URL` | 空 | 短链拼接用的基础 URL。为空时用请求的 Host 拼；首尾空白在拼接时忽略，空白-only 等同于空 |
 | `LINKSHORT_RATE_LIMIT_RPS` | `20` | 限流令牌桶每秒补充速率（v1.2 新增）；非法值启动即报错退出（v1.37.0 起） |
 | `LINKSHORT_RATE_LIMIT_BURST` | `40` | 限流令牌桶容量，允许的瞬时突发量（v1.2 新增）；非法值启动即报错退出（v1.37.0 起） |
 | `LINKSHORT_RATE_LIMIT_ENABLED` | `true` | 是否开启限流（v1.2 新增），`true`/`false`；非法值启动即报错退出（v1.37.0 起） |

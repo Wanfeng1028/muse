@@ -5,6 +5,14 @@
 格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
 
+## [v1.37.1] - 2026-11-03
+
+### 修复
+- `LINKSHORT_BASE_URL` 首尾空白不再拼进短链：shortBaseURL 先对配置值做 TrimSpace 再去末尾斜杠；空白-only 的值视为空，仍按请求 Host 拼短链。此前带首尾空白的值会原样拼出带空格的短链（二维码内容、列表 short_url、/api/meta 的 base_url 均受影响）。正常值行为不变；配置值本身不做改写，只在拼接时处理。
+
+### 测试
+- 新增 `internal/handler/shortbaseurl_test.go`，TestShortBaseURLTrimsSpaces 6 例：正常值、末尾斜杠、前后空白、斜杠加尾空白、空白-only、空串。
+
 ## [v1.37.0] - 2026-10-31
 
 ### 新增

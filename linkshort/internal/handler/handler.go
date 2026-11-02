@@ -262,8 +262,9 @@ func toLinkJSON(l *model.Link, base string) linkJSON {
 
 // shortBaseURL 优先使用配置的 BaseURL，否则根据请求 Host 拼。
 func shortBaseURL(r *http.Request, cfg *config.Config) string {
-	if cfg.BaseURL != "" {
-		return strings.TrimRight(cfg.BaseURL, "/")
+	baseURL := strings.TrimSpace(cfg.BaseURL)
+	if baseURL != "" {
+		return strings.TrimRight(baseURL, "/")
 	}
 	return "http://" + r.Host
 }
