@@ -1,31 +1,70 @@
 @import '../../styles/variables.scss';
 
-// Welcome page: same simple-premium language as the mine redo (light
-// default, near-white bg, soft white cards, weak dividers, generous
-// whitespace, Gemini blue capsules). All sizes in scss px = pt x 750/390.
-// The Get Started capsule follows the single shared capsule height
-// $button-h (44pt after the 2026-11-02 reduction) — no per-page height.
-.welcome-brand { display: flex; align-items: center; gap: 15.38px; margin-top: 15.38px; }
-.welcome-mark { width: 61.54px; height: 61.54px; display: block; flex-shrink: 0; }
-.welcome-brand-name { font-size: 34.62px; font-weight: 500; color: $light-text; }
-.welcome-card {
-  box-sizing: border-box; background: $light-card; border: $hairline solid $light-divider;
-  border-radius: 23.08px; padding: 30.77px; margin-top: 46.15px;
+// Welcome page, rebuilt 2026-11-02 12:03 to match the photo-24 Smart
+// Home splash (photo-27 re-shot): gradient hero panel, centered white
+// logo square, wire down to layered cards with tilted stickers, small
+// centered label, big bold centered headline, bottom-anchored capsule.
+// All sizes in scss px = pt x 750/390. This page is a user-specified
+// exception to the nine rules: the hero panel uses a vertical Gemini
+// blue gradient (same three stops as $gemini-grad) and the headline is
+// 32pt bold — both allowed here only. Everything else follows the
+// rules: flat cards, no shadows, Lucide-free (no icons here except the
+// brand mark), capsule 999px at the shared $button-h height.
+.welcome-page { display: flex; flex-direction: column; }
+.welcome-hero {
+  background: linear-gradient(180deg, #3186ff 0%, #346bf0 45%, #4ea0ff 100%);
+  border-radius: 53.85px; padding: 46.15px 30.77px 15.38px;
+  display: flex; flex-direction: column; align-items: center;
 }
-.welcome-card-words { display: block; font-size: 25px; font-weight: 500; color: #346bf0; }
-.welcome-card-line { display: block; font-size: 30.77px; color: $light-text; line-height: 1.7; margin-top: 11.54px; }
-.welcome-title { margin-top: 61.54px; }
-.welcome-title-line { display: block; font-size: 42.31px; font-weight: 500; color: $light-text; line-height: 1.2; }
-.welcome-sub { display: block; font-size: 30.77px; color: $light-sub; line-height: 1.7; margin-top: 23.08px; }
-.welcome-foot { margin-top: 61.54px; padding-bottom: 46.15px; }
+.welcome-logo-sq {
+  width: 123.08px; height: 123.08px; background: #ffffff; border-radius: 30.77px;
+  display: flex; align-items: center; justify-content: center;
+}
+.welcome-logo-img { width: 84.62px; height: 84.62px; display: block; }
+.welcome-hero-name { color: #ffffff; font-size: 30.77px; font-weight: 500; margin-top: 15.38px; }
+.welcome-wire { width: 3.84px; height: 61.54px; background: rgba(255, 255, 255, 0.85); margin-top: 15.38px; }
+.welcome-stack { position: relative; margin: -23.08px 15.38px 0; }
+.welcome-badge {
+  position: absolute; z-index: 3; background: #ffffff; border: 1.92px solid $light-divider;
+  border-radius: 999px; padding: 7.69px 15.38px; font-size: 21.15px; color: #346bf0; font-weight: 500;
+}
+.welcome-badge-a { top: -19.23px; left: 7.69px; transform: rotate(-8deg); }
+.welcome-badge-b { bottom: -11.54px; right: 15.38px; transform: rotate(8deg); }
+.welcome-card-main {
+  position: relative; z-index: 2; box-sizing: border-box; background: $light-card;
+  border: 1.92px solid $light-divider; border-radius: 38.46px; padding: 38.46px 30.77px 30.77px;
+}
+.welcome-card-kicker { display: block; font-size: 23.08px; font-weight: 500; color: #346bf0; }
+.welcome-card-line { display: block; font-size: 26.92px; color: $light-text; line-height: 1.7; margin-top: 11.54px; }
+.welcome-feat { margin-top: 23.08px; display: flex; flex-direction: column; gap: 11.54px; }
+.welcome-feat-item { display: block; font-size: 23.08px; color: $light-sub; }
+.welcome-card-peek {
+  position: relative; z-index: 1; box-sizing: border-box; margin-top: -23.08px; margin-left: 61.54px;
+  background: $light-card; border: 1.92px solid $light-divider; border-radius: 38.46px;
+  border-top-left-radius: 46.15px; padding: 38.46px 30.77px 30.77px;
+}
+.welcome-peek-kicker { display: block; font-size: 23.08px; font-weight: 500; color: #346bf0; }
+.welcome-peek-line { display: block; font-size: 23.08px; color: $light-sub; line-height: 1.7; margin-top: 7.69px; }
+.welcome-label { display: flex; align-items: center; justify-content: center; gap: 7.69px; margin-top: 46.15px; }
+.welcome-label-mark { width: 21.15px; height: 21.15px; display: block; }
+.welcome-label-text { font-size: 23.08px; color: $light-sub; }
+.welcome-title { margin-top: 23.08px; text-align: center; }
+.welcome-title-line { display: block; font-size: 61.54px; font-weight: 700; color: $light-text; line-height: 1.25; }
+.welcome-sub { display: block; text-align: center; font-size: 26.92px; color: $light-sub; line-height: 1.7; margin-top: 23.08px; padding: 0 30.77px; }
+.welcome-foot { margin-top: auto; padding-top: 46.15px; padding-bottom: 30.77px; }
 .welcome-cta {
   box-sizing: border-box; width: 100%; height: $button-h; border-radius: 999px;
   background: $gemini-grad; color: #ffffff; font-size: $fs-item; font-weight: 500;
   display: flex; align-items: center; justify-content: center;
 }
-.page.theme-dark .welcome-brand-name { color: $text; }
-.page.theme-dark .welcome-card { background: $card; border-color: $divider; box-shadow: none; }
-.page.theme-dark .welcome-card-words { color: #8db4ff; }
+.page.theme-dark .welcome-badge { background: $card; border-color: $divider; color: #8db4ff; }
+.page.theme-dark .welcome-card-main { background: $card; border-color: $divider; }
+.page.theme-dark .welcome-card-kicker { color: #8db4ff; }
 .page.theme-dark .welcome-card-line { color: $text; }
+.page.theme-dark .welcome-feat-item { color: $sub; }
+.page.theme-dark .welcome-card-peek { background: $card; border-color: $divider; }
+.page.theme-dark .welcome-peek-kicker { color: #8db4ff; }
+.page.theme-dark .welcome-peek-line { color: $sub; }
+.page.theme-dark .welcome-label-text { color: $sub; }
 .page.theme-dark .welcome-title-line { color: $text; }
 .page.theme-dark .welcome-sub { color: $sub; }
