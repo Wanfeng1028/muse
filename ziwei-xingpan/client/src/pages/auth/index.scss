@@ -3,7 +3,10 @@
 // Auth (login / register / forgot): light-first; dark overrides scoped
 // under .page.theme-dark at the bottom. Every control is a 999px
 // capsule (user's login spec); primary = Gemini blue gradient.
-.auth-back { display: flex; align-items: center; gap: 11.54px; margin-bottom: 30.77px; }
+// Back control: a real capsule button (inline-flex hugs the content,
+// light bubble bg), not a bare text row — it must read as tappable
+// at a glance (2026-11-02 user question: "is it a button?").
+.auth-back { display: inline-flex; align-items: center; gap: 7.69px; height: 61.54px; padding: 0 23.08px; border-radius: 999px; background: $light-bubble; margin-bottom: 30.77px; }
 .auth-back-text { font-size: $fs-item; font-weight: 500; color: $light-sub; }
 .auth-brand { display: flex; align-items: center; justify-content: center; margin-bottom: 30.77px; }
 .auth-brand-mark { width: 48px; height: 48px; flex-shrink: 0; }
@@ -40,7 +43,8 @@
 // Mode-switch transition (login <-> register): the form card fades
 // in and rises slightly on each switch (key={mode} remount replays
 // it). iOS curve, 250ms. Inputs are controlled by Auth state, so
-// remounting loses no typed values.
+// remounting loses no typed values. NOT applied on first mount
+// (animOn gate in tsx): the landing page renders crisp immediately.
 .auth-form-anim { animation: auth-form-in 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
 @keyframes auth-form-in { from { opacity: 0; transform: translateY(15.38px); } to { opacity: 1; transform: translateY(0); } }
 // Official brand mark chip on the gradient button: white circle keeps
@@ -56,6 +60,7 @@
 .auth-legal-body { display: block; white-space: pre-wrap; font-size: $fs-body; line-height: 1.8; color: $light-text; }
 
 // ---------- Dark ----------
+.page.theme-dark .auth-back { background: $row; }
 .page.theme-dark .auth-back-text { color: $sub; }
 .page.theme-dark .auth-title { color: $text; }
 .page.theme-dark .auth-sub { color: $sub; }

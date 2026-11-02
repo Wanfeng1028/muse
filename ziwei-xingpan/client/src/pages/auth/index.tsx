@@ -43,6 +43,11 @@ function initialMode(): Mode {
 export default function Auth() {
   const [theme] = useTheme();
   const [mode, setMode] = useState<Mode>(initialMode());
+  // Switch animation runs only AFTER the first segment tap, never on
+  // first mount: the landing page must render crisp immediately, not
+  // fade in pale (2026-11-02 user report: the landing frame looked
+  // washed out next to settled frames, placeholders nearly invisible).
+  const [animOn, setAnimOn] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -156,11 +161,11 @@ export default function Auth() {
             <SegmentedControl
               options={['登录', '注册']}
               value={mode === 'register' ? 1 : 0}
-              onChange={(i) => { setMode(i === 1 ? 'register' : 'login'); setNotice(''); }}
+              onChange={(i) => { setMode(i === 1 ? 'register' : 'login'); setNotice(''); setAnimOn(true); }}
               tone={dark ? 'dark' : 'light'}
             />
           </View>
-          <View key={mode} className='auth-form-anim'>
+          <View key={mode} className={animOn ? 'auth-form-anim' : ''}>
           <Card>
             <View className='auth-row'>
               <Icon name='mail' tone={dark ? 'sky' : 'blue'} size='40px' />
