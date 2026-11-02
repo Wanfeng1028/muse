@@ -22,7 +22,7 @@ COPY src ./src
 RUN mvn -B package -DskipTests
 
 # ---------- 阶段二：运行 ----------
-FROM eclipse-temurin:21-jre
+FROM eclipse-temurin:25-jre
 WORKDIR /app
 
 # 安装 ffmpeg（含 ffprobe），并清理 apt 缓存以减小镜像体积
