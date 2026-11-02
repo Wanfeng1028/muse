@@ -181,8 +181,20 @@ import ic_minus_blue from '../assets/lucide/png/minus-blue.png';
 import ic_minus_sky from '../assets/lucide/png/minus-sky.png';
 import ic_minus_gray from '../assets/lucide/png/minus-gray.png';
 import ic_minus_white from '../assets/lucide/png/minus-white.png';
+import ic_list_blue from '../assets/lucide/png/list-blue.png';
+import ic_list_sky from '../assets/lucide/png/list-sky.png';
+import ic_list_gray from '../assets/lucide/png/list-gray.png';
+import ic_list_white from '../assets/lucide/png/list-white.png';
+import ic_calendar_blue from '../assets/lucide/png/calendar-blue.png';
+import ic_calendar_sky from '../assets/lucide/png/calendar-sky.png';
+import ic_calendar_gray from '../assets/lucide/png/calendar-gray.png';
+import ic_calendar_white from '../assets/lucide/png/calendar-white.png';
+import ic_mic_blue from '../assets/lucide/png/mic-blue.png';
+import ic_mic_sky from '../assets/lucide/png/mic-sky.png';
+import ic_mic_gray from '../assets/lucide/png/mic-gray.png';
+import ic_mic_white from '../assets/lucide/png/mic-white.png';
 
-export const ICON_NAMES = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'map-pin', 'clock', 'arrow-up', 'arrow-right', 'sun', 'inbox', 'star', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus'] as const;
+export const ICON_NAMES = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'map-pin', 'clock', 'arrow-up', 'arrow-right', 'sun', 'inbox', 'star', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus', 'list', 'calendar', 'mic'] as const;
 export type IconName = typeof ICON_NAMES[number];
 export type IconTone = 'blue' | 'sky' | 'gray' | 'white';
 const SRC: Record<IconName, Record<IconTone, string>> = {
@@ -229,6 +241,9 @@ const SRC: Record<IconName, Record<IconTone, string>> = {
   'search': { blue: ic_search_blue, sky: ic_search_sky, gray: ic_search_gray, white: ic_search_white },
   'plus': { blue: ic_plus_blue, sky: ic_plus_sky, gray: ic_plus_gray, white: ic_plus_white },
   'minus': { blue: ic_minus_blue, sky: ic_minus_sky, gray: ic_minus_gray, white: ic_minus_white },
+  'list': { blue: ic_list_blue, sky: ic_list_sky, gray: ic_list_gray, white: ic_list_white },
+  'calendar': { blue: ic_calendar_blue, sky: ic_calendar_sky, gray: ic_calendar_gray, white: ic_calendar_white },
+  'mic': { blue: ic_mic_blue, sky: ic_mic_sky, gray: ic_mic_gray, white: ic_mic_white },
 };
 
 export function Icon({ name, tone, size }: { name: IconName; tone: IconTone; size?: string }) {

@@ -2,7 +2,7 @@
 // rasterized Lucide PNGs). Re-run after adding icons to ICONS.
 const fs = require('node:fs');
 const path = require('node:path');
-const ICONS = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'map-pin', 'clock', 'arrow-up', 'arrow-right', 'sun', 'inbox', 'star', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus'];
+const ICONS = ['home', 'message-circle', 'book-open', 'user', 'users', 'user-plus', 'crown', 'coins', 'history', 'layers', 'share-2', 'clipboard-list', 'settings', 'message-square', 'info', 'layout-grid', 'log-in', 'log-out', 'refresh-cw', 'chevron-right', 'chevron-left', 'copy', 'check', 'trash-2', 'maximize-2', 'x', 'eye', 'eye-off', 'mail', 'lock', 'map-pin', 'clock', 'arrow-up', 'arrow-right', 'sun', 'inbox', 'star', 'pen-line', 'zap', 'save', 'search', 'plus', 'minus', 'list', 'calendar', 'mic'];
 const TONES = ['blue', 'sky', 'gray', 'white'];
 const imps = [];
 const map = [];
