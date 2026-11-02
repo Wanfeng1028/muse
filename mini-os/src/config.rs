@@ -65,7 +65,7 @@ pub fn parse_backup_code_retention_days_raw(raw: Option<&str>) -> Result<i64, St
     }
 }
 
-/// 从环境变量读取配置：缺失用默认值；PORT、UPLOAD_MAX_BYTES、SHUTDOWN_TIMEOUT_SECS、SESSION_TTL_SECS 非法时启动报错退出；DATABASE_PATH、STATIC_DIR 缺失仍用默认值。
+/// 从环境变量读取配置：缺失用默认值；PORT、UPLOAD_MAX_BYTES、SHUTDOWN_TIMEOUT_SECS、SESSION_TTL_SECS、DATABASE_PATH、STATIC_DIR 非法时启动报错退出；DATABASE_PATH、STATIC_DIR 缺失仍用默认值，空值或纯空白非法。
 impl Config {
     pub fn from_env() -> Self {
         let data_dir = compute_data_dir();
@@ -77,10 +77,22 @@ impl Config {
             }
         };
 
-        let database_path =
-            env::var("DATABASE_PATH").unwrap_or_else(|_| "data/mini-os.db".to_string());
+        let database_path = match parse_database_path_raw(env::var("DATABASE_PATH").ok().as_deref())
+        {
+            Ok(v) => v,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
 
-        let static_dir = env::var("STATIC_DIR").unwrap_or_else(|_| "static".to_string());
+        let static_dir = match parse_static_dir_raw(env::var("STATIC_DIR").ok().as_deref()) {
+            Ok(v) => v,
+            Err(msg) => {
+                eprintln!("配置错误：{}", msg);
+                std::process::exit(2);
+            }
+        };
 
         let upload_max_bytes =
             match parse_upload_max_bytes_raw(env::var("UPLOAD_MAX_BYTES").ok().as_deref()) {
@@ -223,6 +235,34 @@ pub fn parse_session_ttl_secs_raw(raw: Option<&str>) -> Result<u64, String> {
                 Ok(v) if v > 0 => Ok(v),
                 _ => Err(format!("SESSION_TTL_SECS 必须是正整数，当前值：{}", s)),
             }
+        }
+    }
+}
+
+/// 解析 DATABASE_PATH：缺失时默认 data/mini-os.db；空串或纯空白非法。
+pub fn parse_database_path_raw(raw: Option<&str>) -> Result<String, String> {
+    match raw {
+        None => Ok("data/mini-os.db".to_string()),
+        Some(s) => {
+            let trimmed = s.trim();
+            if trimmed.is_empty() {
+                return Err(format!("DATABASE_PATH 不能为空，当前值：{:?}", s));
+            }
+            Ok(trimmed.to_string())
+        }
+    }
+}
+
+/// 解析 STATIC_DIR：缺失时默认 static；空串或纯空白非法。
+pub fn parse_static_dir_raw(raw: Option<&str>) -> Result<String, String> {
+    match raw {
+        None => Ok("static".to_string()),
+        Some(s) => {
+            let trimmed = s.trim();
+            if trimmed.is_empty() {
+                return Err(format!("STATIC_DIR 不能为空，当前值：{:?}", s));
+            }
+            Ok(trimmed.to_string())
         }
     }
 }

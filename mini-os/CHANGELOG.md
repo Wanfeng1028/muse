@@ -1,3 +1,33 @@
+## [1.19.19] - 2026-11-02
+
+### Changed
+
+- `src/config.rs`：`from_env` 中 `DATABASE_PATH` / `STATIC_DIR` 由 `unwrap_or_else` 缺省兜底改为 fail-fast：缺失仍用默认值（`data/mini-os.db` / `static`），但空串或纯空白视为非法，`eprintln` 配置错误（文案含变量名与“不能为空”）并 `exit(2)`，与 `PORT` 等分支同款。
+- `src/config.rs`：`from_env` 文档注释同步更新。
+- `Cargo.toml` 与 `Cargo.lock` 版本由 1.19.18 升为 1.19.19。
+
+### Added
+
+- `src/config.rs`：新增 `pub` 纯解析函数 `parse_database_path_raw` 与 `parse_static_dir_raw`，合法值 trim 后生效，供 `from_env` 复用与单测直接断言。
+- `tests/config_path_strict_test.rs`：新增 4 个测试函数（两变量各一组合法与默认值、一组空值拒绝），用纯解析函数断言，不碰 `from_env`。
+
+### Verification
+
+- 靶向测试合计 21/21 通过：`config_path_strict_test` 4/4、`config_env_strict_test` 4/4、`config_deep` 10/10、lib 内 config 单元测试 3/3。
+- `cargo fmt --all --check` 干净（新测试文件经 rustfmt 一次格式化后复测仍 4/4）。
+- `cargo clippy --lib` 共 8 个告警，均不在本轮改动文件、无 `src/config.rs` 归属告警。
+- 真实服务冒烟（18573 端口隔离库）：
+  - `DATABASE_PATH` 空串启动 exit 2，末行“配置错误：DATABASE_PATH 不能为空，当前值：\"\"”；
+  - `STATIC_DIR` 纯空白启动 exit 2，末行“配置错误：STATIC_DIR 不能为空，当前值：\"   \"”；
+  - 合法配置起服后 `GET /api/health` 返回 `{"status":"ok","version":"1.19.19"}`，`POST /api/auth/register` 返回 `id 2`、`username smokeuser`、`isAdmin true`、`role admin`，`GET /api/readyz` 返回 `{"status":"ready"}`；
+  - 冒烟后服务已按 PID kill、端口复查已关、冒烟库已删。
+
+### Known Limitations
+
+- 全量 `cargo test` 本轮未跑（只跑靶向测试）。
+- 无数据库迁移、无新增端点、无新增依赖、无 UI 改动，视觉验收不适用。
+- `from_env` 里 `compute_data_dir` 仍在数据库路径解析之前计算（空 `DATABASE_PATH` 时它先回落到 `data`，但随后解析分支即 `exit(2)`，服务不会带着空路径启动）。
+
 ## [1.19.18] - 2026-11-01
 
 ### Changed
