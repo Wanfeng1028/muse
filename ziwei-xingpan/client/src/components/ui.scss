@@ -25,6 +25,10 @@
 .segctl-light .segctl-opt { color: $light-sub; }
 .segctl-dark .segctl-opt-active { background: $gemini-grad; color: #ffffff; }
 .segctl-light .segctl-opt-active { background: $gemini-grad; color: #ffffff; }
+// Press feedback for segment options (all pages using this control):
+// dim while pressed. No background change: the active pill's gradient
+// must not be overridden.
+.segctl-press { opacity: 0.6; }
 
 // ---- Vector cover (knowledge, productization round) ----
 .cover {

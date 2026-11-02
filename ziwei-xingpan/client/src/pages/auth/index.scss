@@ -33,6 +33,16 @@
   margin-top: 23.08px;
 }
 .auth-submit-text { font-size: $fs-item; font-weight: 500; color: #ffffff; }
+// Press feedback for small controls (Views): dim while pressed.
+// Main buttons already use .btn-press (brightened gradient); these
+// small controls have no background to brighten, so dim instead.
+.auth-press { opacity: 0.6; }
+// Mode-switch transition (login <-> register): the form card fades
+// in and rises slightly on each switch (key={mode} remount replays
+// it). iOS curve, 250ms. Inputs are controlled by Auth state, so
+// remounting loses no typed values.
+.auth-form-anim { animation: auth-form-in 0.25s cubic-bezier(0.32, 0.72, 0, 1); }
+@keyframes auth-form-in { from { opacity: 0; transform: translateY(15.38px); } to { opacity: 1; transform: translateY(0); } }
 // Official brand mark chip on the gradient button: white circle keeps
 // the verbatim green WeChat mark legible without recoloring it.
 .auth-brand-chip { display: flex; align-items: center; justify-content: center; width: 48px; height: 48px; border-radius: 50%; background: #ffffff; flex-shrink: 0; }

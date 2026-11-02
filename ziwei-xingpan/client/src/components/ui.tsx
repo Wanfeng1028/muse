@@ -59,7 +59,7 @@ export function SegmentedControl({ options, value, onChange, tone }: {
   return (
     <View className={cls}>
       {options.map((label, i) => (
-        <View key={label} className={i === value ? 'segctl-opt segctl-opt-active' : 'segctl-opt'} onClick={() => onChange(i)}>
+        <View key={label} className={i === value ? 'segctl-opt segctl-opt-active' : 'segctl-opt'} hoverClass='segctl-press' onClick={() => onChange(i)}>
           <Text>{label}</Text>
         </View>
       ))}

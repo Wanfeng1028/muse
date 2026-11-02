@@ -23,6 +23,11 @@ import './index.scss';
 // shows the unconfigured notice, configured calls the real loginFlow.
 // Mode lands from ?mode=login | register | forgot | terms | privacy so
 // screenshots can capture each state directly.
+// Interactions (2026-11-02): main buttons use hoverClass btn-press
+// (brightened gradient); small controls use hoverClass auth-press
+// (dim) or segctl-press (segment options, shared control); the
+// login<->register form card replays a 250ms fade+rise on mode change
+// (key={mode} on its wrapper).
 type Mode = 'login' | 'register' | 'forgot' | 'terms' | 'privacy';
 
 function initialMode(): Mode {
@@ -110,7 +115,7 @@ export default function Auth() {
 
   return (
     <View className={'page theme-' + theme}>
-      <View className='auth-back' onClick={() => { if (mode === 'terms' || mode === 'privacy') setMode('login'); else Taro.navigateBack(); }}>
+      <View className='auth-back' hoverClass='auth-press' onClick={() => { if (mode === 'terms' || mode === 'privacy') setMode('login'); else Taro.navigateBack(); }}>
         <Icon name='chevron-left' tone={dark ? 'sky' : 'blue'} size='40px' />
         <Text className='auth-back-text'>返回</Text>
       </View>
@@ -141,7 +146,7 @@ export default function Auth() {
           <View className='auth-submit' hoverClass='btn-press' onClick={sendReset}>
             <Text className='auth-submit-text'>发送重置链接</Text>
           </View>
-          <View className='auth-switch' onClick={() => setMode('login')}>
+          <View className='auth-switch' hoverClass='auth-press' onClick={() => setMode('login')}>
             <Text className='auth-link'>返回登录</Text>
           </View>
         </Card>
@@ -155,6 +160,7 @@ export default function Auth() {
               tone={dark ? 'dark' : 'light'}
             />
           </View>
+          <View key={mode} className='auth-form-anim'>
           <Card>
             <View className='auth-row'>
               <Icon name='mail' tone={dark ? 'sky' : 'blue'} size='40px' />
@@ -163,7 +169,7 @@ export default function Auth() {
             <View className='auth-row'>
               <Icon name='lock' tone={dark ? 'sky' : 'blue'} size='40px' />
               <Input className='auth-input' placeholder='密码（至少 6 位）' password={!showPwd} value={password} onInput={(e) => setPassword(e.detail.value)} />
-              <View onClick={() => setShowPwd(!showPwd)}>
+              <View hoverClass='auth-press' onClick={() => setShowPwd(!showPwd)}>
                 <Icon name={showPwd ? 'eye-off' : 'eye'} tone='gray' size='40px' />
               </View>
             </View>
@@ -180,7 +186,7 @@ export default function Auth() {
               </View>
             ) : null}
             {mode === 'login' ? (
-              <View className='auth-forgot' onClick={() => setMode('forgot')}>
+              <View className='auth-forgot' hoverClass='auth-press' onClick={() => setMode('forgot')}>
                 <Text className='auth-link'>忘记密码？</Text>
               </View>
             ) : null}
@@ -188,6 +194,7 @@ export default function Auth() {
               <Text className='auth-submit-text'>{mode === 'register' ? '注册' : '登录'}</Text>
             </View>
           </Card>
+          </View>
           <View className='auth-divider'><Text className='auth-divider-text'>或用微信登录</Text></View>
           {/* WeChat one-tap login (PRIMARY, recommended; placed below email
               per user order 2026-11-01): Gemini blue gradient capsule
@@ -204,9 +211,9 @@ export default function Auth() {
           </View>
           <View className='auth-agreement'>
             <Text className='auth-agreement-text'>登录/注册即代表你已阅读并同意</Text>
-            <Text className='auth-agreement-link' onClick={() => setMode('terms')}>《服务条款》</Text>
+            <View className='auth-agreement-link' hoverClass='auth-press' onClick={() => setMode('terms')}><Text>《服务条款》</Text></View>
             <Text className='auth-agreement-text'>与</Text>
-            <Text className='auth-agreement-link' onClick={() => setMode('privacy')}>《隐私政策》</Text>
+            <View className='auth-agreement-link' hoverClass='auth-press' onClick={() => setMode('privacy')}><Text>《隐私政策》</Text></View>
           </View>
         </View>
       )}
