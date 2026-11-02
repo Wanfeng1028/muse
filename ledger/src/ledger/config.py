@@ -36,6 +36,8 @@ class Settings:
 def get_settings() -> Settings:
     """读取环境变量并构造 Settings（带缓存）。"""
     raw_db = os.environ.get("LEDGER_DB", DEFAULT_DB)
+    if not raw_db.strip():
+        raise ValueError(f"LEDGER_DB 非法: {raw_db!r}，不能为空")
     host = os.environ.get("LEDGER_HOST", DEFAULT_HOST)
     if not host.strip():
         raise ValueError(f"LEDGER_HOST 非法: {host!r}，不能为空")

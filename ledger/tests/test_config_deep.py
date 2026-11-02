@@ -54,16 +54,17 @@ def env_guard():
             os.environ[k] = v
 
 
-def test_empty_db_path_falls_back_to_project_root(env_guard):
-    """边界：LEDGER_DB 为空字符串时按相对路径处理，拼到项目根目录。"""
+def test_empty_db_path_raises_value_error(env_guard):
+    """边界：LEDGER_DB 为空字符串时应抛 ValueError 而非回退到项目根目录。"""
     os.environ["LEDGER_DB"] = ""
     mod = _fresh_config()
-    settings = mod.get_settings()
 
-    expected = str(mod.PROJECT_ROOT / "")
-    assert settings.db_path == expected
-    assert settings.db_path.startswith(str(mod.PROJECT_ROOT))
-    assert os.path.isabs(settings.db_path)
+    with pytest.raises(ValueError) as exc_info:
+        mod.get_settings()
+
+    msg = str(exc_info.value)
+    assert "LEDGER_DB" in msg
+    assert repr("") in msg
 
 
 def test_relative_db_path_is_anchored_to_project_root(env_guard):

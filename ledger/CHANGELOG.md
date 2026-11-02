@@ -1,5 +1,23 @@
 # 更新日志
 
+## v2.17.33 - 2026-11-02
+
+### 新增
+
+src/ledger/config.py 的 get_settings 在读取 LEDGER_DB 后增加校验：取值为空串或纯空白时抛出 ValueError，文案为 LEDGER_DB 非法: '<原始值>'，不能为空；与上轮 LEDGER_HOST 校验同款。
+
+### 不变
+
+未设置 LEDGER_DB 时仍默认 data/ledger.db 并拼到项目根目录；相对路径拼项目根目录、绝对路径原样透传的逻辑一字不动；host、port、log_level、base_currency 一字不动；无迁移、无新依赖、无新端点、无 UI 改动；database.py 的 _resolve_db_path 一字不动。
+
+### 测试
+
+新增 tests/test_config_db_invalid.py，6 例全绿：空串/三空格/Tab 参数化 3 例抛错且文案含 LEDGER_DB 与原值 repr；缺省 data/ledger.db 拼项目根目录；相对路径锚定项目根目录；绝对路径原样透传。tests/test_config_deep.py 的旧空库用例改名为 test_empty_db_path_raises_value_error，改为抛错断言。靶向合跑 config 深测 + 新测 + host 旧测 + port 旧测 = 33 项全绿。ruff check 在 config.py 与新测试文件上全洁；新测试文件经 ruff format 一次格式化后复测仍 6/6 全绿；deep 文件既存 import 未排序与未用 httpx、273 行格式漂移为非本轮改动行，未扩范围修复。
+
+### 补充
+
+真实服务冒烟（18581 端口、隔离库已删）：LEDGER_DB 空串与三空格启动均 exit 1，终行文案逐字相符；合法库起服后 /api/health 返回 status ok 且 version 2.17.33、/api/ready 返回 ready true；冒烟后服务已停、端口复查已关、冒烟库已删。全量 pytest 在文档同步前：1546 通过、1 失败（仅版本一致性测试，系 CHANGELOG 未同步所致）、1 跳过。升版四处统一为 2.17.33：src/ledger/__init__.py、pyproject.toml、tests/test_version_consistency_v21715.py 的 EXPECTED_VERSION、CHANGELOG.md 顶条（本节）。
+
 ## v2.17.32 - 2026-11-01
 
 ### 新增
