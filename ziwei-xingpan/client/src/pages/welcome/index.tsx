@@ -14,7 +14,7 @@ import './index.scss';
 // pill + big bold headline + centered copy + bottom capsule); only
 // the content layer is swapped to this product's own: star brand,
 // 命盘摘要 card (line + feature lines), 年度运势 peek, 免费看盘 /
-// 十三维解读 chips, 紫微斗数 pill, 你的命盘，一眼看懂。 headline,
+// 十三维解读 chips, 星命盘 pill, 你的命盘一看就懂 headline,
 // Get Started capsule in the Gemini blue gradient (text stays
 // English per the 2026-11-02 15:59 order). The reference card head's
 // arrow/tools row is dropped: a back arrow on an entry splash is
@@ -23,9 +23,11 @@ import './index.scss';
 // cover our (longer) card line. Tech stack note: this page is Taro
 // (View/Text/Image + Taro.navigateTo, builds to weapp) — the
 // reproduction was ported to our stack, never pasted as web code.
-// Button target unchanged: Get Started goes to this product's chat
-// page. Entry rule unchanged: first launch, no local login marker
-// (mount-only home guard, never a loop).
+// Button target per the 2026-11-02 18:19 order: Get Started goes to
+// the auth page (login/register segments on one page); this
+// supersedes the 15:48 Start→chat flow. Entry rule unchanged:
+// first launch, no local login marker (mount-only home guard, never
+// a loop).
 export default function Welcome() {
   return (
     <View className='welcome-ref'>
@@ -45,7 +47,7 @@ export default function Welcome() {
         </View>
         <View className='welcome-ref-better'>
           <Text className='welcome-ref-better-title'>年度运势</Text>
-          <Text className='welcome-ref-better-line'>流年四化与大限，100 积分/次</Text>
+          <Text className='welcome-ref-better-line'>流年四化与大限</Text>
         </View>
         <View className='welcome-ref-chip welcome-ref-chip-left'>
           <View className='welcome-ref-chip-dot'>
@@ -61,13 +63,13 @@ export default function Welcome() {
         </View>
         <View className='welcome-ref-pill'>
           <Image className='welcome-ref-pill-ico' src={starMark} mode='aspectFit' />
-          紫微斗数
+          星命盘
         </View>
         <View className='welcome-ref-title'>
           <Text className='welcome-ref-title-line'>你的命盘一看就懂</Text>
         </View>
         <Text className='welcome-ref-copy'>本地排盘，十三维解读，对话随时问。积分规则公开透明。</Text>
-        <View className='welcome-ref-cta' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>Get Started</View>
+        <View className='welcome-ref-cta' onClick={() => Taro.navigateTo({ url: '/pages/auth/index' })}>Get Started</View>
       </View>
     </View>
   );
