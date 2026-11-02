@@ -1,33 +1,39 @@
 @import '../../styles/variables.scss';
 
-// Welcome page, rebuilt 2026-11-02 12:03 to match the photo-24 Smart
-// Home splash (photo-27 re-shot): gradient hero panel, centered white
-// logo square, wire down to layered cards with tilted stickers, small
-// centered label, big bold centered headline, bottom-anchored capsule.
+// Welcome page, rebuilt 2026-11-02 15:47 to faithfully reproduce the
+// photo-24 Smart Home splash (photo-27 re-shot, miniappdesign
+// LivingOnboarding as the measured reference): full-bleed gradient top,
+// centered white logo square, split-curve wire image down to layered
+// cards with tilted stickers, small centered label pill, big bold
+// centered headline, bottom-anchored capsule reading 要开始.
 // All sizes in scss px = pt x 750/390. This page is a user-specified
-// exception to the nine rules: the hero panel uses a vertical Gemini
-// blue gradient (same three stops as $gemini-grad) and the headline is
-// 32pt bold — both allowed here only. Everything else follows the
-// rules: flat cards, no shadows, Lucide-free (no icons here except the
-// brand mark), capsule 999px at the shared $button-h height.
+// exception to the nine rules: the gradient top, the wire image, and
+// the 32pt bold headline are allowed here only. Everything else
+// follows the rules: flat cards, no shadows, capsule 999px at the
+// shared $button-h height, Gemini blue only (no reference blue-purple).
 .welcome-page { display: flex; flex-direction: column; }
-.welcome-hero {
-  background: linear-gradient(180deg, #3186ff 0%, #346bf0 45%, #4ea0ff 100%);
-  border-radius: 53.85px; padding: 46.15px 30.77px 15.38px;
-  display: flex; flex-direction: column; align-items: center;
+.welcome-glow {
+  position: absolute; top: 0; left: 0; right: 0; height: 65vh; z-index: -1;
+  background: linear-gradient(180deg, #3186ff 0%, #346bf0 40%, #4ea0ff 70%, rgba(78, 160, 255, 0) 100%);
 }
 .welcome-logo-sq {
-  width: 123.08px; height: 123.08px; background: #ffffff; border-radius: 30.77px;
+  width: 138.46px; height: 138.46px; background: #ffffff; border-radius: 34.62px;
+  display: flex; align-items: center; justify-content: center; margin: 15.38px auto 0;
+}
+.welcome-logo-img { width: 96.15px; height: 96.15px; display: block; }
+.welcome-hero-name { color: #ffffff; font-size: 30.77px; font-weight: 500; margin-top: 15.38px; text-align: center; }
+.welcome-wire-img { width: 423.08px; height: 146.15px; display: block; margin: 7.69px auto 0; }
+.welcome-stack { position: relative; margin: 0 15.38px; }
+.welcome-badge {
+  position: absolute; z-index: 3; display: flex; align-items: center; gap: 7.69px;
+  background: #ffffff; border: 1.92px solid $light-divider;
+  border-radius: 999px; padding: 7.69px 15.38px 7.69px 7.69px; font-size: 21.15px; color: #346bf0; font-weight: 500;
+}
+.welcome-badge-dot {
+  width: 30.77px; height: 30.77px; border-radius: 50%; background: #346bf0; flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
 }
-.welcome-logo-img { width: 84.62px; height: 84.62px; display: block; }
-.welcome-hero-name { color: #ffffff; font-size: 30.77px; font-weight: 500; margin-top: 15.38px; }
-.welcome-wire { width: 3.84px; height: 61.54px; background: rgba(255, 255, 255, 0.85); margin-top: 15.38px; }
-.welcome-stack { position: relative; margin: -23.08px 15.38px 0; }
-.welcome-badge {
-  position: absolute; z-index: 3; background: #ffffff; border: 1.92px solid $light-divider;
-  border-radius: 999px; padding: 7.69px 15.38px; font-size: 21.15px; color: #346bf0; font-weight: 500;
-}
+.welcome-badge-ico { width: 19.23px; height: 19.23px; display: block; }
 .welcome-badge-a { top: -19.23px; left: 7.69px; transform: rotate(-8deg); }
 .welcome-badge-b { bottom: -11.54px; right: 15.38px; transform: rotate(8deg); }
 .welcome-card-main {
@@ -45,7 +51,11 @@
 }
 .welcome-peek-kicker { display: block; font-size: 23.08px; font-weight: 500; color: #346bf0; }
 .welcome-peek-line { display: block; font-size: 23.08px; color: $light-sub; line-height: 1.7; margin-top: 7.69px; }
-.welcome-label { display: flex; align-items: center; justify-content: center; gap: 7.69px; margin-top: 46.15px; }
+.welcome-label {
+  display: flex; align-items: center; justify-content: center; gap: 7.69px; align-self: center;
+  margin-top: 46.15px; background: #ffffff; border: 1.92px solid $light-divider;
+  border-radius: 999px; padding: 11.54px 23.08px;
+}
 .welcome-label-mark { width: 21.15px; height: 21.15px; display: block; }
 .welcome-label-text { font-size: 23.08px; color: $light-sub; }
 .welcome-title { margin-top: 23.08px; text-align: center; }
@@ -65,6 +75,7 @@
 .page.theme-dark .welcome-card-peek { background: $card; border-color: $divider; }
 .page.theme-dark .welcome-peek-kicker { color: #8db4ff; }
 .page.theme-dark .welcome-peek-line { color: $sub; }
+.page.theme-dark .welcome-label { background: $card; border-color: $divider; }
 .page.theme-dark .welcome-label-text { color: $sub; }
 .page.theme-dark .welcome-title-line { color: $text; }
 .page.theme-dark .welcome-sub { color: $sub; }
