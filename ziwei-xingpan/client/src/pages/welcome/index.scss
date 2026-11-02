@@ -1,81 +1,82 @@
-@import '../../styles/variables.scss';
-
-// Welcome page, rebuilt 2026-11-02 15:47 to faithfully reproduce the
-// photo-24 Smart Home splash (photo-27 re-shot, miniappdesign
-// LivingOnboarding as the measured reference): full-bleed gradient top,
-// centered white logo square, split-curve wire image down to layered
-// cards with tilted stickers, small centered label pill, big bold
-// centered headline, bottom-anchored capsule reading 要开始.
-// All sizes in scss px = pt x 750/390. This page is a user-specified
-// exception to the nine rules: the gradient top, the wire image, and
-// the 32pt bold headline are allowed here only. Everything else
-// follows the rules: flat cards, no shadows, capsule 999px at the
-// shared $button-h height, Gemini blue only (no reference blue-purple).
-.welcome-page { display: flex; flex-direction: column; }
-.welcome-glow {
-  position: absolute; top: 0; left: 0; right: 0; height: 65vh; z-index: -1;
-  background: linear-gradient(180deg, #3186ff 0%, #346bf0 40%, #4ea0ff 70%, rgba(78, 160, 255, 0) 100%);
+// Welcome page, reference pass 2026-11-02 16:14: miniappdesign
+// LivingOnboarding ported to this project's Taro stack, verbatim.
+// Every value is that file's CSS px times 750/390 (390pt screen).
+// This page deliberately does NOT use .page (which would add the
+// project's own padding/theme bg); it is a self-contained
+// reproduction. No position:fixed anywhere: chips are absolute against
+// the body wrapper (position relative), exactly as in the original.
+.welcome-ref {
+  position: relative; box-sizing: border-box; min-height: 100vh; overflow: hidden;
+  background:
+    radial-gradient(circle at 70% 8%, rgba(255, 255, 255, 0.5), transparent 42%),
+    linear-gradient(180deg, #bfd9ff 0%, #d8e8ff 40%, #f2f8ff 78%, #fbfdff 100%);
+  color: #17181a;
 }
-.welcome-logo-sq {
-  width: 138.46px; height: 138.46px; background: #ffffff; border-radius: 34.62px;
-  display: flex; align-items: center; justify-content: center; margin: 15.38px auto 0;
+.welcome-ref-glow {
+  position: absolute; top: -173.08px; left: -115.38px; width: 615.38px; height: 615.38px;
+  border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, 0.55), transparent 65%);
 }
-.welcome-logo-img { width: 96.15px; height: 96.15px; display: block; }
-.welcome-hero-name { color: #ffffff; font-size: 30.77px; font-weight: 500; margin-top: 15.38px; text-align: center; }
-.welcome-wire-img { width: 423.08px; height: 146.15px; display: block; margin: 7.69px auto 0; }
-.welcome-stack { position: relative; margin: 0 15.38px; }
-.welcome-badge {
-  position: absolute; z-index: 3; display: flex; align-items: center; gap: 7.69px;
-  background: #ffffff; border: 1.92px solid $light-divider;
-  border-radius: 999px; padding: 7.69px 15.38px 7.69px 7.69px; font-size: 21.15px; color: #346bf0; font-weight: 500;
+.welcome-ref-body {
+  position: relative; z-index: 2; box-sizing: border-box; display: flex; flex-direction: column;
+  align-items: center; padding: 50px 42.31px 0;
 }
-.welcome-badge-dot {
-  width: 30.77px; height: 30.77px; border-radius: 50%; background: #346bf0; flex-shrink: 0;
+.welcome-ref-logo {
+  display: flex; align-items: center; justify-content: center; width: 119.23px; height: 119.23px;
+  border-radius: 36.54px; background: #ffffff;
+  box-shadow: 0 26.92px 57.69px rgba(50, 92, 180, 0.17), 0 0 0 11.54px rgba(255, 255, 255, 0.26);
+}
+.welcome-ref-logo-img { width: 65.38px; height: 65.38px; display: block; }
+.welcome-ref-lines { width: 423.08px; height: 146.15px; display: block; opacity: 0.9; }
+.welcome-ref-card {
+  position: relative; z-index: 3; box-sizing: border-box; width: 619.23px; margin-top: 30.77px;
+  padding: 30.77px 28.85px 46.15px; border-radius: 38.46px; background: rgba(255, 255, 255, 0.97);
+  border: 1.92px solid rgba(255, 255, 255, 0.9); box-shadow: 0 50px 115.38px rgba(38, 78, 150, 0.14);
+}
+.welcome-ref-card-head-row { display: flex; align-items: center; justify-content: space-between; }
+.welcome-ref-card-title { display: block; font-size: 32.69px; font-weight: 600; letter-spacing: -0.005em; margin-top: 28.85px; }
+.welcome-ref-head-ico { width: 32.69px; height: 32.69px; display: block; }
+.welcome-ref-head-tools { display: flex; align-items: center; gap: 15.38px; margin-left: auto; }
+.welcome-ref-head-tools .welcome-ref-head-ico { width: 30.77px; height: 30.77px; }
+.welcome-ref-skeleton { display: flex; flex-direction: column; gap: 15.38px; margin-top: 28.85px; }
+.welcome-ref-bar { display: block; height: 9.62px; border-radius: 7.69px; background: #eef1f4; }
+.welcome-ref-skeleton-short { gap: 13.46px; margin-top: 23.08px; }
+.welcome-ref-progress { height: 13.46px; margin-top: 21.15px; border-radius: 999px; background: #e9eff8; overflow: hidden; }
+.welcome-ref-progress-fill { display: block; height: 100%; width: 44%; border-radius: inherit; background: #5c8df7; }
+.welcome-ref-better {
+  position: relative; z-index: 4; align-self: flex-end; width: 440px; margin-top: -30.77px; margin-right: 23.08px;
+  padding: 21.15px 25px 30.77px;
+  background: #ffffff; border: 1.92px solid #eaf1fb; border-radius: 28.85px;
+  box-shadow: 0 -19.23px 50px rgba(40, 70, 130, 0.06);
+}
+.welcome-ref-better-title { display: block; font-size: 22.12px; font-weight: 600; }
+.welcome-ref-skeleton-inside { margin-top: 23.08px; gap: 13.46px; }
+.welcome-ref-chip {
+  position: absolute; z-index: 4; display: flex; align-items: center; gap: 11.54px; height: 51.92px;
+  padding: 0 19.23px 0 7.69px; border-radius: 999px; background: rgba(255, 255, 255, 0.94);
+  border: 1.92px solid rgba(255, 255, 255, 0.9); box-shadow: 0 15.38px 38.46px rgba(40, 70, 130, 0.12);
+  font-size: 17.31px; color: #3a3f46; white-space: nowrap;
+}
+.welcome-ref-chip-left { top: 319.23px; left: 34.62px; transform: rotate(-8deg); }
+.welcome-ref-chip-right { top: 430.77px; right: 103.85px; transform: rotate(8deg); }
+.welcome-ref-chip-dot {
+  display: flex; align-items: center; justify-content: center; width: 40.38px; height: 40.38px;
+  border-radius: 50%; color: #ffffff; flex-shrink: 0;
+}
+.welcome-ref-chip-dot-blue { background: #4d8bff; }
+.welcome-ref-chip-dot-violet { background: #7b63ef; }
+.welcome-ref-chip-ico { width: 23.08px; height: 23.08px; display: block; }
+.welcome-ref-pill {
+  display: inline-flex; align-items: center; gap: 11.54px; height: 57.69px; margin-top: 50px;
+  padding: 0 26.92px; border-radius: 999px; background: rgba(255, 255, 255, 0.7);
+  border: 1.92px solid rgba(255, 255, 255, 0.9); color: #2f6bff; font-size: 19.23px; font-weight: 600;
+}
+.welcome-ref-pill-ico { width: 25px; height: 25px; display: block; }
+.welcome-ref-title { margin: 50px 0 0; text-align: center; }
+.welcome-ref-title-line { display: block; font-size: 59.62px; line-height: 1.22; font-weight: 700; letter-spacing: -0.03em; color: #101216; }
+.welcome-ref-copy { display: block; max-width: 576.92px; margin: 25px 0 0; font-size: 22.12px; line-height: 1.75; color: #707783; text-align: center; }
+.welcome-ref-cta {
+  box-sizing: border-box; width: 100%; height: 88.46px; margin-top: 42.31px; border-radius: 999px;
+  background: #2f6bff; color: #ffffff; font-size: 23.08px; font-weight: 600;
+  box-shadow: 0 26.92px 50px rgba(47, 107, 255, 0.24);
   display: flex; align-items: center; justify-content: center;
 }
-.welcome-badge-ico { width: 19.23px; height: 19.23px; display: block; }
-.welcome-badge-a { top: -19.23px; left: 7.69px; transform: rotate(-8deg); }
-.welcome-badge-b { bottom: -11.54px; right: 15.38px; transform: rotate(8deg); }
-.welcome-card-main {
-  position: relative; z-index: 2; box-sizing: border-box; background: $light-card;
-  border: 1.92px solid $light-divider; border-radius: 38.46px; padding: 38.46px 30.77px 30.77px;
-}
-.welcome-card-kicker { display: block; font-size: 23.08px; font-weight: 500; color: #346bf0; }
-.welcome-card-line { display: block; font-size: 26.92px; color: $light-text; line-height: 1.7; margin-top: 11.54px; }
-.welcome-feat { margin-top: 23.08px; display: flex; flex-direction: column; gap: 11.54px; }
-.welcome-feat-item { display: block; font-size: 23.08px; color: $light-sub; }
-.welcome-card-peek {
-  position: relative; z-index: 1; box-sizing: border-box; margin-top: -23.08px; margin-left: 61.54px;
-  background: $light-card; border: 1.92px solid $light-divider; border-radius: 38.46px;
-  border-top-left-radius: 46.15px; padding: 38.46px 30.77px 30.77px;
-}
-.welcome-peek-kicker { display: block; font-size: 23.08px; font-weight: 500; color: #346bf0; }
-.welcome-peek-line { display: block; font-size: 23.08px; color: $light-sub; line-height: 1.7; margin-top: 7.69px; }
-.welcome-label {
-  display: flex; align-items: center; justify-content: center; gap: 7.69px; align-self: center;
-  margin-top: 46.15px; background: #ffffff; border: 1.92px solid $light-divider;
-  border-radius: 999px; padding: 11.54px 23.08px;
-}
-.welcome-label-mark { width: 21.15px; height: 21.15px; display: block; }
-.welcome-label-text { font-size: 23.08px; color: $light-sub; }
-.welcome-title { margin-top: 23.08px; text-align: center; }
-.welcome-title-line { display: block; font-size: 61.54px; font-weight: 700; color: $light-text; line-height: 1.25; }
-.welcome-sub { display: block; text-align: center; font-size: 26.92px; color: $light-sub; line-height: 1.7; margin-top: 23.08px; padding: 0 30.77px; }
-.welcome-foot { margin-top: auto; padding-top: 46.15px; padding-bottom: 30.77px; }
-.welcome-cta {
-  box-sizing: border-box; width: 100%; height: $button-h; border-radius: 999px;
-  background: $gemini-grad; color: #ffffff; font-size: $fs-item; font-weight: 500;
-  display: flex; align-items: center; justify-content: center;
-}
-.page.theme-dark .welcome-badge { background: $card; border-color: $divider; color: #8db4ff; }
-.page.theme-dark .welcome-card-main { background: $card; border-color: $divider; }
-.page.theme-dark .welcome-card-kicker { color: #8db4ff; }
-.page.theme-dark .welcome-card-line { color: $text; }
-.page.theme-dark .welcome-feat-item { color: $sub; }
-.page.theme-dark .welcome-card-peek { background: $card; border-color: $divider; }
-.page.theme-dark .welcome-peek-kicker { color: #8db4ff; }
-.page.theme-dark .welcome-peek-line { color: $sub; }
-.page.theme-dark .welcome-label { background: $card; border-color: $divider; }
-.page.theme-dark .welcome-label-text { color: $sub; }
-.page.theme-dark .welcome-title-line { color: $text; }
-.page.theme-dark .welcome-sub { color: $sub; }

@@ -100,5 +100,6 @@ UI 组件：
 
 - 星命盘：本轮（我的页 + 充值积分页 + 欢迎页 + 胶囊高度调矮）按九条裁决执行中。
 - 星命盘首页原样复现轮（2026-11-02 16:04 用户令：先把 miniappdesign 复现好的智能家居首页用本站 Taro 技术栈、连带内容一起拉到本站首页，先不要本站自己的）：pages/index/index 已替换为 LivingDashboard 的 Taro 移植（尺寸为原 CSS px × 750/390，颜色/字重/文案/图标原样，图标 PNG 与吊灯图在 client/src/assets/ref-home/）；本轮内首页不受九条约束（字重 600/650、阴影、毛玻璃均为原样）；原生 tabBar 本轮在首页挂载时隐藏、卸载时恢复，复现的 5 个 tab 钮纯展示无动作；此前本站首页（命盘锚点、运限、解读）未删库，仍在 git 历史里，等用户令下再改回/融合。
+- 星命盘欢迎页原样复现轮（2026-11-02 16:14 用户令：先把复现出来的代码直接弄过来，也别管本站内容）：pages/welcome/index 已替换为 LivingOnboarding 的 Taro 移植（Google G 标、分叉连线、Smart Home Summary 卡、Auto Lights / Voice Control 徽标、Smart Control 胶囊、英文标题文案、Get Started 蓝钮，全部原样；图标与连线图在 client/src/assets/ref-home/）；代码与实拍（photo-27）不一致的三处按实拍为准：卡片头为两行（箭头行 + 标题行）、徽标倾斜贴在卡片上沿左角与标题行高度右沿（代码位置会盖住标题）、Better Insight 从主卡底部向右探出；此前本站欢迎页各版均在 git 历史里；按钮唯一保留本站行为是点 Get Started 进本站对话页（原稿按钮无动作，留空会把用户 stranded 在首屏）。
 - 其他产品（Spark、BotsTalk、BotsRouter、GoClub、剧坊）与 UIDesign 1:1 四套：等用户开口再改（2026-11-02 00:39 用户令：“第二点你先别动”“我说改你再改”）。
 - 另：1:1 四套当前残留（web/medley 15、web/airbuild 15、app/medley 12、app/airbuild R10–R12 + 结转项），即使用户不下九条，也尚未达到 1:1（2026-11-02 00:39 用户亲口指出）。

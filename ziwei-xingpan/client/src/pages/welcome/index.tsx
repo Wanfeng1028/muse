@@ -1,82 +1,100 @@
 import { View, Text, Image } from '@tarojs/components';
 import Taro from '@tarojs/taro';
-import { useTheme } from '../../lib/theme';
-import starMark from '../../assets/logo/star-mark.png';
-import wireImg from '../../assets/welcome-wire.png';
-import eyeWhite from '../../assets/lucide/png/eye-white.png';
-import bookWhite from '../../assets/lucide/png/book-open-white.png';
+import googleG from '../../assets/ref-home/google-g.png';
+import wireImg from '../../assets/ref-home/wire-pale.png';
+import icoArrow from '../../assets/ref-home/ico-arrow.png';
+import icoSparkles from '../../assets/ref-home/ico-sparkles-dk.png';
+import icoMore from '../../assets/ref-home/ico-more.png';
+import icoBulbW from '../../assets/ref-home/ico-bulb-w.png';
+import icoMicW from '../../assets/ref-home/ico-mic-w.png';
+import icoHomeBlue from '../../assets/ref-home/ico-home-blue.png';
 import './index.scss';
 
-// Welcome (splash) page, rebuilt 2026-11-02 15:47 to faithfully
-// reproduce the photo-24 Smart Home splash (photo-27 re-shot,
-// miniappdesign LivingOnboarding as the measured reference): full-bleed
-// Gemini blue gradient top, white rounded-square brand mark centered,
-// the split-curve wire (same curve geometry as the reference) down to
-// layered overlapping summary cards with two tilted feature stickers,
-// a small centered label pill, a big bold centered headline, gray
-// centered sub copy, and a full-width bottom capsule. Layout and visual
-// weight follow the reference; parameters are this product's own:
-// Gemini blue (not the reference blue-purple), star brand mark, Chinese
-// copy, and the button reads Get Started in English (2026-11-02 15:59
-// user order: Get Started stays English no matter what) and goes to
-// this product's chat page. Card lines are real product facts, no
-// invented data.
-// This page is a user-specified exception to the 2026-11-02 nine rules:
-// the gradient top, the wire image, and the big bold headline are
-// allowed here. Entry rule (home mount-only guard): this page shows on
-// first launch when no local login marker exists. There is NO such
-// marker yet — loginFlow stores nothing locally — so until cloud联调
-// adds a local session marker, this page shows on every cold start,
-// once per session (the guard is mount-only, never useDidShow, so
-// pressing back from here lands on the already-mounted home and never
-// re-bounces).
+// Welcome (splash) page, reference pass 2026-11-02 16:14 (user order:
+// bring the reproduced code over directly, disregard our own content
+// for this pass). This is miniappdesign LivingOnboarding ported to
+// this project's Taro stack, verbatim: sizes are that file's CSS px
+// times 750/390, colors/weights/copy/icons verbatim (icon PNGs in
+// assets/ref-home/ rendered from miniappdesign's own SVG paths; the
+// wire is that file's split-curve path at its original stroke).
+// Three places where the code disagrees with the photo it reproduces
+// (photo-27) are resolved in favor of the photo, because the user
+// judges by the photo: (1) the card head is two rows in the photo
+// (arrow row, then title row), not the code's one row; (2) the chips
+// sit tilted on the card's top edge (left) and right edge at title
+// height (right) in the photo — the code's positions would cover the
+// head's arrow and first letters; (3) Better Insight peeks out below
+// the main card, shifted right, in the photo — the code keeps it
+// inside. Everything else is verbatim.
+// The previous welcome versions (our adaptation: Gemini gradient,
+// star brand, Chinese copy, 要开始/Get Started routing copy) are in
+// git history, not deleted from the repo. The only behavior kept from
+// this product is the button target: Get Started goes to this
+// product's chat page (the original button has no action; a dead end
+// here would strand the user on the splash). Entry rule unchanged:
+// this page shows on first launch when no local login marker exists
+// (mount-only home guard, never a loop).
 export default function Welcome() {
-  const [theme] = useTheme();
   return (
-    <View className={'page theme-' + theme + ' welcome-page'}>
-      <View className='welcome-glow' />
-      <View className='welcome-logo-sq'>
-        <Image className='welcome-logo-img' src={starMark} mode='aspectFit' />
-      </View>
-      <Text className='welcome-hero-name'>星命盘</Text>
-      <Image className='welcome-wire-img' src={wireImg} mode='aspectFit' />
-      <View className='welcome-stack'>
-        <View className='welcome-badge welcome-badge-a'>
-          <View className='welcome-badge-dot'>
-            <Image className='welcome-badge-ico' src={eyeWhite} mode='aspectFit' />
-          </View>
-          免费看盘
+    <View className='welcome-ref'>
+      <View className='welcome-ref-glow' />
+      <View className='welcome-ref-body'>
+        <View className='welcome-ref-logo'>
+          <Image className='welcome-ref-logo-img' src={googleG} mode='aspectFit' />
         </View>
-        <View className='welcome-card-main'>
-          <Text className='welcome-card-kicker'>命盘摘要</Text>
-          <Text className='welcome-card-line'>输入出生信息，一次排盘，看懂整张命盘。</Text>
-          <View className='welcome-feat'>
-            <Text className='welcome-feat-item'>十三维解读，随盘解锁</Text>
-            <Text className='welcome-feat-item'>对话每日 2M tokens 免费</Text>
-          </View>
-          <View className='welcome-badge welcome-badge-b'>
-            <View className='welcome-badge-dot'>
-              <Image className='welcome-badge-ico' src={bookWhite} mode='aspectFit' />
+        <Image className='welcome-ref-lines' src={wireImg} mode='aspectFit' />
+        <View className='welcome-ref-card'>
+          <View className='welcome-ref-card-head-row'>
+            <Image className='welcome-ref-head-ico' src={icoArrow} mode='aspectFit' />
+            <View className='welcome-ref-head-tools'>
+              <Image className='welcome-ref-head-ico' src={icoSparkles} mode='aspectFit' />
+              <Image className='welcome-ref-head-ico' src={icoMore} mode='aspectFit' />
             </View>
-            十三维解读
+          </View>
+          <Text className='welcome-ref-card-title'>Smart Home Summary</Text>
+          <View className='welcome-ref-skeleton'>
+            <View className='welcome-ref-bar' style={{ width: '76%' }} />
+            <View className='welcome-ref-bar' style={{ width: '56%' }} />
+            <View className='welcome-ref-bar' style={{ width: '82%' }} />
+            <View className='welcome-ref-bar' style={{ width: '44%' }} />
+          </View>
+          <View className='welcome-ref-progress'>
+            <View className='welcome-ref-progress-fill' />
+          </View>
+          <View className='welcome-ref-skeleton welcome-ref-skeleton-short'>
+            <View className='welcome-ref-bar' style={{ width: '38%' }} />
+            <View className='welcome-ref-bar' style={{ width: '52%' }} />
           </View>
         </View>
-        <View className='welcome-card-peek'>
-          <Text className='welcome-peek-kicker'>年度运势</Text>
-          <Text className='welcome-peek-line'>流年四化与大限，100 积分/次</Text>
+        <View className='welcome-ref-better'>
+          <Text className='welcome-ref-better-title'>Better Insight</Text>
+          <View className='welcome-ref-skeleton welcome-ref-skeleton-inside'>
+            <View className='welcome-ref-bar' style={{ width: '70%' }} />
+            <View className='welcome-ref-bar' style={{ width: '46%' }} />
+          </View>
         </View>
-      </View>
-      <View className='welcome-label'>
-        <Image className='welcome-label-mark' src={starMark} mode='aspectFit' />
-        <Text className='welcome-label-text'>紫微斗数</Text>
-      </View>
-      <View className='welcome-title'>
-        <Text className='welcome-title-line'>你的命盘，</Text>
-        <Text className='welcome-title-line'>一眼看懂。</Text>
-      </View>
-      <Text className='welcome-sub'>本地排盘，十三维解读，对话随时问。积分规则公开透明。</Text>
-      <View className='welcome-foot'>
-        <View className='welcome-cta' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>Get Started</View>
+        <View className='welcome-ref-chip welcome-ref-chip-left'>
+          <View className='welcome-ref-chip-dot welcome-ref-chip-dot-blue'>
+            <Image className='welcome-ref-chip-ico' src={icoBulbW} mode='aspectFit' />
+          </View>
+          Auto Lights
+        </View>
+        <View className='welcome-ref-chip welcome-ref-chip-right'>
+          <View className='welcome-ref-chip-dot welcome-ref-chip-dot-violet'>
+            <Image className='welcome-ref-chip-ico' src={icoMicW} mode='aspectFit' />
+          </View>
+          Voice Control
+        </View>
+        <View className='welcome-ref-pill'>
+          <Image className='welcome-ref-pill-ico' src={icoHomeBlue} mode='aspectFit' />
+          Smart Control
+        </View>
+        <View className='welcome-ref-title'>
+          <Text className='welcome-ref-title-line'>Experience Smarter</Text>
+          <Text className='welcome-ref-title-line'>Living Every Day</Text>
+        </View>
+        <Text className='welcome-ref-copy'>Control devices, automate routines, and enjoy seamless comfort tailored to your lifestyle.</Text>
+        <View className='welcome-ref-cta' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>Get Started</View>
       </View>
     </View>
   );
