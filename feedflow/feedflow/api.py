@@ -456,6 +456,8 @@ def update_feed(feed_id: int):
                 except (TypeError, ValueError):
                     return _err("folder_id 非法", 400)
         elif key in ("interval_min", "enabled", "position"):
+            if key == "interval_min" and isinstance(value, (bool, float)):
+                return _err("interval_min 非法", 400)
             try:
                 fields[key] = int(value)
             except (TypeError, ValueError):
