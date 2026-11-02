@@ -17,8 +17,10 @@ import './index.scss';
 // centered sub copy, and a full-width bottom capsule. Layout and visual
 // weight follow the reference; parameters are this product's own:
 // Gemini blue (not the reference blue-purple), star brand mark, Chinese
-// copy, and the button reads 要开始 and goes to this product's chat
-// page. Card lines are real product facts, no invented data.
+// copy, and the button reads Get Started in English (2026-11-02 15:59
+// user order: Get Started stays English no matter what) and goes to
+// this product's chat page. Card lines are real product facts, no
+// invented data.
 // This page is a user-specified exception to the 2026-11-02 nine rules:
 // the gradient top, the wire image, and the big bold headline are
 // allowed here. Entry rule (home mount-only guard): this page shows on
@@ -74,7 +76,7 @@ export default function Welcome() {
       </View>
       <Text className='welcome-sub'>本地排盘，十三维解读，对话随时问。积分规则公开透明。</Text>
       <View className='welcome-foot'>
-        <View className='welcome-cta' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>要开始</View>
+        <View className='welcome-cta' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>Get Started</View>
       </View>
     </View>
   );
