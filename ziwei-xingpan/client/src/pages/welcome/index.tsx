@@ -64,8 +64,7 @@ export default function Welcome() {
           紫微斗数
         </View>
         <View className='welcome-ref-title'>
-          <Text className='welcome-ref-title-line'>你的命盘，</Text>
-          <Text className='welcome-ref-title-line'>一眼看懂。</Text>
+          <Text className='welcome-ref-title-line'>你的命盘一看就懂</Text>
         </View>
         <Text className='welcome-ref-copy'>本地排盘，十三维解读，对话随时问。积分规则公开透明。</Text>
         <View className='welcome-ref-cta' onClick={() => Taro.navigateTo({ url: '/pages/chat/index' })}>Get Started</View>
