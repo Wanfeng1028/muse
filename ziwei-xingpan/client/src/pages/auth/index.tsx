@@ -5,6 +5,7 @@ import { Card, SegmentedControl } from '../../components/ui';
 import { Icon } from '../../components/icons';
 import { useTheme } from '../../lib/theme';
 import { cloudConfigured, loginFlow } from '../../lib/cloud';
+import { setLoginFlag } from '../../lib/session';
 import { PRIVACY_POLICY, TERMS_OF_SERVICE } from '../../lib/legal';
 import starMark from '../../assets/logo/star-mark.png';
 import wechatMark from '../../assets/brand/wechat.png';
@@ -78,7 +79,11 @@ export default function Auth() {
     setBusy(false);
     if (res.ok) {
       toast('微信登录成功');
-      Taro.navigateBack();
+      // 登录落点（2026-11-02 用户定：登录后进首页）:写登录标记后切到
+      // 首页 tab。switchTab 会关掉非 tab 页（欢迎页、登录页），首页
+      // 已挂载故只触发显示、不重挂载，守夜不会再把用户推回欢迎页。
+      setLoginFlag();
+      Taro.switchTab({ url: '/pages/index/index' });
       return;
     }
     setNotice('微信登录失败：' + res.code + '。请稍后重试，或用邮箱登录。');

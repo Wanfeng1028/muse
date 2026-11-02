@@ -12,6 +12,7 @@ import Taro, { useDidShow } from '@tarojs/taro';
 import { Ambient, AmbientLight, Card, Disclaimer } from '../../components/ui';
 import { useTheme } from '../../lib/theme';
 import { loadChart, loadInput } from '../../lib/chart';
+import { takeHomeQuestion } from '../../lib/nav';
 import { buildChartSummary, localTemplateAnswer, loadHistory, appendHistory, clearHistory, clientInjectionCheck, type ChatMessage } from '../../lib/chat-agent';
 import { profileChartKey } from '../../lib/profiles';
 import { callFn, cloudConfigured } from '../../lib/cloud';
@@ -42,6 +43,10 @@ export default function Chat() {
   const [chartName, setChartName] = useState('');
 
   useDidShow(() => {
+    // 首页输入框带过来的问题：取走预填（只消费一次，不自动发送，
+    // 用户点发送才真正发；无命盘时发送仍会提示先排盘）。
+    const pending = takeHomeQuestion();
+    if (pending) setQuestion(pending);
     const input = loadInput();
     const chart = loadChart();
     if (!input || !chart) {

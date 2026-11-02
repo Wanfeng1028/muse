@@ -1,102 +1,307 @@
-// Home page, reference pass 2026-11-02 16:04: miniappdesign
-// LivingDashboard ported to this project's Taro stack. Every value is
-// that file's CSS px times 750/390 (390pt screen), colors/weights/copy
-// verbatim. This page deliberately does NOT use .page (which would add
-// the project's own padding/theme bg); it is a self-contained
-// reproduction. No position:fixed anywhere: the tab bar is absolute
-// against this root (min-height 100vh). backdrop-filter degrades
-// gracefully where the client does not support it.
-.home-ref {
-  position: relative; box-sizing: border-box; min-height: 100vh;
-  background: #fcfcfc; color: #101216; padding: 0 34.62px 176.92px;
+@import '../../styles/variables';
+
+// 首页（2026-11-02 用户定）：参考 miniappdesign HealthChat（带圆球的
+// AI 对话首页），按本站技术栈改编。参照值 → 本站值：
+// - 天空底：参照分层渐变原样（浅蓝 → 浅青 → 浅绿 + 两处白色光晕）；
+//   blur 滤镜按九条 2 去掉（光晕由渐变本身的透明过渡承担）。
+// - 圆球：参照 86pt 蓝色光晕球原样（渐变 stops 与辉光阴影）；
+//   外圈光环的 blur 同样去掉，改用 1px 白色半透明边框。
+// - 标题：参照 26pt/600 → 本站 22pt/500（九条 6 字号、九条 4 字重）。
+// - 输入框：参照底部 52pt → 本站 composer 56pt + 36pt 发送钮
+//  （与 ComposerBar 同款 token；输入框从底部挪到标题下面）。
+// - 健康小芯片去掉，换成四块本站面板（白卡 + 细线 + 12pt 圆角，
+//   无阴影，九条 3/5；面板标题 18pt，九条 6）。
+.home-sky {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background:
+    radial-gradient(circle at 8% 18%, rgba(255, 255, 255, 0.7), transparent 34%),
+    radial-gradient(circle at 90% 38%, rgba(255, 255, 255, 0.6), transparent 36%),
+    linear-gradient(180deg, #dfeeff 0%, #eef7fb 46%, #f1f8f3 100%);
 }
-.home-ref-header { display: flex; align-items: center; gap: 19.23px; padding: 3.85px 0 28.85px; }
-.home-ref-avatar {
-  width: 80.77px; height: 80.77px; border-radius: 50%; background: #e7d8ce; color: #57534b;
-  font-size: 24.23px; font-weight: 650; letter-spacing: 0.02em; flex-shrink: 0;
-  display: flex; align-items: center; justify-content: center; border: 1.92px solid rgba(0, 0, 0, 0.06);
+
+.home-body {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
-.home-ref-who { flex: 1; min-width: 0; }
-.home-ref-name { display: block; font-size: 25.96px; font-weight: 600; }
-.home-ref-loc { display: flex; align-items: center; gap: 7.69px; margin-top: 5.77px; font-size: 19.23px; color: #8b9097; }
-.home-ref-loc-ico { width: 21.15px; height: 21.15px; display: block; }
-.home-ref-bell {
-  width: 71.15px; height: 71.15px; border-radius: 50%; background: #f2f3f4; color: #2b2e33;
-  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+
+.home-orb {
+  position: relative;
+  flex-shrink: 0;
+  width: 165.38px;
+  height: 165.38px;
+  margin-top: 38.46px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 68% 32%, #ffffff 0%, #b9d2ff 12%, #6f9bff 38%, #4e7ce9 58%, #e9f1ff 88%);
+  box-shadow:
+    0 0 65.38px rgba(122, 165, 255, 0.55),
+    inset -19.23px -23.08px 42.31px rgba(35, 75, 190, 0.28);
 }
-.home-ref-bell-ico { width: 32.69px; height: 32.69px; display: block; }
-.home-ref-section-head { display: flex; align-items: baseline; justify-content: space-between; margin: 17.31px 0 19.23px; }
-.home-ref-section-title { font-size: 28.85px; font-weight: 650; letter-spacing: -0.01em; }
-.home-ref-see-all { font-size: 19.23px; color: #8f949b; }
-.home-ref-hero {
-  position: relative; box-sizing: border-box; height: 561.54px; border-radius: 50px;
-  background: linear-gradient(155deg, #f8f9fa 0%, #eef0f2 100%); overflow: hidden; padding: 42.31px 38.46px;
+
+.home-orb-ring {
+  position: absolute;
+  inset: -15.38px;
+  border-radius: 50%;
+  border: $hairline solid rgba(255, 255, 255, 0.55);
 }
-.home-ref-stats { position: relative; z-index: 2; display: flex; flex-direction: column; gap: 48.08px; width: 230.77px; }
-.home-ref-stat-value { display: block; font-size: 57.69px; font-weight: 600; letter-spacing: -0.03em; line-height: 1; }
-.home-ref-stat-label { display: flex; align-items: center; gap: 9.62px; margin-top: 13.46px; font-size: 19.23px; color: #6d727a; }
-.home-ref-stat-ico { width: 26.92px; height: 26.92px; display: block; }
-.home-ref-photo {
-  position: absolute; top: 15.38px; right: 0; width: 400px; height: 376.92px; border-radius: 46.15px;
-  -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 30%);
-  mask-image: linear-gradient(90deg, transparent 0%, #000 30%);
+
+.home-title {
+  margin-top: 57.69px;
+  text-align: center;
 }
-.home-ref-photo-fade {
-  position: absolute; top: 0; right: 0; width: 384.62px; height: 403.85px;
-  background: linear-gradient(90deg, #f3f5f6 0%, rgba(243, 245, 246, 0) 38%);
+
+.home-title-line {
+  display: block;
+  font-size: $fs-hero;
+  line-height: 1.24;
+  font-weight: 500;
+  letter-spacing: -0.025em;
+  color: $light-text;
 }
-.home-ref-control {
-  position: absolute; left: 25px; right: 25px; bottom: 25px; z-index: 3;
-  display: flex; align-items: center; justify-content: space-between; height: 92.31px; padding: 0 15.38px;
-  border-radius: 999px; background: rgba(255, 255, 255, 0.72); border: 1.92px solid rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(15.38px);
+
+.home-sub {
+  margin-top: 23.08px;
+  font-size: $fs-secondary;
+  color: $light-sub;
+  text-align: center;
 }
-.home-ref-ctl-btn {
-  width: 69.23px; height: 69.23px; border-radius: 50%; background: rgba(255, 255, 255, 0.7); color: #40454c;
-  display: flex; align-items: center; justify-content: center;
+
+.home-composer {
+  display: flex;
+  align-items: center;
+  gap: 19.23px;
+  width: 100%;
+  margin-top: 46.15px;
+  box-sizing: border-box;
 }
-.home-ref-ctl-ico { width: 26.92px; height: 26.92px; display: block; }
-.home-ref-step { display: flex; align-items: center; gap: 5.77px; color: #b6bcc4; font-size: 36.54px; letter-spacing: -0.1em; }
-.home-ref-tiles { display: flex; gap: 23.08px; margin-top: 25px; }
-.home-ref-tile {
-  flex: 1; box-sizing: border-box; display: flex; flex-direction: column; justify-content: space-between;
-  height: 284.62px; padding: 26.92px; border-radius: 44.23px; background: #f3f4f5;
+
+.home-input {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  height: $composer-h;
+  padding: 0 34.62px;
+  border-radius: $radius-input;
+  background: $white-btn;
+  border: $hairline solid $light-divider;
+  font-size: $fs-item;
+  color: $light-text;
 }
-.home-ref-tile-top { display: flex; align-items: flex-start; justify-content: space-between; }
-.home-ref-glyph {
-  width: 65.38px; height: 65.38px; border-radius: 50%; background: #ffffff; color: #3d4249;
-  display: flex; align-items: center; justify-content: center;
+
+.home-send {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: $composer-btn;
+  height: $composer-btn;
+  border-radius: 50%;
+  background: $gemini-grad;
 }
-.home-ref-glyph-ico { width: 30.77px; height: 30.77px; display: block; }
-.home-ref-power {
-  position: relative; width: 44.23px; height: 44.23px; border-radius: 50%; background: #2f6bff; color: #ffffff;
-  display: flex; align-items: center; justify-content: center;
+
+.home-panel {
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 30.77px;
+  padding: 30.77px;
+  background: $white-btn;
+  border: $hairline solid $light-divider;
+  border-radius: 23.08px;
 }
-.home-ref-power-ico { width: 21.15px; height: 21.15px; display: block; }
-.home-ref-power-slash {
-  position: absolute; width: 50px; height: 2.69px; background: #f2f4f7;
-  transform: rotate(45deg); box-shadow: 0 0 0 2.88px #f3f4f5;
+
+.home-panel-title {
+  display: block;
+  margin-bottom: 23.08px;
+  font-size: 34.62px;
+  font-weight: 500;
+  color: $light-text;
 }
-.home-ref-tile-name { display: block; font-size: 25px; font-weight: 600; }
-.home-ref-tile-meta { display: flex; align-items: center; gap: 7.69px; margin-top: 11.54px; font-size: 18.27px; color: #7b8087; }
-.home-ref-meta-ico { width: 23.08px; height: 23.08px; display: block; }
-.home-ref-ghost-row { display: flex; gap: 23.08px; margin-top: 25px; }
-.home-ref-ghost-btn {
-  flex: 1; height: 76.92px; border-radius: 999px; border: 1.92px solid #ecedf0; background: #ffffff;
-  font-size: 20.19px; color: #5f646b; display: flex; align-items: center; justify-content: center;
+
+.home-ming-kicker {
+  display: block;
+  margin-bottom: 11.54px;
+  font-size: $fs-secondary;
+  font-weight: 500;
+  color: $light-accent;
 }
-.home-ref-tabbar {
-  position: absolute; left: 26.92px; right: 26.92px; bottom: 32.69px; z-index: 30;
-  display: flex; align-items: center; justify-content: space-around; height: 111.54px; padding: 0 15.38px;
-  border-radius: 999px; background: rgba(255, 255, 255, 0.84); border: 1.92px solid rgba(0, 0, 0, 0.04);
-  box-shadow: 0 19.23px 57.69px rgba(0, 0, 0, 0.06); backdrop-filter: blur(23.08px);
+
+.home-ming-majors {
+  display: block;
+  margin-bottom: 11.54px;
+  font-size: $fs-item;
+  font-weight: 500;
+  line-height: 1.5;
+  color: $light-text;
 }
-.home-ref-tab-btn {
-  width: 73.08px; height: 73.08px; border-radius: 50%; color: #6b7078;
-  display: flex; align-items: center; justify-content: center;
+
+.home-ming-meta {
+  display: block;
+  font-size: $fs-secondary;
+  line-height: 1.6;
+  color: $light-sub;
 }
-.home-ref-tab-btn.is-active {
-  width: 84.62px; height: 84.62px; background: #2f6bff; color: #ffffff;
-  box-shadow: 0 15.38px 34.62px rgba(47, 107, 255, 0.28);
+
+.home-panel-btns {
+  margin-top: 23.08px;
 }
-.home-ref-tab-ico { width: 34.62px; height: 34.62px; display: block; }
+
+.home-mini-row {
+  display: flex;
+  gap: 23.08px;
+}
+
+.home-mini {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 23.08px;
+  background: $light-bg;
+  border-radius: 15.38px;
+}
+
+.home-mini-kicker {
+  display: block;
+  margin-bottom: 7.69px;
+  font-size: $fs-secondary;
+  color: $light-sub;
+}
+
+.home-mini-palace {
+  display: block;
+  margin-bottom: 7.69px;
+  font-size: $fs-item;
+  font-weight: 500;
+  color: $light-text;
+}
+
+.home-mini-stars {
+  display: block;
+  margin-bottom: 7.69px;
+  font-size: $fs-secondary;
+  line-height: 1.5;
+  color: $light-text;
+}
+
+.home-mini-sihua {
+  display: block;
+  font-size: $fs-secondary;
+  line-height: 1.6;
+  color: $light-sub;
+}
+
+.home-footnote {
+  display: block;
+  margin-top: 23.08px;
+}
+
+.home-chips {
+  display: flex;
+  flex-wrap: wrap;
+  margin-top: 23.08px;
+}
+
+.home-chip {
+  margin-right: 15.38px;
+  margin-bottom: 15.38px;
+}
+
+.home-tile-row {
+  display: flex;
+  gap: 23.08px;
+}
+
+.home-tile {
+  flex: 1;
+  min-width: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 11.54px;
+  padding: 23.08px;
+  background: $light-bg;
+  border-radius: 15.38px;
+}
+
+.home-tile-title {
+  font-size: $fs-item;
+  font-weight: 500;
+  color: $light-text;
+}
+
+.home-tile-sub {
+  font-size: $fs-secondary;
+  line-height: 1.5;
+  color: $light-sub;
+}
+
+// 深色模式（九条 8d：星命盘深色模式整套）：天空底换深蓝夜色，
+// 卡片/输入框换深底细线，蓝色点缀换 Gemini 深色模式浅蓝。
+.page.theme-dark .home-sky {
+  background:
+    radial-gradient(circle at 8% 18%, rgba(255, 255, 255, 0.06), transparent 34%),
+    radial-gradient(circle at 90% 38%, rgba(255, 255, 255, 0.05), transparent 36%),
+    linear-gradient(180deg, #1b2742 0%, #111518 55%, #111518 100%);
+}
+
+.page.theme-dark .home-title-line {
+  color: $text;
+}
+
+.page.theme-dark .home-sub {
+  color: $sub;
+}
+
+.page.theme-dark .home-input {
+  background: $row;
+  border-color: $divider;
+  color: $text;
+}
+
+.page.theme-dark .home-panel {
+  background: $row;
+  border-color: $divider;
+}
+
+.page.theme-dark .home-panel-title {
+  color: $text;
+}
+
+.page.theme-dark .home-ming-kicker {
+  color: $gemini-sky;
+}
+
+.page.theme-dark .home-ming-majors {
+  color: $text;
+}
+
+.page.theme-dark .home-ming-meta {
+  color: $sub;
+}
+
+.page.theme-dark .home-mini,
+.page.theme-dark .home-tile {
+  background: $input-bg;
+}
+
+.page.theme-dark .home-mini-kicker,
+.page.theme-dark .home-mini-sihua,
+.page.theme-dark .home-tile-sub {
+  color: $sub;
+}
+
+.page.theme-dark .home-mini-palace,
+.page.theme-dark .home-mini-stars,
+.page.theme-dark .home-tile-title {
+  color: $text;
+}
+
+// 描边按钮在深色面板里不能继续用浅色字（浅色字是深墨色，
+// 深底上看不清）：深色模式下改用深色细线 + 浅字。
+.page.theme-dark .home-panel .btn-medley-outline-light {
+  border-color: $divider;
+  color: $text;
+}

@@ -27,6 +27,30 @@ export function takeDimTarget(): string | undefined {
   }
 }
 
+// 首页输入框 → 对话页：问题预填中转（与 goInterpret 的深链模式相同）。
+// 首页输入框是真输入框：输入文字后点发送，问题存这里，对话页显示时取走预填；
+// 只进对话页不带问题时不存不取。
+const HOME_Q_KEY = 'zw_home_question';
+
+export function setHomeQuestion(q: string): void {
+  try {
+    if (q) Taro.setStorageSync(HOME_Q_KEY, q);
+    else Taro.removeStorageSync(HOME_Q_KEY);
+  } catch {
+    // 储存不可用时仍进对话页，只是丢预填问题，不阻断主流程。
+  }
+}
+
+export function takeHomeQuestion(): string | undefined {
+  try {
+    const v = Taro.getStorageSync(HOME_Q_KEY) as string | undefined;
+    if (v) Taro.removeStorageSync(HOME_Q_KEY);
+    return v || undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 // 知识页同样是 Tab 页，只能 switchTab（无深链参数需求）。
 export function goKnowledge() {
   Taro.switchTab({ url: '/pages/knowledge/index' });
