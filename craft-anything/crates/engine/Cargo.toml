@@ -1,0 +1,45 @@
+[package]
+name = "craft-anything-engine"
+description = "Craft Anything engine: session, projects, the tool registry every surface dispatches through, settings and jobs"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+craft-anything-evidence = { workspace = true }
+craft-anything-formats = { workspace = true }
+craft-anything-disasm = { workspace = true }
+craft-anything-js = { workspace = true }
+craft-anything-analysis = { workspace = true }
+craft-anything-platform = { workspace = true }
+craft-anything-engines = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+schemars = { workspace = true }
+bitflags = { workspace = true }
+thiserror = { workspace = true }
+log = { workspace = true }
+toml = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+regex = { workspace = true }
+dirs = "6"
+# Browser (Chrome DevTools Protocol) client: hand-rolled WebSocket framing needs only a SHA-1 and
+# base64 for the loopback handshake; PNG decoding is for screenshot pixel diffs. All pure Rust.
+base64 = "0.22"
+png = "0.17"
+# The person's reference pictures may be JPEG, WebP or GIF (decoders only; pure Rust, MIT/Apache).
+image = { version = "0.25", default-features = false, features = ["jpeg", "webp", "gif"] }
+
+[features]
+# WASM component plugins (R1.8): compiles wasmtime, so off by default.
+wasm-plugins = ["craft-anything-engines/wasm-plugins"]
+
+[dev-dependencies]
+sha1 = "0.10"
+craft-anything-testkit = { workspace = true }
+tempfile = "3"

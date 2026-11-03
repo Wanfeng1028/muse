@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refuse commits that carry API keys, private keys, secret env values or a home folder path.
+# Enable once per clone: git config core.hooksPath .githooks
+exec cargo xtask secrets

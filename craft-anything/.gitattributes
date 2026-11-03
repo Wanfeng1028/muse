@@ -1,0 +1,7 @@
+# LF everywhere: files are embedded with include_str! and must not change with the checkout platform.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.ico binary
+*.icns binary
+*.ttf binary

@@ -1,0 +1,56 @@
+# cargo-deny config. Run `cargo xtask licenses` (licences only) or `cargo deny check` (everything).
+# Policy: docs/licences.md. We never link or bundle copyleft code.
+
+[graph]
+all-features = true
+
+[advisories]
+# RustSec advisories: vulnerable, unmaintained or yanked crates are reported.
+yanked = "deny"
+ignore = [
+    # rsa "Marvin attack": a timing leak in operations with a private key. We only verify signatures
+    # with public keys (formats::verify), and no fixed version exists. Revisit when rsa 0.10 lands.
+    { id = "RUSTSEC-2023-0071", reason = "public-key signature verification only; no private-key operations" },
+    # zbus_names / zvariant / zvariant_derive are unmaintained (not vulnerable). They come only from
+    # Linux-only dependencies: keyring's secret-service backend and accesskit's AT-SPI bridge.
+    { id = "RUSTSEC-2026-0370", reason = "unmaintained, Linux-only via keyring and accesskit; tracked in ROADMAP R0.3" },
+    { id = "RUSTSEC-2026-0371", reason = "unmaintained, Linux-only via keyring and accesskit; tracked in ROADMAP R0.3" },
+    { id = "RUSTSEC-2026-0372", reason = "unmaintained, Linux-only via keyring and accesskit; tracked in ROADMAP R0.3" },
+]
+
+[licenses]
+# Permissive licences only. Dual-licensed crates (e.g. self_cell, r-efi) pass through their
+# permissive option, so they need no exception.
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "Unicode-3.0",
+    "BSL-1.0",
+    "CDLA-Permissive-2.0",
+    "OFL-1.1",         # egui's embedded default fonts (epaint_default_fonts)
+    "Ubuntu-font-1.0", # same crate
+]
+confidence-threshold = 0.9
+# MPL-2.0 is file-level copyleft: allowed only for named crates, used unmodified.
+# (`colored`, also MPL-2.0, appears in Cargo.lock only behind egui_kittest's optional `dify`;
+# it is not built, so it gets no exception. Add one if it ever enters the graph.)
+exceptions = [
+    { allow = ["MPL-2.0"], crate = "option-ext" }, # via dirs
+]
+
+[bans]
+multiple-versions = "allow"
+wildcards = "deny"
+# Path dependencies are exempt only in crates marked `publish = false`. Our workspace crates
+# are not marked yet, so `cargo deny check bans` flags their internal path deps until they are.
+allow-wildcard-paths = true
+
+[sources]
+unknown-registry = "deny"
+unknown-git = "deny"

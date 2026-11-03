@@ -1,0 +1,832 @@
+# French UI catalog: English key<TAB>French text. See i18n.rs.
+Coding agent app	Application d'agent de code
+Turn on an AI	Activer une IA
+Turn off an AI	Désactiver une IA
+Remove an AI	Retirer une IA
+Building needs a coding agent such as Claude Code, or an AI with an API key.	Pour construire, il faut un agent de code comme Claude Code, ou une IA avec une clé d'API.
+Set one up	En configurer un
+Automatic ({name})	Automatique ({name})
+Built by	Construit par
+Whatever Settings → AI builds with.	Celui utilisé dans Réglages → IA pour construire.
+found on this computer; set up when you start	trouvé sur cet ordinateur ; configuré au démarrage
+Set up a builder	Configurer un constructeur
+Building needs a coding agent on this computer (Claude Code, Codex or Gemini CLI: install one and sign in to it once in its own window), or an AI with an API key. Craft Anything never sees your account.	Pour construire, il faut un agent de code sur cet ordinateur (Claude Code, Codex ou Gemini CLI : installez-en un et connectez-vous-y une fois dans sa propre fenêtre), ou une IA avec une clé d'API. Craft Anything ne voit jamais votre compte.
+Looking on this computer…	Recherche sur cet ordinateur…
+No coding agent was found on this computer yet.	Aucun agent de code n'a encore été trouvé sur cet ordinateur.
+Found on this computer	Trouvé sur cet ordinateur
+Build with {name}	Construire avec {name}
+Use {name}	Utiliser {name}
+Look again	Chercher à nouveau
+After installing one, look for it again.	Après en avoir installé un, relancez la recherche.
+Use an API key…	Utiliser une clé d'API…
+Cancel	Annuler
+What can Craft Anything do?	Que peut faire Craft Anything ?
+How do I open an app?	Comment ouvrir une application ?
+Is it safe to look inside programs?	Est-ce sans risque de regarder à l'intérieur des programmes ?
+What does this program do?	Que fait ce programme ?
+What does it send over the internet?	Qu'envoie-t-il sur Internet ?
+Is it safe to run?	Peut-on le lancer sans risque ?
+Which files does it read or write?	Quels fichiers lit-il ou écrit-il ?
+What are its main parts?	Quelles sont ses parties principales ?
+Does it talk to the internet?	Communique-t-il avec Internet ?
+What does this app store?	Que stocke cette application ?
+What tables are in here?	Quelles tables contient-il ?
+Is anything sensitive saved in plain text?	Des données sensibles sont-elles enregistrées en clair ?
+What does this app do?	Que fait cette application ?
+What permissions does it ask for?	Quelles autorisations demande-t-elle ?
+Which servers does it talk to?	Avec quels serveurs communique-t-elle ?
+Does it track me?	Me piste-t-elle ?
+How is this app built?	Comment cette application est-elle construite ?
+Which websites does it load?	Quels sites web charge-t-elle ?
+How do the window and the page talk to each other?	Comment la fenêtre et la page communiquent-elles ?
+What does this module do?	Que fait ce module ?
+What does it need from the page?	De quoi a-t-il besoin dans la page ?
+What's in this folder?	Que contient ce dossier ?
+Which file is the main program?	Quel fichier est le programme principal ?
+How is this app put together?	Comment cette application est-elle assemblée ?
+What's inside this archive?	Que contient cette archive ?
+Is anything in here a program?	Y a-t-il un programme là-dedans ?
+Which servers were contacted?	Quels serveurs ont été contactés ?
+What data was sent?	Quelles données ont été envoyées ?
+What settings are in here?	Quels réglages contient-il ?
+What does this contract do?	Que fait ce contrat ?
+Who can move funds?	Qui peut déplacer des fonds ?
+What kind of file is this?	Quel type de fichier est-ce ?
+Is there any readable text inside?	Y a-t-il du texte lisible à l'intérieur ?
+What is it	Ce que c'est
+Clean room	Salle blanche
+Nothing inside it is read.	Rien à l'intérieur n'est lu.
+Deep	Approfondi
+Nothing open yet	Rien d'ouvert pour l'instant
+Drop a file or app anywhere in this window.	Déposez un fichier ou une application n'importe où dans cette fenêtre.
+Open an app or file	Ouvrir une application ou un fichier
+Try asking	Essayez de demander
+Explain like I'm new	Explique comme à un débutant
+Plain words, short sentences, and every technical word explained.	Des mots simples, des phrases courtes, et chaque mot technique expliqué.
+Export a report	Exporter un rapport
+Everything found so far, as a Markdown file.	Tout ce qui a été trouvé jusqu'ici, dans un fichier Markdown.
+Working on your answer	Préparation de votre réponse
+Ask the agent about this target. It cites evidence for every claim.	Interrogez l'agent sur cette cible. Il cite une preuve pour chaque affirmation.
+What would you like to know about {name}?	Que voulez-vous savoir sur {name} ?
+What would you like to find out?	Que voulez-vous découvrir ?
+Ask in your own words. Every answer shows how sure we are, and the proof.	Demandez avec vos propres mots. Chaque réponse indique notre degré de certitude, et la preuve.
+No AI brain is set up, so answers come straight from the built-in engines. Add one any time for plain-words explanations.	Aucun cerveau IA n'est configuré, les réponses viennent donc directement des moteurs intégrés. Ajoutez-en un à tout moment pour des explications en mots simples.
+Ask the agent…	Demander à l'agent…
+Ask anything, e.g. "What does this program do?"	Demandez ce que vous voulez, par ex. « Que fait ce programme ? »
+Ask a question	Poser une question
+Stop	Arrêter
+Answered by {name}	Réponse de {name}
+May I run "{title}"?	Puis-je lancer « {title} » ?
+This runs code from the target or changes a device. Nothing runs until you say so.	Ceci exécute du code de la cible ou modifie un appareil. Rien ne se lance sans votre accord.
+Allow once	Autoriser une fois
+Always for this project	Toujours pour ce projet
+Don't allow	Ne pas autoriser
+Allowed once.	Autorisé une fois.
+Allowed for this project.	Autorisé pour ce projet.
+Not allowed.	Non autorisé.
+Want answers in plain words?	Vous voulez des réponses en mots simples ?
+Add an AI brain and I'll read this evidence for you, answer follow-up questions and point at the proof.	Ajoutez un cerveau IA et je lirai ces preuves pour vous, je répondrai à vos questions et je vous montrerai la preuve.
+Add a brain	Ajouter un cerveau
+Look for game engines	Chercher des moteurs de jeu
+Look at the game	Examiner le jeu
+Getting Godot	Récupération de Godot
+Getting Unity Hub	Récupération de Unity Hub
+Getting the Epic Games Launcher	Récupération de l'Epic Games Launcher
+The installer is open. Follow its steps, then come back here.	L'installateur est ouvert. Suivez ses étapes, puis revenez ici.
+{name} is ready.	{name} est prêt.
+Starting…	Démarrage…
+Getting Ghidra	Récupération de Ghidra
+Ghidra is ready. Deep mode uses it from now on.	Ghidra est prêt. Le mode Approfondi l'utilise désormais.
+Looking inside needs Deep mode	Regarder à l'intérieur nécessite le mode Approfondi
+Clean room never reads the original's code, files or page source. Deep mode reads them with every tool Craft Anything has.	La salle blanche ne lit jamais le code, les fichiers ni le source de page de l'original. Le mode Approfondi les lit avec tous les outils de Craft Anything.
+Turn on Deep mode	Activer le mode Approfondi
+Not now	Pas maintenant
+Ghidra is ready	Ghidra est prêt
+Get Ghidra for Deep mode	Obtenir Ghidra pour le mode Approfondi
+Ghidra, a free reverse-engineering tool from the NSA, gives Deep mode richer decompiled code and types.	Ghidra, un outil gratuit de rétro-ingénierie de la NSA, donne au mode Approfondi un code décompilé et des types plus riches.
+Your project starts as soon as it's done.	Votre projet démarre dès que c'est terminé.
+Deep mode now decompiles with Ghidra. The first look at a large program can take several minutes.	Le mode Approfondi décompile maintenant avec Ghidra. Le premier examen d'un gros programme peut prendre plusieurs minutes.
+This keeps going in the background, and each download is checked against its publisher's checksum before it's used.	Cela continue en arrière-plan, et chaque téléchargement est vérifié avec la somme de contrôle de son éditeur avant d'être utilisé.
+It isn't on this computer yet. Craft Anything can download Ghidra {version} and the Java runtime it needs (about {mb} MB), check both against their publishers' checksums, and set them up in its own folder. Nothing else on your computer changes.	Il n'est pas encore sur cet ordinateur. Craft Anything peut télécharger Ghidra {version} et l'environnement Java dont il a besoin (environ {mb} Mo), les vérifier avec les sommes de contrôle de leurs éditeurs et les installer dans son propre dossier. Rien d'autre ne change sur votre ordinateur.
+It isn't on this computer yet. Install Ghidra {version} from its release page, then choose its folder.	Il n'est pas encore sur cet ordinateur. Installez Ghidra {version} depuis sa page de versions, puis choisissez son dossier.
+Open Ghidra's release page	Ouvrir la page des versions de Ghidra
+Without it, Deep mode uses Craft Anything's own decompiler, which is rougher.	Sans lui, le mode Approfondi utilise le décompilateur de Craft Anything, plus rudimentaire.
+Start building	Lancer la construction
+Done	Terminé
+Close	Fermer
+The download keeps going in the background.	Le téléchargement continue en arrière-plan.
+Download and use Ghidra	Télécharger et utiliser Ghidra
+I have Ghidra	J'ai Ghidra
+Choose the folder Ghidra is installed in.	Choisissez le dossier où Ghidra est installé.
+Build without it	Construire sans lui
+Ghidra will use up to {gb} GB of memory.	Ghidra utilisera jusqu'à {gb} Go de mémoire.
+Ghidra will use half of this computer's memory (up to {gb} GB).	Ghidra utilisera la moitié de la mémoire de cet ordinateur (jusqu'à {gb} Go).
+{gb} GB for bigger ones	{gb} Go pour les plus gros
+{gb} GB for programs up to {size}	{gb} Go pour les programmes jusqu'à {size}
+{gb} GB up to {size}	{gb} Go jusqu'à {size}
+Rough guide:	Repères :
+Automatic	Automatique
+Custom	Personnalisé
+Half of this computer's memory, up to {gb} GB.	La moitié de la mémoire de cet ordinateur, jusqu'à {gb} Go.
+Memory for Ghidra	Mémoire pour Ghidra
+Leave a few GB for the rest of your computer.	Laissez quelques Go pour le reste de votre ordinateur.
+Installed	Installé
+Not installed	Non installé
+Get Ghidra	Obtenir Ghidra
+Check the asset keys	Vérifier les clés de ressources
+Save the key	Enregistrer la clé
+Forget the key	Oublier la clé
+Allow generated assets	Autoriser les ressources générées
+Stop generated assets	Arrêter les ressources générées
+Paste your {name} key	Collez votre clé {name}
+Generate custom pictures and models	Générer des images et des modèles sur mesure
+Needs a fal.ai key. Until then the game is built without them.	Nécessite une clé fal.ai. En attendant, le jeu est construit sans.
+Made with fal.ai and paid from your account: {model} a 3D model, {picture} a picture. Off, the game is built without them.	Faits avec fal.ai et payés depuis votre compte : {model} par modèle 3D, {picture} par image. Désactivé, le jeu est construit sans.
+Add a fal.ai key	Ajouter une clé fal.ai
+Your fal.ai key	Votre clé fal.ai
+Generated pictures and 3D models are made with fal.ai.	Les images et modèles 3D générés sont faits avec fal.ai.
+The builder makes the game's 3D models and textures from descriptions of original designs, paid from your fal.ai account. Models are low-poly so the game runs fast. A textured model costs {model} and a picture {picture}. Each project has a {budget} budget, and you're asked before it goes over. The key is kept in your system keychain.	Le constructeur crée les modèles 3D et les textures du jeu à partir de descriptions de designs originaux, payés depuis votre compte fal.ai. Les modèles sont low-poly pour que le jeu tourne vite. Un modèle texturé coûte {model} et une image {picture}. Chaque projet a un budget de {budget}, et on vous demande avant de le dépasser. La clé est gardée dans le trousseau de votre système.
+Save	Enregistrer
+Get a key at {name}	Obtenir une clé sur {name}
+Game assets	Ressources de jeu
+Lets the builder make realistic 3D models and textures for games, {model} a model, with a {budget} budget per project.	Permet au constructeur de créer des modèles 3D et des textures réalistes pour les jeux, {model} par modèle, avec un budget de {budget} par projet.
+Key saved	Clé enregistrée
+Remove	Retirer
+Made with {engine}	Fait avec {engine}
+Craft Anything can't build with {engine}, so Unity is the closest match.	Craft Anything ne sait pas construire avec {engine}, Unity est donc le plus proche.
+Build with	Construire avec
+Built with {stack}, as you asked, so no game engine is needed.	Construit avec {stack}, comme demandé, donc aucun moteur de jeu n'est nécessaire.
+Looking for game engines on this computer…	Recherche de moteurs de jeu sur cet ordinateur…
+Ready: {what} is on this computer.	Prêt : {what} est sur cet ordinateur.
+Unreal is here, but it also needs Visual Studio's C++ tools.	Unreal est là, mais il lui faut aussi les outils C++ de Visual Studio.
+{name} isn't on this computer yet.	{name} n'est pas encore sur cet ordinateur.
+Get {name}	Obtenir {name}
+Download Godot {v}	Télécharger Godot {v}
+Checked against Godot's official checksums before it's used.	Vérifié avec les sommes de contrôle officielles de Godot avant utilisation.
+Install Rust	Installer Rust
+Follow the steps on rustup.rs, then come back here.	Suivez les étapes sur rustup.rs, puis revenez ici.
+Download Unity Hub	Télécharger Unity Hub
+Unity's own installer. It only opens if Unity's signature checks out.	L'installateur officiel de Unity. Il ne s'ouvre que si la signature de Unity est valide.
+Install Unity Hub	Installer Unity Hub
+Follow the installer that opened. Come back here when it's done.	Suivez l'installateur qui s'est ouvert. Revenez ici une fois terminé.
+Get Unity Hub	Obtenir Unity Hub
+Download it from unity.com and install it.	Téléchargez-le sur unity.com et installez-le.
+Sign in and add the Unity Editor	Connectez-vous et ajoutez l'éditeur Unity
+In Unity Hub: sign in (or make a free account) and accept the free Personal licence. Then open Installs, press Install Editor and choose the recommended version. About 10 GB.	Dans Unity Hub : connectez-vous (ou créez un compte gratuit) et acceptez la licence Personal gratuite. Ouvrez ensuite Installs, appuyez sur Install Editor et choisissez la version recommandée. Environ 10 Go.
+Download the Epic Games Launcher	Télécharger l'Epic Games Launcher
+Epic's own installer. It only opens if Epic's signature checks out.	L'installateur officiel d'Epic. Il ne s'ouvre que si la signature d'Epic est valide.
+Install the launcher	Installer le launcher
+Get the Epic Games Launcher	Obtenir l'Epic Games Launcher
+Download it from unrealengine.com and install it.	Téléchargez-le sur unrealengine.com et installez-le.
+Sign in and install Unreal Engine	Connectez-vous et installez Unreal Engine
+In the launcher: sign in, open Unreal Engine, then Library, and press + next to Engine Versions to install one. About 60 GB.	Dans le launcher : connectez-vous, ouvrez Unreal Engine, puis Library, et appuyez sur + à côté de Engine Versions pour en installer une. Environ 60 Go.
+Install Xcode	Installer Xcode
+Unreal builds games with Apple's Xcode, free in the App Store.	Unreal construit les jeux avec Xcode d'Apple, gratuit sur l'App Store.
+Add Visual Studio's C++ tools	Ajouter les outils C++ de Visual Studio
+Install Visual Studio Community (free) and tick "Game development with C++".	Installez Visual Studio Community (gratuit) et cochez « Game development with C++ ».
+{name} is ready	{name} est prêt
+Download	Télécharger
+Open Unity Hub	Ouvrir Unity Hub
+Open the Epic Games Launcher	Ouvrir l'Epic Games Launcher
+Open the download page	Ouvrir la page de téléchargement
+This updates by itself when it's done.	Ceci se met à jour tout seul une fois terminé.
+Build with {name} instead	Construire plutôt avec {name}
+Downloads keep going in the background.	Les téléchargements continuent en arrière-plan.
+Game engines	Moteurs de jeu
+Recreated games are built with the original's own engine when it's here (Unity, Unreal or Godot), else Unity, and Rust as the last resort.	Les jeux recréés sont construits avec le moteur de l'original quand il est présent (Unity, Unreal ou Godot), sinon avec Unity, et en dernier recours avec Rust.
+Open the installer app	Ouvrir l'application d'installation
+Made without looking inside the original.	Fait sans regarder à l'intérieur de l'original.
+Show me the proof	Montre-moi la preuve
+Where we found it	Où nous l'avons trouvé
+What we couldn't check	Ce que nous n'avons pas pu vérifier
+Looked at everything	Tout a été examiné
+Looked at {a} of {b}	{a} sur {b} examinés
+Looked at part of it	Une partie a été examinée
+Coverage unknown	Couverture inconnue
+Copy the evidence id	Copier l'identifiant de la preuve
+The code	Le code
+The raw result	Le résultat brut
+Welcome	Bienvenue
+AI	IA
+Purpose	Objectif
+Ready	Prêt
+← Back	← Retour
+Back	Retour
+Find out how any software works, then craft your own.	Découvrez comment fonctionne n'importe quel logiciel, puis créez le vôtre.
+I'm new to this	Je débute
+Plain words, big buttons, and I'll explain everything.	Des mots simples, de gros boutons, et j'explique tout.
+Show me everything	Montre-moi tout
+Every tool as well: a workbench with functions, bytes, references and evidence.	Tous les outils aussi : un établi avec fonctions, octets, références et preuves.
+Skip setup	Passer la configuration
+Start with Simple mode; you can set up AI later in Settings.	Commencer en mode Simple ; vous pourrez configurer l'IA plus tard dans les Réglages.
+Who builds what you make	Qui construit ce que vous créez
+A coding agent such as Claude Code builds it, and an AI answers your questions in plain words. Change this any time in Settings → AI.	Un agent de code comme Claude Code le construit, et une IA répond à vos questions en mots simples. Modifiable à tout moment dans Réglages → IA.
+{name} builds what you make.	{name} construit ce que vous créez.
+Nothing can build yet: install Claude Code (and sign in to it once), or add an AI with an API key below.	Rien ne peut encore construire : installez Claude Code (et connectez-vous-y une fois), ou ajoutez ci-dessous une IA avec une clé d'API.
+Looking for AI on this computer…	Recherche d'IA sur cet ordinateur…
+We didn't find an AI on this computer yet	Nous n'avons pas encore trouvé d'IA sur cet ordinateur
+You can add a Claude, ChatGPT or OpenRouter key, a local model (Ollama, LM Studio) or an agent you already use, later in Settings → AI.	Vous pourrez ajouter plus tard dans Réglages → IA une clé Claude, ChatGPT ou OpenRouter, un modèle local (Ollama, LM Studio) ou un agent que vous utilisez déjà.
+No AI for now	Pas d'IA pour l'instant
+The built-in engines still show you everything they find.	Les moteurs intégrés vous montrent quand même tout ce qu'ils trouvent.
+Continue	Continuer
+Selected	Sélectionné
+Use this	Utiliser celui-ci
+Paste your API key (kept in your system keychain)	Collez votre clé d'API (gardée dans le trousseau de votre système)
+Connect	Connecter
+What brings you here?	Qu'est-ce qui vous amène ?
+One line, in plain words. It stays on this computer and is never sent anywhere.	Une ligne, en mots simples. Elle reste sur cet ordinateur et n'est jamais envoyée nulle part.
+Why we ask	Pourquoi nous demandons
+Looking inside software you own or are allowed to examine is normal and often protected (learning, compatibility, security). Saying why helps you keep to it; it stays on this computer.	Regarder à l'intérieur d'un logiciel qui vous appartient ou que vous avez le droit d'examiner est normal et souvent protégé (apprentissage, compatibilité, sécurité). Dire pourquoi vous aide à vous y tenir ; cela reste sur cet ordinateur.
+You're all set	Tout est prêt
+the built-in engines	les moteurs intégrés
+{name} builds what you make; answers come from {brain}.	{name} construit ce que vous créez ; les réponses viennent de {brain}.
+Answers come from {brain}. To build, set up a coding agent in Settings → AI.	Les réponses viennent de {brain}. Pour construire, configurez un agent de code dans Réglages → IA.
+Say what you want to make, or drop an app or file on the window to look inside it. Everything runs in Clean room mode unless you switch on Deep.	Dites ce que vous voulez créer, ou déposez une application ou un fichier sur la fenêtre pour regarder à l'intérieur. Tout se fait en mode Salle blanche, sauf si vous activez Approfondi.
+Let's go	C'est parti
+your files there are the app, edited in place	vos fichiers sont l'application, modifiée sur place
+the app is built beside your files, starting from them	l'application est construite à côté de vos fichiers, en partant d'eux
+say how to use the files there	dites comment utiliser ces fichiers
+a new folder in {dir}	un nouveau dossier dans {dir}
+Saved in	Enregistré dans
+Change	Modifier
+Pick another folder…	Choisir un autre dossier…
+Choose a folder…	Choisir un dossier…
+Use the projects folder	Utiliser le dossier des projets
+That folder is already a project, so it's open now.	Ce dossier est déjà un projet, il est donc maintenant ouvert.
+That folder already has {names}, where Craft Anything keeps its own files. Pick another folder, or move those out first.	Ce dossier contient déjà {names}, où Craft Anything range ses propres fichiers. Choisissez un autre dossier, ou déplacez-les d'abord.
+This folder already has files	Ce dossier contient déjà des fichiers
+ and {n} more	 et {n} de plus
+How should the builder use them?	Comment le constructeur doit-il les utiliser ?
+They're my app: edit them in place	C'est mon application : les modifier sur place
+The builder works on these files directly and keeps what works. Craft Anything adds a few records of its own beside them.	Le constructeur travaille directement sur ces fichiers et garde ce qui fonctionne. Craft Anything ajoute quelques fichiers de suivi à côté.
+Start from them	Partir de ces fichiers
+The builder reads them (code, notes, pictures) and builds the app in a new app folder beside them. Your files stay as they are.	Le constructeur les lit (code, notes, images) et construit l'application dans un nouveau dossier app à côté. Vos fichiers restent tels quels.
+Don't ask again (you can change this in Settings)	Ne plus demander (modifiable dans les Réglages)
+Cancel: don't use this folder	Annuler : ne pas utiliser ce dossier
+Ask each time	Demander à chaque fois
+Edit them in place	Les modifier sur place
+Archive	Archive
+Game files	Fichiers de jeu
+See what a game packs and save its pictures as PNG files. Only for games you made, or whose owner lets you.	Voyez ce que contient un jeu et enregistrez ses images en PNG. Uniquement pour les jeux que vous avez créés, ou dont le propriétaire vous l'autorise.
+Pick another game	Choisir un autre jeu
+Pick a game's folder	Choisir le dossier d'un jeu
+Ask about this game	Poser une question sur ce jeu
+Built with	Construit avec
+Its own code	Son propre code
+Looking for the game's files…	Recherche des fichiers du jeu…
+No game files here	Aucun fichier de jeu ici
+No Unreal or Unity archives were found. Pick the folder the game is installed in.	Aucune archive Unreal ou Unity trouvée. Choisissez le dossier où le jeu est installé.
+Archives	Archives
+Read a game's files	Lire les fichiers d'un jeu
+Inside	Contenu
+Reading what's inside…	Lecture du contenu…
+Pictures can't be saved from IoStore containers yet; you can see what's inside.	Les images ne peuvent pas encore être enregistrées depuis les conteneurs IoStore ; vous pouvez voir leur contenu.
+Filter by name	Filtrer par nom
+Filter the files	Filtrer les fichiers
+Nothing to show	Rien à afficher
+Nothing matches the filter.	Rien ne correspond au filtre.
+Save picture	Enregistrer l'image
+Showing	Affichage de
+— use the filter to find the rest.	— utilisez le filtre pour trouver le reste.
+Do you have permission?	Avez-vous l'autorisation ?
+Only take pictures out of games you made, or whose owner allows it. A game's art is usually protected by copyright and by the game's licence.	N'extrayez des images que des jeux que vous avez créés, ou dont le propriétaire l'autorise. Les graphismes d'un jeu sont généralement protégés par le droit d'auteur et par la licence du jeu.
+I have permission	J'ai l'autorisation
+Find a game's files	Trouver les fichiers d'un jeu
+Look at a game	Examiner un jeu
+Save a picture	Enregistrer une image
+Couldn't look through that folder.	Impossible de parcourir ce dossier.
+Saved	Enregistré
+Open a calculator app and find the code behind one button.	Ouvrez une calculatrice et trouvez le code derrière un bouton.
+Drop a calculator app (or any small program) on the window.	Déposez une calculatrice (ou n'importe quel petit programme) sur la fenêtre.
+Ask: "How does the % key work?"	Demandez : « Comment fonctionne la touche % ? »
+Open "Show me the proof" to see the exact code we found, and how sure we are.	Ouvrez « Montre-moi la preuve » pour voir le code exact trouvé, et notre degré de certitude.
+See which servers an app talks to, and what it says.	Voyez avec quels serveurs une application communique, et ce qu'elle dit.
+Open the app you're curious about.	Ouvrez l'application qui vous intrigue.
+Ask: "What does it send over the internet?"	Demandez : « Qu'envoie-t-elle sur Internet ? »
+We list the web addresses and messages we can see inside it. Watching it live needs your OK first.	Nous listons les adresses web et les messages visibles à l'intérieur. L'observer en direct nécessite d'abord votre accord.
+Is this file safe to open?	Ce fichier peut-il être ouvert sans risque ?
+A first look at a file you're unsure about, without running it.	Un premier examen d'un fichier douteux, sans le lancer.
+Drop the file on the window. We only read it; nothing runs.	Déposez le fichier sur la fenêtre. Nous le lisons seulement ; rien ne s'exécute.
+Ask: "Is it safe to run?"	Demandez : « Peut-on le lancer sans risque ? »
+Each answer says how sure we are: Seen it, Worked it out or Best guess.	Chaque réponse indique notre degré de certitude : Vu, Déduit ou Meilleure hypothèse.
+Got it	Compris
+Look at a website	Examiner un site web
+Website address	Adresse du site web
+Open it	L'ouvrir
+Here's what I found on that page:	Voici ce que j'ai trouvé sur cette page :
+Open something	Ouvrir quelque chose
+Version	Version
+Type your question after /btw.	Tapez votre question après /btw.
+There's no /{name} command. You can use {commands}.	Il n'y a pas de commande /{name}. Vous pouvez utiliser {commands}.
+Ask about the build	Poser une question sur la construction
+This answer won't be there after a restart:	Cette réponse aura disparu après un redémarrage :
+Show the answer	Afficher la réponse
+Hide the answer	Masquer la réponse
+from the builder's own memory of the build	d'après la mémoire de la construction du constructeur
+from the project's files	d'après les fichiers du projet
+Just a question: nothing was changed. Answered by	Simple question : rien n'a été modifié. Réponse de
+Couldn't answer:	Impossible de répondre :
+Save settings	Enregistrer les réglages
+Deep mode on	Mode Approfondi activé
+Clean room on	Salle blanche activée
+No tool named {tool}	Aucun outil nommé {tool}
+Running {id}	Exécution de {id}
+It's already open.	C'est déjà ouvert.
+Starting… it opens in its own window.	Démarrage… cela s'ouvre dans sa propre fenêtre.
+Couldn't start it.	Impossible de le démarrer.
+The builder will decide its questions and tell you what it chose.	Le constructeur tranchera ses questions et vous dira ce qu'il a choisi.
+The builder's questions will come to you.	Les questions du constructeur vous seront posées.
+Plugin added. Read its tools to start using them.	Plugin ajouté. Lisez ses outils pour commencer à les utiliser.
+Plugin removed.	Plugin retiré.
+Plugins read. Their new tools are offered from the next start.	Plugins lus. Leurs nouveaux outils seront proposés au prochain démarrage.
+Some plugins couldn't be read:	Certains plugins n'ont pas pu être lus :
+Couldn't open the folder.	Impossible d'ouvrir le dossier.
+Part of the app got stuck, so it was stopped and the rest carried on. Your work is kept.	Une partie de l'application s'est bloquée ; elle a été arrêtée et le reste a continué. Votre travail est conservé.
+Part of the app is stuck. Restarting clears it, and your work is kept.	Une partie de l'application est bloquée. Redémarrer règle le problème, et votre travail est conservé.
+Open log	Ouvrir le journal
+Restart	Redémarrer
+Dismiss	Ignorer
+Opening {name}…	Ouverture de {name}…
+Open {name}	Ouvrir {name}
+Choose a file	Choisir un fichier
+Pictures of the original	Images de l'original
+Attach pictures	Joindre des images
+Pictures	Images
+Open a folder or app bundle	Ouvrir un dossier ou un paquet d'application
+Where is Ghidra installed?	Où Ghidra est-il installé ?
+Pick the app, game or file to rebuild	Choisissez l'application, le jeu ou le fichier à reconstruire
+Pick the app or game folder	Choisissez le dossier de l'application ou du jeu
+Where should new projects go?	Où ranger les nouveaux projets ?
+Pick the folder for this project	Choisissez le dossier de ce projet
+Pick a folder with projects in it	Choisissez un dossier contenant des projets
+Pick the game's folder	Choisissez le dossier du jeu
+Save the picture	Enregistrer l'image
+Read AI settings	Lire les réglages d'IA
+Choose an AI's job	Choisir le rôle d'une IA
+Look for AI on this computer	Chercher une IA sur cet ordinateur
+Connect {name}	Connecter {name}
+Open something first: drop a file or app here, or choose "Just look inside" on New project. Then I can look inside it.	Ouvrez d'abord quelque chose : déposez un fichier ou une application ici, ou choisissez « Juste regarder à l'intérieur » dans Nouveau projet. Je pourrai alors regarder à l'intérieur.
+There's no AI brain set up yet, so here's what the built-in engines found:	Aucun cerveau IA n'est encore configuré, voici donc ce que les moteurs intégrés ont trouvé :
+Remember permission	Mémoriser l'autorisation
+Export report	Exporter le rapport
+Save the report	Enregistrer le rapport
+Opened {name}	{name} ouvert
+Opened {name}. Taking a first look…	{name} ouvert. Premier examen en cours…
+Here's a first look:	Voici un premier aperçu :
+{tool} finished	{tool} terminé
+Drop to attach	Déposez pour joindre
+Drop to open it	Déposez pour l'ouvrir
+Part of this screen hit a bug and was skipped. Your work is safe.	Une partie de cet écran a rencontré un bug et a été ignorée. Votre travail est en sécurité.
+Recreate it with darker colours	Le recréer avec des couleurs plus sombres
+Make my own version of this app	Créer ma propre version de cette application
+Recreate just its main feature	Recréer seulement sa fonction principale
+Make a game that plays like this	Créer un jeu qui se joue comme celui-ci
+Make a simpler version of this game	Créer une version plus simple de ce jeu
+A website for my bakery	Un site web pour ma boulangerie
+A simple snake game	Un jeu du serpent simple
+Enter a full web address, like example.com or https://example.com/page.	Saisissez une adresse web complète, comme example.com ou https://example.com/page.
+Make my own version	Créer ma propre version
+Just look inside	Juste regarder à l'intérieur
+What do you want to make?	Que voulez-vous créer ?
+Choose what to recreate, say what you want, then press Start.	Choisissez quoi recréer, dites ce que vous voulez, puis appuyez sur Démarrer.
+What do you want to recreate?	Que voulez-vous recréer ?
+Say what you want	Dites ce que vous voulez
+For example: the same game, with a high-score table	Par exemple : le même jeu, avec un tableau des meilleurs scores
+For example: the same app, but simpler	Par exemple : la même application, en plus simple
+For example: recreate this website	Par exemple : recrée ce site web
+For example: a website for my bakery	Par exemple : un site web pour ma boulangerie
+Add pictures of the original (optional: screenshots help it look right)	Ajouter des images de l'original (facultatif : des captures d'écran aident à le rendre fidèle)
+Start	Démarrer
+Say what you want first.	Dites d'abord ce que vous voulez.
+What do you want to look inside?	Dans quoi voulez-vous regarder ?
+We only read it; nothing runs. Every answer shows how sure we are.	Nous le lisons seulement ; rien ne s'exécute. Chaque réponse indique notre degré de certitude.
+An app or a file	Une application ou un fichier
+See how a program works: what it does, what it talks to, what's inside.	Voyez comment fonctionne un programme : ce qu'il fait, avec quoi il communique, ce qu'il contient.
+A website	Un site web
+See how a page is built: its layout, styles, scripts and the requests it makes.	Voyez comment une page est construite : sa mise en page, ses styles, ses scripts et les requêtes qu'elle fait.
+A game's files	Les fichiers d'un jeu
+See what a game packs, and save its pictures as PNG files.	Voyez ce que contient un jeu, et enregistrez ses images en PNG.
+An app	Une application
+A game	Un jeu
+Nothing — start fresh	Rien — partir de zéro
+You chose:	Votre choix :
+Type the website's address:	Tapez l'adresse du site web :
+How closely may Craft Anything look at it?	Jusqu'où Craft Anything peut-il l'examiner ?
+For everything you make, like the switch in the title bar.	Pour tout ce que vous créez, comme l'interrupteur de la barre de titre.
+Nothing inside it is read; Craft Anything works from what you can see. Your version gets its own art.	Rien à l'intérieur n'est lu ; Craft Anything travaille à partir de ce que vous voyez. Votre version a ses propres graphismes.
+Craft Anything reads its code and files with every tool it has. For your private use.	Craft Anything lit son code et ses fichiers avec tous ses outils. Pour votre usage privé.
+More makes a big program's first look faster.	Plus de mémoire accélère le premier examen d'un gros programme.
+Ghidra isn't on this computer yet, so the built-in decompiler stands in.	Ghidra n'est pas encore sur cet ordinateur, le décompilateur intégré le remplace donc.
+Ideas:	Idées :
+just now	à l'instant
+{n} min ago	il y a {n} min
+{n} h ago	il y a {n} h
+{n} days ago	il y a {n} jours
+Needs you	Vous attend
+Waiting	En attente
+Interrupted	Interrompu
+Rename the project	Renommer le projet
+Duplicate the project	Dupliquer le projet
+Pause the build first, then delete the project.	Mettez d'abord la construction en pause, puis supprimez le projet.
+Delete the project	Supprimer le projet
+Made a copy: {name}	Copie créée : {name}
+Deleted. Your own files are still in the folder.	Supprimé. Vos propres fichiers sont toujours dans le dossier.
+Deleted.	Supprimé.
+Rename…	Renommer…
+Duplicate	Dupliquer
+Delete…	Supprimer…
+Pause the build first.	Mettez d'abord la construction en pause.
+Rename	Renommer
+A copy to try something else from here.	Une copie pour essayer autre chose à partir d'ici.
+Project name	Nom du projet
+Only its name changes; its folder stays where it is.	Seul son nom change ; son dossier reste où il est.
+Delete {name}?	Supprimer {name} ?
+Craft Anything's records, checks and anything it built in app/ are deleted. Your own files in the folder stay as they are.	Les fichiers de suivi de Craft Anything, ses vérifications et tout ce qu'il a construit dans app/ sont supprimés. Vos propres fichiers dans le dossier restent tels quels.
+Its folder is deleted with everything in it: what was built, the checks and the conversation.	Son dossier est supprimé avec tout son contenu : ce qui a été construit, les vérifications et la conversation.
+This can't be undone.	C'est irréversible.
+Delete it	Le supprimer
+Keep it	Le garder
+Open a file…	Ouvrir un fichier…
+Open a folder or app bundle…	Ouvrir un dossier ou un paquet d'application…
+Switch Beginner / Experienced	Basculer Débutant / Expérimenté
+Switch Clean room / Deep	Basculer Salle blanche / Approfondi
+Switch light / dark theme	Basculer thème clair / sombre
+Settings	Réglages
+Export a report (Markdown)	Exporter un rapport (Markdown)
+Go home	Aller à l'accueil
+Type a command or tool…	Tapez une commande ou un outil…
+Nothing matches.	Aucun résultat.
+App	Application
+↑↓ to move · Enter to run · Esc to close	↑↓ pour se déplacer · Entrée pour lancer · Échap pour fermer
+This runs code from the target or changes a device. Clicking Run is your OK.	Ceci exécute du code de la cible ou modifie un appareil. Cliquer sur Lancer vaut accord.
+Run	Lancer
+Read pinned builds	Lire les versions épinglées
+Open a pinned build	Ouvrir une version épinglée
+Close a pinned build	Fermer une version épinglée
+Work out a copy's size	Calculer la taille d'une copie
+Pinned: {name}. Open it from the sidebar any time.	Épinglé : {name}. Ouvrez-le depuis la barre latérale à tout moment.
+It's already open. Right-click it to open another copy.	C'est déjà ouvert. Faites un clic droit pour ouvrir une autre copie.
+Couldn't open it.	Impossible de l'ouvrir.
+Pin removed.	Épingle retirée.
+It closed straight away.	Il s'est fermé aussitôt.
+It closed straight away. It said:	Il s'est fermé aussitôt. Il a affiché :
+Pinned	Épinglé
+Show pinned builds	Afficher les versions épinglées
+Hide pinned builds	Masquer les versions épinglées
+Pinned builds	Versions épinglées
+Running	En cours
+Frozen copy	Copie figée
+Light copy: shares big files with the project	Copie légère : partage les gros fichiers avec le projet
+Live: the project's latest build	En direct : la dernière version du projet
+Open another copy	Ouvrir une autre copie
+Copies share the files it saves beside itself.	Les copies partagent les fichiers qu'il enregistre à côté de lui.
+Close it	Le fermer
+Open	Ouvrir
+Go to the project	Aller au projet
+Remove…	Retirer…
+Close it first.	Fermez-le d'abord.
+Pin this build	Épingler cette version
+Keep it in the sidebar to open any time, whatever later builds change.	La garder dans la barre latérale pour l'ouvrir à tout moment, quoi que changent les constructions suivantes.
+A frozen copy (recommended)	Une copie figée (recommandé)
+Keeps this version exactly as it is now. Later builds can't change or break it, and anything it saves stays with the copy.	Garde cette version exactement telle qu'elle est. Les constructions suivantes ne peuvent ni la modifier ni la casser, et tout ce qu'elle enregistre reste avec la copie.
+A light copy	Une copie légère
+Saves space: copies the program and code, and shares dependencies and media with the project. A shared file rewritten in place changes here too.	Économise de l'espace : copie le programme et le code, et partage les dépendances et les médias avec le projet. Un fichier partagé réécrit sur place change ici aussi.
+Working out how much space a copy takes…	Calcul de l'espace pris par une copie…
+A frozen copy takes {size}. That's a lot of space: a light copy takes {light}.	Une copie figée prend {size}. C'est beaucoup : une copie légère prend {light}.
+A frozen copy takes {size}; a light copy takes {light}.	Une copie figée prend {size} ; une copie légère prend {light}.
+Name (optional)	Nom (facultatif)
+The project's name and round	Le nom du projet et le tour
+Pin name	Nom de l'épingle
+Pin it	L'épingler
+Pin a build	Épingler une version
+Rename the pin	Renommer l'épingle
+Remove {name}?	Retirer {name} ?
+Its copy is deleted, with anything it saved there. The project itself stays as it is.	Sa copie est supprimée, avec tout ce qu'elle y a enregistré. Le projet lui-même reste tel quel.
+Only the pin goes; the project and its app stay as they are.	Seule l'épingle disparaît ; le projet et son application restent tels quels.
+Remove it	Le retirer
+Remove a pin	Retirer une épingle
+Read projects	Lire les projets
+Create the project	Créer le projet
+Couldn't add the pictures:	Impossible d'ajouter les images :
+Another build is working, so this one waits its turn.	Une autre construction est en cours, celle-ci attend donc son tour.
+Paused.	En pause.
+Preview the website	Aperçu du site web
+Add pictures	Ajouter des images
+Those aren't pictures we can use (PNG, JPEG, WebP or GIF, up to 20 MB).	Ces images ne sont pas utilisables (PNG, JPEG, WebP ou GIF, jusqu'à 20 Mo).
+Added {n} picture(s). The builder uses them from your next change.	{n} image(s) ajoutée(s). Le constructeur les utilisera dès votre prochaine modification.
+Choose what the builder's questions get	Choisir comment traiter les questions du constructeur
+Start it	Le démarrer
+Load a screenshot	Charger une capture d'écran
+Plan	Plan
+{done} of {all} done	{done} sur {all} terminé(s)
+Read the project	Lire le projet
+Raise the asset budget	Augmenter le budget de ressources
+Generated assets	Ressources générées
+Raise the budget by {amount}	Augmenter le budget de {amount}
+Project details	Détails du projet
+From	Source
+Add pictures of the original	Ajouter des images de l'original
+Screenshots of how it should look. The builder opens each one and matches it.	Des captures d'écran du rendu attendu. Le constructeur ouvre chacune et la reproduit.
+None yet. Screenshots help it look right.	Aucune pour l'instant. Des captures d'écran aident à le rendre fidèle.
+{n} picture(s) to match.	{n} image(s) à reproduire.
+Open folder	Ouvrir le dossier
+Keep this version in the sidebar to open any time.	Garder cette version dans la barre latérale pour l'ouvrir à tout moment.
+Open in the workbench	Ouvrir dans l'établi
+The full toolset, evidence and logs.	Tous les outils, les preuves et les journaux.
+Open the folder	Ouvrir le dossier
+Open questions	Questions ouvertes
+and {n} more	et {n} de plus
+Answer any of them in a message below.	Répondez à l'une d'elles dans un message ci-dessous.
+Progress	Progression
+Now	Maintenant
+Stopped here	Arrêté ici
+Every build of this project.	Toutes les constructions de ce projet.
+Time spent	Temps passé
+Tokens	Jetons
+Likeness	Ressemblance
+Try it out, then ask below for any changes.	Essayez-le, puis demandez ci-dessous les modifications voulues.
+{n} actions done so far	{n} actions faites jusqu'ici
+Working on it	En cours
+Now: {what} ({time})	Maintenant : {what} ({time})
+{line}, and {n} more	{line}, et {n} de plus
+Last: {what}	Dernière : {what}
+What happened in this build	Ce qui s'est passé pendant cette construction
+More detail	Plus de détails
+A command's output shows here when it finishes.	La sortie d'une commande s'affiche ici quand elle se termine.
+Try again	Réessayer
+Copy the command	Copier la commande
+Working… ({n} steps so far)	En cours… ({n} étapes jusqu'ici)
+Worked through {n} steps	{n} étapes effectuées
+{n} step(s) didn't work and were retried or skipped.	{n} étape(s) n'ont pas fonctionné et ont été relancées ou ignorées.
+This build stopped part-way	Cette construction s'est arrêtée en cours de route
+Craft Anything or the computer closed while it was working. Everything so far is kept; Continue picks up where it stopped.	Craft Anything ou l'ordinateur s'est fermé pendant le travail. Tout ce qui a été fait est conservé ; Continuer reprend là où cela s'est arrêté.
+Paused	En pause
+Everything so far is kept. Continue picks up where it stopped.	Tout ce qui a été fait est conservé. Continuer reprend là où cela s'est arrêté.
+May I {action}?	Puis-je {action} ?
+Details	Détails
+You answered: {a}	Vous avez répondu : {a}
+This is outside what the builder may do on its own. Nothing happens until you say so.	Cela dépasse ce que le constructeur peut faire seul. Rien ne se passe sans votre accord.
+Allowed once	Autorisé une fois
+Allowed for this project	Autorisé pour ce projet
+Not allowed	Non autorisé
+Or type your answer…	Ou tapez votre réponse…
+Send	Envoyer
+{held} of {n} requirements met	{held} exigences remplies sur {n}
+Not compared yet: {what}	Pas encore comparé : {what}
+Show the ones that are met	Afficher celles qui sont remplies
+Check {n}: about {s}% like the original	Vérification {n} : environ {s} % de ressemblance avec l'original
+Check {n}	Vérification {n}
+Original	Original
+Your version	Votre version
+Waiting for another build to finish: this one starts next.	En attente de la fin d'une autre construction : celle-ci démarre ensuite.
+Waiting for other builds to finish: {n} in line.	En attente de la fin d'autres constructions : {n} dans la file.
+Take back: puts it in the box again	Reprendre : le remet dans la zone de saisie
+Send now	Envoyer maintenant
+Stops the current step and sends your notes straight away.	Arrête l'étape en cours et envoie vos notes immédiatement.
+Waiting: the builder reads it at its next step. Up arrow to edit.	En attente : le constructeur le lira à sa prochaine étape. Flèche haut pour modifier.
+Waiting: the builder reads these at its next step. Up arrow to edit the last.	En attente : le constructeur les lira à sa prochaine étape. Flèche haut pour modifier le dernier.
+Ask about the build, e.g. "where are the latest files?" Nothing changes and no build starts.	Posez une question sur la construction, par ex. « où sont les derniers fichiers ? » Rien ne change et aucune construction ne démarre.
+Add more info. The builder reads it at its next step.	Ajoutez des précisions. Le constructeur les lira à sa prochaine étape.
+Ask for a change, e.g. "make the header blue" or "add a contact form"	Demandez une modification, par ex. « mets l'en-tête en bleu » ou « ajoute un formulaire de contact »
+Ask for a change	Demander une modification
+Attach pictures (or drop them here)	Joindre des images (ou les déposer ici)
+Pause	Pause
+Change it	Modifier
+Just ask	Juste demander
+or start with /btw to just ask	ou commencez par /btw pour juste demander
+Ask me	Me demander
+Decide yourself	Décide toi-même
+The builder's questions come to you as cards, and it waits for your answer.	Les questions du constructeur vous arrivent sous forme de cartes, et il attend votre réponse.
+The builder answers its own questions and says what it chose ("I decided: …"), so you can change it.	Le constructeur répond à ses propres questions et dit ce qu'il a choisi (« J'ai décidé : … »), pour que vous puissiez changer.
+Builder's questions:	Questions du constructeur :
+This project is waiting its turn. Send your message once it starts.	Ce projet attend son tour. Envoyez votre message une fois qu'il aura démarré.
+Your message wasn't sent: another project was opened while its pictures were copied.	Votre message n'a pas été envoyé : un autre projet a été ouvert pendant la copie de ses images.
+Couldn't attach the pictures:	Impossible de joindre les images :
+Remove {name}	Retirer {name}
+Enter to send · Shift+Enter for a new line	Entrée pour envoyer · Maj+Entrée pour aller à la ligne
+Send (Enter)	Envoyer (Entrée)
+(1 picture attached)	(1 image jointe)
+({n} pictures attached)	({n} images jointes)
+is required	est obligatoire
+must be a whole number	doit être un nombre entier
+must be a number	doit être un nombre
+This tool takes no settings.	Cet outil n'a pas de réglages.
+0x… or number	0x… ou nombre
+General	Général
+Engines	Moteurs
+Builds	Constructions
+Plugins	Plugins
+Safety	Sécurité
+Mode	Mode
+Simple: say what you want and it's handled for you. Advanced: every tool, the evidence and the logs.	Simple : dites ce que vous voulez, on s'occupe du reste. Avancé : tous les outils, les preuves et les journaux.
+Simple	Simple
+Advanced	Avancé
+New projects go in	Les nouveaux projets vont dans
+Change…	Modifier…
+Also list projects from	Lister aussi les projets de
+Folders of projects, and projects started in a folder you picked. Removing one only takes it off the list.	Des dossiers de projets, et les projets démarrés dans un dossier choisi. En retirer un l'enlève seulement de la liste.
+Add a folder…	Ajouter un dossier…
+Stop listing {folder}	Ne plus lister {folder}
+When a folder you pick has files	Quand un dossier choisi contient des fichiers
+Whether they're the app to edit in place, or material the app starts from beside them.	S'ils sont l'application à modifier sur place, ou une base de départ pour l'application construite à côté.
+Theme	Thème
+Show the welcome again	Revoir l'accueil
+Runs the first-run steps next time.	Relance les étapes du premier démarrage la prochaine fois.
+Reset	Réinitialiser
+Language	Langue
+System	Système
+Clean room / Deep	Salle blanche / Approfondi
+Clean room never reads the original's code, files or page source: it works from what you can see. Deep reads them with every tool, and with Ghidra when it's installed. Every finding records which was used.	La salle blanche ne lit jamais le code, les fichiers ni le source de page de l'original : elle travaille à partir de ce que vous voyez. Approfondi les lit avec tous les outils, et avec Ghidra quand il est installé. Chaque découverte indique lequel a été utilisé.
+Adds its decompiler to Deep mode. Craft Anything can download and set it up for you.	Ajoute son décompilateur au mode Approfondi. Craft Anything peut le télécharger et l'installer pour vous.
+More memory makes Ghidra's first look at a big program faster; leave some for the rest of the computer. Used from the next time Ghidra starts.	Plus de mémoire accélère le premier examen d'un gros programme par Ghidra ; laissez-en pour le reste de l'ordinateur. Pris en compte au prochain démarrage de Ghidra.
+Ghidra folder	Dossier de Ghidra
+Leave empty to use the one Craft Anything sets up.	Laissez vide pour utiliser celui installé par Craft Anything.
+Choose…	Choisir…
+Java runtime	Environnement Java
+Only for Ghidra. Empty = managed.	Uniquement pour Ghidra. Vide = géré automatiquement.
+Your own tool installs (optional)	Vos propres installations d'outils (facultatif)
+Leave a path empty to use the managed install. We never need environment variables.	Laissez un chemin vide pour utiliser l'installation gérée. Nous n'avons jamais besoin de variables d'environnement.
+Your brains	Vos cerveaux
+No AI is set up yet. The built-in engines still work; an AI adds plain-words answers.	Aucune IA n'est encore configurée. Les moteurs intégrés fonctionnent quand même ; une IA ajoute des réponses en mots simples.
+In use	Utilisé
+Use	Utiliser
+Builds use this one. Click to choose automatically again.	Les constructions utilisent celle-ci. Cliquez pour revenir au choix automatique.
+Build with this	Construire avec celle-ci
+Extracts	Extrait
+In Deep mode this one takes a game's own files out after the study. Click to stop.	En mode Approfondi, celle-ci extrait les fichiers du jeu après l'étude. Cliquez pour arrêter.
+Extract with this	Extraire avec celle-ci
+Turn off	Désactiver
+Nothing uses it until it's on again; it keeps its key.	Rien ne l'utilise jusqu'à sa réactivation ; elle garde sa clé.
+Turn on	Activer
+Builds and answers may use it again.	Les constructions et les réponses peuvent de nouveau l'utiliser.
+Remove it and its key	La retirer avec sa clé
+Off	Désactivé
+Detect	Détecter
+Nothing found yet. We look for API keys, local model servers (Ollama, LM Studio) and agent apps you already have.	Rien trouvé pour l'instant. Nous cherchons les clés d'API, les serveurs de modèles locaux (Ollama, LM Studio) et les applications d'agent que vous avez déjà.
+Added	Ajouté
+Add	Ajouter
+API key (stored in your system keychain)	Clé d'API (stockée dans le trousseau de votre système)
+Good enough	Suffisant
+How alike a rebuild must look to the original before refining stops.	La ressemblance qu'une reconstruction doit atteindre avec l'original avant d'arrêter les retouches.
+Refining rounds	Tours de retouche
+At most this many rounds of fixes after the first build.	Au maximum ce nombre de tours de corrections après la première construction.
+Website pages	Pages du site web
+Other pages of a website studied and compared besides the one you gave.	Autres pages d'un site étudiées et comparées, en plus de celle indiquée.
+Match my pictures	Coller à mes images
+Apps and games: keep refining until they look this alike to your pictures. Off, the likeness is only reported.	Applications et jeux : continuer les retouches jusqu'à atteindre cette ressemblance avec vos images. Désactivé, la ressemblance est seulement indiquée.
+Use as a goal	Utiliser comme objectif
+Builds at once	Constructions simultanées
+How many projects may build at the same time. More wait their turn.	Combien de projets peuvent construire en même temps. Les autres attendent leur tour.
+Generated art (games)	Graphismes générés (jeux)
+Budget for a new project	Budget d'un nouveau projet
+What a new game may spend on generated pictures and 3D models before you're asked. Each project keeps its own.	Ce qu'un nouveau jeu peut dépenser en images et modèles 3D générés avant qu'on vous demande. Chaque projet garde le sien.
+Picture model	Modèle d'images
+What pictures and textures are made with.	Ce qui sert à créer les images et les textures.
+a picture	une image
+Plugins add tools Craft Anything offers as its own: MCP servers (a command or an address; read their tools after adding) or WebAssembly components (a .wasm file, which can't touch your files or the network).	Les plugins ajoutent des outils que Craft Anything propose comme les siens : serveurs MCP (une commande ou une adresse ; lisez leurs outils après l'ajout) ou composants WebAssembly (un fichier .wasm, qui ne peut toucher ni à vos fichiers ni au réseau).
+No plugins yet.	Aucun plugin pour l'instant.
+Runs its tools without asking	Lance ses outils sans demander
+On	Activé
+Read its tools	Lire ses outils
+Read the plugin's tools	Lire les outils du plugin
+Remove a plugin	Retirer un plugin
+Turning a plugin on or off takes effect from the next start.	Activer ou désactiver un plugin prend effet au prochain démarrage.
+Add a plugin	Ajouter un plugin
+id, e.g. docs	identifiant, par ex. docs
+Plugin id	Identifiant du plugin
+command, https:// address or .wasm file	commande, adresse https:// ou fichier .wasm
+Plugin command or address	Commande ou adresse du plugin
+arguments (optional)	arguments (facultatif)
+Plugin arguments	Arguments du plugin
+Plugins added here always ask before each call.	Les plugins ajoutés ici demandent toujours avant chaque appel.
+Ask before running anything	Demander avant de lancer quoi que ce soit
+Tools that run code from a target or change a phone always ask first, unless you allowed them for a project.	Les outils qui exécutent du code d'une cible ou modifient un téléphone demandent toujours d'abord, sauf si vous les avez autorisés pour un projet.
+Ask first	Demander d'abord
+Tools may now run code from what you open without asking. Turn this back on unless you're sure.	Les outils peuvent désormais exécuter du code de ce que vous ouvrez sans demander. Réactivez ceci, sauf si vous êtes sûr de vous.
+Auto mode	Mode automatique
+Builds keep going without stopping to ask you before an action. The builder still never deletes outside its project, changes system settings or publishes anything, and stays within each project's asset budget.	Les constructions continuent sans s'arrêter pour vous demander avant une action. Le constructeur ne supprime toujours rien hors de son projet, ne modifie pas les réglages système, ne publie rien, et reste dans le budget de ressources de chaque projet.
+Keep going without asking	Continuer sans demander
+The builder's questions	Les questions du constructeur
+When the builder needs a choice made: show it to you and wait, or let it decide and say what it chose. Each project can choose for itself under its prompt box.	Quand le constructeur a un choix à faire : vous le montrer et attendre, ou le laisser décider et dire ce qu'il a choisi. Chaque projet peut choisir sous sa zone de saisie.
+Study apps by running them	Étudier les applications en les lançant
+When you rebuild an app or game, start it once to picture its window and compare the rebuild with it. It runs that program.	Quand vous reconstruisez une application ou un jeu, la lancer une fois pour capturer sa fenêtre et y comparer la reconstruction. Cela exécute ce programme.
+Run to study	Lancer pour étudier
+Allowed in	Autorisé dans
+Nothing allowed yet.	Rien d'autorisé pour l'instant.
+Show the sidebar	Afficher la barre latérale
+Fold the sidebar	Replier la barre latérale
+New project	Nouveau projet
+Workbench	Établi
+Look for projects again	Rechercher à nouveau les projets
+Projects	Projets
+Nothing made yet. What you make shows up here.	Rien de créé pour l'instant. Ce que vous créez apparaît ici.
+Targets	Cibles
+Functions	Fonctions
+Strings	Chaînes
+Imports / Exports	Imports / Exports
+Sections	Sections
+Classes	Classes
+Modules	Modules
+Resources	Ressources
+Pseudo-C	Pseudo-C
+Disassembly	Désassemblage
+Hex	Hexa
+Graph	Graphe
+Source	Source
+Network	Réseau
+Result	Résultat
+It's mine, or I'm allowed to look	C'est à moi, ou j'ai le droit de regarder
+Software I made, bought, or have permission to examine.	Un logiciel que j'ai créé, acheté, ou que j'ai l'autorisation d'examiner.
+I'm learning how things work	J'apprends comment les choses fonctionnent
+Studying software to understand it.	Étudier un logiciel pour le comprendre.
+I want to make things work together	Je veux faire fonctionner des choses ensemble
+Making my own thing talk to something else.	Faire communiquer ma création avec autre chose.
+I'm checking whether it's safe	Je vérifie si c'est sûr
+Security research on software I'm allowed to examine.	Recherche en sécurité sur un logiciel que j'ai le droit d'examiner.
+I'm keeping old software alive	Je fais vivre un vieux logiciel
+Preserving software that's no longer supported.	Préserver un logiciel qui n'est plus maintenu.
+Home	Accueil
+Restore	Restaurer
+Maximise	Agrandir
+Minimise	Réduire
+{n} job(s) running	{n} tâche(s) en cours
+AI use this session	Usage de l'IA cette session
+Since Craft Anything opened.	Depuis l'ouverture de Craft Anything.
+Clean room or Deep	Salle blanche ou Approfondi
+Clean room: nothing inside the original is read. We work from what you can see: pictures, the page as a visitor sees it, and watching it run.	Salle blanche : rien à l'intérieur de l'original n'est lu. Nous travaillons à partir de ce que vous voyez : des images, la page telle qu'un visiteur la voit, et l'observation de son fonctionnement.
+Deep: we read its code, files and page source with every tool we have, and with Ghidra when it's installed. Click to switch.	Approfondi : nous lisons son code, ses fichiers et le source de page avec tous nos outils, et avec Ghidra quand il est installé. Cliquez pour basculer.
+Ghidra isn't installed, so the built-in decompiler stands in. Get it in Settings → Engines.	Ghidra n'est pas installé, le décompilateur intégré le remplace donc. Obtenez-le dans Réglages → Moteurs.
+None	Aucune
+No AI (built-in engines only)	Pas d'IA (moteurs intégrés seulement)
+Set up a brain…	Configurer un cerveau…
+Which AI answers your questions	Quelle IA répond à vos questions
+about ${n}	environ {n} $
+AI cost	Coût de l'IA
+AI cost (estimate)	Coût de l'IA (estimation)
+AI cost (part estimate)	Coût de l'IA (estimation partielle)
+{cost} (estimate)	{cost} (estimation)
+The coding agent's estimate at API prices, not your bill. A subscription isn't charged this.	Estimation de l'agent de code au tarif de l'API, pas votre facture. Un abonnement n'est pas facturé ce montant.
+{n} tokens	{n} jetons
+{in} in, {out} out.	{in} en entrée, {out} en sortie.
+Of this, {cost} was charged to an API key.	Dont {cost} facturés sur une clé d'API.
+Seen it: read directly from the file, page or capture.	Vu : lu directement dans le fichier, la page ou la capture.
+Worked it out: computed step by step from things we saw.	Déduit : calculé pas à pas à partir de ce que nous avons vu.
+Best guess: a reasonable reading, but not proven.	Meilleure hypothèse : une lecture raisonnable, mais non prouvée.
+Unknown: we couldn't establish this yet.	Inconnu : nous n'avons pas encore pu l'établir.
+Nothing new for {time}. Long steps can be quiet; if it stays like this, press Pause.	Rien de nouveau depuis {time}. Les longues étapes peuvent être silencieuses ; si cela dure, appuyez sur Pause.
+Still working. Bigger jobs can take a few minutes.	Toujours en cours. Les grosses tâches peuvent prendre quelques minutes.
+This is a big one. You can leave this open and come back later.	C'est une grosse tâche. Vous pouvez laisser ceci ouvert et revenir plus tard.
+Show the console	Afficher la console
+Command palette (Ctrl/⌘ K)	Palette de commandes (Ctrl/⌘ K)
+Projects and builds	Projets et constructions
+Reload	Recharger
+Filter…	Filtrer…
+Filter	Filtrer
+Nothing open	Rien d'ouvert
+Open a file or drop one here.	Ouvrez un fichier ou déposez-en un ici.
+Open…	Ouvrir…
+Loading…	Chargement…
+Not available yet	Pas encore disponible
+Nothing found	Rien trouvé
+No matches	Aucun résultat
+Open another target	Ouvrir une autre cible
+No targets	Aucune cible
+Open files, folders or apps; you can have several open at once.	Ouvrez des fichiers, des dossiers ou des applications ; vous pouvez en avoir plusieurs ouverts à la fois.
+Open something to start	Ouvrez quelque chose pour commencer
+A program, an app bundle, an APK, a JavaScript bundle, a folder… or drop it on the window.	Un programme, un paquet d'application, un APK, un bundle JavaScript, un dossier… ou déposez-le sur la fenêtre.
+Open a folder…	Ouvrir un dossier…
+Tip: press Ctrl/⌘ K to run any tool.	Astuce : appuyez sur Ctrl/⌘ K pour lancer n'importe quel outil.
+isn't available yet	n'est pas encore disponible
+This view arrives with the next engines. The Hex and Result views work today.	Cette vue arrivera avec les prochains moteurs. Les vues Hexa et Résultat fonctionnent déjà.
+Pick something on the left	Choisissez un élément à gauche
+Choose a function, string or section to see it here.	Choisissez une fonction, une chaîne ou une section pour l'afficher ici.
+Working…	En cours…
+A folder has no bytes of its own	Un dossier n'a pas d'octets propres
+Open one of the files inside it to see its bytes.	Ouvrez l'un de ses fichiers pour voir ses octets.
+Go to offset (0x…)	Aller à l'offset (0x…)
+No result yet	Pas encore de résultat
+Run a tool from the command palette (Ctrl/⌘ K), or pick a finding in the Evidence panel.	Lancez un outil depuis la palette de commandes (Ctrl/⌘ K), ou choisissez une découverte dans le panneau Preuves.
+Inspector	Inspecteur
+Evidence	Preuves
+Unknowns	Inconnues
+Selection	Sélection
+Ask the agent about this	Interroger l'agent à ce sujet
+What does {what} do?	Que fait {what} ?
+Target	Cible
+Kind	Type
+Size	Taille
+Path	Chemin
+Nothing selected	Rien de sélectionné
+Details about the selected item appear here.	Les détails de l'élément sélectionné apparaissent ici.
+Evidence ledger	Registre des preuves
+No evidence yet	Pas encore de preuve
+Every finding is saved here with how sure we are.	Chaque découverte est enregistrée ici avec notre degré de certitude.
+No open questions	Aucune question ouverte
+Things we couldn't establish yet are listed here, with what would settle them.	Ce que nous n'avons pas encore pu établir est listé ici, avec ce qui permettrait de trancher.
+Jobs ({n_jobs})	Tâches ({n_jobs})
+Jobs	Tâches
+Agent	Agent
+Log	Journal
+Hide the console	Masquer la console
+No jobs yet. Long tasks show their progress here, and you can cancel them.	Aucune tâche pour l'instant. Les longues tâches affichent ici leur progression, et vous pouvez les annuler.
+Clear finished	Effacer les terminées

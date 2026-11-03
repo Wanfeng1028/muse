@@ -1,0 +1,37 @@
+[package]
+name = "craft-anything-platform"
+description = "Native platform services for Craft Anything: owned processes, capture, sandbox, engine store"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+craft-anything-evidence = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+process-wrap = { version = "10", default-features = false, features = ["std", "process-group", "job-object", "kill-on-drop", "creation-flags"] }
+# Process capture under a pseudo-terminal (safe public APIs; we write no unsafe).
+portable-pty = "0.9"
+vt100 = "0.16"
+
+# Window screenshots of a running program (safe API). Windows and macOS only for now: on Linux it
+# needs PipeWire, Wayland/GBM, XCB and clang to build (ROADMAP R2.4).
+[target.'cfg(any(windows, target_os = "macos"))'.dependencies]
+xcap = "0.9"
+
+[target.'cfg(unix)'.dependencies]
+nix = { version = "0.31", default-features = false, features = ["signal", "process"] }
+
+[target.'cfg(windows)'.dependencies]
+# Only for the creation-flags type process-wrap takes (already in the tree through it).
+windows = { version = "0.62", default-features = false, features = ["Win32_System_Threading"] }
+
+[dev-dependencies]
+tempfile = "3"

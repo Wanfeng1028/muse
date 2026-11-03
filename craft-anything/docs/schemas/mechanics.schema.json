@@ -1,0 +1,72 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Mechanics",
+  "description": "Every value that shapes how the rebuild plays.",
+  "type": "object",
+  "properties": {
+    "values": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/Mechanic"
+      }
+    },
+    "version": {
+      "type": "integer",
+      "format": "uint32",
+      "default": 1,
+      "minimum": 0
+    }
+  },
+  "required": [
+    "values"
+  ],
+  "$defs": {
+    "Mechanic": {
+      "description": "One value: \"walk speed\" is 4.5 m/s, from a function in the original.",
+      "type": "object",
+      "properties": {
+        "estimated": {
+          "description": "Guessed rather than found (from pictures, play or documentation).",
+          "type": "boolean"
+        },
+        "group": {
+          "description": "What it belongs to (\"movement\", \"rifle\"), or empty.",
+          "type": "string"
+        },
+        "name": {
+          "description": "What it is, as `MECHANICS.md` names it (\"walk speed\", \"rifle damage\").",
+          "type": "string"
+        },
+        "source": {
+          "description": "Where it came from: a file in the original's folder, a function address or an evidence\nid. Empty for an estimate.",
+          "type": "string"
+        },
+        "unit": {
+          "type": "string"
+        },
+        "value": {
+          "$ref": "#/$defs/MechanicValue"
+        }
+      },
+      "required": [
+        "name",
+        "value"
+      ]
+    },
+    "MechanicValue": {
+      "description": "A number, a piece of text (\"hold to crouch\") or a switch.",
+      "anyOf": [
+        {
+          "type": "boolean"
+        },
+        {
+          "type": "number",
+          "format": "double"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    }
+  }
+}

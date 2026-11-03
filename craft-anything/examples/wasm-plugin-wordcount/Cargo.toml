@@ -1,0 +1,22 @@
+[package]
+name = "wasm-plugin-wordcount"
+version = "0.1.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+publish = false
+description = "An example Craft Anything WASM plugin: one tool that counts words."
+
+# Not part of the Craft Anything workspace: it builds for wasm32-unknown-unknown on its own.
+[workspace]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+wit-bindgen = "0.63"
+serde_json = "1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

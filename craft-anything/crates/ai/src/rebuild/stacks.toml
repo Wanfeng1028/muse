@@ -1,0 +1,84 @@
+# The stacks Craft Anything builds with: what the builder is told for each, and the phrases that
+# ask for one by name. Placeholders in `steps`: {editor} (the game engine's editor), {player} and
+# {ext} (Unity's player target and file extension on this computer). A stack without `steps` gets
+# the generic instruction. Add a stack here; kinds name their default stack by `name`.
+# `asked_by` phrases are matched on the request's lower-case words with punctuation turned into
+# spaces and padded with spaces ("Next.js," reads " next js "), first stack in this order wins.
+#
+# `uses` lists package.json dependencies that show a build was made with the stack, so a build
+# left to the builder ("Builder's choice") is recorded under the stack it really used.
+#
+# A `[[library]]` is a component or styling library asked for on top of a stack ("shadcn",
+# "tailwind"): its `steps` are added to the stack's for the `stacks` it works with.
+
+[[stack]]
+name = "Builder's choice"
+steps = "Use what their request names; otherwise choose the stack yourself: the one that best fits the request and the original. If the request names none and the capture shows what the original is built with (the script and stylesheet addresses in capture.json and page.html, for example /_next/ for Next.js or /_nuxt/ for Nuxt), use the same. For a website, create the project in app/ with a \"build\" script in package.json, then run `npm install` and `npm run build` from app/ until it succeeds: the output must be static files in app/dist, app/out or app/build (index.html at its top and each other page at its own path) that work when served as static files."
+
+[[stack]]
+name = "Electron"
+asked_by = [" electron "]
+uses = ["electron"]
+steps = "Use Electron, with TypeScript or JavaScript (a bundler such as Vite is fine). Create the project in app/: package.json with electron as a devDependency, \"main\" set to the main-process file and a \"build\" script that compiles or bundles everything and exits without opening a window (for plain JavaScript, `node --check` on the main file is enough). Keep contextIsolation on and nodeIntegration off, and give the page what it needs through a preload script and IPC. For --screenshot, set backgroundThrottling to false, wait for the page to finish loading and about two seconds rather than counting requestAnimationFrame frames (a window that opens behind others may get none), then save win.webContents.capturePage(). Craft Anything starts the app with the Electron that `npm install` puts in node_modules, with app/ as its argument, so run `npm install` and `npm run build` from app/ until both succeed."
+
+[[stack]]
+name = "Next.js + TypeScript"
+asked_by = [" nextjs ", " next js ", " use next ", " using next ", " in next "]
+uses = ["next"]
+steps = "Use Next.js (App Router) + React + TypeScript, exported as a static site. Create the project files directly in app/: package.json with next, react and react-dom and the script \"build\": \"next build\"; next.config.mjs with output: 'export', trailingSlash: true and images: { unoptimized: true }; tsconfig.json; src/app/layout.tsx and src/app/page.tsx, with one folder per other page under src/app/. Load the original's fonts with next/font. Use nothing a static export can't serve (API routes, server actions, middleware, dynamic routes without generateStaticParams). Then run `npm install` and `npm run build` from app/ until it succeeds; the output must be app/out and must work when served as static files."
+
+[[stack]]
+name = "Python"
+asked_by = [" in python", " with python"]
+
+[[stack]]
+name = "React + TypeScript (Vite)"
+asked_by = [" in typescript", " in react", " with react", " in javascript", " vite "]
+uses = ["vite"]
+steps = "Use Vite + React + TypeScript. Create the project files directly in app/ (package.json with scripts \"build\": \"tsc -b && vite build\" or \"vite build\", vite.config.ts with base './', index.html, src/). Then run `npm install` and `npm run build` from app/ until it succeeds; the output must be app/dist and must work when served as static files."
+
+[[stack]]
+name = "Plain HTML and CSS"
+asked_by = [" html and css ", " plain html ", " no frameworks ", " no javascript ", " no build step ", " static html "]
+steps = "Use plain HTML, CSS and a little JavaScript only if the page needs it: no framework, no bundler, no build step. Create the project directly in app/: index.html at the top, one .css file (and .js only if needed) beside it, with each other page at its own path (about.html, contact.html). Link the stylesheet with a relative path. Then check that the pages open and look right when served as static files; there is nothing to build."
+
+[[stack]]
+name = "Rust (console)"
+uses = []
+steps = "Use Rust for a console program: create a cargo project in app/ (Cargo.toml, src/main.rs), read its arguments (std::env::args, or clap if it has many options), print to standard output and standard error the way the original does, exit with the original's exit codes, and draw no window. Run `cargo build` until it succeeds."
+
+[[stack]]
+name = "Rust + egui (eframe)"
+steps = "Use Rust with eframe/egui for the window and UI. Create a cargo project in app/ and run `cargo build` until it succeeds."
+
+[[stack]]
+name = "Rust + macroquad"
+engine = "rust"
+steps = "Use Rust with macroquad (a small game library). Create a cargo project in app/ (Cargo.toml, src/main.rs), keep assets procedural (shapes, colours) unless the person provides some, and run `cargo build` until it succeeds."
+
+[[stack]]
+name = "Unity"
+engine = "unity"
+steps = "Use Unity (the editor is {editor}). Create the project in app/: Assets/, Packages/manifest.json (built-in packages unless you need more) and ProjectSettings/ProjectVersion.txt with the editor's version. Write the game in C# under Assets/Scripts/. Scenes are hard to write by hand, so build them from code: an editor script Assets/Editor/CraftBuild.cs with a static `Build()` method that creates the scene(s) under Assets/Scenes/, adds them to the build settings and builds a {player} player to app/Build/Game.{ext} with BuildPipeline.BuildPlayer, calling EditorApplication.Exit(1) when the build fails. Build with `\"{editor}\" -batchmode -quit -nographics -projectPath app -executeMethod CraftBuild.Build -logFile app/Logs/build.log` and read that log when it fails. The first run imports the project and takes a few minutes."
+
+[[stack]]
+name = "Unreal Engine"
+engine = "unreal"
+steps = "Use Unreal Engine (the editor is {editor}) with C++: Blueprint and level files are binary and can't be written by hand. Create app/Game.uproject (its EngineAssociation set to the installed version, one C++ module) and Source/Game/ with the module, its Build.cs and the Target.cs files. Make levels from code (a GameMode that spawns the geometry, lights and actors at start, with a small empty default map) rather than editing .umap files. Craft Anything packages it with Unreal's BuildCookRun into app/Build after each round; the first package takes a long time, so compile your C++ with the engine's build tool first and fix errors there."
+
+[[stack]]
+name = "Godot"
+engine = "godot"
+steps = "Use Godot (the editor is {editor}) with GDScript. Create the project in app/: project.godot (config_version=5, with run/main_scene set), scenes as .tscn text files and scripts as .gd files; Godot's files are plain text, so write scenes directly. Check it with `\"{editor}\" --headless --path app --import` and then `\"{editor}\" --headless --path app --quit-after 120`, and fix every SCRIPT ERROR or ERROR line."
+
+[[library]]
+name = "shadcn/ui"
+asked_by = [" shadcn ", " shadcnui "]
+stacks = ["Next.js + TypeScript", "React + TypeScript (Vite)", "Electron", "Builder's choice"]
+steps = "Build the interface from shadcn/ui components, styled with Tailwind CSS: set it up in app/ with the shadcn CLI, non-interactively (`npx shadcn@latest init --yes --defaults` once package.json and Tailwind are in place), add each component you use with `npx shadcn@latest add --yes <names>` (button, card, navigation-menu, sheet for the phone menu, accordion, tabs…), and use them for every matching part of the page rather than hand-made ones. Then make them look like the original: set the theme's CSS variables (background, foreground, primary, muted, accent, border, ring, radius) to the original's colours and corner radii from capture.json, not shadcn's defaults."
+
+[[library]]
+name = "Tailwind CSS"
+asked_by = [" tailwind ", " tailwindcss "]
+stacks = ["Next.js + TypeScript", "React + TypeScript (Vite)", "Electron", "Builder's choice"]
+steps = "Style with Tailwind CSS (v4, through @tailwindcss/postcss for Next.js or @tailwindcss/vite for Vite), with the original's colours, fonts, text sizes, spacing and breakpoints from capture.json as theme tokens in an @theme block."

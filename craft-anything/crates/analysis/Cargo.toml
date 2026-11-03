@@ -1,0 +1,21 @@
+[package]
+name = "craft-anything-analysis"
+description = "Analyzers that turn parsed targets into evidence for Craft Anything"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+craft-anything-evidence = { workspace = true }
+craft-anything-formats = { workspace = true }
+craft-anything-disasm = { workspace = true }
+craft-anything-js = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+
+[dev-dependencies]
+craft-anything-testkit = { workspace = true }

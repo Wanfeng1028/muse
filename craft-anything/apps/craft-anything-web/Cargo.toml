@@ -1,0 +1,32 @@
+[package]
+name = "craft-anything-web"
+description = "Craft Anything in the browser: drop a file to see what it is (eframe web runner, WebGPU with WebGL2 fallback)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "craft-anything-web"
+path = "src/main.rs"
+
+[dependencies]
+# Only the wasm-safe crates (`cargo xtask wasm`): no engine, platform, AI or desktop UI.
+craft-anything-evidence = { workspace = true }
+craft-anything-formats = { workspace = true }
+craft-anything-analysis = { workspace = true }
+egui = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+# `wgpu` pulls egui-wgpu's defaults: WebGPU plus the WebGL2 fallback.
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit"] }
+# Open button: the browser's file picker (an <input type="file">, read in memory).
+rfd = { workspace = true }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+web-sys = { version = "0.3", features = ["Window", "Document", "Element", "HtmlCanvasElement", "Location"] }

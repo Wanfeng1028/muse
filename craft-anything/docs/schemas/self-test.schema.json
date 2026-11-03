@@ -1,0 +1,49 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SelfTestReport",
+  "description": "A self-test report.",
+  "type": "object",
+  "properties": {
+    "steps": {
+      "description": "The core loop's steps (\"move\", \"act\", \"hud\") as the game measured them.",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/SelfTestStep"
+      }
+    },
+    "version": {
+      "description": "The format version ([`SELF_TEST_VERSION`]); missing means 1.",
+      "type": "integer",
+      "format": "uint32",
+      "default": 1,
+      "minimum": 0
+    }
+  },
+  "required": [
+    "steps"
+  ],
+  "$defs": {
+    "SelfTestStep": {
+      "description": "One step of the core loop.",
+      "type": "object",
+      "properties": {
+        "detail": {
+          "description": "What was measured (\"walked 3.1 m forward\").",
+          "type": "string",
+          "default": ""
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "step": {
+          "description": "\"move\", \"act\" or \"hud\" (any case).",
+          "type": "string"
+        }
+      },
+      "required": [
+        "step",
+        "passed"
+      ]
+    }
+  }
+}

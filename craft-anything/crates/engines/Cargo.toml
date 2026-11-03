@@ -1,0 +1,37 @@
+[package]
+name = "craft-anything-engines"
+description = "Adapters for optional external engines (Ghidra, adb, Chromium, Frida, JADX…) used by Craft Anything"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+craft-anything-evidence = { workspace = true }
+craft-anything-platform = { workspace = true }
+craft-anything-formats = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+thiserror = { workspace = true }
+ureq = "3"
+# The same version the engine crate uses (fal.ai sends files as base64 in some answers).
+base64 = "0.22"
+# The WebSocket handshake of the CDP client.
+sha1 = "0.10"
+toml = { workspace = true }
+# WASM component plugins (R1.8), only with the `wasm-plugins` feature: a large build, so off by
+# default. Safe API; no unsafe in our code.
+wasmtime = { version = "49", optional = true, default-features = false, features = ["std", "runtime", "cranelift", "component-model", "wat"] }
+
+[features]
+wasm-plugins = ["dep:wasmtime"]
+
+[dev-dependencies]
+tempfile = "3"
+craft-anything-testkit = { workspace = true }

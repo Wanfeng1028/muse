@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>Craft Anything</title>
+  <link data-trunk rel="rust" data-bin="craft-anything-web" data-cargo-profile="web-release" data-wasm-opt="z" data-wasm-opt-params="--enable-bulk-memory --enable-bulk-memory-opt --enable-nontrapping-float-to-int --enable-sign-ext --enable-reference-types --enable-multivalue" data-weak-refs />
+  <style>
+    html, body { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #0e0e0f; }
+    #craft_anything_canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+    #craft_anything_loading { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
+      color: #a9a9b2; font: 14px system-ui, sans-serif; pointer-events: none; }
+  </style>
+</head>
+<body>
+  <canvas id="craft_anything_canvas"></canvas>
+  <div id="craft_anything_loading">Loading Craft Anything&hellip;</div>
+</body>
+</html>

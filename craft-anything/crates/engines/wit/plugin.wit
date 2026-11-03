@@ -1,0 +1,50 @@
+// The plugin API, versioned with semver: plugins built against any 0.1.x load in a host that
+// speaks 0.1.y; patch versions only add optional JSON fields (ignore fields you don't know).
+// Details: docs/extending.md, "Plugin API versions".
+package craft-anything:plugin@0.1.0;
+
+/// Tools a plugin adds to Craft Anything. The plugin imports nothing: it gets no files, network,
+/// environment or clock, and each call runs in a fresh instance with a work and memory limit.
+interface tools {
+    /// The tools it offers, as a JSON array:
+    /// [{"name": "count_words", "title": "Count words", "description": "…",
+    ///   "input_schema": {"type": "object", "properties": {…}}}]
+    /// Names are lower-case letters, digits and `_`; the tool's id is `<plugin id>_<name>`.
+    describe: func() -> string;
+
+    /// Run the tool `name` with its JSON input. Answer `{"ok": <any JSON>}` or
+    /// `{"error": "what went wrong, in plain words"}`.
+    call: func(name: string, input: string) -> string;
+}
+
+/// Ways of judging a build, run after the built-in checks of each round.
+interface checks {
+    /// The checks it offers, as a JSON array:
+    /// [{"name": "has_readme", "title": "Has a README", "description": "…",
+    ///   "kinds": ["app", "game"], "extensions": ["md"]}]
+    /// `kinds`: the kinds of project it judges (website, app, game…); empty or missing means all.
+    /// `extensions`: the files whose text it wants to read; the rest come as path and size only.
+    describe: func() -> string;
+
+    /// Judge the build. `build` is JSON:
+    /// {"request": "…", "kind": "game", "stack": "Godot", "round": 1,
+    ///  "files": [{"path": "src/main.rs", "size": 1200, "text": "…"}], "truncated": false}
+    /// with paths relative to the build folder and `text` only for the extensions asked for (and
+    /// small enough). Answer {"passed": true, "similarity": 87.5, "summary": "…"} (similarity
+    /// 0-100, optional) or {"error": "…"}. A failed check is shown to the builder to fix.
+    run: func(name: string, build: string) -> string;
+}
+
+/// A plugin exports `tools`, `checks`, or both; these worlds are for generating bindings.
+world plugin {
+    export tools;
+}
+
+world checks-plugin {
+    export checks;
+}
+
+world full-plugin {
+    export tools;
+    export checks;
+}

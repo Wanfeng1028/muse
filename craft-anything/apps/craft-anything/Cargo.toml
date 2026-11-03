@@ -1,0 +1,30 @@
+[package]
+name = "craft-anything"
+description = "Craft Anything: find out how any software works, then craft your own"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+build = "build.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+craft-anything-engine = { workspace = true }
+craft-anything-platform = { workspace = true }
+craft-anything-ai = { workspace = true }
+craft-anything-setup = { workspace = true }
+craft-anything-ui-egui = { workspace = true }
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "wayland", "x11", "persistence"] }
+log = { workspace = true }
+# The one dialog the app shows itself: when its window can't open, so a start that shows nothing
+# still says why (#166).
+rfd = { workspace = true }
+
+[features]
+wasm-plugins = ["craft-anything-engine/wasm-plugins"]
+
+[build-dependencies]
+# Icon + VERSIONINFO for craft-anything.exe; build.rs only uses it when targeting Windows.
+winresource = "0.1"

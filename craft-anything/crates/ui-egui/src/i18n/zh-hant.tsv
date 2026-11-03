@@ -1,0 +1,1367 @@
+# zh-hant: original Chinese UI translations. Licensed MIT OR Apache-2.0.
+# UTF-8: English source<TAB>translation. Keep placeholders and escapes intact.
+ GB	 GB
+ and {n} more	，另有 {n} 項
+ {ascii}	 {ascii}
+ · ${c:.2}	 · ${c:.2}
+ · ssh {h}	 · ssh {h}
+(1 picture attached)	(已附上 1 張圖片)
+({n} pictures attached)	(已附加 {n} 張圖片)
+, ${c:.4}	, ${c:.4}
+.NET application graph	.NET 應用程式關係圖
+.NET apps	.NET 應用程式
+.NET assembly overview	.NET 組件概觀
+.NET native calls	.NET 原生呼叫
+.NET types and methods	.NET 型別與方法
+/btw {}	/btw {}
+0x… or number	0x… 或數字
+A .NET program (C#, F# or VB)	.NET 程式 (C#、F# 或 VB)
+A DOS program	DOS 程式
+A Java program	Java 程式
+A Linux (or Unix) program	Linux (或 Unix) 程式
+A Mac or iPhone program	Mac 或 iPhone 程式
+A SQLite database (how an app stores its data)	SQLite 資料庫 (應用程式儲存資料的方式)
+A WebAssembly module (code that runs in a browser)	WebAssembly 模組 (在瀏覽器中執行的程式碼)
+A Windows program	Windows 程式
+A ZIP archive	ZIP 封存檔
+A bundle of ready-made code that many programs share.	供多個程式共用的一組現成程式碼。
+A coding agent such as Claude Code builds it, and an AI answers your questions in plain words. Change this any time in Settings → AI.	由 Claude Code 等程式設計代理負責建置，AI 用淺白的語言回答你的問題。你可以隨時在設定 → AI 中變更。
+A command's output shows here when it finishes.	命令完成後，輸出將顯示在這裡。
+A copy to try something else from here.	建立副本，從這裡嘗試其他方案。
+A file of machine code that a computer can run directly, like an .exe or an app.	包含機器碼、可由電腦直接執行的檔案，例如 .exe 或應用程式。
+A file that a computer can run as a program.	電腦可以作為程式執行的檔案。
+A file that links packed web code back to the original, readable source files.	將封裝後的網頁程式碼對應回原始可讀原始碼檔案的檔案。
+A file we don't recognise yet	尚無法識別的檔案
+A first look at a file you're unsure about, without running it.	初步查看你不放心的檔案，無須執行它。
+A folder	資料夾
+A folder has no bytes of its own	資料夾本身沒有可檢視的位元組
+A free reverse-engineering tool from the NSA. Deep mode uses it for extra detail; Clean room mode never does.	NSA 提供的免費逆向工程工具。深度模式用它取得更多細節；淨室模式不使用它。
+A frozen copy (recommended)	凍結副本 (建議)
+A frozen copy takes {size}. That's a lot of space: a light copy takes {light}.	凍結副本佔用 {size}，需要較多空間；輕量副本佔用 {light}。
+A frozen copy takes {size}; a light copy takes {light}.	凍結副本佔用 {size}；輕量副本佔用 {light}。
+A game	遊戲
+A game's files	遊戲檔案
+A light copy	輕量副本
+A locked room for running a program so it can't touch the rest of your computer.	執行程式的隔離空間，避免程式接觸電腦的其他部分。
+A map of which functions call which other functions.	顯示函式之間呼叫關係的圖。
+A name the program's author gave to a function or variable that survived in the file.	程式作者為函式或變數取的名稱，仍保留在檔案中。
+A named piece of a program that does one job, like "add two numbers" or "save the file".	程式中有名稱、負責某一項工作的程式碼片段，例如「將兩個數相加」或「儲存檔案」。
+A number that says where something is in a program's memory, like a house number.	表示某個內容在程式記憶體中位置的數字，類似門牌號碼。
+A piece of text stored inside a program, like a message, a web address or a file name.	儲存在程式中的文字，例如訊息、網址或檔案名稱。
+A program, an app bundle, an APK, a JavaScript bundle, a folder… or drop it on the window.	選擇程式、應用程式套件、APK、JavaScript 套件或資料夾…也可以將其拖到視窗中。
+A recording of network traffic	網路流量記錄
+A region of a program as it sits in memory while running.	程式執行時在記憶體中佔據的一塊區域。
+A region of a program file with one purpose: code, text, pictures, settings.	程式檔案中具有特定用途的區域，例如程式碼、文字、圖片或設定。
+A rule of thumb. Usually right, sometimes wrong, so we label the result as a best guess.	一種經驗判斷，通常正確，偶爾也會出錯，所以我們將結果標為推測。
+A saved, checkable record of something we found, with how sure we are and where we found it.	可儲存和查核的發現紀錄，包含可信度和發現位置。
+A script or web page	指令碼或網頁
+A set of commands a program offers to other programs.	程式提供給其他程式使用的一組命令。
+A simple snake game	簡單的貪食蛇遊戲
+A small download (under 200 MB). Free, no account needed.	下載量較小 (不到 200 MB)。免費，無須帳戶。
+A small file that lists what an app is called, what it needs and what it's allowed to do.	一個小檔案，列出應用程式名稱、所需條件及允許執行的操作。
+A smart contract (EVM bytecode)	智慧合約 (EVM 位元組碼)
+A way of writing bytes as two-character codes (00 to FF). The rawest view of a file.	用兩個字元的編碼 (00 到 FF) 表示位元組的方式，顯示檔案最原始的內容。
+A way to build desktop apps out of web pages. The app is basically a website with its own browser.	一種使用網頁建置桌面應用程式的方式，應用程式本質上就是自帶瀏覽器的網站。
+A website	網站
+A website for my bakery	給我的麵包店做個網站
+AI	AI
+AI cost	AI 費用
+AI cost (estimate)	AI 費用 (估算)
+AI cost (part estimate)	AI 費用 (部分為估算)
+AI model file	AI 模型檔案
+AI name	AI 名稱
+AI use this session	本次工作階段的 AI 用量
+API boundary	API 邊界
+API key	API 金鑰
+API key (stored in your system keychain)	API 金鑰 (儲存在系統鑰匙圈中)
+API key, if it needs one	API 金鑰 (如需要)
+About 10 GB. Free for personal use with a Unity account.	約 10 GB。個人使用免費，需要 Unity 帳戶。
+About 60 GB, an Epic Games account, and Visual Studio's C++ tools.	約 60 GB，需要 Epic Games 帳戶和 Visual Studio 的 C++ 工具。
+Add	新增
+Add Visual Studio's C++ tools	新增 Visual Studio 的 C++ 工具
+Add a brain	新增 AI
+Add a fal.ai key	新增 fal.ai 金鑰
+Add a folder…	新增資料夾…
+Add a plugin	新增外掛
+Add an AI brain and I'll read this evidence for you, answer follow-up questions and point at the proof.	新增 AI 助手後，我就能為你解讀這些證據、回答後續問題，並指出依據。
+Add an AI by its address	依位址新增 AI
+Add more info. The builder reads it at its next step.	補充更多資訊。建置助手會在下一步讀取。
+Add pictures	新增圖片
+Add pictures of the original	新增原作圖片
+Add pictures of the original (optional: screenshots help it look right)	新增原作圖片 (選用：螢幕截圖有助於還原外觀)
+Add to a running build	補充正在進行的建置
+Added	已新增
+Added {n} picture(s). The builder uses them from your next change.	已新增 {n} 張圖片。建置助手會從你下次提出修改時開始使用。
+Address to file offset	位址轉檔案偏移
+Adds its decompiler to Deep mode. Craft Anything can download and set it up for you.	將其反編譯器加入深度模式。Craft Anything 可以為你下載並設定。
+Advanced	進階
+After installing one, look for it again.	安裝後，請重新尋找。
+Agent	代理程式
+Allow generated assets	允許產生素材
+Allow once	允許一次
+Allowed for this project	此專案中允許
+Allowed for this project.	已對此專案授權。
+Allowed in	允許範圍
+Allowed once	已允許一次
+Allowed once.	已允許本次操作。
+Also list projects from	同時列出這些位置的專案
+Always for this project	此專案中一律允許
+An Android app	Android 應用程式
+An Android app package: the file you install on a phone.	Android 應用程式安裝套件，即安裝到手機上的檔案。
+An Apple settings file (plist)	Apple 設定檔 (plist)
+An app	應用程式
+An app or a file	應用程式或檔案
+Analyse a JavaScript app	分析 JavaScript 應用程式
+Analyse a page's JavaScript	分析網頁的 JavaScript
+Android app code (DEX)	Android 應用程式碼 (DEX)
+Android app components	Android 應用程式元件
+Android app package	Android 應用程式套件
+Android apps	Android 應用程式
+Android class	Android 類別
+Android method bytecode	Android 方法位元組碼
+Android resources	Android 資源
+Annotate function	註記函式
+Another build is working, so this one waits its turn.	另一個建置正在進行，此建置正在排隊。
+Answer a project's question	回答專案的問題
+Answer any of them in a message below.	在下方傳送訊息，回答其中任意問題。
+Answered by {name}	由 {name} 回答
+Answers come from {brain}. To build, set up a coding agent in Settings → AI.	由 {brain} 回答問題。要進行建置，請在設定 → AI 中設定程式設計代理。
+App	應用程式
+App details on device	裝置上的應用程式詳細資訊
+Apple apps	Apple 應用程式
+Approve an agent action	核准代理操作
+Apps and games: keep refining until they look this alike to your pictures. Off, the likeness is only reported.	應用程式和遊戲：持續改進，直到與參考圖片達到此相似度。關閉後僅回報相似度。
+Architectures	架構
+Archive	封存檔
+Archives	封存檔
+Ask a question	提問
+Ask about a build	詢問建置相關問題
+Ask about the build	詢問建置情況
+Ask about the build, e.g. "where are the latest files?" Nothing changes and no build starts.	詢問建置相關問題，例如「最新檔案在哪裡？」這不會修改內容或啟動建置。
+Ask about this game	詢問這款遊戲
+Ask anything, e.g. "What does this program do?"	隨意提問，例如「這個程式有什麼用途？」
+Ask before running anything	執行前先詢問
+Ask each time	每次詢問
+Ask first	先詢問我
+Ask for a change	提出修改
+Ask for a change, e.g. "bigger buttons" or "add a dark mode"	提出修改，例如「把按鈕變大」或「新增深色模式」
+Ask for a change, e.g. "make it faster" or "add a high-score table"	提出修改，例如「加快速度」或「新增最高分排行榜」
+Ask for a change, e.g. "make the header blue" or "add a contact form"	提出修改要求，例如「將頁首改成藍色」或「新增聯絡表單」
+Ask in your own words. Every answer shows how sure we are, and the proof.	用自己的話提問。每個回答都會說明可信程度，並提供證據。
+Ask me	詢問我
+Ask the agent about this	向代理程式詢問此內容
+Ask the agent about this target. It cites evidence for every claim.	向代理詢問此目標的情況。它會為每項結論引用證據。
+Ask the agent…	詢問代理…
+Ask the person	詢問使用者
+Ask: "How does the % key work?"	提問：「% 鍵是如何運作的？」
+Ask: "Is it safe to run?"	試著問：「執行它安全嗎？」
+Ask: "What does it send over the internet?"	提問：「它會透過網際網路傳送什麼？」
+Asking for its models…	正在取得可用模型…
+Asset catalog	資源目錄
+At most this many rounds of fixes after the first build.	首次建置後，最多進行這麼多輪修正。
+Attach pictures	附上圖片
+Attach pictures (or drop them here)	附加圖片 (或拖到這裡)
+Auto mode	自動模式
+Automatic	自動
+Automatic ({name})	自動 ({name})
+Back	返回
+Best guess	推測
+Best guess: a reasonable reading, but not proven.	推測：解釋合理，但尚未證實。
+Binary layout	二進位配置
+Blocked	受阻
+Bookmark	新增書籤
+Budget for a new project	新專案預算
+Bug report	錯誤報告
+Build	建置
+Build a rebuild ledger	建立重建紀錄表
+Build a stand-in backend	建置替代後端
+Build with	建置方式
+Build with this	用它建置
+Build with {name}	使用 {name} 建置
+Build with {name} instead	改用 {name} 建置
+Build without it	不使用它，繼續建置
+Builder's questions:	建置助手的問題：
+Building	建置中
+Building needs a coding agent on this computer (Claude Code, Codex or Gemini CLI: install one and sign in to it once in its own window), or an AI with an API key. Craft Anything never sees your account.	建置需要此電腦上的程式設計代理程式 (Claude Code、Codex 或 Gemini CLI：安裝其中一個，並在其視窗中登入一次)，或設定了 API 金鑰的 AI。Craft Anything 不會接觸你的帳戶。
+Building needs a coding agent such as Claude Code, or an AI with an API key.	建置需要 Claude Code 等程式設計代理，或設定了 API 金鑰的 AI。
+Builds	建置
+Builds and answers may use it again.	建置和回答時可以再次使用它。
+Builds at once	同時建置數量
+Builds keep going without stopping to ask you before an action. The builder still never deletes outside its project, changes system settings or publishes anything, and stays within each project's asset budget.	建置會持續進行，不會在每次操作前停下詢問。建置助手仍不會刪除專案外的內容、修改系統設定或發佈任何內容，並遵守各專案的素材預算。
+Builds use this one. Click to choose automatically again.	建置時使用此助手。按一下可恢復自動選擇。
+Built by	建置助手
+Built with	建置工具
+Built with {stack}, as you asked, so no game engine is needed.	已依你的要求使用 {stack} 建置，因此不需要遊戲引擎。
+Call graph	呼叫圖
+Call path	呼叫路徑
+Call the build done	將建置標為完成
+Called done. A new message carries on from here.	已標為完成。傳送新訊息即可從這裡繼續。
+Cancel	取消
+Cancel: don't use this folder	取消：不使用此資料夾
+Capture a website for rebuilding	擷取網站用於重建
+Capture inventories	擷取清單
+Capture menus, dialogs and tabs	擷取選單、對話方塊和分頁
+Change	變更
+Change a setting	變更設定
+Change an AI's model	變更 AI 的模型
+Change how hard an AI thinks	變更 AI 的思考力度
+Change it	變更
+Change…	變更…
+Check	檢查
+Check .NET native calls	檢查 .NET 原生呼叫
+Check a rebuild claim	核驗重建結果聲明
+Check a scripted web session	檢查網頁工作階段指令碼
+Check an answer	檢查答案
+Check decompiled C#	檢查反編譯的 C#
+Check my build	檢查我的建置
+Check the JEB connection	檢查 JEB 連線
+Check the asset keys	檢查素材服務金鑰
+Check the setup	檢查設定
+Check {n}	檢查 {n}
+Check {n}: about {s}% like the original	第 {n} 次檢查：與原作約有 {s}% 相似
+Checked against Godot's official checksums before it's used.	使用前會對照 Godot 官方總和檢查碼進行驗證。
+Checking	檢查中
+Choose a file	選擇檔案
+Choose a folder…	選擇資料夾…
+Choose a function, string or section to see it here.	選取函式、字串或區段，即可在這裡檢視。
+Choose an AI's job	選擇 AI 的職責
+Choose the folder Ghidra is installed in.	選擇 Ghidra 的安裝資料夾。
+Choose what the builder's questions get	選擇如何處理建置助手的問題
+Choose what to recreate, say what you want, then press Start.	選擇要重現的對象，描述你的需求，然後點選開始。
+Choose…	選擇…
+Classes	類別
+Clean room	淨室
+Clean room / Deep	淨室 / 深度
+Clean room never reads the original's code, files or page source. Deep mode reads them with every tool Craft Anything has.	淨室模式從不讀取原作的程式碼、檔案或網頁原始碼。深度模式會使用 Craft Anything 的全部工具讀取它們。
+Clean room never reads the original's code, files or page source: it works from what you can see. Deep reads them with every tool, and with Ghidra when it's installed. Every finding records which was used.	淨室模式不會讀取原作的程式碼、檔案或網頁原始碼，只依據可見內容工作。深度模式會使用全部工具讀取這些內容，安裝 Ghidra 後也會使用它。每項發現都會記錄所用模式。
+Clean room on	淨室模式已開啟
+Clean room or Deep	淨室或深度模式
+Clean room: nothing inside the original is read. We work from what you can see: pictures, the page as a visitor sees it, and watching it run.	淨室：不讀取原作內部內容。我們依據你能看到的內容工作：圖片、訪客看到的網頁，以及執行時的表現。
+Clear finished	清除已完成項目
+Close	關閉
+Close a Frida session	關閉 Frida 工作階段
+Close a GDB session	關閉 GDB 工作階段
+Close a Rizin debug session	關閉 Rizin 偵錯工作階段
+Close a pinned build	關閉釘選的建置
+Close it	關閉它
+Close it first.	請先關閉它。
+Close the website	關閉網站
+Code reconstructed from a program that looks like the C language. Close to what the program does, but not its original source.	從程式重建出的類似 C 語言的程式碼，接近程式的實際行為，但不是其原始碼。
+Code signature	程式碼簽章
+Coding agent app	程式設計代理應用程式
+Command palette (Ctrl/⌘ K)	命令面板 (Ctrl/⌘ K)
+Commands:	指令：
+Compare WebAssembly interfaces	比較 WebAssembly 介面
+Compare module exports	比較模組匯出
+Compare two .NET builds	比較兩個 .NET 建置
+Compare two app versions	比較兩個應用程式版本
+Compare two artifacts	比較兩個產出檔
+Compare two evidence bundles	比較兩組證據
+Compare two functions	比較兩個函式
+Compare two page captures	比較兩次網頁擷取
+Compare two runs	比較兩次執行
+Compare two screenshots	比較兩張螢幕截圖
+Comparing and rebuilding	比較與重建
+Compiled Python file	編譯後的 Python 檔案
+Connect	連線
+Connect agent apps	連線至代理應用程式
+Connect to a browser	連線至瀏覽器
+Connect {name}	連線至 {name}
+Connected devices	已連線的裝置
+Connected phone	已連線的手機
+Continue	繼續
+Contradicted	存在矛盾
+Control-flow graph: a map of every path a function can take, like a flowchart.	控制流程圖：像流程圖一樣，展示函式可能執行的每一條路徑。
+Copies share the files it saves beside itself.	各副本共用它在自身目錄旁儲存的檔案。
+Copy a file off the phone	從手機複製檔案
+Copy a file to the phone	將檔案複製到手機
+Copy an app off the phone	從手機複製應用程式
+Copy the command	複製命令
+Copy the evidence id	複製證據 ID
+Couldn't add the pictures:	無法新增圖片：
+Couldn't answer:	無法回答：
+Couldn't attach the pictures:	無法附加圖片：
+Couldn't look through that folder.	無法檢視該資料夾。
+Couldn't open it.	無法開啟。
+Couldn't open the folder.	無法開啟資料夾。
+Couldn't open {}: {}	無法開啟 {}：{}
+Couldn't start a worker thread: {e}	無法啟動工作執行緒：{e}
+Couldn't start it.	無法啟動。
+Coverage unknown	涵蓋範圍未知
+Craft Anything	Craft Anything
+Craft Anything can't build with {engine}, so Unity is the closest match.	Craft Anything 無法使用 {engine} 建置，因此改用最接近的 Unity。
+Craft Anything or the computer closed while it was working. Everything so far is kept; Continue picks up where it stopped.	工作期間 Craft Anything 或電腦已關閉。目前的進度全部保留；選擇「繼續」可從停止處接著進行。
+Craft Anything reads its code and files with every tool it has. For your private use.	Craft Anything 使用全部工具讀取其程式碼和檔案。僅供你個人使用。
+Craft Anything reads the original's code, files and page source with every tool it has, and with Ghidra when it's installed.	Craft Anything 會使用全部工具讀取原作的程式碼、檔案和網頁原始碼；已安裝 Ghidra 時也會使用它。
+Craft Anything report.md	Craft Anything 報告.md
+Craft Anything's records, checks and anything it built in app/ are deleted. Your own files in the folder stay as they are.	將刪除 Craft Anything 的紀錄、檢查結果及 app/ 中建置的全部內容。資料夾中你自己的檔案保持不變。
+Crash dump	當機傾印
+Create the project	建立專案
+Critical	嚴重
+Cross-reference: a place in the program that uses or calls the thing you're looking at.	交叉參照：程式中使用或呼叫目前所查看內容的位置。
+Cross-references	交叉參照
+Cross-references: the places in the program that use or call the thing you're looking at.	交叉參照：程式中使用或呼叫目前所檢視內容的位置。
+Current document	目前文件
+Cursor address	游標位址
+Cursor function	游標所在函式
+Custom	自訂
+Cutter command	Cutter 命令
+DOS load image	DOS 載入映像
+Databases	資料庫
+Decide yourself	自行決定
+Decode a radio recording	解碼無線電記錄
+Decompile	反編譯
+Decompile Java with Vineflower	使用 Vineflower 反編譯 Java
+Decompile many	批次反編譯
+Decompile with JEB	使用 JEB 反編譯
+Deep	深度
+Deep mode now decompiles with Ghidra. The first look at a large program can take several minutes.	深度模式現在會使用 Ghidra 反編譯。首次分析大型程式可能需要幾分鐘。
+Deep mode on	深度模式已開啟
+Deep: we read its code, files and page source with every tool we have, and with Ghidra when it's installed. Click to switch.	深度：使用所有可用工具讀取其程式碼、檔案和網頁原始碼；已安裝 Ghidra 時也會使用它。按一下切換。
+Delete a project	刪除專案
+Delete it	刪除
+Delete the project	刪除專案
+Delete {name}?	刪除 {name}？
+Deleted.	已刪除。
+Deleted. Your own files are still in the folder.	已刪除。你自己的檔案仍保留在資料夾中。
+Delete…	刪除…
+Deliberately scrambled to make it hard to read, without changing what it does.	刻意打亂程式碼，使其難以閱讀，但不改變程式的行為。
+Demangle Swift symbols	還原 Swift 符號名稱
+Details	詳細資訊
+Details about the selected item appear here.	所選項目的詳細資訊將顯示在這裡。
+Detect	偵測
+Device details	裝置詳細資訊
+Device features	裝置功能
+Device folder	裝置資料夾
+Device log	裝置日誌
+Disassemble sBPF code	反組譯 sBPF 程式碼
+Disassembly	反組譯
+Disconnect agent apps	中斷代理應用程式連線
+Dismiss	關閉提示
+Dispatch metadata	分派中繼資料
+Display info	顯示資訊
+Do you have permission?	你有權限嗎？
+Does it talk to the internet?	它會連線到網際網路嗎？
+Does it track me?	它會追蹤我嗎？
+Don't allow	不允許
+Don't ask again (you can change this in Settings)	不再詢問 (可在設定中變更)
+Done	完成
+Download	下載
+Download Godot {v}	下載 Godot {v}
+Download Unity Hub	下載 Unity Hub
+Download and use Ghidra	下載並使用 Ghidra
+Download it from unity.com and install it.	從 unity.com 下載並安裝。
+Download it from unrealengine.com and install it.	從 unrealengine.com 下載並安裝。
+Download the Epic Games Launcher	下載 Epic Games Launcher
+Downloads keep going in the background.	下載會在背景繼續。
+Drive an app's screen	操作應用程式畫面
+Drop a calculator app (or any small program) on the window.	將計算機應用程式 (或任意小程式) 拖入視窗。
+Drop a file or app anywhere in this window.	將檔案或應用程式拖到此視窗的任意位置。
+Drop the file on the window. We only read it; nothing runs.	將檔案拖到視窗中。我們只讀取檔案，不會執行它。
+Drop to attach	放開以新增附件
+Drop to open it	放開以開啟
+Duplicate	建立副本
+Duplicate a project	複製專案
+Duplicate the project	建立專案副本
+Each answer says how sure we are: Seen it, Worked it out or Best guess.	每個回答都會說明可信程度：已觀察、已推導或推測。
+Edit a project file	編輯專案檔案
+Edit them in place	直接編輯
+Effort:	思考力度：
+Electron and JavaScript	Electron 與 JavaScript
+Electron fuses	Electron 功能開關
+Engines	引擎
+Engines and settings	引擎與設定
+Enter a full web address, like example.com or https://example.com/page.	輸入完整網址，例如 example.com 或 https://example.com/page。
+Enter to send · Shift+Enter for a new line	Enter 傳送 · Shift+Enter 換行
+Epic's own installer. It only opens if Epic's signature checks out.	Epic 官方安裝程式。僅在 Epic 簽章驗證通過後才會開啟。
+Essentials	基本工具
+Every build of this project.	此專案的每次建置。
+Every finding is saved here with how sure we are.	每項發現及其可信程度都會儲存在這裡。
+Every tool as well: a workbench with functions, bytes, references and evidence.	還可使用所有工具：在工作臺中檢視函式、位元組、參照和證據。
+Everything found so far, as a Markdown file.	將目前找到的所有內容儲存為 Markdown 檔案。
+Everything so far is kept. Continue picks up where it stopped.	目前的成果已全部保留。點選繼續即可從停止處接著進行。
+Evidence	證據
+Evidence ledger	證據紀錄
+Evidence so far	目前的證據
+Explain a function	說明函式
+Explain like I'm new	用新手能懂的方式說明
+Export a report	匯出報告
+Export a report (Markdown)	匯出報告 (Markdown)
+Export captured scripts	匯出擷取的指令碼
+Export evidence	匯出證據
+Export report	匯出報告
+Extract an archive	解壓縮封存檔
+Extract firmware	擷取韌體
+Extract with this	用此工具擷取
+Extracts	擷取內容
+File formats	檔案格式
+Files packed inside a file	檔案中打包的檔案
+Filter	篩選
+Filter by name	依名稱篩選
+Filter the files	篩選檔案
+Filter…	篩選…
+Find Android classes	尋找 Android 類別
+Find Java classes	尋找 Java 類別
+Find a call path	尋找呼叫路徑
+Find a game's files	尋找遊戲檔案
+Find an app	尋找應用程式
+Find in-page MCP tools	尋找頁面內的 MCP 工具
+Find it automatically	自動尋找
+Find out how any software works, then craft your own.	瞭解任何軟體的運作原理，再打造自己的版本。
+Find the original source line	尋找原始碼行
+Firmware regions	韌體區域
+Fold the sidebar	摺疊側邊欄
+Folders of projects, and projects started in a folder you picked. Removing one only takes it off the list.	專案所在的資料夾，以及在你指定的資料夾中建立的專案。移除時只會將其從清單中刪除。
+Follow the installer that opened. Come back here when it's done.	依已開啟的安裝程式完成安裝，然後回到這裡。
+Follow the steps on rustup.rs, then come back here.	按照 rustup.rs 上的步驟操作，然後回到這裡。
+For everything you make, like the switch in the title bar.	適用於你建立的所有內容，與標題列中的開關相同。
+For example: a website for my bakery	例如：給我的麵包店做個網站
+For example: recreate this website	例如：重現這個網站
+For example: the same app, but simpler	例如：做一個相同但更簡潔的應用程式
+For example: the same game, with a high-score table	例如：同樣的遊戲，加上最高分排行榜
+Force-stop an app	強制停止應用程式
+Forget the key	移除金鑰
+Found on this computer	在此電腦上找到
+Found {} AI option(s) on this computer	在此電腦上找到 {} 個 AI 選項
+Frida devices	Frida 裝置
+Frida instrumentation	Frida 插樁
+Frida processes	Frida 處理程序
+Frida session status	Frida 工作階段狀態
+From	來源
+Frozen copy	凍結副本
+Function address	函式位址
+Function assembly	函式組合語言碼
+Function dossier	函式檔案
+Function info	函式資訊
+Function instructions	函式指令
+Function references	函式參照
+Functions	函式
+GDB command	GDB 命令
+GDB session status	GDB 工作階段狀態
+Game assets	遊戲素材
+Game engines	遊戲引擎
+Game files	遊戲檔案
+General	一般
+Generate a 3D model	產生 3D 模型
+Generate a picture	產生圖片
+Generate custom pictures and models	產生自訂圖片和模型
+Generated art (games)	產生美術素材 (遊戲)
+Generated assets	產生素材
+Generated pictures and 3D models are made with fal.ai.	使用 fal.ai 產生圖片和 3D 模型。
+Get Ghidra	取得 Ghidra
+Get Ghidra for Deep mode	取得 Ghidra 以用於深度模式
+Get Unity Hub	取得 Unity Hub
+Get a key at {name}	前往 {name} 取得金鑰
+Get the Epic Games Launcher	取得 Epic Games Launcher
+Get {name}	取得 {name}
+Getting Ghidra	正在取得 Ghidra
+Getting Godot	正在取得 Godot
+Getting Unity Hub	正在取得 Unity Hub
+Getting the Epic Games Launcher	正在取得 Epic Games Launcher
+Ghidra	Ghidra
+Ghidra folder	Ghidra 資料夾
+Ghidra is ready	Ghidra 已就緒
+Ghidra is ready. Deep mode uses it from now on.	Ghidra 已就緒。深度模式現在會使用它。
+Ghidra isn't installed, so the built-in decompiler stands in. Get it in Settings → Engines.	尚未安裝 Ghidra，將使用內建反編譯器。可前往「設定 → 引擎」取得 Ghidra。
+Ghidra isn't on this computer yet, so the built-in decompiler stands in.	此電腦尚未安裝 Ghidra，將暫用內建反編譯器。
+Ghidra will use half of this computer's memory (up to {gb} GB).	Ghidra 將使用這台電腦一半的記憶體 (最多 {gb} GB)。
+Ghidra will use up to {gb} GB of memory.	Ghidra 最多使用 {gb} GB 記憶體。
+Ghidra, a free reverse-engineering tool from the NSA, gives Deep mode richer decompiled code and types.	Ghidra 是 NSA 提供的免費逆向工程工具，可讓深度模式取得更豐富的反編譯程式碼與型別資訊。
+Go home	返回首頁
+Go program details	Go 程式詳細資訊
+Go to address	跳至位址
+Go to offset (0x…)	跳至位移量 (0x…)
+Go to the project	前往專案
+Good enough	達到要求
+Got it	知道了
+Graph	關係圖
+Half of this computer's memory, up to {gb} GB.	此電腦記憶體的一半，最多 {gb} GB。
+Here's a first look:	初步分析結果：
+Here's what I found on that page:	以下是我在該網頁上的發現：
+Hex	十六進位
+Hide pinned builds	隱藏釘選建置
+Hide the answer	隱藏回答
+Hide the console	隱藏主控台
+High	高
+Home	首頁
+How alike a rebuild must look to the original before refining stops.	重建結果與原作的外觀相似度達到多少時停止改進。
+How closely may Craft Anything look at it?	允許 Craft Anything 研究到什麼程度？
+How complete is the rebuild	重建完成度
+How do I open an app?	如何開啟應用程式？
+How do the window and the page talk to each other?	視窗與網頁之間如何通訊？
+How does the % key work?	% 鍵是如何運作的？
+How is this app built?	這個應用程式是如何建置的？
+How is this app put together?	這個應用程式由哪些部分組成？
+How many projects may build at the same time. More wait their turn.	可同時建置的專案數量。其他專案將排隊等候。
+How should the builder use them?	建置助手應如何使用這些檔案？
+I have Ghidra	我已安裝 Ghidra
+I have permission	我已獲得許可
+I want to make things work together	我想讓不同的軟體協同運作
+I'm checking whether it's safe	我想檢查它是否安全
+I'm keeping old software alive	我想讓舊軟體繼續使用
+I'm learning how things work	我在學習事物的運作原理
+I'm new to this	我是新手
+ILSpy decompile	使用 ILSpy 反編譯
+Ideas:	靈感：
+Identify a Flutter build	識別 Flutter 建置
+Import a source folder	匯入原始碼資料夾
+Import evidence	匯入證據
+Imports / Exports	匯入 / 匯出
+In Deep mode this one takes a game's own files out after the study. Click to stop.	深度模式下，會在研究完成後擷取遊戲本身的檔案。點選可停止。
+In Unity Hub: sign in (or make a free account) and accept the free Personal licence. Then open Installs, press Install Editor and choose the recommended version. About 10 GB.	在 Unity Hub 中登入 (或免費註冊帳戶)，並接受免費的 Personal 授權。然後開啟 Installs，按一下 Install Editor，選擇建議版本。約需 10 GB。
+In the launcher: sign in, open Unreal Engine, then Library, and press + next to Engine Versions to install one. About 60 GB.	在啟動器中登入，開啟 Unreal Engine，再開啟「程式庫」，點選「引擎版本」旁的 + 安裝一個版本。約需 60 GB。
+In use	使用中
+Inside	內部
+Inspect a Dart AOT snapshot	檢查 Dart AOT 快照
+Inspect a network recording	檢查網路記錄
+Inspect a web page	檢查網頁
+Inspect an Electron page	檢查 Electron 頁面
+Inspect data	檢查資料
+Inspect instruction	檢查指令
+Inspector	檢查器
+Install Rust	安裝 Rust
+Install Unity Hub	安裝 Unity Hub
+Install Visual Studio Community (free) and tick "Game development with C++".	安裝 Visual Studio Community (免費)，並勾選「使用 C++ 的遊戲開發」。
+Install Xcode	安裝 Xcode
+Install an app	安裝應用程式
+Install an engine	安裝引擎
+Install the launcher	安裝啟動器
+Installed	已安裝
+Installed apps	已安裝的應用程式
+Inter-process communication: how two parts of an app (or two apps) send messages to each other.	處理程序間通訊：應用程式的兩個部分 (或兩個應用程式) 相互傳送訊息的方式。
+Interface Builder documents	Interface Builder 文件
+Interrupted	已中斷
+Inventory an archive or app bundle	清點封存檔或應用程式套件
+Investigating	調查中
+Investigation so far	目前的調查
+Is Apktool available?	Apktool 可用嗎？
+Is adb available?	adb 可用嗎？
+Is an asset key set up?	素材金鑰已設定嗎？
+Is anything in here a program?	這裡面有程式嗎？
+Is anything sensitive saved in plain text?	是否有敏感資訊以明文儲存？
+Is it safe to look inside programs?	檢視程式內部安全嗎？
+Is it safe to run?	執行它安全嗎？
+Is there any readable text inside?	裡面有可讀的文字嗎？
+Is this file safe to open?	這個檔案可以安全開啟嗎？
+It closed straight away.	它啟動後立即關閉了。
+It closed straight away. It said:	程式啟動後立即關閉。輸出如下：
+It isn't on this computer yet. Craft Anything can download Ghidra {version} and the Java runtime it needs (about {mb} MB), check both against their publishers' checksums, and set them up in its own folder. Nothing else on your computer changes.	此電腦尚未安裝。Craft Anything 可以下載 Ghidra {version} 及所需的 Java 執行階段 (約 {mb} MB)，對照發行者的總和檢查碼驗證兩者，並安裝到自己的資料夾中。電腦上的其他內容不會變更。
+It isn't on this computer yet. Install Ghidra {version} from its release page, then choose its folder.	這台電腦尚未安裝 Ghidra。請從發佈頁面安裝 Ghidra {version}，然後選擇其資料夾。
+It's already open.	它已經開啟了。
+It's already open. Right-click it to open another copy.	已經開啟。按右鍵可再開啟一個副本。
+It's done	就這樣吧
+It's mine, or I'm allowed to look	這是我的，或我已獲准查看
+Its copy is deleted, with anything it saved there. The project itself stays as it is.	將刪除此副本及其儲存的所有內容。專案本身保持不變。
+Its folder is deleted with everything in it: what was built, the checks and the conversation.	將刪除其資料夾及其中的全部內容：建置成果、檢查結果和對話。
+Its own code	本身的程式碼
+Java archive overview	Java 封存檔概觀
+Java class	Java 類別
+Java method bytecode and pseudo-Java	Java 方法位元組碼與虛擬 Java 程式碼
+Java program code (one class)	Java 程式碼 (一個類別)
+Java programs	Java 程式
+Java runtime	Java 執行階段
+Jobs	工作
+Jobs ({n_jobs})	工作 ({n_jobs})
+Jobs ({n})	工作（{n}）
+Just a question: nothing was changed. Answered by	僅回答問題，未作任何修改。回答者：
+Just ask	只提問
+Just look inside	只檢視內部
+Keep going without asking	繼續執行，無須詢問
+Keep it	保留
+Keep it in the sidebar to open any time, whatever later builds change.	將其保留在側邊欄中，隨時開啟，不受後續建置變更的影響。
+Keep the build as it is and stop offering to carry on.	保留建置的現狀，不再提示繼續。
+Keep this version in the sidebar to open any time.	將此版本保留在側邊欄中，隨時開啟。
+Keeps this version exactly as it is now. Later builds can't change or break it, and anything it saves stays with the copy.	完整保留目前版本。後續建置無法修改或破壞它，它儲存的所有內容也會留在此副本中。
+Key saved	金鑰已儲存
+Keyed archive	索引鍵封存檔
+Kind	類型
+Language	語言
+Last: {what}	最近：{what}
+Launch an app	啟動應用程式
+Leave a few GB for the rest of your computer.	請為電腦的其他工作保留幾 GB 記憶體。
+Leave a path empty to use the managed install. We never need environment variables.	路徑留空即可使用受管理的安裝，無須設定環境變數。
+Leave empty to use the one Craft Anything sets up.	留空則使用 Craft Anything 安裝的版本。
+Let a project generate assets	允許專案產生素材
+Let's go	開始吧
+Lets the builder make realistic 3D models and textures for games, {model} a model, with a {budget} budget per project.	允許建置助手為遊戲製作逼真的 3D 模型和紋理，每個模型 {model}，每個專案預算 {budget}。
+Library resolution	函式庫解析
+Light copy: shares big files with the project	輕量副本：與專案共用大型檔案
+Likeness	相似度
+Line up code and behaviour	對照程式碼與行為
+Line up source with the bundle	對照原始碼與程式套件
+List Electron pages	列出 Electron 頁面
+List JEB units	列出 JEB 單元
+List JS runtime targets	列出 JS 執行環境目標
+List a Unity assets file	列出 Unity assets 檔案內容
+List a Unity bundle	列出 Unity 資源套件內容
+List a game's archives	列出遊戲封存檔
+List a node's event listeners	列出節點的事件監聽器
+List an AI's models	列出 AI 的模型
+List an Unreal IoStore container	列出 Unreal IoStore 容器內容
+List an Unreal pak	列出 Unreal pak 內容
+List bookmarks	列出書籤
+List browser pages	列出瀏覽器頁面
+List documents	列出文件
+List engines	列出引擎
+List functions	列出函式
+List names	列出名稱
+List open targets	列出已開啟的目標
+List pinned builds	列出釘選的建置
+List plugins	列出外掛
+List project files	列出專案檔案
+List projects	列出專案
+List questions about a build	列出建置相關問題
+List radio decoders	列出無線電解碼器
+List segments	列出區段
+List shared Cutter sessions	列出共用的 Cutter 工作階段
+List strings	列出字串
+Live: the project's latest build	目前：專案的最新建置
+Load a screenshot	載入螢幕擷取畫面
+Loading…	正在載入…
+Log	記錄
+Look again	重新尋找
+Look at a game	查看遊戲
+Look at a website	檢視網站
+Look at the game	檢視遊戲
+Look for AI on this computer	尋找本機上的 AI
+Look for game engines	尋找遊戲引擎
+Look for projects again	重新尋找專案
+Looked at everything	已查看全部內容
+Looked at part of it	已檢視部分內容
+Looked at {a} of {b}	已檢視 {a} / {b}
+Looking for AI on this computer…	正在尋找本機上的 AI…
+Looking for game engines on this computer…	正在此電腦上尋找遊戲引擎…
+Looking for the game's files…	正在尋找遊戲檔案…
+Looking inside needs Deep mode	查看內部需要深度模式
+Looking inside software you own or are allowed to examine is normal and often protected (learning, compatibility, security). Saying why helps you keep to it; it stays on this computer.	研究你擁有或獲准檢查的軟體是常見行為，且通常受到保護 (如學習、相容性或安全研究)。說明目的有助於遵守這一範圍；此資訊僅儲存在本機。
+Looking on this computer…	正在此電腦上尋找…
+Low	低
+Mach-O structure	Mach-O 結構
+Made a copy: {name}	已建立副本：{name}
+Made with fal.ai and paid from your account: {model} a 3D model, {picture} a picture. Off, the game is built without them.	使用 fal.ai 製作，費用從你的帳戶扣除：每個 3D 模型 {model}，每張圖片 {picture}。關閉後，建置遊戲時不會產生這些素材。
+Made with {engine}	使用 {engine} 製作
+Made without looking inside the original.	未查看原作內部而製作。
+Make a game that plays like this	製作玩法類似的遊戲
+Make a simpler version of this game	製作這個遊戲的簡化版本
+Make my own version	製作自己的版本
+Make my own version of this app	製作我自己的應用程式版本
+Making my own thing talk to something else.	讓自己的作品與其他軟體互通。
+Many source files packed into one big file so an app or web page loads faster.	將多個原始檔打包為一個大檔案，以加快應用程式或網頁的載入速度。
+Map a HarmonyOS app	繪製 HarmonyOS 應用程式關係圖
+Map a page's module graph	繪製網頁模組關係圖
+Map an Android app	繪製 Android 應用程式關係圖
+Map an Apple app	繪製 Apple 應用程式關係圖
+Markdown	Markdown
+Match functions between two builds	比對兩個建置之間的函式
+Match my pictures	符合我的圖片
+Match static code to what ran	比對靜態程式碼與實際執行內容
+Maximise	最大化
+May I run "{title}"?	可以執行「{title}」嗎？
+May I {action}?	可以{action}嗎？
+Measure which code ran	測量程式碼執行範圍
+Medium	中
+Memory for Ghidra	Ghidra 記憶體用量
+Minimise	最小化
+Mode	模式
+Model	模型
+Model: {model}	模型：{model}
+Modules	模組
+More detail	更多詳細資訊
+More makes a big program's first look faster.	分配更多記憶體可加快大型程式的首次分析。
+More memory makes Ghidra's first look at a big program faster; leave some for the rest of the computer. Used from the next time Ghidra starts.	更多記憶體能加快 Ghidra 對大型程式的首次分析，但請為電腦的其他工作保留空間。下次啟動 Ghidra 時生效。
+Name (optional)	名稱 (選用)
+Name an address	為位址命名
+Name at address	位址處的名稱
+Name many addresses	為多個位址命名
+Names the program's author gave to functions or variables that survived in the file.	程式作者為函式或變數取的名稱，仍保留在檔案中。
+Needs a fal.ai key. Until then the game is built without them.	需要 fal.ai 金鑰。新增之前，建置遊戲時不會產生這些素材。
+Needs you	需要你處理
+Network	網路
+New	新增
+New project	新增專案
+New projects go in	新專案儲存位置
+Next address	下一個位址
+No AI (built-in engines only)	不使用 AI (僅內建引擎)
+No AI brain is set up, so answers come straight from the built-in engines. Add one any time for plain-words explanations.	尚未設定 AI 助手，因此回答直接來自內建引擎。你可以隨時新增 AI 助手，取得淺白的說明。
+No AI for now	暫不使用 AI
+No AI is set up yet. The built-in engines still work; an AI adds plain-words answers.	尚未設定 AI。內建引擎仍可使用；新增 AI 後可取得淺顯易懂的回答。
+No Unreal or Unity archives were found. Pick the folder the game is installed in.	未找到 Unreal 或 Unity 封存檔。請選擇遊戲的安裝資料夾。
+No coding agent was found on this computer yet.	尚未在此電腦上找到程式設計代理程式。
+No evidence yet	尚無證據
+No game files here	這裡沒有遊戲檔案
+No jobs yet. Long tasks show their progress here, and you can cancel them.	目前沒有工作。耗時工作將在這裡顯示進度，你也可以取消它們。
+No matches	沒有相符項目
+No open questions	沒有待解答的問題
+No plugins yet.	目前沒有外掛。
+No result yet	尚無結果
+No targets	沒有目標
+No tool named {tool}	沒有名為 {tool} 的工具
+None	無
+None yet. Screenshots help it look right.	尚未新增。螢幕截圖有助於還原外觀。
+Not allowed	不允許
+Not allowed.	未允許。
+Not available yet	尚無法使用
+Not compared yet: {what}	尚未比較：{what}
+Not installed	未安裝
+Not now	暫時不要
+Nothing allowed yet.	尚未允許任何操作。
+Nothing can build yet: install Claude Code (and sign in to it once), or add an AI with an API key below.	尚無可用的建置助手：請安裝 Claude Code (並先登入一次)，或在下方新增設定了 API 金鑰的 AI。
+Nothing found	未找到內容
+Nothing found yet. We look for API keys, local model servers (Ollama, LM Studio) and agent apps you already have.	尚未找到。我們會尋找你已有的 API 金鑰、本機模型伺服器 (Ollama、LM Studio) 和代理程式應用程式。
+Nothing inside it is read.	不會讀取其內部內容。
+Nothing inside it is read; Craft Anything works from what you can see. Your version gets its own art.	不會讀取其內部內容；Craft Anything 僅依據你能看到的內容工作。你的版本會使用自己的美術素材。
+Nothing inside the original is read: not its code, files or page source. Craft Anything works from what you can see: pictures, the page as a visitor sees it, and watching it run.	不會讀取原作的內部內容，包括程式碼、檔案和網頁原始碼。Craft Anything 僅根據可見內容工作：圖片、訪客所見的網頁以及執行時的表現。
+Nothing made yet. What you make shows up here.	還沒有作品。你製作的內容會顯示在這裡。
+Nothing matches the filter.	沒有符合篩選條件的內容。
+Nothing matches.	沒有相符項目。
+Nothing new for {time}. Long steps can be quiet; if it stays like this, press Pause.	已有 {time} 沒有新進展。耗時步驟可能暫時沒有訊息；若一直如此，請點選暫停。
+Nothing open	尚未開啟任何內容
+Nothing open yet	尚未開啟任何內容
+Nothing selected	未選取任何內容
+Nothing to show	沒有可顯示的內容
+Nothing uses it until it's on again; it keeps its key.	重新啟用前不會使用它；金鑰會保留。
+Nothing — start fresh	不使用任何檔案，從頭開始
+Now	現在
+Now: {what} ({time})	目前：{what} ({time})
+Objective-C classes	Objective-C 類別
+Objective-C protocols	Objective-C 協定
+Observe a JS runtime	觀察 JS 執行環境
+Of this, {cost} was charged to an API key.	其中 {cost} 透過 API 金鑰計費。
+Off	關閉
+Ollama or LM Studio on another computer, or any service that speaks the OpenAI API.	另一台電腦上的 Ollama 或 LM Studio，或任何相容 OpenAI API 的服務。
+On	開啟
+One line, in plain words. It stays on this computer and is never sent anywhere.	用一句淺白的話說明。內容只保留在本機，絕不會傳送到其他地方。
+One-shot instrumentation	單次插樁
+Only for Ghidra. Empty = managed.	僅用於 Ghidra。留空則使用受管理的安裝。
+Only its name changes; its folder stays where it is.	只變更名稱；資料夾位置不變。
+Only take pictures out of games you made, or whose owner allows it. A game's art is usually protected by copyright and by the game's licence.	僅可從你製作的遊戲或已獲得擁有者許可的遊戲中擷取圖片。遊戲美術通常受著作權和遊戲授權條款保護。
+Only the pin goes; the project and its app stay as they are.	僅移除釘選紀錄；專案和應用程式保持不變。
+Open	開啟
+Open "Show me the proof" to see the exact code we found, and how sure we are.	開啟「檢視證據」，查看我們找到的具體程式碼及其可信度。
+Open Ghidra's release page	開啟 Ghidra 發佈頁面
+Open Unity Hub	開啟 Unity Hub
+Open a calculator app and find the code behind one button.	開啟計算機應用程式，找到某個按鈕背後的程式碼。
+Open a file in JEB	在 JEB 中開啟檔案
+Open a file or drop one here.	開啟檔案，或將其拖入此處。
+Open a file…	開啟檔案…
+Open a folder or app bundle	開啟資料夾或應用程式套件
+Open a folder or app bundle…	開啟資料夾或應用程式套件…
+Open a folder…	開啟資料夾…
+Open a pinned build	開啟釘選的建置
+Open a project's folder	開啟專案資料夾
+Open a website	開啟網站
+Open an app or file	開啟應用程式或檔案
+Open an engine's app	開啟引擎應用程式
+Open another copy	再開啟一個副本
+Open another target	開啟另一個目標
+Open files, folders or apps; you can have several open at once.	開啟檔案、資料夾或應用程式；可以同時開啟多個。
+Open folder	開啟資料夾
+Open in the workbench	在工作臺中開啟
+Open it	開啟
+Open log	開啟記錄
+Open one of the files inside it to see its bytes.	開啟其中一個檔案，查看其位元組。
+Open questions	待解問題
+Open something	開啟內容
+Open something first: drop a file or app here, or choose "Just look inside" on New project. Then I can look inside it.	請先開啟內容：將檔案或應用程式拖到這裡，或在新增專案中選擇「只查看內部」。然後我就能查看其內部內容。
+Open something to start	開啟內容以開始
+Open the Epic Games Launcher	開啟 Epic Games Launcher
+Open the app	開啟應用程式
+Open the app you're curious about.	開啟你感興趣的應用程式。
+Open the download page	開啟下載頁面
+Open the folder	開啟資料夾
+Open the installer app	開啟安裝程式
+Open the website	開啟網站
+Open {name}	開啟 {name}
+Opened {name}	已開啟 {name}
+Opened {name}. Taking a first look…	已開啟 {name}。正在初步查看…
+Opened {}	已開啟 {}
+Opening {name}…	正在開啟 {name}…
+Open…	開啟…
+Or type your answer…	或輸入你的回答…
+Original	原作
+Other pages of a website studied and compared besides the one you gave.	除你提供的頁面外，額外研究和比較的網站頁面數量。
+Overview	概觀
+Packet capture overview	封包擷取概觀
+Packet fields	封包欄位
+Page through evidence	分頁瀏覽證據
+Part of the app got stuck, so it was stopped and the rest carried on. Your work is kept.	應用程式的某個部分卡住，已將其停止，其他部分繼續執行。你的工作已保留。
+Part of the app is stuck. Restarting clears it, and your work is kept.	應用程式的某個部分卡住了。重新啟動即可恢復，你的工作會保留。
+Part of this screen hit a bug and was skipped. Your work is safe.	此畫面的一部分發生錯誤，已略過。你的工作內容是安全的。
+Paste your API key (kept in your system keychain)	貼上 API 金鑰 (儲存在系統鑰匙圈中)
+Paste your {name} key	貼上你的 {name} 金鑰
+Path	路徑
+Pause	暫停
+Pause the build first, then delete the project.	請先暫停建置，再刪除專案。
+Pause the build first.	請先暫停建置。
+Paused	已暫停
+Paused.	已暫停。
+Pick a folder with projects in it	選擇包含專案的資料夾
+Pick a game's folder	選擇遊戲資料夾
+Pick another folder…	選擇其他資料夾…
+Pick another game	選擇其他遊戲
+Pick something on the left	在左側選擇內容
+Pick the app or game folder	選擇應用程式或遊戲資料夾
+Pick the app, game or file to rebuild	選擇要重建的應用程式、遊戲或檔案
+Pick the folder for this project	選擇此專案的資料夾
+Pick the game's folder	選擇遊戲資料夾
+Picture a program's window	擷取程式視窗圖片
+Picture model	圖片模型
+Pictures	圖片
+Pictures can't be saved from IoStore containers yet; you can see what's inside.	目前不支援從 IoStore 容器儲存圖片，但可以檢視其中的內容。
+Pictures of the original	原作圖片
+Pieces of text stored inside a program, like messages, web addresses or file names.	儲存在程式內部的文字，例如訊息、網址或檔案名稱。
+Pin a build	釘選建置
+Pin a project's build	釘選專案建置
+Pin it	釘選
+Pin name	釘選版本名稱
+Pin removed.	已移除釘選紀錄。
+Pin this build	釘選此建置
+Pinned	已釘選
+Pinned builds	已釘選的建置
+Pinned: {name}. Open it from the sidebar any time.	已釘選：{name}。隨時可從側邊欄開啟。
+Plain words, big buttons, and I'll explain everything.	淺白的語言、大按鈕，我會說明每一步。
+Plain words, short sentences, and every technical word explained.	使用簡單用語和短句，並解釋每個技術術語。
+Plan	計畫
+Plan connecting agent apps	規劃連線至代理應用程式
+Play a project's result	執行專案成果
+Play the game	執行遊戲
+Plugin added. Read its tools to start using them.	已新增外掛。讀取其工具後即可使用。
+Plugin arguments	外掛引數
+Plugin command or address	外掛命令或位址
+Plugin id	外掛 ID
+Plugin removed.	已移除外掛。
+Plugins	外掛
+Plugins add tools Craft Anything offers as its own: MCP servers (a command or an address; read their tools after adding) or WebAssembly components (a .wasm file, which can't touch your files or the network).	外掛為 Craft Anything 新增可直接使用的工具：包括 MCP 伺服器 (命令或位址，新增後需讀取其工具)，以及 WebAssembly 元件 (.wasm 檔案，無法存取你的檔案或網路)。
+Plugins added here always ask before each call.	此處新增的外掛在每次呼叫前都會詢問。
+Plugins read. Their new tools are offered from the next start.	已讀取外掛。下次啟動起即可使用它們的新工具。
+Preserving software that's no longer supported.	保存已停止維護的軟體。
+Preview a project's website	預覽專案網站
+Preview the website	預覽網站
+Previous address	上一個位址
+Program: found automatically	程式：自動尋找
+Program: {path}	程式：{path}
+Programs (native code)	程式 (原生程式碼)
+Progress	進度
+Project details	專案詳細資訊
+Project name	專案名稱
+Projects	專案
+Projects and builds	專案與建置
+Property list	屬性列表
+Pseudo-C	C 偽程式碼
+Purpose	用途
+Raise the asset budget	提高素材預算
+Raise the budget by {amount}	增加 {amount} 預算
+Raw machine code	原始機器碼
+Read AI settings	讀取 AI 設定
+Read a Unity game's IL2CPP metadata	讀取 Unity 遊戲的 IL2CPP 中繼資料
+Read a game's files	讀取遊戲檔案
+Read a project file	讀取專案檔案
+Read a setting	讀取設定
+Read an app's screen	讀取應用程式畫面
+Read bytes	讀取位元組
+Read comment	讀取註解
+Read inline comment	讀取行內註解
+Read its tools	讀取工具清單
+Read pinned builds	讀取釘選建置
+Read projects	讀取專案
+Read the journal	讀取工作日誌
+Read the plugin's tools	讀取外掛工具
+Read the project	讀取專案
+Reading what's inside…	正在讀取內部內容…
+Ready	就緒
+Ready: {what} is on this computer.	已就緒：此電腦上已有 {what}。
+Rebuild status	重建狀態
+Record a finding	記錄發現
+Record a hypothesis	記錄假設
+Record an open question	記錄待解答的問題
+Recover readable sources	還原可讀原始碼
+Recreate it with darker colours	使用更深的配色重現它
+Recreate just its main feature	僅重現其主要功能
+Recreate this website	重建這個網站
+Recreated games are built with the original's own engine when it's here (Unity, Unreal or Godot), else Unity, and Rust as the last resort.	重建遊戲時，若本機已有原作所用的引擎 (Unity、Unreal 或 Godot)，就使用該引擎；否則使用 Unity，最後才考慮 Rust。
+References to a name	名稱參照
+Refining rounds	改進輪數
+Refresh plugins	重新整理外掛
+Regions of a program file, each with one purpose: code, text, pictures, settings.	程式檔案中的區域，各有特定用途，例如程式碼、文字、圖片或設定。
+Reload	重新載入
+Remember permission	記住授權
+Remove	移除
+Remove a pin	移除釘選版本
+Remove a pinned build	移除釘選的建置
+Remove a plugin	移除外掛
+Remove an AI	移除 AI
+Remove an app	移除應用程式
+Remove an asset key	移除素材金鑰
+Remove bookmark	移除書籤
+Remove it	移除
+Remove it and its key	移除它及其金鑰
+Remove {name}	移除 {name}
+Remove {name}?	移除 {name}？
+Remove…	移除…
+Rename	重新命名
+Rename a pinned build	重新命名釘選的建置
+Rename a project	重新命名專案
+Rename the pin	重新命名釘選版本
+Rename the project	重新命名專案
+Rename…	重新命名…
+Reset	重設
+Resolve a call	解析呼叫
+Resolved	已解決
+Resources	資源
+Restart	重新啟動
+Restore	還原
+Result	結果
+Resume a Frida session	繼續 Frida 工作階段
+Rizin command	Rizin 命令
+Rizin debug command	Rizin 偵錯命令
+Rizin debug session status	Rizin 偵錯工作階段狀態
+Rough guide:	概略參考：
+Run	執行
+Run a Frida script	執行 Frida 指令碼
+Run a build command	執行建置命令
+Run a scripted Electron session	執行 Electron 工作階段指令碼
+Run a scripted web session	執行網頁工作階段指令碼
+Run a tool from the command palette (Ctrl/⌘ K), or pick a finding in the Evidence panel.	從命令面板 (Ctrl/⌘ K) 執行工具，或在「證據」面板中選擇一項發現。
+Run and watch a program	執行並觀察程式
+Run to study	執行以研究
+Running	執行中
+Running processes	執行中的處理程序
+Running programs	執行中的程式
+Running {id}	正在執行 {id}
+Runs its tools without asking	無需詢問即可執行其工具
+Runs the first-run steps next time.	下次啟動時重新顯示首次使用步驟。
+Rust program details	Rust 程式詳細資訊
+SHA-256	SHA-256
+SQLite database contents	SQLite 資料庫內容
+Safety	安全
+Save	儲存
+Save a picture	儲存圖片
+Save a report	儲存報告
+Save an asset key	儲存素材金鑰
+Save picture	儲存圖片
+Save settings	儲存設定
+Save the key	儲存金鑰
+Save the picture	儲存圖片
+Save the report	儲存報告
+Saved	已儲存
+Saved in	儲存位置
+Saves space: copies the program and code, and shares dependencies and media with the project. A shared file rewritten in place changes here too.	節省空間：複製程式和程式碼，與專案共用相依套件和媒體檔案。共用檔案被直接覆寫時，此處的內容也會改變。
+Say what you want	描述你的需求
+Say what you want first.	請先描述你的需求。
+Say what you want to make, or drop an app or file on the window to look inside it. Everything runs in Clean room mode unless you switch on Deep.	描述你想製作的內容，或將應用程式或檔案拖到視窗中查看其內部。除非開啟深度模式，否則所有操作都在淨室模式下進行。
+Screenshot	螢幕截圖
+Screenshot a page	擷取網頁圖片
+Screenshots of how it should look. The builder opens each one and matches it.	新增預期外觀的螢幕截圖。建置助手會逐張開啟並進行還原。
+Search for bytes	搜尋位元組
+Search functions	搜尋函式
+Search strings	搜尋字串
+Sections	區段
+Security research on software I'm allowed to examine.	對我獲准檢查的軟體進行安全研究。
+See how a page is built: its layout, styles, scripts and the requests it makes.	檢視網頁的構成：版面配置、樣式、指令碼及其發出的請求。
+See how a program works: what it does, what it talks to, what's inside.	瞭解程式的運作原理：它做什麼、與誰通訊、內部有什麼。
+See what a game packs and save its pictures as PNG files. Only for games you made, or whose owner lets you.	查看遊戲打包的內容，並將其中的圖片儲存為 PNG 檔案。僅限你製作的遊戲或已獲得擁有者許可的遊戲。
+See what a game packs, and save its pictures as PNG files.	檢視遊戲封裝的內容，並將圖片儲存為 PNG 檔案。
+See what a stand-in was asked	查看替代後端收到的要求
+See which servers an app talks to, and what it says.	檢視應用程式與哪些伺服器通訊，以及傳輸的內容。
+Seen it	已觀察
+Seen it: read directly from the file, page or capture.	已觀察：直接從檔案、網頁或擷取結果中讀取。
+Selected	已選擇
+Selection	所選內容
+Send	傳送
+Send (Enter)	傳送 (Enter)
+Send now	立即傳送
+Server address	伺服器位址
+Session status	工作階段狀態
+Set a project's asset budget	設定專案素材預算
+Set an AI's program	設定 AI 的程式
+Set one up	設定一個
+Set up a brain…	設定 AI 助手…
+Set up a builder	設定建置助手
+Settings	設定
+Show a build's activity	顯示建置活動
+Show a project	顯示專案
+Show folder	顯示資料夾
+Show me everything	顯示全部內容
+Show me the proof	檢視證據
+Show pinned builds	顯示釘選的建置
+Show settings	顯示設定
+Show the answer	顯示回答
+Show the console	顯示主控台
+Show the folder	顯示該資料夾
+Show the ones that are met	顯示已滿足的要求
+Show the sidebar	顯示側邊欄
+Show the welcome again	再次顯示歡迎畫面
+Showing	目前顯示
+Sign in and add the Unity Editor	登入並新增 Unity Editor
+Sign in and install Unreal Engine	登入並安裝 Unreal Engine
+Simple	簡易
+Simple: say what you want and it's handled for you. Advanced: every tool, the evidence and the logs.	簡易：描述需求，即可為你處理。進階：使用所有工具，檢視證據和記錄。
+Since Craft Anything opened.	自 Craft Anything 啟動以來。
+Size	大小
+Skip setup	略過設定
+Smart contract interface	智慧合約介面
+Software I made, bought, or have permission to examine.	我製作、購買或獲准檢查的軟體。
+Solana program (sBPF)	Solana 程式 (sBPF)
+Some plugins couldn't be read:	部分外掛無法讀取：
+Something a program borrows from the operating system or a library, like "open a file".	程式從作業系統或程式庫呼叫的功能，例如「開啟檔案」。
+Something a program or library offers for other programs to use.	程式或程式庫提供給其他程式使用的功能。
+Source	原始碼
+Start	開始
+Start a Frida session	啟動 Frida 工作階段
+Start a GDB session	啟動 GDB 工作階段
+Start a Rizin debug session	啟動 Rizin 偵錯工作階段
+Start a rebuild	開始重建
+Start a stand-in backend	啟動替代後端
+Start an activity	啟動 Activity
+Start building	開始建置
+Start from them	以這些檔案為起點
+Start it	啟動
+Start with Simple mode; you can set up AI later in Settings.	先使用簡易模式；之後可在設定中設定 AI。
+Starting…	正在啟動…
+Starting… it opens in its own window.	正在啟動…將開啟獨立視窗。
+Still working. Bigger jobs can take a few minutes.	仍在處理中。較大的工作可能需要幾分鐘。
+Stop	停止
+Stop a pinned build	停止釘選的建置
+Stop a rebuild	停止重建
+Stop a stand-in backend	停止替代後端
+Stop generated assets	停止產生素材
+Stop listing {folder}	不再列出 {folder}
+Stopped here	停在這裡
+Stops the current step and sends your notes straight away.	停止目前步驟，並立即傳送你的補充說明。
+Strings	字串
+Studio	Studio
+Studio (dark)	Studio (深色)
+Studio Light	Studio 淺色
+Study	研究
+Study apps by running them	透過執行應用程式進行研究
+Studying	研究中
+Studying software to understand it.	透過研究來理解軟體。
+Summarise what changed	彙整變更
+Swift types	Swift 型別
+Switch Beginner / Experienced	切換新手 / 熟練模式
+Switch Clean room / Deep	切換淨室 / 深度模式
+Switch light / dark theme	切換淺色 / 深色佈景主題
+Switch target	切換目標
+System	跟隨系統
+System services	系統服務
+Take a texture out of an Unreal game	從 Unreal 遊戲中擷取紋理
+Take an asset out of a Unity game	從 Unity 遊戲中擷取資源
+Take back a note	收回訊息
+Take back: puts it in the box again	收回：將內容放回輸入框
+Take files out of an Unreal pak	從 Unreal pak 中擷取檔案
+Take out packed files	擷取打包檔案
+Target	目標
+Targets	目標
+That folder already has {names}, where Craft Anything keeps its own files. Pick another folder, or move those out first.	該資料夾中已有 {names}，Craft Anything 會在其中存放本身的檔案。請選擇其他資料夾，或先將它們移出。
+That folder is already a project, so it's open now.	該資料夾已經是專案，現已開啟。
+The Rust toolchain (rustup.rs).	Rust 工具鏈 (rustup.rs)。
+The builder answers its own questions and says what it chose ("I decided: …"), so you can change it.	建置助手會自行回答問題並說明選擇 (「我決定：…」)，方便你修改。
+The builder makes the game's 3D models and textures from descriptions of original designs, paid from your fal.ai account. Models are low-poly so the game runs fast. A textured model costs {model} and a picture {picture}. Each project has a {budget} budget, and you're asked before it goes over. The key is kept in your system keychain.	建置助手根據原創設計的描述產生遊戲的 3D 模型和紋理，費用從你的 fal.ai 帳戶扣除。模型採用低多邊形設計，讓遊戲執行流暢。帶紋理的模型費用為 {model}，圖片費用為 {picture}。每個專案的預算為 {budget}，超出前會先詢問你。金鑰儲存在系統鑰匙圈中。
+The builder reads them (code, notes, pictures) and builds the app in a new app folder beside them. Your files stay as they are.	建置助手會讀取這些檔案 (程式碼、筆記、圖片)，並在旁邊新建 app 資料夾來建置應用程式。你的檔案保持不變。
+The builder will decide its questions and tell you what it chose.	建置助手會自行決定，並告知你它的選擇。
+The builder works on these files directly and keeps what works. Craft Anything adds a few records of its own beside them.	建置助手直接編輯這些檔案，並保留已有的有效內容。Craft Anything 會在旁邊新增少量本身的記錄。
+The builder's questions	建置助手的問題
+The builder's questions come to you as cards, and it waits for your answer.	建置助手的問題會以卡片形式交給你，並等待你的回答。
+The builder's questions will come to you.	建置助手的問題會交給你回答。
+The built-in engines still show you everything they find.	內建引擎仍會顯示它們發現的所有內容。
+The code	程式碼
+The code format Android apps use.	Android 應用程式使用的程式碼格式。
+The coding agent's estimate at API prices, not your bill. A subscription isn't charged this.	這是程式設計代理程式依 API 價格估算的費用，並非你的實際帳單；訂閱不會依此金額收費。
+The download keeps going in the background.	下載會在背景繼續。
+The first instruction a program runs when it starts.	程式啟動時執行的第一條指令。
+The full toolset, evidence and logs.	完整工具集、證據和記錄。
+The installer is open. Follow its steps, then come back here.	安裝程式已開啟。依步驟完成安裝，然後回到這裡。
+The lowest-level human-readable form of machine code: one small instruction per line.	機器碼最底層的可讀形式，每行一條簡短指令。
+The names were removed from the program before it was shipped, so we have to work them out.	程式發佈前移除了這些名稱，因此需要推導它們。
+The packed contents of an Electron app (a website inside a desktop app)	Electron 應用程式的打包內容 (桌面應用程式中的網站)
+The program's machine code written out as one tiny instruction per line.	將程式的機器碼寫成每行一條簡單指令的形式。
+The project's name and round	專案名稱與輪次
+The raw result	原始結果
+The smallest unit of data in a file: a number from 0 to 255.	檔案中最小的資料單位：一個 0 到 255 的數字。
+The smallest units of data in a file: numbers from 0 to 255.	檔案中最小的資料單位，以 0 到 255 的數字表示。
+The {name} view isn't available yet in this build.	此版本尚未提供{name}檢視。
+The {} view isn't available yet in this build.	此版本暫不提供 {} 檢視。
+Theme	佈景主題
+There's no /{name} command. You can use {commands}.	沒有 /{name} 命令。你可以使用 {commands}。
+There's no AI brain set up yet, so here's what the built-in engines found:	尚未設定 AI 助手，以下是內建引擎的發現：
+They're my app: edit them in place	這些就是我的應用程式：就地編輯
+Things a program borrows from the operating system or libraries, like "open a file" or "draw a window".	程式借用作業系統或函式庫提供的功能，例如「開啟檔案」或「繪製視窗」。
+Things a program or library offers for other programs to use.	程式或程式庫提供給其他程式使用的功能。
+Things we couldn't establish yet are listed here, with what would settle them.	這裡列出尚未確認的事項，以及確認它們所需的資訊。
+This answer won't be there after a restart:	重新啟動後將無法保留此回答：
+This build stopped part-way	此建置中途停止
+This can't be undone.	此操作無法復原。
+This folder already has files	此資料夾中已有檔案
+This is a big one. You can leave this open and come back later.	這項工作比較大。可以保持視窗開啟，稍後再回來。
+This is outside what the builder may do on its own. Nothing happens until you say so.	此操作超出了建置助手可以自行處理的範圍。只有你同意後才會執行。
+This keeps going in the background, and each download is checked against its publisher's checksum before it's used.	此操作會在背景繼續，每個下載檔案都會先核對發佈者提供的總和檢查碼，再投入使用。
+This project is waiting its turn. Send your message once it starts.	此專案正在排隊。請在開始後傳送訊息。
+This runs code from the target or changes a device. Clicking Run is your OK.	此操作會執行目標中的程式碼或變更裝置。點選「執行」即表示同意。
+This runs code from the target or changes a device. Nothing runs until you say so.	此操作會執行目標中的程式碼或修改裝置。獲得你的許可後才會執行。
+This tool takes no settings.	此工具無須設定參數。
+This updates by itself when it's done.	完成後會自動更新。
+This view arrives with the next engines. The Hex and Result views work today.	此檢視將在後續引擎中提供。目前可使用十六進位和結果檢視。
+Those aren't pictures we can use (PNG, JPEG, WebP or GIF, up to 20 MB).	無法使用這些圖片 (支援 PNG、JPEG、WebP 或 GIF，最大 20 MB)。
+Time spent	耗時
+Tip: press Ctrl/⌘ K to run any tool.	提示：按 Ctrl/⌘ K 可執行任意工具。
+Tokens	Token 數
+Tools may now run code from what you open without asking. Turn this back on unless you're sure.	工具現在可能無需詢問就執行所開啟內容中的程式碼。除非你確定這樣做，否則請重新啟用此選項。
+Tools that run code from a target or change a phone always ask first, unless you allowed them for a project.	執行目標程式碼或修改手機的工具總會先詢問，除非你已為該專案授予許可。
+Trace a UI action	追蹤介面操作
+Trace a feature	追蹤功能
+Try again	重試
+Try asking	試著問問
+Try it out, then ask below for any changes.	先試用，再在下方提出修改。
+Turn a program's machine code back into something that reads like source code. It's a reconstruction, not the original.	將程式的機器碼轉換為類似原始碼的可讀內容。這是重建結果，並非原本的程式碼。
+Turn off	關閉
+Turn off an AI	停用 AI
+Turn on	啟用
+Turn on Deep mode	開啟深度模式
+Turn on an AI	啟用 AI
+Turning a plugin on or off takes effect from the next start.	外掛的啟用或關閉將在下次啟動時生效。
+Type a command or tool…	輸入命令或工具…
+Type the website's address:	輸入網站位址：
+Type your question after /btw.	在 /btw 後輸入你的問題。
+Unity assets	Unity 資源
+Unity bundle	Unity 資源套件
+Unity's own installer. It only opens if Unity's signature checks out.	Unity 官方安裝程式。只有驗證 Unity 簽章通過後才會開啟。
+Unknown	未知
+Unknown: we couldn't establish this yet.	未知：尚未確定。
+Unknowns	待確認事項
+Unload a Frida script	卸載 Frida 指令碼
+Unreal IoStore	Unreal IoStore
+Unreal builds games with Apple's Xcode, free in the App Store.	Unreal 使用 Apple 的 Xcode 建置遊戲，可從 App Store 免費取得。
+Unreal is here, but it also needs Visual Studio's C++ tools.	已安裝 Unreal，但還需要 Visual Studio 的 C++ 工具。
+Unreal pak	Unreal pak
+Update a hypothesis	更新假設
+Update an open question	更新待解答的問題
+Update the checklist	更新檢查清單
+Update the plan	更新計畫
+Use	使用
+Use an API key…	使用 API 金鑰…
+Use as a goal	設為目標
+Use the projects folder	使用專案資料夾
+Use this	使用此項
+Use {name}	使用 {name}
+Value flow	值流向
+Version	版本
+Waiting	等待中
+Waiting for another build to finish: this one starts next.	等待另一個建置完成：接下來就會開始。
+Waiting for other builds to finish: {n} in line.	正在等候其他建置完成：佇列中有 {n} 項。
+Waiting: the builder reads it at its next step. Up arrow to edit.	等待中：建置助手會在下一步讀取。按上方向鍵可編輯。
+Waiting: the builder reads these at its next step. Up arrow to edit the last.	等待中：建置助手將在下一步讀取這些訊息。按上方向鍵可編輯最後一則。
+Want answers in plain words?	希望用簡單的話解釋嗎？
+Watch a Mac app's calls	觀察 Mac 應用程式的呼叫
+Watch a page over time	持續觀察網頁
+We didn't find an AI on this computer yet	尚未在此電腦上找到 AI
+We list the web addresses and messages we can see inside it. Watching it live needs your OK first.	我們會列出在其內部找到的網址和訊息。即時觀察前會先徵求你的同意。
+We only read it; nothing runs. Every answer shows how sure we are.	只會讀取，不會執行。每個回答都會標明可信度。
+WebAssembly module	WebAssembly 模組
+WebAssembly: fast compiled code that runs inside web browsers.	WebAssembly：可在瀏覽器中快速執行的編譯後程式碼。
+Website address	網站網址
+Website pages	網站頁面
+Websites	網站
+Welcome	歡迎
+What a new game may spend on generated pictures and 3D models before you're asked. Each project keeps its own.	新遊戲在詢問你之前可用於產生圖片和 3D 模型的金額。每個專案分別儲存預算。
+What a program exports	程式匯出的內容
+What a program imports	程式匯入的內容
+What are its main parts?	它主要由哪些部分組成？
+What brings you here?	你想用它做什麼？
+What can Craft Anything do?	Craft Anything 可以做什麼？
+What data was sent?	傳送了哪些資料？
+What do you want to look inside?	你想查看什麼的內部？
+What do you want to make?	你想製作什麼？
+What do you want to recreate?	你想重建什麼？
+What does it need from the page?	它需要網頁中的哪些內容？
+What does it send over the internet?	它透過網際網路傳送了什麼？
+What does this app do?	這個應用程式有什麼用途？
+What does this app store?	這個應用程式會儲存什麼？
+What does this contract do?	這個合約有什麼作用？
+What does this module do?	這個模組有什麼用途？
+What does this program do?	這個程式有什麼功能？
+What does {what} do?	{what} 有什麼作用？
+What happened in this build	本次建置發生了什麼
+What is it	內容類型
+What is this?	這是什麼？
+What it calls	它呼叫了什麼
+What kind of file is this?	這是什麼類型的檔案？
+What permissions does it ask for?	它要求哪些權限？
+What pictures and textures are made with.	用於產生圖片和紋理的模型。
+What settings are in here?	這裡面有哪些設定？
+What tables are in here?	這裡有哪些資料表？
+What we couldn't check	無法檢查的內容
+What would you like to find out?	你想瞭解什麼？
+What would you like to know about {name}?	關於 {name}，你想瞭解什麼？
+What's at this address	此位址處有什麼
+What's in this folder?	這個資料夾裡有什麼？
+What's inside this archive?	這個封存檔裡有什麼？
+Whatever Settings → AI builds with.	使用設定 → AI 中的建置助手。
+When a folder you pick has files	選擇的資料夾已有檔案時
+When the builder needs a choice made: show it to you and wait, or let it decide and say what it chose. Each project can choose for itself under its prompt box.	建置助手需要做出選擇時：顯示問題並等候你回答，或自行決定並說明選擇。每個專案都可在輸入框下方單獨設定。
+When you rebuild an app or game, start it once to picture its window and compare the rebuild with it. It runs that program.	重建應用程式或遊戲時，先啟動原作一次以擷取其視窗，並與重建結果比較。這會執行該程式。
+Where am I	目前位置
+Where is Ghidra installed?	Ghidra 安裝在哪裡？
+Where is the program?	程式在哪裡？
+Where should new projects go?	新專案應儲存在哪裡？
+Where we found it	發現位置
+Whether they're the app to edit in place, or material the app starts from beside them.	選擇直接編輯這些應用程式檔案，還是以它們為素材在旁邊建立應用程式。
+Which AI answers your questions	由哪個 AI 回答你的問題
+Which file is the main program?	哪個檔案是主程式？
+Which files does it read or write?	它會讀寫哪些檔案？
+Which function is this in	這屬於哪個函式
+Which servers does it talk to?	它與哪些伺服器通訊？
+Which servers were contacted?	連線了哪些伺服器？
+Which websites does it load?	它會載入哪些網站？
+Who builds what you make	由誰負責建置
+Who calls it	誰呼叫了它
+Who can move funds?	誰能移轉資金？
+Who signed this Windows program	誰簽署了這個 Windows 程式
+Who uses this Android class?	誰使用了這個 Android 類別？
+Who uses this Java class?	誰使用了這個 Java 類別？
+Why we ask	為什麼詢問
+Window / focus info	視窗 / 焦點資訊
+Windows resources	Windows 資源
+Wireshark tools check	檢查 Wireshark 工具
+Without it, Deep mode uses Craft Anything's own decompiler, which is rougher.	未安裝時，深度模式會使用 Craft Anything 內建的反編譯器，結果較為粗略。
+Work out a copy's size	計算副本大小
+Work out what an installed app is built on	分析已安裝應用程式所用的技術
+Workbench	工作臺
+Worked it out	已推導
+Worked it out: computed step by step from things we saw.	已推導：根據觀察到的內容逐步計算得出。
+Worked through {n} steps	已完成 {n} 個步驟
+Working on it	正在處理
+Working on your answer	正在準備回答
+Working out how much space a copy takes…	正在計算副本佔用的空間…
+Working…	正在處理…
+Working… ({n} steps so far)	正在處理… (已完成 {n} 步)
+Write a project file	寫入專案檔案
+Write a readable report	撰寫易讀的報告
+Write comment	寫入註解
+Write inline comment	寫入行內註解
+Write pseudo-C to a folder	將C 偽程式碼寫入資料夾
+Write the brief	撰寫需求簡報
+Write the handoff	撰寫交接說明
+Wrote {what} to {}	已將{what}寫入 {}
+You answered: {a}	你的回答：{a}
+You can add a Claude, ChatGPT or OpenRouter key, a local model (Ollama, LM Studio) or an agent you already use, later in Settings → AI.	之後可以在「設定 → AI」中新增 Claude、ChatGPT 或 OpenRouter 金鑰、本機模型 (Ollama、LM Studio)，或你正在使用的代理程式。
+You chose:	你的選擇：
+You're all set	準備就緒
+Your app is ready	你的應用程式已就緒
+Your brains	你的 AI 助手
+Your fal.ai key	你的 fal.ai 金鑰
+Your game is ready	你的遊戲已就緒
+Your message wasn't sent: another project was opened while its pictures were copied.	訊息未傳送：複製圖片期間開啟了另一個專案。
+Your own tool installs (optional)	自行安裝的工具 (選用)
+Your project starts as soon as it's done.	完成後將立即啟動你的專案。
+Your version	你的版本
+Your website is ready	你的網站已就緒
+a new folder in {dir}	{dir} 中的新資料夾
+a picture	每張圖片
+about ${n}	約 ${n}
+address, e.g. http://192.168.1.20:11434/v1	位址，例如 http://192.168.1.20:11434/v1
+and {n} more	以及另外 {n} 項
+arguments (optional)	引數 (選填)
+call graph	呼叫圖
+clean room	淨室
+command, https:// address or .wasm file	命令、https:// 位址或 .wasm 檔案
+deep mode	深度模式
+entry point	進入點
+files	個檔案
+findings	項發現
+first run	首次使用
+found on this computer; set up when you start	已在此電腦上找到；啟動時設定
+from the builder's own memory of the build	來自建置助手對本次建置的記憶
+from the project's files	來自專案檔案
+id, e.g. docs	ID，例如 docs
+is required	為必填項目
+isn't available yet	暫時無法使用
+job result	工作結果
+job {title} panicked: {what}	工作 {title} 發生異常：{what}
+just now	剛剛
+managed	由應用程式管理
+model (optional)	模型 (選填)
+must be a number	必須是數字
+must be a whole number	必須是整數
+name, e.g. Studio box	名稱，例如 工作室電腦
+number	數字
+objdump output	objdump 輸出
+or start with /btw to just ask	或以 /btw 開頭，僅提出問題
+pinned builds couldn't be read: {}	無法讀取釘選建置：{}
+say how to use the files there	說明如何使用其中的檔案
+scene	個場景
+scenes	個場景
+source map	原始碼對應
+start page	起始頁面
+the app is built beside your files, starting from them	以你的檔案為起點，在旁邊建置應用程式
+the built-in engines	內建引擎
+the prompt box changed height	提示輸入框高度發生變更
+title bar	標題列
+under $0.01	低於 $0.01
+yesterday	昨天
+your files there are the app, edited in place	該位置的檔案就是應用程式，將就地編輯
+{:.1} GB	{:.1} GB
+{:.1}M	{:.1}M
+{backend}: {input_tokens} in / {output_tokens} out{cost}	{backend}：輸入 {input_tokens} / 輸出 {output_tokens}{cost}
+{cost} (estimate)	{cost} (估算)
+{c} · {size}	{c} · {size}
+{done} of {all} done	已完成 {done} / {all}
+{gb} GB for bigger ones	較大程式需要 {gb} GB
+{gb} GB for programs up to {size}	不超過 {size} 的程式使用 {gb} GB
+{gb} GB up to {size}	不超過 {size} 使用 {gb} GB
+{held} of {n} requirements met	已滿足 {held} / {n} 項要求
+{id} · {summary}	{id} · {summary}
+{in} in, {out} out.	輸入 {in}，輸出 {out}。
+{k}: {s}	{k}: {s}
+{lbl}  {}	{lbl}  {}
+{line}, and {n} more	{line}，另有 {n} 項
+{mb} MB	{mb} MB
+{name} builds what you make.	由 {name} 建置你的作品。
+{name} builds what you make; answers come from {brain}.	由 {name} 負責建置，{brain} 負責回答。
+{name} is ready	{name} 已就緒
+{name} is ready.	{name} 已就緒。
+{name} isn't available yet in this build.	此版本尚未提供{name}。
+{name} isn't on this computer yet.	此電腦尚未安裝 {name}。
+{name} key	{name} 金鑰
+{n} actions done so far	目前已完成 {n} 項操作
+{n} days ago	{n} 天前
+{n} h ago	{n} 小時前
+{n} item(s)	{n} 項
+{n} job(s) running	{n} 個工作正在執行
+{n} min ago	{n} 分鐘前
+{n} picture(s) to match.	有 {n} 張參考圖片。
+{n} step(s) didn't work and were retried or skipped.	{n} 個步驟未成功，已重試或略過。
+{n} tokens	{n} 個 token
+{n} · ${spent:.2} of ${budget:.2}	{n} · 已用 ${spent:.2} / ${budget:.2}
+{n} · ${spent} of ${budget}	{n} · 已用 ${spent}，預算 ${budget}
+{scenes} {}	{scenes} {}
+{text}, {}	{text}，{}
+{title} hit a bug and stopped safely. ({what})	{title} 遇到錯誤，已安全停止。({what})
+{title} {id}	{title} {id}
+{title} · {:.0}%	{title} · {:.0}%
+{tool} finished	{tool} 已完成
+{tool}: {}	{tool}: {}
+{what} panicked: {msg}	{what} 發生異常：{msg}
+{} GB	{} GB
+{} isn't available yet in this build.	目前版本尚不支援 {}。
+{} item(s)	{} 項
+{} key	{} 金鑰
+{} report.md	{} 報告.md
+{} {name}	{} {name}
+{} {said}	{} {said}
+{} {then}	{} {then}
+{} {v}	{} {v}
+{} {why}	{} {why}
+{} {} · {}{cost}	{} {} · {}{cost}
+{} · {mode}	{} · {mode}
+{}: {e}	{}：{e}
+{}: {some}{more}.	{}：{some}{more}。
+{}: {state}	{}：{state}
+{}h {:02}m	{}小時 {:02}分
+{}m {:02}s	{}分 {:02}秒
+— use the filter to find the rest.	— 使用篩選尋找其餘內容。
+… {n} more	…另有 {n} 項
+… {n} older	…另有 {n} 筆較早記錄
+… {} more	…另有 {} 項
+… {} older	… 還有 {} 則較早內容
+← Back	← 返回
+↑↓ to move · Enter to run · Esc to close	↑↓ 選擇 · Enter 執行 · Esc 關閉

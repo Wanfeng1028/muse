@@ -1,0 +1,349 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Manifest",
+  "description": "A workspace's manifest (`craft.json`): what the person asked for, the target, status and history.\nIts schema is published in `docs/schemas/craft.schema.json` (`cargo xtask schemas`).",
+  "type": "object",
+  "properties": {
+    "agent_session": {
+      "description": "The coding agent's session, so a later request continues the same conversation.",
+      "type": [
+        "string",
+        "null"
+      ],
+      "default": null
+    },
+    "agent_session_by": {
+      "description": "The coding agent that saved `agent_session` (`claude-code`, `codex`…); none: saved before\nthis was kept.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "allowed_actions": {
+      "description": "Kinds of agent action the person allowed for this workspace (\"bash:npm\", \"web_fetch\"…).",
+      "type": "array",
+      "default": [],
+      "items": {
+        "type": "string"
+      }
+    },
+    "app_in_root": {
+      "description": "The app is the project folder itself: the person's own files, which the builder edits in\nplace, instead of app/.",
+      "type": "boolean"
+    },
+    "asset_budget_usd": {
+      "description": "What generated pictures and 3D models may cost before the person is asked (US dollars).",
+      "type": "number",
+      "format": "double",
+      "default": 5.0
+    },
+    "awaiting_check": {
+      "description": "The builder finished its turn and the run's checks haven't reported on it yet, so a run\nthat picks this up only needs to check: nothing is left to build.",
+      "type": "boolean"
+    },
+    "builder": {
+      "description": "The AI the person chose to build this project (a backend's name); none: the default\nbuilder. The person's, like the budget.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/CheckResult"
+      }
+    },
+    "created_ms": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "generate_assets": {
+      "description": "The person lets the builder generate pictures and 3D models (paid, so off until they turn\nit on; it also needs a key for an asset provider).",
+      "type": "boolean",
+      "default": false
+    },
+    "last_reply": {
+      "description": "The agent's last plain-words summary, shown when the project is reopened.",
+      "type": "string",
+      "default": ""
+    },
+    "name": {
+      "type": "string"
+    },
+    "note": {
+      "description": "One line on what's happening or what went wrong.",
+      "type": "string",
+      "default": ""
+    },
+    "questions": {
+      "description": "What the builder's questions get in this project; none: the app's default\n(`Settings::questions`). The person's, like the budget.",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Questions"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "request": {
+      "description": "What the person asked for, in their words.",
+      "type": "string"
+    },
+    "stack": {
+      "description": "The stack chosen for the build (\"React + TypeScript (Vite)\", \"Rust + Bevy\"…).",
+      "type": "string",
+      "default": ""
+    },
+    "start_files": {
+      "description": "The names in the person's folder when the project started there (at most\n[`START_FILES_SHOWN`]), so the builder knows what to start from.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "$ref": "#/$defs/Status",
+      "default": "new"
+    },
+    "target": {
+      "$ref": "#/$defs/TargetRef"
+    },
+    "updated_ms": {
+      "type": "integer",
+      "format": "uint64",
+      "minimum": 0
+    },
+    "version": {
+      "description": "The craft.json format version. Missing means 0: written before files had versions.",
+      "type": "integer",
+      "format": "uint32",
+      "default": 0,
+      "minimum": 0
+    }
+  },
+  "required": [
+    "name",
+    "request",
+    "target",
+    "created_ms",
+    "updated_ms"
+  ],
+  "$defs": {
+    "CheckResult": {
+      "description": "One check of the build: whether it works and, when it could be compared with the original,\nhow alike it is. Decisions read `passed` and `similarity`, never `note` (which is for people).",
+      "type": "object",
+      "properties": {
+        "artifacts": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        },
+        "at_ms": {
+          "type": "integer",
+          "format": "uint64",
+          "minimum": 0
+        },
+        "check": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "default": null
+        },
+        "claims": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/Claim"
+          }
+        },
+        "good_enough": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double",
+          "default": null
+        },
+        "note": {
+          "type": "string"
+        },
+        "pages": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PageLikeness"
+          }
+        },
+        "passed": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "default": null
+        },
+        "round": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0
+        },
+        "similarity": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "unknowns": {
+          "type": "array",
+          "default": [],
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "required": [
+        "round",
+        "note",
+        "at_ms"
+      ]
+    },
+    "Claim": {
+      "description": "One thing a build must do, checked on its own (\"The start page doesn't scroll sideways at\n390 px\").",
+      "type": "object",
+      "properties": {
+        "detail": {
+          "description": "Why it failed, in plain words (empty when it passed).",
+          "type": "string"
+        },
+        "passed": {
+          "type": "boolean"
+        },
+        "title": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "title",
+        "passed"
+      ]
+    },
+    "PageLikeness": {
+      "description": "How alike one page of a website and its rebuild are.",
+      "type": "object",
+      "properties": {
+        "dir": {
+          "description": "Its screenshots' folder inside `capture/` and `checks/round-N/`: \"\" for the start page,\n`routes/<slug>` for another.",
+          "type": "string"
+        },
+        "name": {
+          "description": "What people see: \"start page\" or the page's path (\"/about\").",
+          "type": "string"
+        },
+        "similarity": {
+          "description": "0..=100, as [`CheckResult::similarity`].",
+          "type": "number",
+          "format": "double"
+        }
+      },
+      "required": [
+        "name",
+        "dir",
+        "similarity"
+      ]
+    },
+    "Questions": {
+      "description": "What the builder's questions (`core_person_ask`) get.",
+      "oneOf": [
+        {
+          "description": "Shown to the person as a card; the builder waits for the answer.",
+          "type": "string",
+          "const": "ask"
+        },
+        {
+          "description": "Answered at once with \"decide yourself and say what you chose\".",
+          "type": "string",
+          "const": "decide"
+        }
+      ]
+    },
+    "Status": {
+      "description": "Where a workspace is in its life.",
+      "oneOf": [
+        {
+          "type": "string",
+          "enum": [
+            "new",
+            "inspecting",
+            "building",
+            "checking",
+            "ready",
+            "stopped"
+          ]
+        },
+        {
+          "description": "Waiting for the person (a question, an approval, or after an error).",
+          "type": "string",
+          "const": "needs_you"
+        }
+      ]
+    },
+    "TargetRef": {
+      "description": "What is being rebuilt.",
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "website"
+            },
+            "url": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "url"
+          ]
+        },
+        {
+          "description": "An app, game, executable, archive or folder on this computer.",
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "local"
+            },
+            "path": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "kind",
+            "path"
+          ]
+        },
+        {
+          "description": "Only a description.",
+          "type": "object",
+          "properties": {
+            "kind": {
+              "type": "string",
+              "const": "none"
+            }
+          },
+          "required": [
+            "kind"
+          ]
+        }
+      ]
+    }
+  }
+}

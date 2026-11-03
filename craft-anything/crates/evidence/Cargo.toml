@@ -1,0 +1,17 @@
+[package]
+name = "craft-anything-evidence"
+description = "Evidence records, canonical ids, confidence, unknowns and the error contract for Craft Anything"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+sha2 = { workspace = true }
+hex = { workspace = true }
+thiserror = { workspace = true }

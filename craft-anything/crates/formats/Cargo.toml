@@ -1,0 +1,33 @@
+[package]
+name = "craft-anything-formats"
+description = "Pure, standalone file-format parsers for Craft Anything (no workspace dependencies)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+miniz_oxide = { workspace = true }
+object = { workspace = true }
+rustc-demangle = { workspace = true }
+sha2 = { workspace = true }
+wasmparser = { workspace = true }
+wasmprinter = { workspace = true }
+# Signature verification (pure Rust, verified wasm32-unknown-unknown-safe).
+rsa = { version = "0.9", default-features = false, features = ["sha2"] }
+p256 = { version = "0.13", default-features = false, features = ["ecdsa", "sha256"] }
+p384 = { version = "0.13", default-features = false, features = ["ecdsa"] }
+sha1 = { version = "0.10", default-features = false, features = ["oid"] }
+# Firmware decompressors (pure Rust, verified wasm32-unknown-unknown-safe).
+lzma-rs = "0.3"
+bzip2-rs = "0.1"
+ruzstd = { version = "0.9.1", default-features = false, features = ["std"] }
+
+[dev-dependencies]
+craft-anything-testkit = { workspace = true }

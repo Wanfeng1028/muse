@@ -1,0 +1,1367 @@
+# zh-hans: original Chinese UI translations. Licensed MIT OR Apache-2.0.
+# UTF-8: English source<TAB>translation. Keep placeholders and escapes intact.
+ GB	 GB
+ and {n} more	，另有 {n} 项
+ {ascii}	 {ascii}
+ · ${c:.2}	 · ${c:.2}
+ · ssh {h}	 · ssh {h}
+(1 picture attached)	(已附上 1 张图片)
+({n} pictures attached)	(已附加 {n} 张图片)
+, ${c:.4}	, ${c:.4}
+.NET application graph	.NET 应用关系图
+.NET apps	.NET 应用
+.NET assembly overview	.NET 程序集概览
+.NET native calls	.NET 原生调用
+.NET types and methods	.NET 类型与方法
+/btw {}	/btw {}
+0x… or number	0x… 或数字
+A .NET program (C#, F# or VB)	.NET 程序 (C#、F# 或 VB)
+A DOS program	DOS 程序
+A Java program	Java 程序
+A Linux (or Unix) program	Linux (或 Unix) 程序
+A Mac or iPhone program	Mac 或 iPhone 程序
+A SQLite database (how an app stores its data)	SQLite 数据库 (应用存储数据的方式)
+A WebAssembly module (code that runs in a browser)	WebAssembly 模块 (在浏览器中运行的代码)
+A Windows program	Windows 程序
+A ZIP archive	ZIP 归档文件
+A bundle of ready-made code that many programs share.	供多个程序共用的一组现成代码。
+A coding agent such as Claude Code builds it, and an AI answers your questions in plain words. Change this any time in Settings → AI.	由 Claude Code 等编程智能体负责构建，AI 用通俗的语言回答你的问题。你可以随时在设置 → AI 中更改。
+A command's output shows here when it finishes.	命令完成后，输出将显示在这里。
+A copy to try something else from here.	创建副本，从这里尝试其他方案。
+A file of machine code that a computer can run directly, like an .exe or an app.	包含机器码、可由计算机直接运行的文件，例如 .exe 或应用程序。
+A file that a computer can run as a program.	计算机可以作为程序运行的文件。
+A file that links packed web code back to the original, readable source files.	将打包后的网页代码对应回原始可读源文件的文件。
+A file we don't recognise yet	尚无法识别的文件
+A first look at a file you're unsure about, without running it.	初步查看你不放心的文件，无须运行它。
+A folder	文件夹
+A folder has no bytes of its own	文件夹本身没有可查看的字节
+A free reverse-engineering tool from the NSA. Deep mode uses it for extra detail; Clean room mode never does.	NSA 提供的免费逆向工程工具。深度模式用它获取更多细节；净室模式不使用它。
+A frozen copy (recommended)	冻结副本 (推荐)
+A frozen copy takes {size}. That's a lot of space: a light copy takes {light}.	冻结副本占用 {size}，需要较多空间；轻量副本占用 {light}。
+A frozen copy takes {size}; a light copy takes {light}.	冻结副本占用 {size}；轻量副本占用 {light}。
+A game	游戏
+A game's files	游戏文件
+A light copy	轻量副本
+A locked room for running a program so it can't touch the rest of your computer.	运行程序的隔离空间，避免程序接触计算机的其他部分。
+A map of which functions call which other functions.	展示函数之间调用关系的图。
+A name the program's author gave to a function or variable that survived in the file.	程序作者为函数或变量起的名称，仍保留在文件中。
+A named piece of a program that does one job, like "add two numbers" or "save the file".	程序中有名称、负责某一项工作的代码片段，例如“将两个数相加”或“保存文件”。
+A number that says where something is in a program's memory, like a house number.	表示某个内容在程序内存中位置的数字，类似门牌号。
+A piece of text stored inside a program, like a message, a web address or a file name.	存储在程序中的文字，例如消息、网址或文件名。
+A program, an app bundle, an APK, a JavaScript bundle, a folder… or drop it on the window.	选择程序、应用包、APK、JavaScript 包或文件夹…也可以将其拖到窗口中。
+A recording of network traffic	网络流量记录
+A region of a program as it sits in memory while running.	程序运行时在内存中占据的一块区域。
+A region of a program file with one purpose: code, text, pictures, settings.	程序文件中承担特定用途的区域，例如代码、文字、图片或设置。
+A rule of thumb. Usually right, sometimes wrong, so we label the result as a best guess.	一种经验判断，通常正确，偶尔也会出错，所以我们将结果标为推测。
+A saved, checkable record of something we found, with how sure we are and where we found it.	可保存和核查的发现记录，包含可信度和发现位置。
+A script or web page	脚本或网页
+A set of commands a program offers to other programs.	程序提供给其他程序使用的一组命令。
+A simple snake game	简单的贪吃蛇游戏
+A small download (under 200 MB). Free, no account needed.	下载量较小 (不到 200 MB)。免费，无须账户。
+A small file that lists what an app is called, what it needs and what it's allowed to do.	一个小文件，列出应用名称、所需条件及允许执行的操作。
+A smart contract (EVM bytecode)	智能合约 (EVM 字节码)
+A way of writing bytes as two-character codes (00 to FF). The rawest view of a file.	用两个字符的编码 (00 到 FF) 表示字节的方式，展示文件最原始的内容。
+A way to build desktop apps out of web pages. The app is basically a website with its own browser.	一种使用网页构建桌面应用的方式，应用本质上就是自带浏览器的网站。
+A website	网站
+A website for my bakery	给我的面包店做个网站
+AI	AI
+AI cost	AI 费用
+AI cost (estimate)	AI 费用 (估算)
+AI cost (part estimate)	AI 费用 (部分为估算)
+AI model file	AI 模型文件
+AI name	AI 名称
+AI use this session	本次会话的 AI 用量
+API boundary	API 边界
+API key	API 密钥
+API key (stored in your system keychain)	API 密钥 (存储在系统钥匙串中)
+API key, if it needs one	API 密钥 (如需要)
+About 10 GB. Free for personal use with a Unity account.	约 10 GB。个人使用免费，需要 Unity 账户。
+About 60 GB, an Epic Games account, and Visual Studio's C++ tools.	约 60 GB，需要 Epic Games 账户和 Visual Studio 的 C++ 工具。
+Add	添加
+Add Visual Studio's C++ tools	添加 Visual Studio 的 C++ 工具
+Add a brain	添加 AI
+Add a fal.ai key	添加 fal.ai 密钥
+Add a folder…	添加文件夹…
+Add a plugin	添加插件
+Add an AI brain and I'll read this evidence for you, answer follow-up questions and point at the proof.	添加 AI 助手后，我就能为你解读这些证据、回答后续问题，并指出依据。
+Add an AI by its address	按地址添加 AI
+Add more info. The builder reads it at its next step.	补充更多信息。构建助手会在下一步读取。
+Add pictures	添加图片
+Add pictures of the original	添加原作图片
+Add pictures of the original (optional: screenshots help it look right)	添加原作图片 (可选：截图有助于还原外观)
+Add to a running build	补充正在进行的构建
+Added	已添加
+Added {n} picture(s). The builder uses them from your next change.	已添加 {n} 张图片。构建助手会从你下次提出修改时开始使用。
+Address to file offset	地址转文件偏移
+Adds its decompiler to Deep mode. Craft Anything can download and set it up for you.	将其反编译器加入深度模式。Craft Anything 可以为你下载并设置。
+Advanced	高级
+After installing one, look for it again.	安装后，请重新查找。
+Agent	智能体
+Allow generated assets	允许生成素材
+Allow once	允许一次
+Allowed for this project	此项目中允许
+Allowed for this project.	已对此项目授权。
+Allowed in	允许范围
+Allowed once	已允许一次
+Allowed once.	已允许本次操作。
+Also list projects from	同时列出这些位置的项目
+Always for this project	此项目中始终允许
+An Android app	Android 应用
+An Android app package: the file you install on a phone.	Android 应用安装包，即安装到手机上的文件。
+An Apple settings file (plist)	Apple 设置文件 (plist)
+An app	应用
+An app or a file	应用或文件
+Analyse a JavaScript app	分析 JavaScript 应用
+Analyse a page's JavaScript	分析网页的 JavaScript
+Android app code (DEX)	Android 应用代码 (DEX)
+Android app components	Android 应用组件
+Android app package	Android 应用包
+Android apps	Android 应用
+Android class	Android 类
+Android method bytecode	Android 方法字节码
+Android resources	Android 资源
+Annotate function	批注函数
+Another build is working, so this one waits its turn.	另一个构建正在进行，此构建正在排队。
+Answer a project's question	回答项目的问题
+Answer any of them in a message below.	在下方发送消息，回答其中任意问题。
+Answered by {name}	由 {name} 回答
+Answers come from {brain}. To build, set up a coding agent in Settings → AI.	由 {brain} 回答问题。要进行构建，请在设置 → AI 中配置编程智能体。
+App	应用
+App details on device	设备上的应用详情
+Apple apps	Apple 应用
+Approve an agent action	批准智能体操作
+Apps and games: keep refining until they look this alike to your pictures. Off, the likeness is only reported.	应用和游戏：持续改进，直到与参考图片达到此相似度。关闭后仅报告相似度。
+Architectures	架构
+Archive	归档文件
+Archives	归档文件
+Ask a question	提问
+Ask about a build	询问构建相关问题
+Ask about the build	询问构建情况
+Ask about the build, e.g. "where are the latest files?" Nothing changes and no build starts.	询问构建相关问题，例如“最新文件在哪里？”这不会修改内容或启动构建。
+Ask about this game	询问这款游戏
+Ask anything, e.g. "What does this program do?"	随便提问，例如“这个程序有什么用途？”
+Ask before running anything	运行前先询问
+Ask each time	每次询问
+Ask first	先询问我
+Ask for a change	提出修改
+Ask for a change, e.g. "bigger buttons" or "add a dark mode"	提出修改，例如“把按钮变大”或“添加深色模式”
+Ask for a change, e.g. "make it faster" or "add a high-score table"	提出修改，例如“加快速度”或“添加最高分排行榜”
+Ask for a change, e.g. "make the header blue" or "add a contact form"	提出修改要求，例如“将页眉改成蓝色”或“添加联系表单”
+Ask in your own words. Every answer shows how sure we are, and the proof.	用自己的话提问。每个回答都会说明可信程度，并给出证据。
+Ask me	询问我
+Ask the agent about this	向智能体询问此内容
+Ask the agent about this target. It cites evidence for every claim.	向智能体询问此目标的情况。它会为每项结论引用证据。
+Ask the agent…	询问智能体…
+Ask the person	询问用户
+Ask: "How does the % key work?"	提问：“% 键是如何工作的？”
+Ask: "Is it safe to run?"	试着问：“运行它安全吗？”
+Ask: "What does it send over the internet?"	提问：“它会通过互联网发送什么？”
+Asking for its models…	正在获取可用模型…
+Asset catalog	资源目录
+At most this many rounds of fixes after the first build.	首次构建后，最多进行这么多轮修正。
+Attach pictures	附上图片
+Attach pictures (or drop them here)	附加图片 (或拖到这里)
+Auto mode	自动模式
+Automatic	自动
+Automatic ({name})	自动 ({name})
+Back	返回
+Best guess	推测
+Best guess: a reasonable reading, but not proven.	推测：解释合理，但尚未证实。
+Binary layout	二进制布局
+Blocked	受阻
+Bookmark	添加书签
+Budget for a new project	新项目预算
+Bug report	错误报告
+Build	构建
+Build a rebuild ledger	建立重建台账
+Build a stand-in backend	构建替代后端
+Build with	构建方式
+Build with this	用它构建
+Build with {name}	使用 {name} 构建
+Build with {name} instead	改用 {name} 构建
+Build without it	不使用它，继续构建
+Builder's questions:	构建助手的问题：
+Building	构建中
+Building needs a coding agent on this computer (Claude Code, Codex or Gemini CLI: install one and sign in to it once in its own window), or an AI with an API key. Craft Anything never sees your account.	构建需要此计算机上的编程智能体 (Claude Code、Codex 或 Gemini CLI：安装其中一个，并在其窗口中登录一次)，或配置了 API 密钥的 AI。Craft Anything 不会接触你的账户。
+Building needs a coding agent such as Claude Code, or an AI with an API key.	构建需要 Claude Code 等编程智能体，或配置了 API 密钥的 AI。
+Builds	构建
+Builds and answers may use it again.	构建和回答时可以再次使用它。
+Builds at once	同时构建数量
+Builds keep going without stopping to ask you before an action. The builder still never deletes outside its project, changes system settings or publishes anything, and stays within each project's asset budget.	构建会持续进行，不会在每次操作前停下询问。构建助手仍不会删除项目外的内容、修改系统设置或发布任何内容，并遵守各项目的素材预算。
+Builds use this one. Click to choose automatically again.	构建时使用此助手。点击可恢复自动选择。
+Built by	构建助手
+Built with	构建工具
+Built with {stack}, as you asked, so no game engine is needed.	已按你的要求使用 {stack} 构建，因此不需要游戏引擎。
+Call graph	调用图
+Call path	调用路径
+Call the build done	将构建标为完成
+Called done. A new message carries on from here.	已标为完成。发送新消息即可从这里继续。
+Cancel	取消
+Cancel: don't use this folder	取消：不使用此文件夹
+Capture a website for rebuilding	采集网站用于重建
+Capture inventories	采集清单
+Capture menus, dialogs and tabs	采集菜单、对话框和标签页
+Change	更改
+Change a setting	更改设置
+Change an AI's model	更改 AI 的模型
+Change how hard an AI thinks	更改 AI 的思考力度
+Change it	更改
+Change…	更改…
+Check	检查
+Check .NET native calls	检查 .NET 原生调用
+Check a rebuild claim	核验重建结果声明
+Check a scripted web session	检查网页会话脚本
+Check an answer	检查答案
+Check decompiled C#	检查反编译的 C#
+Check my build	检查我的构建
+Check the JEB connection	检查 JEB 连接
+Check the asset keys	检查素材服务密钥
+Check the setup	检查配置
+Check {n}	检查 {n}
+Check {n}: about {s}% like the original	第 {n} 次检查：与原作约有 {s}% 相似
+Checked against Godot's official checksums before it's used.	使用前会对照 Godot 官方校验和进行验证。
+Checking	检查中
+Choose a file	选择文件
+Choose a folder…	选择文件夹…
+Choose a function, string or section to see it here.	选择函数、字符串或节区，即可在这里查看。
+Choose an AI's job	选择 AI 的职责
+Choose the folder Ghidra is installed in.	选择 Ghidra 的安装文件夹。
+Choose what the builder's questions get	选择如何处理构建助手的问题
+Choose what to recreate, say what you want, then press Start.	选择要重现的对象，描述你的需求，然后点击开始。
+Choose…	选择…
+Classes	类
+Clean room	净室
+Clean room / Deep	净室 / 深度
+Clean room never reads the original's code, files or page source. Deep mode reads them with every tool Craft Anything has.	净室模式从不读取原作的代码、文件或页面源代码。深度模式会使用 Craft Anything 的全部工具读取它们。
+Clean room never reads the original's code, files or page source: it works from what you can see. Deep reads them with every tool, and with Ghidra when it's installed. Every finding records which was used.	净室模式不会读取原作的代码、文件或网页源码，只依据可见内容工作。深度模式会使用全部工具读取这些内容，安装 Ghidra 后也会使用它。每项发现都会记录所用模式。
+Clean room on	净室模式已开启
+Clean room or Deep	净室或深度模式
+Clean room: nothing inside the original is read. We work from what you can see: pictures, the page as a visitor sees it, and watching it run.	净室：不读取原作内部内容。我们依据你能看到的内容工作：图片、访客看到的网页，以及运行时的表现。
+Clear finished	清除已完成项
+Close	关闭
+Close a Frida session	关闭 Frida 会话
+Close a GDB session	关闭 GDB 会话
+Close a Rizin debug session	关闭 Rizin 调试会话
+Close a pinned build	关闭固定的构建
+Close it	关闭它
+Close it first.	请先关闭它。
+Close the website	关闭网站
+Code reconstructed from a program that looks like the C language. Close to what the program does, but not its original source.	从程序重建出的类似 C 语言的代码，接近程序的实际行为，但不是原始源码。
+Code signature	代码签名
+Coding agent app	编程智能体应用
+Command palette (Ctrl/⌘ K)	命令面板 (Ctrl/⌘ K)
+Commands:	命令：
+Compare WebAssembly interfaces	比较 WebAssembly 接口
+Compare module exports	比较模块导出
+Compare two .NET builds	比较两个 .NET 构建
+Compare two app versions	比较两个应用版本
+Compare two artifacts	比较两个产物
+Compare two evidence bundles	比较两组证据
+Compare two functions	比较两个函数
+Compare two page captures	比较两次网页采集
+Compare two runs	比较两次运行
+Compare two screenshots	比较两张截图
+Comparing and rebuilding	比较与重建
+Compiled Python file	编译后的 Python 文件
+Connect	连接
+Connect agent apps	连接智能体应用
+Connect to a browser	连接浏览器
+Connect {name}	连接 {name}
+Connected devices	已连接的设备
+Connected phone	已连接的手机
+Continue	继续
+Contradicted	存在矛盾
+Control-flow graph: a map of every path a function can take, like a flowchart.	控制流图：像流程图一样，展示函数可能执行的每一条路径。
+Copies share the files it saves beside itself.	各副本共享它在自身目录旁保存的文件。
+Copy a file off the phone	从手机复制文件
+Copy a file to the phone	将文件复制到手机
+Copy an app off the phone	从手机复制应用
+Copy the command	复制命令
+Copy the evidence id	复制证据 ID
+Couldn't add the pictures:	无法添加图片：
+Couldn't answer:	无法回答：
+Couldn't attach the pictures:	无法附加图片：
+Couldn't look through that folder.	无法查看该文件夹。
+Couldn't open it.	无法打开。
+Couldn't open the folder.	无法打开文件夹。
+Couldn't open {}: {}	无法打开 {}：{}
+Couldn't start a worker thread: {e}	无法启动工作线程：{e}
+Couldn't start it.	无法启动。
+Coverage unknown	覆盖范围未知
+Craft Anything	Craft Anything
+Craft Anything can't build with {engine}, so Unity is the closest match.	Craft Anything 无法使用 {engine} 构建，因此改用最接近的 Unity。
+Craft Anything or the computer closed while it was working. Everything so far is kept; Continue picks up where it stopped.	工作期间 Craft Anything 或计算机已关闭。目前的进度全部保留；选择“继续”可从停止处接着进行。
+Craft Anything reads its code and files with every tool it has. For your private use.	Craft Anything 使用全部工具读取其代码和文件。仅供你个人使用。
+Craft Anything reads the original's code, files and page source with every tool it has, and with Ghidra when it's installed.	Craft Anything 会使用全部工具读取原作的代码、文件和页面源代码；已安装 Ghidra 时也会使用它。
+Craft Anything report.md	Craft Anything 报告.md
+Craft Anything's records, checks and anything it built in app/ are deleted. Your own files in the folder stay as they are.	将删除 Craft Anything 的记录、检查结果及 app/ 中构建的全部内容。文件夹中你自己的文件保持不变。
+Crash dump	崩溃转储
+Create the project	创建项目
+Critical	严重
+Cross-reference: a place in the program that uses or calls the thing you're looking at.	交叉引用：程序中使用或调用当前所查看内容的位置。
+Cross-references	交叉引用
+Cross-references: the places in the program that use or call the thing you're looking at.	交叉引用：程序中使用或调用当前所查看内容的位置。
+Current document	当前文档
+Cursor address	光标地址
+Cursor function	光标所在函数
+Custom	自定义
+Cutter command	Cutter 命令
+DOS load image	DOS 加载映像
+Databases	数据库
+Decide yourself	自行决定
+Decode a radio recording	解码无线电记录
+Decompile	反编译
+Decompile Java with Vineflower	使用 Vineflower 反编译 Java
+Decompile many	批量反编译
+Decompile with JEB	使用 JEB 反编译
+Deep	深度
+Deep mode now decompiles with Ghidra. The first look at a large program can take several minutes.	深度模式现在会使用 Ghidra 反编译。首次分析大型程序可能需要几分钟。
+Deep mode on	深度模式已开启
+Deep: we read its code, files and page source with every tool we have, and with Ghidra when it's installed. Click to switch.	深度：使用所有可用工具读取其代码、文件和网页源码；已安装 Ghidra 时也会使用它。点击切换。
+Delete a project	删除项目
+Delete it	删除
+Delete the project	删除项目
+Delete {name}?	删除 {name}？
+Deleted.	已删除。
+Deleted. Your own files are still in the folder.	已删除。你自己的文件仍保留在文件夹中。
+Delete…	删除…
+Deliberately scrambled to make it hard to read, without changing what it does.	刻意打乱代码，使其难以阅读，但不改变程序的行为。
+Demangle Swift symbols	还原 Swift 符号名称
+Details	详情
+Details about the selected item appear here.	所选项的详细信息将显示在这里。
+Detect	检测
+Device details	设备详情
+Device features	设备功能
+Device folder	设备文件夹
+Device log	设备日志
+Disassemble sBPF code	反汇编 sBPF 代码
+Disassembly	反汇编
+Disconnect agent apps	断开智能体应用连接
+Dismiss	关闭提示
+Dispatch metadata	分派元数据
+Display info	显示信息
+Do you have permission?	你有权限吗？
+Does it talk to the internet?	它会连接互联网吗？
+Does it track me?	它会跟踪我吗？
+Don't allow	不允许
+Don't ask again (you can change this in Settings)	不再询问 (可在设置中更改)
+Done	完成
+Download	下载
+Download Godot {v}	下载 Godot {v}
+Download Unity Hub	下载 Unity Hub
+Download and use Ghidra	下载并使用 Ghidra
+Download it from unity.com and install it.	从 unity.com 下载并安装。
+Download it from unrealengine.com and install it.	从 unrealengine.com 下载并安装。
+Download the Epic Games Launcher	下载 Epic Games Launcher
+Downloads keep going in the background.	下载会在后台继续。
+Drive an app's screen	操作应用界面
+Drop a calculator app (or any small program) on the window.	将计算器应用 (或任意小程序) 拖入窗口。
+Drop a file or app anywhere in this window.	将文件或应用拖到此窗口的任意位置。
+Drop the file on the window. We only read it; nothing runs.	将文件拖到窗口中。我们只读取文件，不会运行它。
+Drop to attach	松开以添加附件
+Drop to open it	松开以打开
+Duplicate	创建副本
+Duplicate a project	复制项目
+Duplicate the project	创建项目副本
+Each answer says how sure we are: Seen it, Worked it out or Best guess.	每个回答都会说明可信程度：已观察、已推导或推测。
+Edit a project file	编辑项目文件
+Edit them in place	原位编辑
+Effort:	思考力度：
+Electron and JavaScript	Electron 与 JavaScript
+Electron fuses	Electron 功能开关
+Engines	引擎
+Engines and settings	引擎与设置
+Enter a full web address, like example.com or https://example.com/page.	输入完整网址，例如 example.com 或 https://example.com/page。
+Enter to send · Shift+Enter for a new line	Enter 发送 · Shift+Enter 换行
+Epic's own installer. It only opens if Epic's signature checks out.	Epic 官方安装程序。仅在 Epic 签名验证通过后才会打开。
+Essentials	基础工具
+Every build of this project.	此项目的每次构建。
+Every finding is saved here with how sure we are.	每项发现及其可信程度都会保存在这里。
+Every tool as well: a workbench with functions, bytes, references and evidence.	还可使用所有工具：在工作台中查看函数、字节、引用和证据。
+Everything found so far, as a Markdown file.	将目前找到的所有内容保存为 Markdown 文件。
+Everything so far is kept. Continue picks up where it stopped.	目前的成果已全部保留。点击继续即可从停止处接着进行。
+Evidence	证据
+Evidence ledger	证据记录
+Evidence so far	目前的证据
+Explain a function	解释函数
+Explain like I'm new	用新手能懂的方式解释
+Export a report	导出报告
+Export a report (Markdown)	导出报告 (Markdown)
+Export captured scripts	导出采集的脚本
+Export evidence	导出证据
+Export report	导出报告
+Extract an archive	解压归档文件
+Extract firmware	提取固件
+Extract with this	用此工具提取
+Extracts	提取内容
+File formats	文件格式
+Files packed inside a file	文件中打包的文件
+Filter	筛选
+Filter by name	按名称筛选
+Filter the files	筛选文件
+Filter…	筛选…
+Find Android classes	查找 Android 类
+Find Java classes	查找 Java 类
+Find a call path	查找调用路径
+Find a game's files	查找游戏文件
+Find an app	查找应用
+Find in-page MCP tools	查找页面内的 MCP 工具
+Find it automatically	自动查找
+Find out how any software works, then craft your own.	了解任何软件的工作原理，再打造自己的版本。
+Find the original source line	查找原始源码行
+Firmware regions	固件区域
+Fold the sidebar	折叠侧栏
+Folders of projects, and projects started in a folder you picked. Removing one only takes it off the list.	项目所在的文件夹，以及在你指定的文件夹中创建的项目。移除时只会将其从列表中删除。
+Follow the installer that opened. Come back here when it's done.	按已打开的安装程序完成安装，然后回到这里。
+Follow the steps on rustup.rs, then come back here.	按照 rustup.rs 上的步骤操作，然后回到这里。
+For everything you make, like the switch in the title bar.	适用于你创建的所有内容，与标题栏中的开关相同。
+For example: a website for my bakery	例如：给我的面包店做个网站
+For example: recreate this website	例如：重现这个网站
+For example: the same app, but simpler	例如：做一个相同但更简洁的应用
+For example: the same game, with a high-score table	例如：同样的游戏，加上最高分排行榜
+Force-stop an app	强行停止应用
+Forget the key	移除密钥
+Found on this computer	在此计算机上找到
+Found {} AI option(s) on this computer	在此电脑上找到 {} 个 AI 选项
+Frida devices	Frida 设备
+Frida instrumentation	Frida 插桩
+Frida processes	Frida 进程
+Frida session status	Frida 会话状态
+From	来源
+Frozen copy	冻结副本
+Function address	函数地址
+Function assembly	函数汇编代码
+Function dossier	函数档案
+Function info	函数信息
+Function instructions	函数指令
+Function references	函数引用
+Functions	函数
+GDB command	GDB 命令
+GDB session status	GDB 会话状态
+Game assets	游戏素材
+Game engines	游戏引擎
+Game files	游戏文件
+General	常规
+Generate a 3D model	生成 3D 模型
+Generate a picture	生成图片
+Generate custom pictures and models	生成自定义图片和模型
+Generated art (games)	生成美术素材 (游戏)
+Generated assets	生成素材
+Generated pictures and 3D models are made with fal.ai.	使用 fal.ai 生成图片和 3D 模型。
+Get Ghidra	获取 Ghidra
+Get Ghidra for Deep mode	获取 Ghidra 以用于深度模式
+Get Unity Hub	获取 Unity Hub
+Get a key at {name}	前往 {name} 获取密钥
+Get the Epic Games Launcher	获取 Epic Games Launcher
+Get {name}	获取 {name}
+Getting Ghidra	正在获取 Ghidra
+Getting Godot	正在获取 Godot
+Getting Unity Hub	正在获取 Unity Hub
+Getting the Epic Games Launcher	正在获取 Epic Games Launcher
+Ghidra	Ghidra
+Ghidra folder	Ghidra 文件夹
+Ghidra is ready	Ghidra 已就绪
+Ghidra is ready. Deep mode uses it from now on.	Ghidra 已就绪。深度模式现在会使用它。
+Ghidra isn't installed, so the built-in decompiler stands in. Get it in Settings → Engines.	尚未安装 Ghidra，将使用内置反编译器。可前往“设置 → 引擎”获取 Ghidra。
+Ghidra isn't on this computer yet, so the built-in decompiler stands in.	此电脑尚未安装 Ghidra，将暂用内置反编译器。
+Ghidra will use half of this computer's memory (up to {gb} GB).	Ghidra 将使用这台计算机一半的内存 (最多 {gb} GB)。
+Ghidra will use up to {gb} GB of memory.	Ghidra 最多使用 {gb} GB 内存。
+Ghidra, a free reverse-engineering tool from the NSA, gives Deep mode richer decompiled code and types.	Ghidra 是 NSA 提供的免费逆向工程工具，可让深度模式获得更丰富的反编译代码与类型信息。
+Go home	返回首页
+Go program details	Go 程序详情
+Go to address	跳转到地址
+Go to offset (0x…)	跳转到偏移量 (0x…)
+Go to the project	前往项目
+Good enough	达到要求
+Got it	知道了
+Graph	关系图
+Half of this computer's memory, up to {gb} GB.	此计算机内存的一半，最多 {gb} GB。
+Here's a first look:	初步分析结果：
+Here's what I found on that page:	以下是我在该网页上的发现：
+Hex	十六进制
+Hide pinned builds	隐藏固定构建
+Hide the answer	隐藏回答
+Hide the console	隐藏控制台
+High	高
+Home	首页
+How alike a rebuild must look to the original before refining stops.	重建结果与原作的外观相似度达到多少时停止改进。
+How closely may Craft Anything look at it?	允许 Craft Anything 研究到什么程度？
+How complete is the rebuild	重建完成度
+How do I open an app?	如何打开应用？
+How do the window and the page talk to each other?	窗口与网页之间如何通信？
+How does the % key work?	% 键是如何工作的？
+How is this app built?	这个应用是如何构建的？
+How is this app put together?	这个应用由哪些部分组成？
+How many projects may build at the same time. More wait their turn.	可同时构建的项目数量。其他项目将排队等待。
+How should the builder use them?	构建助手应如何使用这些文件？
+I have Ghidra	我已安装 Ghidra
+I have permission	我已获得许可
+I want to make things work together	我想让不同的软件协同工作
+I'm checking whether it's safe	我想检查它是否安全
+I'm keeping old software alive	我想让旧软件继续使用
+I'm learning how things work	我在学习事物的工作原理
+I'm new to this	我是新手
+ILSpy decompile	使用 ILSpy 反编译
+Ideas:	灵感：
+Identify a Flutter build	识别 Flutter 构建
+Import a source folder	导入源码文件夹
+Import evidence	导入证据
+Imports / Exports	导入 / 导出
+In Deep mode this one takes a game's own files out after the study. Click to stop.	深度模式下，会在研究完成后提取游戏自身的文件。点击可停止。
+In Unity Hub: sign in (or make a free account) and accept the free Personal licence. Then open Installs, press Install Editor and choose the recommended version. About 10 GB.	在 Unity Hub 中登录 (或免费注册账户)，并接受免费的 Personal 许可。然后打开 Installs，点击 Install Editor，选择推荐版本。约需 10 GB。
+In the launcher: sign in, open Unreal Engine, then Library, and press + next to Engine Versions to install one. About 60 GB.	在启动器中登录，打开 Unreal Engine，再打开“库”，点击“引擎版本”旁的 + 安装一个版本。约需 60 GB。
+In use	使用中
+Inside	内部
+Inspect a Dart AOT snapshot	检查 Dart AOT 快照
+Inspect a network recording	检查网络记录
+Inspect a web page	检查网页
+Inspect an Electron page	检查 Electron 页面
+Inspect data	检查数据
+Inspect instruction	检查指令
+Inspector	检查器
+Install Rust	安装 Rust
+Install Unity Hub	安装 Unity Hub
+Install Visual Studio Community (free) and tick "Game development with C++".	安装 Visual Studio Community (免费)，并勾选“使用 C++ 的游戏开发”。
+Install Xcode	安装 Xcode
+Install an app	安装应用
+Install an engine	安装引擎
+Install the launcher	安装启动器
+Installed	已安装
+Installed apps	已安装的应用
+Inter-process communication: how two parts of an app (or two apps) send messages to each other.	进程间通信：应用的两个部分 (或两个应用) 相互发送消息的方式。
+Interface Builder documents	Interface Builder 文档
+Interrupted	已中断
+Inventory an archive or app bundle	清点归档文件或应用包
+Investigating	调查中
+Investigation so far	目前的调查
+Is Apktool available?	Apktool 可用吗？
+Is adb available?	adb 可用吗？
+Is an asset key set up?	素材密钥已设置吗？
+Is anything in here a program?	这里面有程序吗？
+Is anything sensitive saved in plain text?	是否有敏感信息以明文保存？
+Is it safe to look inside programs?	查看程序内部安全吗？
+Is it safe to run?	运行它安全吗？
+Is there any readable text inside?	里面有可读的文本吗？
+Is this file safe to open?	这个文件可以安全打开吗？
+It closed straight away.	它启动后立即关闭了。
+It closed straight away. It said:	程序启动后立即关闭。输出如下：
+It isn't on this computer yet. Craft Anything can download Ghidra {version} and the Java runtime it needs (about {mb} MB), check both against their publishers' checksums, and set them up in its own folder. Nothing else on your computer changes.	此电脑尚未安装。Craft Anything 可以下载 Ghidra {version} 及所需的 Java 运行时 (约 {mb} MB)，对照发布者的校验和验证两者，并安装到自己的文件夹中。电脑上的其他内容不会改变。
+It isn't on this computer yet. Install Ghidra {version} from its release page, then choose its folder.	这台计算机尚未安装 Ghidra。请从发布页面安装 Ghidra {version}，然后选择其文件夹。
+It's already open.	它已经打开了。
+It's already open. Right-click it to open another copy.	已经打开。右键点击可再打开一个副本。
+It's done	就这样吧
+It's mine, or I'm allowed to look	这是我的，或我已获准查看
+Its copy is deleted, with anything it saved there. The project itself stays as it is.	将删除此副本及其保存的所有内容。项目本身保持不变。
+Its folder is deleted with everything in it: what was built, the checks and the conversation.	将删除其文件夹及其中的全部内容：构建成果、检查结果和对话。
+Its own code	自身代码
+Java archive overview	Java 归档概览
+Java class	Java 类
+Java method bytecode and pseudo-Java	Java 方法字节码与伪 Java 代码
+Java program code (one class)	Java 程序代码 (一个类)
+Java programs	Java 程序
+Java runtime	Java 运行时
+Jobs	任务
+Jobs ({n_jobs})	任务 ({n_jobs})
+Jobs ({n})	任务（{n}）
+Just a question: nothing was changed. Answered by	仅回答问题，未作任何修改。回答者：
+Just ask	只提问
+Just look inside	只查看内部
+Keep going without asking	继续执行，无须询问
+Keep it	保留
+Keep it in the sidebar to open any time, whatever later builds change.	将其保留在侧栏中，随时打开，不受后续构建改动的影响。
+Keep the build as it is and stop offering to carry on.	保留构建的现状，不再提示继续。
+Keep this version in the sidebar to open any time.	将此版本保留在侧栏中，随时打开。
+Keeps this version exactly as it is now. Later builds can't change or break it, and anything it saves stays with the copy.	完整保留当前版本。后续构建无法修改或破坏它，它保存的所有内容也会留在此副本中。
+Key saved	密钥已保存
+Keyed archive	键控归档
+Kind	类型
+Language	语言
+Last: {what}	最近：{what}
+Launch an app	启动应用
+Leave a few GB for the rest of your computer.	请为计算机的其他任务留出几 GB 内存。
+Leave a path empty to use the managed install. We never need environment variables.	路径留空即可使用托管安装，无需设置环境变量。
+Leave empty to use the one Craft Anything sets up.	留空则使用 Craft Anything 安装的版本。
+Let a project generate assets	允许项目生成素材
+Let's go	开始吧
+Lets the builder make realistic 3D models and textures for games, {model} a model, with a {budget} budget per project.	允许构建助手为游戏制作逼真的 3D 模型和纹理，每个模型 {model}，每个项目预算 {budget}。
+Library resolution	库解析
+Light copy: shares big files with the project	轻量副本：与项目共享大型文件
+Likeness	相似度
+Line up code and behaviour	对照代码与行为
+Line up source with the bundle	对照源码与程序包
+List Electron pages	列出 Electron 页面
+List JEB units	列出 JEB 单元
+List JS runtime targets	列出 JS 运行时目标
+List a Unity assets file	列出 Unity assets 文件内容
+List a Unity bundle	列出 Unity 资源包内容
+List a game's archives	列出游戏归档文件
+List a node's event listeners	列出节点的事件监听器
+List an AI's models	列出 AI 的模型
+List an Unreal IoStore container	列出 Unreal IoStore 容器内容
+List an Unreal pak	列出 Unreal pak 内容
+List bookmarks	列出书签
+List browser pages	列出浏览器页面
+List documents	列出文档
+List engines	列出引擎
+List functions	列出函数
+List names	列出名称
+List open targets	列出已打开的目标
+List pinned builds	列出固定的构建
+List plugins	列出插件
+List project files	列出项目文件
+List projects	列出项目
+List questions about a build	列出构建相关问题
+List radio decoders	列出无线电解码器
+List segments	列出区段
+List shared Cutter sessions	列出共享的 Cutter 会话
+List strings	列出字符串
+Live: the project's latest build	当前：项目的最新构建
+Load a screenshot	加载截图
+Loading…	正在加载…
+Log	日志
+Look again	重新查找
+Look at a game	查看游戏
+Look at a website	查看网站
+Look at the game	查看游戏
+Look for AI on this computer	查找本机上的 AI
+Look for game engines	查找游戏引擎
+Look for projects again	重新查找项目
+Looked at everything	已查看全部内容
+Looked at part of it	已查看部分内容
+Looked at {a} of {b}	已查看 {a} / {b}
+Looking for AI on this computer…	正在查找本机上的 AI…
+Looking for game engines on this computer…	正在此计算机上查找游戏引擎…
+Looking for the game's files…	正在查找游戏文件…
+Looking inside needs Deep mode	查看内部需要深度模式
+Looking inside software you own or are allowed to examine is normal and often protected (learning, compatibility, security). Saying why helps you keep to it; it stays on this computer.	研究你拥有或获准检查的软件是常见行为，且通常受到保护 (如学习、兼容性或安全研究)。说明目的有助于遵守这一范围；此信息仅保存在本机。
+Looking on this computer…	正在此电脑上查找…
+Low	低
+Mach-O structure	Mach-O 结构
+Made a copy: {name}	已创建副本：{name}
+Made with fal.ai and paid from your account: {model} a 3D model, {picture} a picture. Off, the game is built without them.	使用 fal.ai 制作，费用从你的账户扣除：每个 3D 模型 {model}，每张图片 {picture}。关闭后，构建游戏时不会生成这些素材。
+Made with {engine}	使用 {engine} 制作
+Made without looking inside the original.	未查看原作内部而制作。
+Make a game that plays like this	制作玩法类似的游戏
+Make a simpler version of this game	制作这个游戏的简化版本
+Make my own version	制作自己的版本
+Make my own version of this app	制作我自己的应用版本
+Making my own thing talk to something else.	让自己的作品与其他软件互通。
+Many source files packed into one big file so an app or web page loads faster.	将多个源文件打包为一个大文件，以加快应用或网页的加载速度。
+Map a HarmonyOS app	绘制 HarmonyOS 应用关系图
+Map a page's module graph	绘制网页模块关系图
+Map an Android app	绘制 Android 应用关系图
+Map an Apple app	绘制 Apple 应用关系图
+Markdown	Markdown
+Match functions between two builds	匹配两个构建之间的函数
+Match my pictures	匹配我的图片
+Match static code to what ran	匹配静态代码与实际运行内容
+Maximise	最大化
+May I run "{title}"?	可以运行“{title}”吗？
+May I {action}?	可以{action}吗？
+Measure which code ran	测量代码执行范围
+Medium	中
+Memory for Ghidra	Ghidra 内存用量
+Minimise	最小化
+Mode	模式
+Model	模型
+Model: {model}	模型：{model}
+Modules	模块
+More detail	更多详情
+More makes a big program's first look faster.	分配更多内存可加快大型程序的首次分析。
+More memory makes Ghidra's first look at a big program faster; leave some for the rest of the computer. Used from the next time Ghidra starts.	更多内存能加快 Ghidra 对大型程序的首次分析，但请为计算机的其他任务留出空间。下次启动 Ghidra 时生效。
+Name (optional)	名称 (可选)
+Name an address	为地址命名
+Name at address	地址处的名称
+Name many addresses	为多个地址命名
+Names the program's author gave to functions or variables that survived in the file.	程序作者为函数或变量起的名称，仍保留在文件中。
+Needs a fal.ai key. Until then the game is built without them.	需要 fal.ai 密钥。添加之前，构建游戏时不会生成这些素材。
+Needs you	需要你处理
+Network	网络
+New	新建
+New project	新建项目
+New projects go in	新项目保存位置
+Next address	下一个地址
+No AI (built-in engines only)	不使用 AI (仅内置引擎)
+No AI brain is set up, so answers come straight from the built-in engines. Add one any time for plain-words explanations.	尚未设置 AI 助手，因此回答直接来自内置引擎。你可以随时添加 AI 助手，获得通俗的解释。
+No AI for now	暂不使用 AI
+No AI is set up yet. The built-in engines still work; an AI adds plain-words answers.	尚未配置 AI。内置引擎仍可使用；添加 AI 后可获得通俗易懂的回答。
+No Unreal or Unity archives were found. Pick the folder the game is installed in.	未找到 Unreal 或 Unity 归档文件。请选择游戏的安装文件夹。
+No coding agent was found on this computer yet.	尚未在此计算机上找到编程智能体。
+No evidence yet	暂无证据
+No game files here	这里没有游戏文件
+No jobs yet. Long tasks show their progress here, and you can cancel them.	暂无任务。耗时任务将在这里显示进度，你也可以取消它们。
+No matches	没有匹配项
+No open questions	没有待解答的问题
+No plugins yet.	暂无插件。
+No result yet	暂无结果
+No targets	没有目标
+No tool named {tool}	没有名为 {tool} 的工具
+None	无
+None yet. Screenshots help it look right.	尚未添加。截图有助于还原外观。
+Not allowed	不允许
+Not allowed.	未允许。
+Not available yet	尚不可用
+Not compared yet: {what}	尚未比较：{what}
+Not installed	未安装
+Not now	暂时不要
+Nothing allowed yet.	尚未允许任何操作。
+Nothing can build yet: install Claude Code (and sign in to it once), or add an AI with an API key below.	尚无可用的构建助手：请安装 Claude Code (并先登录一次)，或在下方添加配置了 API 密钥的 AI。
+Nothing found	未找到内容
+Nothing found yet. We look for API keys, local model servers (Ollama, LM Studio) and agent apps you already have.	尚未找到。我们会查找你已有的 API 密钥、本地模型服务器 (Ollama、LM Studio) 和智能体应用。
+Nothing inside it is read.	不会读取其内部内容。
+Nothing inside it is read; Craft Anything works from what you can see. Your version gets its own art.	不会读取其内部内容；Craft Anything 仅依据你能看到的内容工作。你的版本会使用自己的美术素材。
+Nothing inside the original is read: not its code, files or page source. Craft Anything works from what you can see: pictures, the page as a visitor sees it, and watching it run.	不会读取原作的内部内容，包括代码、文件和网页源码。Craft Anything 仅根据可见内容工作：图片、访客所见的网页以及运行时的表现。
+Nothing made yet. What you make shows up here.	还没有作品。你制作的内容会显示在这里。
+Nothing matches the filter.	没有符合筛选条件的内容。
+Nothing matches.	没有匹配项。
+Nothing new for {time}. Long steps can be quiet; if it stays like this, press Pause.	已有 {time} 没有新进展。耗时步骤可能暂时没有消息；若一直如此，请点击暂停。
+Nothing open	尚未打开任何内容
+Nothing open yet	尚未打开任何内容
+Nothing selected	未选择任何内容
+Nothing to show	没有可显示的内容
+Nothing uses it until it's on again; it keeps its key.	重新启用前不会使用它；密钥会保留。
+Nothing — start fresh	不使用任何文件，从头开始
+Now	现在
+Now: {what} ({time})	当前：{what} ({time})
+Objective-C classes	Objective-C 类
+Objective-C protocols	Objective-C 协议
+Observe a JS runtime	观察 JS 运行时
+Of this, {cost} was charged to an API key.	其中 {cost} 通过 API 密钥计费。
+Off	关闭
+Ollama or LM Studio on another computer, or any service that speaks the OpenAI API.	另一台电脑上的 Ollama 或 LM Studio，或任何兼容 OpenAI API 的服务。
+On	开启
+One line, in plain words. It stays on this computer and is never sent anywhere.	用一句通俗的话说明。内容只保留在本机，绝不会发送到其他地方。
+One-shot instrumentation	单次插桩
+Only for Ghidra. Empty = managed.	仅用于 Ghidra。留空则使用托管安装。
+Only its name changes; its folder stays where it is.	只更改名称；文件夹位置不变。
+Only take pictures out of games you made, or whose owner allows it. A game's art is usually protected by copyright and by the game's licence.	仅可从你制作的游戏或已获得所有者许可的游戏中提取图片。游戏美术通常受版权和游戏许可协议保护。
+Only the pin goes; the project and its app stay as they are.	仅移除固定记录；项目和应用保持不变。
+Open	打开
+Open "Show me the proof" to see the exact code we found, and how sure we are.	打开“查看证据”，查看我们找到的具体代码及其可信度。
+Open Ghidra's release page	打开 Ghidra 发布页面
+Open Unity Hub	打开 Unity Hub
+Open a calculator app and find the code behind one button.	打开计算器应用，找到某个按钮背后的代码。
+Open a file in JEB	在 JEB 中打开文件
+Open a file or drop one here.	打开文件，或将其拖入此处。
+Open a file…	打开文件…
+Open a folder or app bundle	打开文件夹或应用包
+Open a folder or app bundle…	打开文件夹或应用包…
+Open a folder…	打开文件夹…
+Open a pinned build	打开固定的构建
+Open a project's folder	打开项目文件夹
+Open a website	打开网站
+Open an app or file	打开应用或文件
+Open an engine's app	打开引擎应用
+Open another copy	再打开一个副本
+Open another target	打开另一个目标
+Open files, folders or apps; you can have several open at once.	打开文件、文件夹或应用；可以同时打开多个。
+Open folder	打开文件夹
+Open in the workbench	在工作台中打开
+Open it	打开
+Open log	打开日志
+Open one of the files inside it to see its bytes.	打开其中一个文件，查看其字节。
+Open questions	待解问题
+Open something	打开内容
+Open something first: drop a file or app here, or choose "Just look inside" on New project. Then I can look inside it.	请先打开内容：将文件或应用拖到这里，或在新建项目中选择“只查看内部”。然后我就能查看其内部内容。
+Open something to start	打开内容以开始
+Open the Epic Games Launcher	打开 Epic Games Launcher
+Open the app	打开应用
+Open the app you're curious about.	打开你感兴趣的应用。
+Open the download page	打开下载页面
+Open the folder	打开文件夹
+Open the installer app	打开安装程序
+Open the website	打开网站
+Open {name}	打开 {name}
+Opened {name}	已打开 {name}
+Opened {name}. Taking a first look…	已打开 {name}。正在初步查看…
+Opened {}	已打开 {}
+Opening {name}…	正在打开 {name}…
+Open…	打开…
+Or type your answer…	或输入你的回答…
+Original	原作
+Other pages of a website studied and compared besides the one you gave.	除你提供的页面外，额外研究和比较的网站页面数量。
+Overview	概览
+Packet capture overview	抓包概览
+Packet fields	数据包字段
+Page through evidence	分页浏览证据
+Part of the app got stuck, so it was stopped and the rest carried on. Your work is kept.	应用的某个部分卡住，已将其停止，其他部分继续运行。你的工作已保留。
+Part of the app is stuck. Restarting clears it, and your work is kept.	应用的某个部分卡住了。重启即可恢复，你的工作会保留。
+Part of this screen hit a bug and was skipped. Your work is safe.	此界面的一部分出现错误，已跳过。你的工作内容是安全的。
+Paste your API key (kept in your system keychain)	粘贴 API 密钥 (保存在系统钥匙串中)
+Paste your {name} key	粘贴你的 {name} 密钥
+Path	路径
+Pause	暂停
+Pause the build first, then delete the project.	请先暂停构建，再删除项目。
+Pause the build first.	请先暂停构建。
+Paused	已暂停
+Paused.	已暂停。
+Pick a folder with projects in it	选择包含项目的文件夹
+Pick a game's folder	选择游戏文件夹
+Pick another folder…	选择其他文件夹…
+Pick another game	选择其他游戏
+Pick something on the left	在左侧选择内容
+Pick the app or game folder	选择应用或游戏文件夹
+Pick the app, game or file to rebuild	选择要重建的应用、游戏或文件
+Pick the folder for this project	选择此项目的文件夹
+Pick the game's folder	选择游戏文件夹
+Picture a program's window	截取程序窗口图片
+Picture model	图片模型
+Pictures	图片
+Pictures can't be saved from IoStore containers yet; you can see what's inside.	暂不支持从 IoStore 容器保存图片，但可以查看其中的内容。
+Pictures of the original	原作图片
+Pieces of text stored inside a program, like messages, web addresses or file names.	保存在程序内部的文本，例如消息、网址或文件名。
+Pin a build	固定构建
+Pin a project's build	固定项目构建
+Pin it	固定
+Pin name	固定版本名称
+Pin removed.	已移除固定记录。
+Pin this build	固定此构建
+Pinned	已固定
+Pinned builds	已固定的构建
+Pinned: {name}. Open it from the sidebar any time.	已固定：{name}。随时可从侧栏打开。
+Plain words, big buttons, and I'll explain everything.	通俗的语言、大按钮，我会解释每一步。
+Plain words, short sentences, and every technical word explained.	使用简单用语和短句，并解释每个技术术语。
+Plan	计划
+Plan connecting agent apps	规划连接智能体应用
+Play a project's result	运行项目成果
+Play the game	运行游戏
+Plugin added. Read its tools to start using them.	已添加插件。读取其工具后即可使用。
+Plugin arguments	插件参数
+Plugin command or address	插件命令或地址
+Plugin id	插件 ID
+Plugin removed.	已移除插件。
+Plugins	插件
+Plugins add tools Craft Anything offers as its own: MCP servers (a command or an address; read their tools after adding) or WebAssembly components (a .wasm file, which can't touch your files or the network).	插件为 Craft Anything 添加可直接使用的工具：包括 MCP 服务器 (命令或地址，添加后需读取其工具)，以及 WebAssembly 组件 (.wasm 文件，无法访问你的文件或网络)。
+Plugins added here always ask before each call.	此处添加的插件在每次调用前都会询问。
+Plugins read. Their new tools are offered from the next start.	已读取插件。下次启动起即可使用它们的新工具。
+Preserving software that's no longer supported.	保存已停止维护的软件。
+Preview a project's website	预览项目网站
+Preview the website	预览网站
+Previous address	上一个地址
+Program: found automatically	程序：自动查找
+Program: {path}	程序：{path}
+Programs (native code)	程序 (原生代码)
+Progress	进度
+Project details	项目详情
+Project name	项目名称
+Projects	项目
+Projects and builds	项目与构建
+Property list	属性列表
+Pseudo-C	伪 C 代码
+Purpose	用途
+Raise the asset budget	提高素材预算
+Raise the budget by {amount}	增加 {amount} 预算
+Raw machine code	原始机器码
+Read AI settings	读取 AI 设置
+Read a Unity game's IL2CPP metadata	读取 Unity 游戏的 IL2CPP 元数据
+Read a game's files	读取游戏文件
+Read a project file	读取项目文件
+Read a setting	读取设置
+Read an app's screen	读取应用界面
+Read bytes	读取字节
+Read comment	读取注释
+Read inline comment	读取行内注释
+Read its tools	读取工具列表
+Read pinned builds	读取固定构建
+Read projects	读取项目
+Read the journal	读取工作日志
+Read the plugin's tools	读取插件工具
+Read the project	读取项目
+Reading what's inside…	正在读取内部内容…
+Ready	就绪
+Ready: {what} is on this computer.	已就绪：此电脑上已有 {what}。
+Rebuild status	重建状态
+Record a finding	记录发现
+Record a hypothesis	记录假设
+Record an open question	记录待解答的问题
+Recover readable sources	恢复可读源码
+Recreate it with darker colours	使用更深的配色重现它
+Recreate just its main feature	仅重现其主要功能
+Recreate this website	重建这个网站
+Recreated games are built with the original's own engine when it's here (Unity, Unreal or Godot), else Unity, and Rust as the last resort.	重建游戏时，若本机已有原作所用的引擎 (Unity、Unreal 或 Godot)，就使用该引擎；否则使用 Unity，最后才考虑 Rust。
+References to a name	名称引用
+Refining rounds	改进轮数
+Refresh plugins	刷新插件
+Regions of a program file, each with one purpose: code, text, pictures, settings.	程序文件中的区域，各有特定用途，例如代码、文字、图片或设置。
+Reload	重新加载
+Remember permission	记住授权
+Remove	移除
+Remove a pin	移除固定版本
+Remove a pinned build	移除固定的构建
+Remove a plugin	移除插件
+Remove an AI	移除 AI
+Remove an app	移除应用
+Remove an asset key	移除素材密钥
+Remove bookmark	移除书签
+Remove it	移除
+Remove it and its key	移除它及其密钥
+Remove {name}	移除 {name}
+Remove {name}?	移除 {name}？
+Remove…	移除…
+Rename	重命名
+Rename a pinned build	重命名固定的构建
+Rename a project	重命名项目
+Rename the pin	重命名固定版本
+Rename the project	重命名项目
+Rename…	重命名…
+Reset	重置
+Resolve a call	解析调用
+Resolved	已解决
+Resources	资源
+Restart	重新启动
+Restore	还原
+Result	结果
+Resume a Frida session	恢复 Frida 会话
+Rizin command	Rizin 命令
+Rizin debug command	Rizin 调试命令
+Rizin debug session status	Rizin 调试会话状态
+Rough guide:	大致参考：
+Run	运行
+Run a Frida script	运行 Frida 脚本
+Run a build command	运行构建命令
+Run a scripted Electron session	运行 Electron 会话脚本
+Run a scripted web session	运行网页会话脚本
+Run a tool from the command palette (Ctrl/⌘ K), or pick a finding in the Evidence panel.	从命令面板 (Ctrl/⌘ K) 运行工具，或在“证据”面板中选择一项发现。
+Run and watch a program	运行并观察程序
+Run to study	运行以研究
+Running	运行中
+Running processes	运行中的进程
+Running programs	运行中的程序
+Running {id}	正在运行 {id}
+Runs its tools without asking	无需询问即可运行其工具
+Runs the first-run steps next time.	下次启动时重新显示首次使用步骤。
+Rust program details	Rust 程序详情
+SHA-256	SHA-256
+SQLite database contents	SQLite 数据库内容
+Safety	安全
+Save	保存
+Save a picture	保存图片
+Save a report	保存报告
+Save an asset key	保存素材密钥
+Save picture	保存图片
+Save settings	保存设置
+Save the key	保存密钥
+Save the picture	保存图片
+Save the report	保存报告
+Saved	已保存
+Saved in	保存位置
+Saves space: copies the program and code, and shares dependencies and media with the project. A shared file rewritten in place changes here too.	节省空间：复制程序和代码，与项目共享依赖和媒体文件。共享文件被原位重写时，此处的内容也会改变。
+Say what you want	描述你的需求
+Say what you want first.	请先描述你的需求。
+Say what you want to make, or drop an app or file on the window to look inside it. Everything runs in Clean room mode unless you switch on Deep.	描述你想制作的内容，或将应用或文件拖到窗口中查看其内部。除非开启深度模式，否则所有操作都在净室模式下进行。
+Screenshot	截图
+Screenshot a page	截取网页图片
+Screenshots of how it should look. The builder opens each one and matches it.	添加预期外观的截图。构建助手会逐张打开并进行还原。
+Search for bytes	搜索字节
+Search functions	搜索函数
+Search strings	搜索字符串
+Sections	节区
+Security research on software I'm allowed to examine.	对我获准检查的软件进行安全研究。
+See how a page is built: its layout, styles, scripts and the requests it makes.	查看网页的构成：布局、样式、脚本及其发出的请求。
+See how a program works: what it does, what it talks to, what's inside.	了解程序的工作原理：它做什么、与谁通信、内部有什么。
+See what a game packs and save its pictures as PNG files. Only for games you made, or whose owner lets you.	查看游戏打包的内容，并将其中的图片保存为 PNG 文件。仅限你制作的游戏或已获得所有者许可的游戏。
+See what a game packs, and save its pictures as PNG files.	查看游戏打包的内容，并将图片保存为 PNG 文件。
+See what a stand-in was asked	查看替代后端收到的请求
+See which servers an app talks to, and what it says.	查看应用与哪些服务器通信，以及传输的内容。
+Seen it	已观察
+Seen it: read directly from the file, page or capture.	已观察：直接从文件、网页或采集结果中读取。
+Selected	已选择
+Selection	所选内容
+Send	发送
+Send (Enter)	发送 (Enter)
+Send now	立即发送
+Server address	服务器地址
+Session status	会话状态
+Set a project's asset budget	设置项目素材预算
+Set an AI's program	设置 AI 的程序
+Set one up	设置一个
+Set up a brain…	设置 AI 助手…
+Set up a builder	配置构建助手
+Settings	设置
+Show a build's activity	显示构建活动
+Show a project	显示项目
+Show folder	显示文件夹
+Show me everything	显示全部内容
+Show me the proof	查看证据
+Show pinned builds	显示固定的构建
+Show settings	显示设置
+Show the answer	显示回答
+Show the console	显示控制台
+Show the folder	显示该文件夹
+Show the ones that are met	显示已满足的要求
+Show the sidebar	显示侧栏
+Show the welcome again	再次显示欢迎界面
+Showing	当前显示
+Sign in and add the Unity Editor	登录并添加 Unity Editor
+Sign in and install Unreal Engine	登录并安装 Unreal Engine
+Simple	简单
+Simple: say what you want and it's handled for you. Advanced: every tool, the evidence and the logs.	简单：描述需求，即可为你处理。高级：使用所有工具，查看证据和日志。
+Since Craft Anything opened.	自 Craft Anything 启动以来。
+Size	大小
+Skip setup	跳过设置
+Smart contract interface	智能合约接口
+Software I made, bought, or have permission to examine.	我制作、购买或获准检查的软件。
+Solana program (sBPF)	Solana 程序 (sBPF)
+Some plugins couldn't be read:	部分插件无法读取：
+Something a program borrows from the operating system or a library, like "open a file".	程序从操作系统或库调用的功能，例如“打开文件”。
+Something a program or library offers for other programs to use.	程序或库提供给其他程序使用的功能。
+Source	源代码
+Start	开始
+Start a Frida session	启动 Frida 会话
+Start a GDB session	启动 GDB 会话
+Start a Rizin debug session	启动 Rizin 调试会话
+Start a rebuild	开始重建
+Start a stand-in backend	启动替代后端
+Start an activity	启动 Activity
+Start building	开始构建
+Start from them	以这些文件为起点
+Start it	启动
+Start with Simple mode; you can set up AI later in Settings.	先使用简单模式；之后可在设置中配置 AI。
+Starting…	正在启动…
+Starting… it opens in its own window.	正在启动…将打开独立窗口。
+Still working. Bigger jobs can take a few minutes.	仍在处理中。较大的任务可能需要几分钟。
+Stop	停止
+Stop a pinned build	停止固定的构建
+Stop a rebuild	停止重建
+Stop a stand-in backend	停止替代后端
+Stop generated assets	停止生成素材
+Stop listing {folder}	不再列出 {folder}
+Stopped here	停在这里
+Stops the current step and sends your notes straight away.	停止当前步骤，并立即发送你的补充说明。
+Strings	字符串
+Studio	Studio
+Studio (dark)	Studio (深色)
+Studio Light	Studio 浅色
+Study	研究
+Study apps by running them	通过运行应用进行研究
+Studying	研究中
+Studying software to understand it.	通过研究来理解软件。
+Summarise what changed	汇总变化
+Swift types	Swift 类型
+Switch Beginner / Experienced	切换新手 / 熟练模式
+Switch Clean room / Deep	切换净室 / 深度模式
+Switch light / dark theme	切换浅色 / 深色主题
+Switch target	切换目标
+System	跟随系统
+System services	系统服务
+Take a texture out of an Unreal game	从 Unreal 游戏中提取纹理
+Take an asset out of a Unity game	从 Unity 游戏中提取资源
+Take back a note	收回消息
+Take back: puts it in the box again	收回：将内容放回输入框
+Take files out of an Unreal pak	从 Unreal pak 中提取文件
+Take out packed files	提取打包文件
+Target	目标
+Targets	目标
+That folder already has {names}, where Craft Anything keeps its own files. Pick another folder, or move those out first.	该文件夹中已有 {names}，Craft Anything 会在其中存放自身文件。请选择其他文件夹，或先将它们移出。
+That folder is already a project, so it's open now.	该文件夹已经是项目，现已打开。
+The Rust toolchain (rustup.rs).	Rust 工具链 (rustup.rs)。
+The builder answers its own questions and says what it chose ("I decided: …"), so you can change it.	构建助手会自行回答问题并说明选择 (“我决定：…”)，方便你修改。
+The builder makes the game's 3D models and textures from descriptions of original designs, paid from your fal.ai account. Models are low-poly so the game runs fast. A textured model costs {model} and a picture {picture}. Each project has a {budget} budget, and you're asked before it goes over. The key is kept in your system keychain.	构建助手根据原创设计的描述生成游戏的 3D 模型和纹理，费用从你的 fal.ai 账户扣除。模型采用低多边形设计，让游戏运行流畅。带纹理的模型费用为 {model}，图片费用为 {picture}。每个项目的预算为 {budget}，超出前会先询问你。密钥保存在系统钥匙串中。
+The builder reads them (code, notes, pictures) and builds the app in a new app folder beside them. Your files stay as they are.	构建助手会读取这些文件 (代码、笔记、图片)，并在旁边新建 app 文件夹来构建应用。你的文件保持不变。
+The builder will decide its questions and tell you what it chose.	构建助手会自行决定，并告知你它的选择。
+The builder works on these files directly and keeps what works. Craft Anything adds a few records of its own beside them.	构建助手直接编辑这些文件，并保留已有的有效内容。Craft Anything 会在旁边添加少量自身记录。
+The builder's questions	构建助手的问题
+The builder's questions come to you as cards, and it waits for your answer.	构建助手的问题会以卡片形式交给你，并等待你的回答。
+The builder's questions will come to you.	构建助手的问题会交给你回答。
+The built-in engines still show you everything they find.	内置引擎仍会显示它们发现的所有内容。
+The code	代码
+The code format Android apps use.	Android 应用使用的代码格式。
+The coding agent's estimate at API prices, not your bill. A subscription isn't charged this.	这是编程智能体按 API 价格估算的费用，并非你的实际账单；订阅不会按此金额收费。
+The download keeps going in the background.	下载会在后台继续。
+The first instruction a program runs when it starts.	程序启动时执行的第一条指令。
+The full toolset, evidence and logs.	完整工具集、证据和日志。
+The installer is open. Follow its steps, then come back here.	安装程序已打开。按步骤完成安装，然后回到这里。
+The lowest-level human-readable form of machine code: one small instruction per line.	机器码最底层的可读形式，每行一条简短指令。
+The names were removed from the program before it was shipped, so we have to work them out.	程序发布前移除了这些名称，因此需要推导它们。
+The packed contents of an Electron app (a website inside a desktop app)	Electron 应用的打包内容 (桌面应用中的网站)
+The program's machine code written out as one tiny instruction per line.	将程序的机器码写成每行一条简单指令的形式。
+The project's name and round	项目名称与轮次
+The raw result	原始结果
+The smallest unit of data in a file: a number from 0 to 255.	文件中最小的数据单位：一个 0 到 255 的数字。
+The smallest units of data in a file: numbers from 0 to 255.	文件中最小的数据单位，以 0 到 255 的数字表示。
+The {name} view isn't available yet in this build.	此版本尚未提供{name}视图。
+The {} view isn't available yet in this build.	此版本暂不提供 {} 视图。
+Theme	主题
+There's no /{name} command. You can use {commands}.	没有 /{name} 命令。你可以使用 {commands}。
+There's no AI brain set up yet, so here's what the built-in engines found:	尚未设置 AI 助手，以下是内置引擎的发现：
+They're my app: edit them in place	这些就是我的应用：原位编辑
+Things a program borrows from the operating system or libraries, like "open a file" or "draw a window".	程序借用操作系统或库提供的功能，例如“打开文件”或“绘制窗口”。
+Things a program or library offers for other programs to use.	程序或库提供给其他程序使用的功能。
+Things we couldn't establish yet are listed here, with what would settle them.	这里列出尚未确认的事项，以及确认它们所需的信息。
+This answer won't be there after a restart:	重启后将无法保留此回答：
+This build stopped part-way	此构建中途停止
+This can't be undone.	此操作无法撤销。
+This folder already has files	此文件夹中已有文件
+This is a big one. You can leave this open and come back later.	这项工作比较大。可以保持窗口打开，稍后再回来。
+This is outside what the builder may do on its own. Nothing happens until you say so.	此操作超出了构建助手可以自行处理的范围。只有你同意后才会执行。
+This keeps going in the background, and each download is checked against its publisher's checksum before it's used.	此操作会在后台继续，每个下载文件都会先核对发布者提供的校验和，再投入使用。
+This project is waiting its turn. Send your message once it starts.	此项目正在排队。请在开始后发送消息。
+This runs code from the target or changes a device. Clicking Run is your OK.	此操作会运行目标中的代码或更改设备。点击“运行”即表示同意。
+This runs code from the target or changes a device. Nothing runs until you say so.	此操作会运行目标中的代码或修改设备。获得你的许可后才会执行。
+This tool takes no settings.	此工具无需设置参数。
+This updates by itself when it's done.	完成后会自动更新。
+This view arrives with the next engines. The Hex and Result views work today.	此视图将在后续引擎中提供。目前可使用十六进制和结果视图。
+Those aren't pictures we can use (PNG, JPEG, WebP or GIF, up to 20 MB).	无法使用这些图片 (支持 PNG、JPEG、WebP 或 GIF，最大 20 MB)。
+Time spent	耗时
+Tip: press Ctrl/⌘ K to run any tool.	提示：按 Ctrl/⌘ K 可运行任意工具。
+Tokens	Token 数
+Tools may now run code from what you open without asking. Turn this back on unless you're sure.	工具现在可能无需询问就运行所打开内容中的代码。除非你确定这样做，否则请重新启用此选项。
+Tools that run code from a target or change a phone always ask first, unless you allowed them for a project.	运行目标代码或修改手机的工具总会先询问，除非你已为该项目授予许可。
+Trace a UI action	追踪界面操作
+Trace a feature	追踪功能
+Try again	重试
+Try asking	试着问问
+Try it out, then ask below for any changes.	先试用，再在下方提出修改。
+Turn a program's machine code back into something that reads like source code. It's a reconstruction, not the original.	将程序的机器码转换为类似源代码的可读内容。这是重建结果，并非原始源码。
+Turn off	关闭
+Turn off an AI	停用 AI
+Turn on	启用
+Turn on Deep mode	开启深度模式
+Turn on an AI	启用 AI
+Turning a plugin on or off takes effect from the next start.	插件的启用或关闭将在下次启动时生效。
+Type a command or tool…	输入命令或工具…
+Type the website's address:	输入网站地址：
+Type your question after /btw.	在 /btw 后输入你的问题。
+Unity assets	Unity 资源
+Unity bundle	Unity 资源包
+Unity's own installer. It only opens if Unity's signature checks out.	Unity 官方安装程序。只有验证 Unity 签名通过后才会打开。
+Unknown	未知
+Unknown: we couldn't establish this yet.	未知：尚未确定。
+Unknowns	待确认事项
+Unload a Frida script	卸载 Frida 脚本
+Unreal IoStore	Unreal IoStore
+Unreal builds games with Apple's Xcode, free in the App Store.	Unreal 使用 Apple 的 Xcode 构建游戏，可从 App Store 免费获取。
+Unreal is here, but it also needs Visual Studio's C++ tools.	已安装 Unreal，但还需要 Visual Studio 的 C++ 工具。
+Unreal pak	Unreal pak
+Update a hypothesis	更新假设
+Update an open question	更新待解答的问题
+Update the checklist	更新检查清单
+Update the plan	更新计划
+Use	使用
+Use an API key…	使用 API 密钥…
+Use as a goal	设为目标
+Use the projects folder	使用项目文件夹
+Use this	使用此项
+Use {name}	使用 {name}
+Value flow	值流向
+Version	版本
+Waiting	等待中
+Waiting for another build to finish: this one starts next.	等待另一个构建完成：接下来就会开始。
+Waiting for other builds to finish: {n} in line.	正在等待其他构建完成：队列中有 {n} 项。
+Waiting: the builder reads it at its next step. Up arrow to edit.	等待中：构建助手会在下一步读取。按上箭头可编辑。
+Waiting: the builder reads these at its next step. Up arrow to edit the last.	等待中：构建助手将在下一步读取这些消息。按上方向键可编辑最后一条。
+Want answers in plain words?	希望用简单的话解释吗？
+Watch a Mac app's calls	观察 Mac 应用的调用
+Watch a page over time	持续观察网页
+We didn't find an AI on this computer yet	尚未在此电脑上找到 AI
+We list the web addresses and messages we can see inside it. Watching it live needs your OK first.	我们会列出在其内部找到的网址和消息。实时观察前会先征求你的同意。
+We only read it; nothing runs. Every answer shows how sure we are.	只会读取，不会运行。每个回答都会标明可信度。
+WebAssembly module	WebAssembly 模块
+WebAssembly: fast compiled code that runs inside web browsers.	WebAssembly：可在浏览器中快速运行的编译后代码。
+Website address	网站地址
+Website pages	网站页面
+Websites	网站
+Welcome	欢迎
+What a new game may spend on generated pictures and 3D models before you're asked. Each project keeps its own.	新游戏在询问你之前可用于生成图片和 3D 模型的金额。每个项目分别保存预算。
+What a program exports	程序导出的内容
+What a program imports	程序导入的内容
+What are its main parts?	它主要由哪些部分组成？
+What brings you here?	你想用它做什么？
+What can Craft Anything do?	Craft Anything 可以做什么？
+What data was sent?	发送了哪些数据？
+What do you want to look inside?	你想查看什么的内部？
+What do you want to make?	你想制作什么？
+What do you want to recreate?	你想重建什么？
+What does it need from the page?	它需要网页中的哪些内容？
+What does it send over the internet?	它通过互联网发送了什么？
+What does this app do?	这个应用有什么用途？
+What does this app store?	这个应用会存储什么？
+What does this contract do?	这个合约有什么作用？
+What does this module do?	这个模块有什么用途？
+What does this program do?	这个程序有什么功能？
+What does {what} do?	{what} 有什么作用？
+What happened in this build	本次构建发生了什么
+What is it	内容类型
+What is this?	这是什么？
+What it calls	它调用了什么
+What kind of file is this?	这是什么类型的文件？
+What permissions does it ask for?	它请求哪些权限？
+What pictures and textures are made with.	用于生成图片和纹理的模型。
+What settings are in here?	这里面有哪些设置？
+What tables are in here?	这里有哪些数据表？
+What we couldn't check	无法检查的内容
+What would you like to find out?	你想了解什么？
+What would you like to know about {name}?	关于 {name}，你想了解什么？
+What's at this address	此地址处有什么
+What's in this folder?	这个文件夹里有什么？
+What's inside this archive?	这个归档文件里有什么？
+Whatever Settings → AI builds with.	使用设置 → AI 中的构建助手。
+When a folder you pick has files	选择的文件夹已有文件时
+When the builder needs a choice made: show it to you and wait, or let it decide and say what it chose. Each project can choose for itself under its prompt box.	构建助手需要做出选择时：展示问题并等待你回答，或自行决定并说明选择。每个项目都可在输入框下方单独设置。
+When you rebuild an app or game, start it once to picture its window and compare the rebuild with it. It runs that program.	重建应用或游戏时，先启动原作一次以截取其窗口，并与重建结果比较。这会运行该程序。
+Where am I	当前位置
+Where is Ghidra installed?	Ghidra 安装在哪里？
+Where is the program?	程序在哪里？
+Where should new projects go?	新项目应保存在哪里？
+Where we found it	发现位置
+Whether they're the app to edit in place, or material the app starts from beside them.	选择直接编辑这些应用文件，还是以它们为素材在旁边创建应用。
+Which AI answers your questions	由哪个 AI 回答你的问题
+Which file is the main program?	哪个文件是主程序？
+Which files does it read or write?	它会读写哪些文件？
+Which function is this in	这属于哪个函数
+Which servers does it talk to?	它与哪些服务器通信？
+Which servers were contacted?	连接了哪些服务器？
+Which websites does it load?	它会加载哪些网站？
+Who builds what you make	由谁负责构建
+Who calls it	谁调用了它
+Who can move funds?	谁能转移资金？
+Who signed this Windows program	谁签署了这个 Windows 程序
+Who uses this Android class?	谁使用了这个 Android 类？
+Who uses this Java class?	谁使用了这个 Java 类？
+Why we ask	为什么询问
+Window / focus info	窗口 / 焦点信息
+Windows resources	Windows 资源
+Wireshark tools check	检查 Wireshark 工具
+Without it, Deep mode uses Craft Anything's own decompiler, which is rougher.	未安装时，深度模式会使用 Craft Anything 自带的反编译器，结果较为粗略。
+Work out a copy's size	计算副本大小
+Work out what an installed app is built on	分析已安装应用所用的技术
+Workbench	工作台
+Worked it out	已推导
+Worked it out: computed step by step from things we saw.	已推导：根据观察到的内容逐步计算得出。
+Worked through {n} steps	已完成 {n} 个步骤
+Working on it	正在处理
+Working on your answer	正在准备回答
+Working out how much space a copy takes…	正在计算副本占用的空间…
+Working…	正在处理…
+Working… ({n} steps so far)	正在处理… (已完成 {n} 步)
+Write a project file	写入项目文件
+Write a readable report	撰写易读的报告
+Write comment	写入注释
+Write inline comment	写入行内注释
+Write pseudo-C to a folder	将伪 C 代码写入文件夹
+Write the brief	撰写需求简报
+Write the handoff	撰写交接说明
+Wrote {what} to {}	已将{what}写入 {}
+You answered: {a}	你的回答：{a}
+You can add a Claude, ChatGPT or OpenRouter key, a local model (Ollama, LM Studio) or an agent you already use, later in Settings → AI.	之后可以在“设置 → AI”中添加 Claude、ChatGPT 或 OpenRouter 密钥、本地模型 (Ollama、LM Studio)，或你正在使用的智能体。
+You chose:	你的选择：
+You're all set	准备就绪
+Your app is ready	你的应用已就绪
+Your brains	你的 AI 助手
+Your fal.ai key	你的 fal.ai 密钥
+Your game is ready	你的游戏已就绪
+Your message wasn't sent: another project was opened while its pictures were copied.	消息未发送：复制图片期间打开了另一个项目。
+Your own tool installs (optional)	自行安装的工具 (可选)
+Your project starts as soon as it's done.	完成后将立即启动你的项目。
+Your version	你的版本
+Your website is ready	你的网站已就绪
+a new folder in {dir}	{dir} 中的新文件夹
+a picture	每张图片
+about ${n}	约 ${n}
+address, e.g. http://192.168.1.20:11434/v1	地址，例如 http://192.168.1.20:11434/v1
+and {n} more	以及另外 {n} 项
+arguments (optional)	参数 (可选)
+call graph	调用图
+clean room	净室
+command, https:// address or .wasm file	命令、https:// 地址或 .wasm 文件
+deep mode	深度模式
+entry point	入口点
+files	个文件
+findings	条发现
+first run	首次使用
+found on this computer; set up when you start	已在此电脑上找到；启动时配置
+from the builder's own memory of the build	来自构建助手对本次构建的记忆
+from the project's files	来自项目文件
+id, e.g. docs	ID，例如 docs
+is required	为必填项
+isn't available yet	暂不可用
+job result	任务结果
+job {title} panicked: {what}	任务 {title} 发生异常：{what}
+just now	刚刚
+managed	由应用管理
+model (optional)	模型 (可选)
+must be a number	必须是数字
+must be a whole number	必须是整数
+name, e.g. Studio box	名称，例如 工作室电脑
+number	数字
+objdump output	objdump 输出
+or start with /btw to just ask	或以 /btw 开头，仅提出问题
+pinned builds couldn't be read: {}	无法读取固定构建：{}
+say how to use the files there	说明如何使用其中的文件
+scene	个场景
+scenes	个场景
+source map	源码映射
+start page	起始页面
+the app is built beside your files, starting from them	以你的文件为起点，在旁边构建应用
+the built-in engines	内置引擎
+the prompt box changed height	提示输入框高度发生变化
+title bar	标题栏
+under $0.01	低于 $0.01
+yesterday	昨天
+your files there are the app, edited in place	该位置的文件就是应用，将原位编辑
+{:.1} GB	{:.1} GB
+{:.1}M	{:.1}M
+{backend}: {input_tokens} in / {output_tokens} out{cost}	{backend}：输入 {input_tokens} / 输出 {output_tokens}{cost}
+{cost} (estimate)	{cost} (估算)
+{c} · {size}	{c} · {size}
+{done} of {all} done	已完成 {done} / {all}
+{gb} GB for bigger ones	较大程序需要 {gb} GB
+{gb} GB for programs up to {size}	不超过 {size} 的程序使用 {gb} GB
+{gb} GB up to {size}	不超过 {size} 使用 {gb} GB
+{held} of {n} requirements met	已满足 {held} / {n} 项要求
+{id} · {summary}	{id} · {summary}
+{in} in, {out} out.	输入 {in}，输出 {out}。
+{k}: {s}	{k}: {s}
+{lbl}  {}	{lbl}  {}
+{line}, and {n} more	{line}，另有 {n} 项
+{mb} MB	{mb} MB
+{name} builds what you make.	由 {name} 构建你的作品。
+{name} builds what you make; answers come from {brain}.	由 {name} 负责构建，{brain} 负责回答。
+{name} is ready	{name} 已就绪
+{name} is ready.	{name} 已就绪。
+{name} isn't available yet in this build.	此版本尚未提供{name}。
+{name} isn't on this computer yet.	此计算机尚未安装 {name}。
+{name} key	{name} 密钥
+{n} actions done so far	目前已完成 {n} 项操作
+{n} days ago	{n} 天前
+{n} h ago	{n} 小时前
+{n} item(s)	{n} 项
+{n} job(s) running	{n} 个任务正在运行
+{n} min ago	{n} 分钟前
+{n} picture(s) to match.	有 {n} 张参考图片。
+{n} step(s) didn't work and were retried or skipped.	{n} 个步骤未成功，已重试或跳过。
+{n} tokens	{n} 个 token
+{n} · ${spent:.2} of ${budget:.2}	{n} · 已用 ${spent:.2} / ${budget:.2}
+{n} · ${spent} of ${budget}	{n} · 已用 ${spent}，预算 ${budget}
+{scenes} {}	{scenes} {}
+{text}, {}	{text}，{}
+{title} hit a bug and stopped safely. ({what})	{title} 遇到错误，已安全停止。({what})
+{title} {id}	{title} {id}
+{title} · {:.0}%	{title} · {:.0}%
+{tool} finished	{tool} 已完成
+{tool}: {}	{tool}: {}
+{what} panicked: {msg}	{what} 发生异常：{msg}
+{} GB	{} GB
+{} isn't available yet in this build.	当前版本尚不支持 {}。
+{} item(s)	{} 项
+{} key	{} 密钥
+{} report.md	{} 报告.md
+{} {name}	{} {name}
+{} {said}	{} {said}
+{} {then}	{} {then}
+{} {v}	{} {v}
+{} {why}	{} {why}
+{} {} · {}{cost}	{} {} · {}{cost}
+{} · {mode}	{} · {mode}
+{}: {e}	{}：{e}
+{}: {some}{more}.	{}：{some}{more}。
+{}: {state}	{}：{state}
+{}h {:02}m	{}小时 {:02}分
+{}m {:02}s	{}分 {:02}秒
+— use the filter to find the rest.	— 使用筛选查找其余内容。
+… {n} more	…另有 {n} 项
+… {n} older	…另有 {n} 条较早记录
+… {} more	…另有 {} 项
+… {} older	… 还有 {} 条较早内容
+← Back	← 返回
+↑↓ to move · Enter to run · Esc to close	↑↓ 选择 · Enter 运行 · Esc 关闭

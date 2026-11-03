@@ -1,0 +1,52 @@
+# The models Craft Anything generates game assets with, and what each one costs (US dollars, the
+# provider's listed prices). `provider` names an asset provider in the registry (`fal`), and
+# `endpoint` is the model's address at that provider. The `[default]` table picks the model used
+# when Settings names none; `[assets] image_model` in config.toml picks another picture model by
+# its `id`. A table that doesn't parse falls back to the built-in defaults (a test keeps it parsing).
+
+[default]
+image = "nano-banana-pro"
+model_3d = "tripo-p1"
+
+# Pictures (textures, skies, concept art), billed by megapixel (`usd_per_megapixel`) or per picture
+# (`usd_per_image`). `size_by` says how the model is told the shape: `image_size` (a named size, the
+# default) or `aspect_ratio`. FLUX prices checked against fal's model pages on 2026-10-19; fal rounds
+# each picture up to whole megapixels, which the estimate doesn't yet.
+
+# Checked on fal's model page on 2026-10-20: $0.15 per picture at 1K and 2K (4K costs double; we ask
+# for the default 1K).
+[[image]]
+id = "nano-banana-pro"
+provider = "fal"
+name = "Nano Banana Pro"
+endpoint = "fal-ai/nano-banana-pro"
+usd_per_image = 0.15
+size_by = "aspect_ratio"
+licence = "Commercial use enabled through fal.ai"
+
+[[image]]
+id = "flux-dev"
+provider = "fal"
+name = "FLUX.1 [dev]"
+endpoint = "fal-ai/flux/dev"
+usd_per_megapixel = 0.025
+licence = "FLUX.1 [dev] Non-Commercial License (model weights)"
+
+[[image]]
+id = "flux-schnell"
+provider = "fal"
+name = "FLUX.1 [schnell]"
+endpoint = "fal-ai/flux/schnell"
+usd_per_megapixel = 0.003
+licence = "Apache-2.0 (model weights)"
+
+# Game-ready 3D models (GLB) from a picture, billed per model; `faces` is the face-count range the
+# model accepts.
+[[model_3d]]
+id = "tripo-p1"
+provider = "fal"
+name = "Tripo P1"
+endpoint = "tripo3d/p1/image-to-3d"
+usd = 0.40
+textured_usd = 0.50
+faces = [48, 20000]

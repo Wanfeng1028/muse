@@ -1,0 +1,38 @@
+[package]
+name = "craft-anything-ui-egui"
+description = "The Craft Anything egui interface: Beginner and Experienced modes"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+build = "build.rs"
+
+[lints]
+workspace = true
+
+[dependencies]
+craft-anything-engine = { workspace = true }
+craft-anything-engines = { workspace = true }
+craft-anything-ai = { workspace = true }
+craft-anything-setup = { workspace = true }
+craft-anything-platform = { workspace = true }
+egui = { workspace = true }
+# SVG icons (Lucide) rasterised at the exact on-screen size with resvg (pure Rust).
+egui_extras = { workspace = true, features = ["svg"] }
+# `links`: without it `ctx.open_url` is a silent no-op (the workspace turns eframe's defaults off).
+eframe = { workspace = true, features = ["default_fonts", "wgpu", "accesskit", "links"] }
+serde = { workspace = true }
+serde_json = { workspace = true }
+log = { workspace = true }
+
+[target.'cfg(not(target_arch = "wasm32"))'.dependencies]
+# Native open/save dialogs, always shown from a worker thread (never blocks a frame).
+rfd = { workspace = true }
+pollster = "0.4"
+# Safe, small OS-language lookup; MIT OR Apache-2.0, no native runtime dependency.
+sys-locale = "0.3.2"
+
+[dev-dependencies]
+craft-anything-testkit = { workspace = true }
+egui_kittest = { workspace = true, features = ["wgpu", "snapshot", "eframe"] }
+tempfile = "3"
