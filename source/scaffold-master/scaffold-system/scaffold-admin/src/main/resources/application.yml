@@ -1,0 +1,19 @@
+spring:
+  application:
+    name: scaffold-admin
+  profiles:
+    active: dev
+
+server:
+  port: 8080
+
+scaffold:
+  api-prefix: /api
+  jwt:
+    secret: "${JWT_SECRET}"
+    expires-seconds: 7200
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+    call-setters-on-nulls: true
