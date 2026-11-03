@@ -1,8 +1,0 @@
-node_modules/
-dist/
-.env
-*.local
-*.log
-project.private.config.json
-cloudfunctions/*/node_modules/
-client/node_modules/
