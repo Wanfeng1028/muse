@@ -5,7 +5,7 @@
 ## 目录
 
 - `source/` — 收录内容：第三方项目、skill 合集（`source/skill/`）、prompt（`source/prompt/`）。
-- `project/` — 过渡目录：我们自己做的项目暂存于此，后续迁往私有仓继续开发。
+- 本仓现仅含 `source/` 收录存档，不再含 `project/` 目录（自有项目已迁往私有仓，见下节）。
 - `LICENSE`、`CONTRIBUTING.md` 见仓库根目录。
 
 ## 开发仓
