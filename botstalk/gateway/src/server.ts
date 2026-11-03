@@ -720,7 +720,12 @@ export function startServer(config: GatewayConfig, db: Db): RunningServer {
       const limitParam = parsed.searchParams.get("limit");
       if (limitParam !== null) {
         const n = Number.parseInt(limitParam, 10);
-        if (Number.isFinite(n) && n > 0) limit = Math.min(n, 200);
+        if (!/^[0-9]+$/.test(limitParam) || n < 1) {
+          res.writeHead(400, { "content-type": "application/json" });
+          res.end(JSON.stringify({ error: "INVALID_TASKS_LIMIT" }));
+          return;
+        }
+        limit = Math.min(n, 200);
       }
       let before_updated_ms: number | undefined;
       let before_task_id: string | undefined;
