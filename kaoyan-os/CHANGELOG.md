@@ -4,6 +4,17 @@
 
 格式遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [1.28.0] - 2026-11-03
+
+### Added
+- GET /api/focus limit 收紧：小于 1 或大于 500 返回 400，错误体不变；不传仍默认 50；合法 1~500、非整数 400 均不变
+- 改写既有测试 focus-concurrency.deep3.test.ts 与 focus.deep.test.ts
+- 新增测试文件 apps/server/tests/focus-list-limit-range.test.ts
+- 文档 docs/API.md 同步
+
+### Notes
+- 本轮模型调用走 BotsRouter 讯飞星辰 spark-x2.6
+
 ## [1.27.0] - 2026-11-01
 
 ### Added

@@ -66,9 +66,10 @@ export function registerFocusRoutes(app: FastifyInstance, db: DatabaseSync): voi
       if (!/^-?\d+$/.test(req.query.limit)) {
         return reply.code(400).send({ error: "limit 参数无效" });
       }
-      if (parsed > 0) {
-        limit = Math.min(parsed, 500);
+      if (parsed < 1 || parsed > 500) {
+        return reply.code(400).send({ error: "limit 参数无效" });
       }
+      limit = parsed;
     }
     const rows = db
       .prepare(

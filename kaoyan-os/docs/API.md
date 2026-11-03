@@ -655,7 +655,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 位置 | 名称 | 类型 | 必填 | 说明 |
 | --- | --- | --- | --- | --- |
-| query | limit | number | 否 | 返回条数上限，缺省 50；limit 必须为整数字符串（正则 /^-?\d+$/），非整数返回 400 错误体 { "error": "limit 参数无效" }；整数小于等于 0 时回落 50；整数大于 500 时钳制为 500。 |
+| query | limit | number | 否 | 返回条数上限，缺省 50；limit 必须为 1~500 的整数字符串，非整数或越界（小于 1 或大于 500）均返回 400 错误体 { "error": "limit 参数无效" }。 |
 
 **成功响应**
 
@@ -678,7 +678,7 @@ id,date,subject,subject_name,title,planned_minutes,done,created_at
 
 | 状态码 | 返回体 | 触发条件 |
 | --- | --- | --- |
-| 400 | `{ "error": "limit 参数无效" }` | limit 不是整数字符串 |
+| 400 | `{ "error": "limit 参数无效" }` | limit 不是整数字符串，或 limit 小于 1 或大于 500 |
 | 401 | （未认证响应） | 未登录或认证失败 |
 
 ### `POST /api/focus`

@@ -199,7 +199,7 @@ describe('focus concurrency & deep validation', () => {
     expect(numRes.json()).toEqual({ error: 'note must be a string up to 500 chars' });
   });
 
-  it('limit boundary: 0→50, 1000→60, abc→400', async () => {
+  it('limit boundary: 0→400, 501→400, 1000→400, 500→200, abc→400', async () => {
     for (let i = 0; i < 60; i++) {
       const res = await app.inject({
         method: 'POST',
@@ -215,16 +215,32 @@ describe('focus concurrency & deep validation', () => {
       url: '/api/focus?limit=0',
       headers: { cookie },
     });
-    expect(limitZero.statusCode).toBe(200);
-    expect((limitZero.json() as unknown[]).length).toBe(50);
+    expect(limitZero.statusCode).toBe(400);
+    expect(limitZero.json()).toEqual({ error: 'limit 参数无效' });
 
-    const limitBig = await app.inject({
+    const limit501 = await app.inject({
+      method: 'GET',
+      url: '/api/focus?limit=501',
+      headers: { cookie },
+    });
+    expect(limit501.statusCode).toBe(400);
+    expect(limit501.json()).toEqual({ error: 'limit 参数无效' });
+
+    const limit1000 = await app.inject({
       method: 'GET',
       url: '/api/focus?limit=1000',
       headers: { cookie },
     });
-    expect(limitBig.statusCode).toBe(200);
-    expect((limitBig.json() as unknown[]).length).toBe(60);
+    expect(limit1000.statusCode).toBe(400);
+    expect(limit1000.json()).toEqual({ error: 'limit 参数无效' });
+
+    const limit500 = await app.inject({
+      method: 'GET',
+      url: '/api/focus?limit=500',
+      headers: { cookie },
+    });
+    expect(limit500.statusCode).toBe(200);
+    expect((limit500.json() as unknown[]).length).toBe(60);
 
     const limitAbc = await app.inject({
       method: 'GET',

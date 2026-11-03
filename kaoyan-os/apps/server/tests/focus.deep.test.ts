@@ -210,22 +210,21 @@ describe('focus routes deep coverage', () => {
     expect(new Set(notes).size).toBe(2);
   });
 
-  it('单词 SRS 等价行为：limit 上限 500，非法 limit 返回 400', async () => {
+  it('limit 上限收紧：99999→400，-3→400，abc→400', async () => {
     for (let i = 0; i < 5; i++) {
       insertSession(h.db, 'english', 5, '2024-06-0' + (i + 1) + 'T08:00:00.000Z', 'w' + i);
     }
     const resBig = await h.app.inject({ method: 'GET', url: '/api/focus?limit=99999', headers: { cookie: h.cookie } });
-    expect(resBig.statusCode).toBe(200);
-    expect(resBig.json().length).toBe(5);
+    expect(resBig.statusCode).toBe(400);
+    expect(resBig.json()).toEqual({ error: 'limit 参数无效' });
 
     const resBad = await h.app.inject({ method: 'GET', url: '/api/focus?limit=-3', headers: { cookie: h.cookie } });
-    expect(resBad.statusCode).toBe(200);
-    expect(resBad.json().length).toBe(5);
+    expect(resBad.statusCode).toBe(400);
+    expect(resBad.json()).toEqual({ error: 'limit 参数无效' });
 
     const resNaN = await h.app.inject({ method: 'GET', url: '/api/focus?limit=abc', headers: { cookie: h.cookie } });
     expect(resNaN.statusCode).toBe(400);
     expect(resNaN.json()).toEqual({ error: 'limit 参数无效' });
-
   });
 
   it('导入 CSV 畸形行等价：缺少 startedAt 回退 nowIso，多余字段被忽略', async () => {
