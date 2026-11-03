@@ -1,0 +1,12 @@
+build/
+build-*/
+*.gguf
+*.safetensors
+*.npy
+weights/
+__pycache__/
+*.pyc
+.cache/
+# Agent scratch worktrees. A nested git worktree must never be committed into
+# the repo it checks out, and `git add -A` would happily try.
+.claude/worktrees/

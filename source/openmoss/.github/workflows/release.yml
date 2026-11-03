@@ -1,0 +1,220 @@
+name: Build & Release
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: "Release tag to attach binaries to (e.g. v0.3.0)"
+        required: true
+        default: "v0.3.0"
+
+permissions:
+  contents: write
+
+# Asset names must match Lemonade's media_release_asset():
+#   moss-tts-<backend>-<os>-x64.<tar.gz|zip>
+jobs:
+  build:
+    name: ${{ matrix.os }} · ${{ matrix.backend }}
+    runs-on: ${{ matrix.runner }}
+    continue-on-error: ${{ matrix.experimental == true }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: linux,   backend: vulkan, runner: ubuntu-22.04 }
+          - { os: linux,   backend: cuda,   runner: ubuntu-22.04 }
+          - { os: linux,   backend: rocm,   runner: ubuntu-22.04,  experimental: true }
+          - { os: windows, backend: vulkan, runner: windows-2022 }
+          - { os: windows, backend: cuda,   runner: windows-2022, experimental: true }
+          - { os: windows, backend: rocm,   runner: windows-2022, experimental: true }
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: MSVC dev shell (Windows)
+        if: matrix.os == 'windows'
+        uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Ninja
+        uses: seanmiddleditch/gha-setup-ninja@v5
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ matrix.os }}-${{ matrix.backend }}
+
+      - name: Vulkan SDK (Linux)
+        if: matrix.backend == 'vulkan' && matrix.os == 'linux'
+        uses: humbletim/install-vulkan-sdk@v1.2
+        with:
+          version: 1.4.309.0
+          cache: true
+      - name: Vulkan SDK (Windows)
+        if: matrix.backend == 'vulkan' && matrix.os == 'windows'
+        uses: jakoch/install-vulkan-sdk-action@v1
+        with:
+          vulkan_version: 1.4.309.0
+          install_runtime: true
+          cache: true
+      - name: SPIRV-Headers (Windows Vulkan)
+        if: matrix.backend == 'vulkan' && matrix.os == 'windows'
+        shell: bash
+        run: |
+          set -e
+          git clone --depth 1 --branch vulkan-sdk-1.4.309.0 https://github.com/KhronosGroup/SPIRV-Headers \
+            || git clone --depth 1 https://github.com/KhronosGroup/SPIRV-Headers
+          cmake -S SPIRV-Headers -B SPIRV-Headers/build -DCMAKE_INSTALL_PREFIX="$PWD/spirv-headers-install"
+          cmake --build SPIRV-Headers/build --target install --config Release
+          echo "SPIRV_HEADERS_ROOT=$(cygpath -m "$PWD/spirv-headers-install")" >> "$GITHUB_ENV"
+
+      - name: CUDA toolkit
+        if: matrix.backend == 'cuda'
+        uses: Jimver/cuda-toolkit@v0.2.30
+        with:
+          method: network
+
+      # ROCm via TheRock (gfx1151, Strix Halo — Lemonade's validated target).
+      # Best-effort: allow-failure (no AMD GPU in CI to run-test).
+      - name: ROCm TheRock (Linux, gfx1151)
+        if: matrix.backend == 'rocm' && matrix.os == 'linux'
+        shell: bash
+        run: |
+          set -e
+          base="https://rocm.nightlies.amd.com/tarball-multi-arch"
+          prefix="therock-dist-linux-gfx1151-"
+          files=$(curl -s "$base/" | tr '\n' ' ' | grep -oP 'const files = \K\[.*?\](?=\s*;)')
+          latest=$(echo "$files" | jq -r --arg p "$prefix" \
+            '[.[]|select(.name|startswith($p))|select(.name|test("[0-9]{8}\\.tar\\.gz$"))]|sort_by(.name|capture("(?<d>[0-9]{8})\\.tar\\.gz$").d)|last|.name // empty')
+          test -n "$latest"
+          echo "TheRock tarball: $latest"
+          sudo mkdir -p /opt/rocm
+          curl -sL "$base/$latest" | sudo tar --use-compress-program=gzip -xf - -C /opt/rocm --strip-components=1
+          {
+            echo "ROCM_PATH=/opt/rocm"
+            echo "HIP_PATH=/opt/rocm"
+            echo "HIP_PLATFORM=amd"
+            echo "LD_LIBRARY_PATH=/opt/rocm/lib:/opt/rocm/lib64:/opt/rocm/llvm/lib"
+            echo "ROCM_CC=/opt/rocm/llvm/bin/clang"
+            echo "ROCM_CXX=/opt/rocm/llvm/bin/clang++"
+          } >> "$GITHUB_ENV"
+          echo "/opt/rocm/bin:/opt/rocm/llvm/bin" >> "$GITHUB_PATH"
+
+      - name: ROCm TheRock (Windows, gfx1151)
+        if: matrix.backend == 'rocm' && matrix.os == 'windows'
+        shell: bash
+        run: |
+          set -e
+          base="https://rocm.nightlies.amd.com/tarball-multi-arch"
+          prefix="therock-dist-windows-gfx1151-"
+          files=$(curl -s "$base/" | tr '\n' ' ' | grep -oP 'const files = \K\[.*?\](?=\s*;)')
+          latest=$(echo "$files" | jq -r --arg p "$prefix" \
+            '[.[]|select(.name|startswith($p))|select(.name|test("[0-9]{8}\\.tar\\.gz$"))]|sort_by(.name|capture("(?<d>[0-9]{8})\\.tar\\.gz$").d)|last|.name // empty')
+          test -n "$latest"
+          echo "TheRock tarball: $latest"
+          mkdir -p rocm
+          curl -sL "$base/$latest" | tar -xzf - -C rocm --strip-components=1
+          HIP=$(cygpath -m "$PWD/rocm")
+          {
+            echo "HIP_PATH=$HIP"
+            echo "HIP_PLATFORM=amd"
+            echo "ROCM_CC=$HIP/lib/llvm/bin/clang.exe"
+            echo "ROCM_CXX=$HIP/lib/llvm/bin/clang++.exe"
+          } >> "$GITHUB_ENV"
+          echo "$PWD/rocm/bin" >> "$GITHUB_PATH"
+          echo "$PWD/rocm/lib/llvm/bin" >> "$GITHUB_PATH"
+
+      - name: Configure & build
+        shell: bash
+        run: |
+          set -e
+          case "${{ matrix.backend }}" in
+            vulkan) FLAGS="-DGGML_VULKAN=ON" ;;
+            # ggml rewrites 12x -> 12xa (arch-specific); Blackwell ships SASS-only
+            # (120a can't be virtual), so no PTX fallback entry here.
+            cuda)   FLAGS="-DGGML_CUDA=ON -DCMAKE_CUDA_ARCHITECTURES=75;80;86;89;90;120" ;;
+            # One flagship gfx per consumer family (RX6000/7000/9000 + Strix Halo).
+            rocm)   FLAGS="-DGGML_HIP=ON -DGPU_TARGETS=gfx1030;gfx1100;gfx1151;gfx1201 -DCMAKE_C_COMPILER=$ROCM_CC -DCMAKE_CXX_COMPILER=$ROCM_CXX -DCMAKE_PREFIX_PATH=$HIP_PATH -DCMAKE_HIP_COMPILER=$ROCM_CXX" ;;
+          esac
+          # Windows builds only: TheRock's Windows ROCm dist ships a minimal
+          # Clang toolchain (enough to compile HIP kernels) but not the LLVM
+          # OpenMP runtime, so a ggml-cpu linked against OpenMP fails to start
+          # (missing libomp140.x86_64.dll). ggml has its own portable thread
+          # pool for exactly this case; use it instead of chasing the DLL.
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            FLAGS="$FLAGS -DGGML_OPENMP=OFF"
+          fi
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release $FLAGS ${SPIRV_HEADERS_ROOT:+-DCMAKE_PREFIX_PATH=$SPIRV_HEADERS_ROOT}
+          cmake --build build --target moss-tts-server -j
+
+      - name: Package
+        shell: bash
+        run: |
+          set -e
+          mkdir -p dist
+          # llama.cpp emits libs under build/bin; flatten them next to the binary
+          # so the binary's $ORIGIN rpath (Linux) / exe dir (Windows) resolves them.
+          if [ "${{ matrix.os }}" = "windows" ]; then
+            cp build/moss-tts-server.exe dist/
+            cp build/bin/*.dll dist/ 2>/dev/null || true
+            cp -r build/webui dist/webui 2>/dev/null || true
+            if [ "${{ matrix.backend }}" = "cuda" ]; then
+              # $CUDA_PATH is a Windows path (backslashes/spaces) that breaks bash
+              # globbing. CUDA 13 also relocated the Windows runtime DLLs out of
+              # bin/ (into bin/x64), so locate each wherever it lives under the
+              # toolkit and fail loudly (set -e) rather than shipping a zip with
+              # no CUDA runtime.
+              cuda_root="$(cygpath -u "$CUDA_PATH")"
+              echo "== CUDA runtime DLLs found under $cuda_root =="
+              find "$cuda_root" -type f \( -name 'cudart64_*.dll' -o -name 'cublas64_*.dll' -o -name 'cublasLt64_*.dll' \) -print
+              for dll in cudart64 cublas64 cublasLt64; do
+                src="$(find "$cuda_root" -type f -name "${dll}_*.dll" -print -quit)"
+                if [ -z "$src" ]; then echo "ERROR: ${dll}_*.dll not found under CUDA toolkit"; exit 1; fi
+                cp "$src" dist/
+              done
+              ls -la dist/*.dll
+            fi
+            ASSET="moss-tts-${{ matrix.backend }}-windows-x64.zip"
+            (cd dist && 7z a -y "../$ASSET" ./* >/dev/null)
+          else
+            cp build/moss-tts-server dist/
+            cp -P build/bin/*.so* dist/ 2>/dev/null || true
+            cp -r build/webui dist/webui 2>/dev/null || true
+            # The ROCm runtime comes from the shared TheRock SDK that Lemonade
+            # installs per the user's gfx arch (via LD_LIBRARY_PATH), not bundled
+            # here. CUDA has no such shared SDK, so bundle its runtime next to the
+            # binary (mirrors sd-cpp / llama.cpp); the $ORIGIN rpath below then
+            # resolves it with no system CUDA toolkit required.
+            if [ "${{ matrix.backend }}" = "cuda" ]; then
+              cuda_lib="${CUDA_PATH:-/usr/local/cuda}/lib64"
+              for l in libcudart libcublas libcublasLt; do
+                cp -P "$cuda_lib"/$l.so* dist/ 2>/dev/null || true
+              done
+            fi
+            sudo apt-get install -y -qq patchelf
+            for f in $(find dist -type f); do patchelf --set-rpath '$ORIGIN' "$f" 2>/dev/null || true; done
+            ASSET="moss-tts-${{ matrix.backend }}-linux-x64.tar.gz"
+            tar -C dist -czf "$ASSET" .
+          fi
+          echo "ASSET=$ASSET" >> "$GITHUB_ENV"
+
+      - name: Resolve release tag
+        id: tag
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" = "release" ]; then
+            echo "value=${{ github.event.release.tag_name }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=${{ inputs.release_tag }}" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release upload "${{ steps.tag.outputs.value }}" "$ASSET" --clobber --repo "${{ github.repository }}"
