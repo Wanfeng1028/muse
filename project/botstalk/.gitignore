@@ -1,8 +1,0 @@
-node_modules/
-dist/
-*.tsbuildinfo
-.env
-.env.local
-.DS_Store
-coverage/
-gateway/data/

@@ -1,8 +1,0 @@
-node_modules
-npm-debug.log
-data
-.git
-.gitignore
-web/dist
-gateway/dist
-packages/protocol/dist
