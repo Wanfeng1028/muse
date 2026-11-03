@@ -1,0 +1,35 @@
+name: 程序问题 / Bug report
+description: 代码跑不起来、报错、页面显示异常
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        先确认：开源版**不含**任何 `/api/*` 后端接口（AI 解读、合盘分析），这些功能出现 404 是预期行为，需要你自己实现，见 README「快速开始」。排盘本身不需要 API Key。
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. npm ci
+        2. npm run dev
+        3. 打开 /chart，选 …… 点 ……
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果（报错信息、截图）
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 运行环境
+      placeholder: 例：macOS 15 / Node 22 / Chrome 140
