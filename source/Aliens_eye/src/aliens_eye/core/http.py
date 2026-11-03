@@ -1,0 +1,195 @@
+import asyncio
+import errno
+import random
+import time
+from dataclasses import dataclass
+from urllib.parse import urlparse
+
+import aiohttp
+
+from .config import ScannerConfig
+from .rate_limit import DomainRateLimiter
+
+# How long a finished request's socket may sit idle in the pool. aiohttp's
+# default is 75s, and the pool holds one idle connection per site for that
+# long: a scan of 854 sites then had hundreds open at once, past macOS's
+# default of 256 file descriptors, and every socket and subprocess spawn after
+# that failed with Errno 24 (#26). The ``limit`` of the connector does not
+# bound these -- it counts only the connections currently in use.
+KEEPALIVE_SECONDS = 10.0
+
+
+@dataclass
+class FetchResult:
+    url: str
+    final_url: str
+    status: int
+    content: str
+    response_time: float
+    headers: dict[str, str]
+    error: str | None
+    redirect_count: int
+
+
+async def read_capped(response: aiohttp.ClientResponse, limit: int) -> bytes:
+    """The body up to ``limit`` bytes, or all of it if shorter.
+
+    ``StreamReader.read(n)`` returns *up to* n bytes -- whatever has arrived on
+    the socket so far -- not n bytes. A single call therefore yields a
+    random-length prefix: fetching one GitHub profile three times gave 100000,
+    100000 and 19497 bytes. The page's og: tags sit at ~21 KB, so on the short
+    reads the avatar, name and bio were silently missing, and every feature was
+    computed from a different slice of the page on each run. Loop until the cap
+    or EOF.
+    """
+    chunks: list[bytes] = []
+    size = 0
+    while size < limit:
+        chunk = await response.content.read(limit - size)
+        if not chunk:
+            break
+        chunks.append(chunk)
+        size += len(chunk)
+    return b"".join(chunks)
+
+
+def _should_retry(status: int) -> bool:
+    return status in {408, 429, 500, 502, 503, 504}
+
+
+def _parse_retry_after(headers: dict[str, str]) -> float | None:
+    """Seconds the server asked us to wait, when it gave a usable number.
+
+    The date form is treated as absent, as are zero, negative and NaN values.
+    Infinity is kept: it is a (very) long wait, which the caller refuses.
+    """
+    value = headers.get("Retry-After")
+    if not value:
+        return None
+    try:
+        seconds = float(value)
+    except ValueError:
+        return None
+    if seconds != seconds or seconds <= 0:
+        return None
+    return seconds
+
+
+def describe_error(exc: BaseException) -> str:
+    """A fetch failure as text, naming the fix when there is an obvious one.
+
+    Errno 24 means the process-wide file-descriptor limit was hit. It reaches
+    us from aiohttp's socket and from the browser fallback's driver spawn alike,
+    and as "Too many open files" alone it reads like the site failed (#26).
+    """
+    if isinstance(exc, OSError) and exc.errno in (errno.EMFILE, errno.ENFILE):
+        return (
+            f"{exc.strerror or exc} (the process hit its file-descriptor limit; "
+            "macOS starts programs at 256 -- raise it with e.g. `ulimit -n 4096`)"
+        )
+    return str(exc)
+
+
+async def fetch_url(
+    session: aiohttp.ClientSession,
+    url: str,
+    config: ScannerConfig,
+    rate_limiter: DomainRateLimiter,
+    logger,
+) -> FetchResult:
+    error_message = None
+    last_status = 0
+    last_headers: dict[str, str] = {}
+    final_url = url
+    redirect_count = 0
+
+    retry_after = None
+    for attempt in range(config.retries + 1):
+        try:
+            parsed = urlparse(url)
+            await rate_limiter.wait_for_slot(
+                parsed.netloc, config.rate_limit_delay, retry_after
+            )
+
+            # SOCKS proxies are handled by the session connector; only plain
+            # HTTP(S) proxies go through aiohttp's per-request proxy support.
+            http_proxy = None
+            if config.proxy and config.proxy.lower().startswith(("http://", "https://")):
+                http_proxy = config.proxy
+
+            start_time = time.monotonic()
+            async with session.get(
+                url, timeout=config.timeout, allow_redirects=True, proxy=http_proxy
+            ) as response:
+                raw = await read_capped(response, config.max_content_bytes)
+                encoding = response.charset or "utf-8"
+                content = raw.decode(encoding, errors="ignore")
+                response_time = time.monotonic() - start_time
+                last_status = response.status
+                last_headers = dict(response.headers)
+                final_url = str(response.url)
+                redirect_count = len(response.history)
+
+                if _should_retry(response.status) and attempt < config.retries:
+                    retry_after = _parse_retry_after(last_headers)
+                    raise aiohttp.ClientResponseError(
+                        request_info=response.request_info,
+                        history=response.history,
+                        status=response.status,
+                        message="retryable status",
+                    )
+
+                return FetchResult(
+                    url=url,
+                    final_url=final_url,
+                    status=last_status,
+                    content=content,
+                    response_time=response_time,
+                    headers=last_headers,
+                    error=None,
+                    redirect_count=redirect_count,
+                )
+        except asyncio.TimeoutError:
+            error_message = "timeout"
+            last_status = 408
+        except aiohttp.ClientResponseError as exc:
+            error_message = str(exc)
+            last_status = exc.status or last_status
+            retry_after = _parse_retry_after(last_headers)
+        except aiohttp.ClientError as exc:
+            # ClientOSError is one of these: a refused or exhausted socket
+            # arrives here, errno included.
+            error_message = describe_error(exc)
+        except OSError as exc:
+            error_message = describe_error(exc)
+        except Exception as exc:
+            error_message = str(exc)
+
+        if retry_after and retry_after > config.backoff_cap:
+            # The header is the server's to set, so obeying it lets one site stall
+            # a whole scan: "Retry-After: 3600" held a scan of 858 sites at its
+            # last request for an hour. Asking again sooner than the site said
+            # would only be refused again, so this site is done.
+            break
+
+        if attempt < config.retries:
+            backoff = min(config.backoff_base * (2 ** attempt), config.backoff_cap)
+            backoff += random.uniform(0.0, config.jitter)
+            if retry_after:
+                backoff = max(backoff, retry_after)
+            await asyncio.sleep(backoff)
+            # That sleep was the wait the site asked for. Left set, the rate
+            # limiter would sleep for it a second time before the next attempt.
+            retry_after = None
+
+    logger.debug("Fetch failed for %s: %s", url, error_message)
+    return FetchResult(
+        url=url,
+        final_url=final_url,
+        status=last_status,
+        content="",
+        response_time=0.0,
+        headers=last_headers,
+        error=error_message,
+        redirect_count=redirect_count,
+    )

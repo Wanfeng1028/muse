@@ -1,0 +1,458 @@
+"""Tests for the feature-expansion batch: report diff, correlation, expansion,
+domains, checkpoint, graph export, dataset append, and selfcheck metrics."""
+
+import json
+
+import pytest
+
+from aliens_eye.core import report as report_mod
+from aliens_eye.core.checkpoint import Checkpoint
+from aliens_eye.core.correlate import (
+    Profile,
+    cluster_profiles,
+    profiles_from_report,
+)
+from aliens_eye.core.domains import domain_label
+from aliens_eye.core.expand import candidate_usernames_from_results
+from aliens_eye.core.exporter import ResultsExporter
+from aliens_eye.ml.collect import write_rows
+from aliens_eye.selfcheck import _metrics
+
+
+def _profile_result(
+    site, variation, status="Found", name="", bio="", avatar="", url="",
+    name_from_profile=True,
+):
+    return {
+        "site": site,
+        "url": url or f"https://{site}.com/{variation}",
+        "final_url": url,
+        "status": status,
+        "code": 200,
+        "response_time": 0.1,
+        "confidence": 90,
+        "ai_analysis": {
+            "features": {"http_200": 1.0},
+            "signals": {
+                "profile": {
+                    "name": name,
+                    "bio": bio,
+                    "avatar": avatar,
+                    "name_from_profile": name_from_profile,
+                }
+            },
+        },
+    }
+
+
+def _report(results):
+    return ResultsExporter.__new__(ResultsExporter)._build_results_data(
+        "alice", "basic", results, "20260101_000000"
+    )
+
+
+# --- report loader + diff -------------------------------------------------
+
+def test_load_report_roundtrip_and_diff(tmp_path):
+    old_results = {"alice": [_profile_result("github", "alice")]}
+    new_results = {
+        "alice": [
+            _profile_result("github", "alice"),
+            _profile_result("reddit", "alice"),
+        ]
+    }
+    old_path = tmp_path / "old.json"
+    new_path = tmp_path / "new.json"
+    old_path.write_text(json.dumps(_report(old_results)), encoding="utf-8")
+    new_path.write_text(json.dumps(_report(new_results)), encoding="utf-8")
+
+    old = report_mod.load_report(old_path)
+    new = report_mod.load_report(new_path)
+    delta = report_mod.diff_reports(old, new)
+    new_keys = [item["key"] for item in delta["new"]]
+    assert "alice:reddit" in new_keys
+    assert delta["gone"] == []
+
+
+def test_load_report_rejects_garbage(tmp_path):
+    bad = tmp_path / "bad.json"
+    bad.write_text("{}", encoding="utf-8")
+    try:
+        report_mod.load_report(bad)
+    except report_mod.ReportError:
+        pass
+    else:
+        raise AssertionError("expected ReportError")
+
+
+def test_diff_detects_status_change():
+    old = _report({"alice": [_profile_result("github", "alice", status="Maybe")]})
+    new = _report({"alice": [_profile_result("github", "alice", status="Found")]})
+    changed = report_mod.diff_reports(old, new)["changed"]
+    assert changed and changed[0]["key"] == "alice:github"
+
+
+# --- correlation ----------------------------------------------------------
+
+def test_cluster_by_shared_name():
+    profiles = [
+        Profile("alice", "github", name="Alice Smith", bio="", avatar="", url="", status="Found"),
+        Profile("alice", "gitlab", name="Alice Smith", bio="", avatar="", url="", status="Found"),
+        Profile("bob", "reddit", name="Bob Jones", bio="", avatar="", url="", status="Found"),
+    ]
+    clusters = cluster_profiles(profiles)
+    assert len(clusters) == 1
+    assert clusters[0]["size"] == 2
+    assert "name" in clusters[0]["reasons"]
+
+
+def test_cluster_by_shared_link():
+    profiles = [
+        Profile("a", "s1", name="", bio="see https://me.example/x", avatar="", url="", status="Found"),
+        Profile("a", "s2", name="", bio="also https://me.example/x here", avatar="", url="", status="Maybe"),
+    ]
+    clusters = cluster_profiles(profiles)
+    assert len(clusters) == 1
+    assert "shared-link" in clusters[0]["reasons"]
+
+
+def test_no_cluster_when_unrelated():
+    profiles = [
+        Profile("a", "s1", name="Zoe", bio="cats", avatar="", url="", status="Found"),
+        Profile("b", "s2", name="Max", bio="dogs", avatar="", url="", status="Found"),
+    ]
+    assert cluster_profiles(profiles) == []
+
+
+def test_profiles_from_report_skips_not_found():
+    rep = _report({
+        "alice": [
+            _profile_result("github", "alice", status="Found", name="Alice Smith"),
+            _profile_result("reddit", "alice", status="Not Found"),
+        ]
+    })
+    profiles = profiles_from_report(rep)
+    assert [p.site for p in profiles] == ["github"]
+
+
+def test_profiles_from_report_is_found_only():
+    # Maybe-band results (mostly bot-walls) must be excluded by default.
+    rep = _report({
+        "alice": [
+            _profile_result("github", "alice", status="Found", name="Alice Smith"),
+            _profile_result("reddit", "alice", status="Maybe", name="Alice Smith"),
+        ]
+    })
+    profiles = profiles_from_report(rep)
+    assert [p.site for p in profiles] == ["github"]
+
+
+def test_title_derived_name_not_used_for_identity():
+    # Same name on two sites, but it came from <title> (name_from_profile=False):
+    # must NOT cluster. Flip the flag on and it should.
+    junk = _report({
+        "alice": [
+            _profile_result("s1", "alice", name="Just a moment...", name_from_profile=False),
+            _profile_result("s2", "alice", name="Just a moment...", name_from_profile=False),
+        ]
+    })
+    assert cluster_profiles(profiles_from_report(junk)) == []
+
+    real = _report({
+        "alice": [
+            _profile_result("s1", "alice", name="Alice Smith", name_from_profile=True),
+            _profile_result("s2", "alice", name="Alice Smith", name_from_profile=True),
+        ]
+    })
+    assert len(cluster_profiles(profiles_from_report(real))) == 1
+
+
+def test_common_name_downweighted():
+    # A structured name shared by many profiles is boilerplate -> no cluster.
+    profiles = [
+        Profile("u", f"s{i}", name="Sign In", bio="", avatar="", url="", status="Found")
+        for i in range(10)
+    ]
+    assert cluster_profiles(profiles) == []
+
+
+# --- expansion ------------------------------------------------------------
+
+def test_candidate_usernames_from_bio():
+    results = {
+        "alice": [
+            _profile_result(
+                "github", "alice", status="Found",
+                bio="I'm @bob_dev, also https://twitter.com/charlie",
+            )
+        ]
+    }
+    candidates = candidate_usernames_from_results(results, exclude={"alice"})
+    assert "bob_dev" in candidates
+    assert "charlie" in candidates
+    assert "alice" not in [c.lower() for c in candidates]
+
+
+# --- domains --------------------------------------------------------------
+
+def test_domain_label_sanitizes():
+    assert domain_label("John_Doe.99") == "john-doe-99"
+    assert domain_label("!!!") == ""
+
+
+# --- checkpoint -----------------------------------------------------------
+
+async def test_checkpoint_roundtrip(tmp_path):
+    path = tmp_path / "ck.jsonl"
+    ck = Checkpoint(path)
+    result = _profile_result("github", "alice")
+    await ck.record("alice", "github", result)
+    assert ck.is_done("alice", "github")
+
+    reloaded = Checkpoint(path)
+    assert reloaded.is_done("alice", "github")
+    assert reloaded.results_for("alice")["github"]["site"] == "github"
+
+    reloaded.finalize()
+    assert not path.exists()
+
+
+# --- graph export ---------------------------------------------------------
+
+def test_graph_exports_written(tmp_path):
+    exporter = ResultsExporter(tmp_path)
+    results = {"alice": [_profile_result("github", "alice", name="Alice")]}
+    written = exporter.save_results("alice", "basic", results, ["gexf", "mermaid", "maltego"])
+    suffixes = {p.suffix for p in written}
+    assert ".gexf" in suffixes
+    assert ".mmd" in suffixes
+    assert any(p.name.endswith("_maltego.csv") for p in written)
+    gexf = next(p for p in written if p.suffix == ".gexf")
+    assert "github" in gexf.read_text(encoding="utf-8")
+
+
+def test_all_format_excludes_graph_and_pdf(tmp_path):
+    exporter = ResultsExporter(tmp_path)
+    results = {"alice": [_profile_result("github", "alice")]}
+    written = exporter.save_results("alice", "basic", results, ["all"])
+    suffixes = {p.suffix for p in written}
+    assert suffixes == {".json", ".csv", ".html", ".md"}
+
+
+# --- dataset append -------------------------------------------------------
+
+def test_write_rows_append(tmp_path):
+    from aliens_eye.core.features import FEATURE_SCHEMA
+
+    path = tmp_path / "ds.csv"
+    row = [0.0] * len(FEATURE_SCHEMA) + [1.0]
+    write_rows(path, [row], append=True)
+    write_rows(path, [row], append=True)
+    lines = path.read_text(encoding="utf-8").strip().splitlines()
+    assert lines[0].startswith("http_200")  # single header
+    assert len(lines) == 3  # header + 2 rows
+
+
+# --- selfcheck metrics ----------------------------------------------------
+
+def test_metrics_math():
+    m = _metrics(tp=8, fp=2, fn=2, tn=8)
+    assert m["precision"] == 0.8
+    assert m["recall"] == 0.8
+    assert round(m["f1"], 2) == 0.8
+    assert m["false_positive_rate"] == 0.2
+
+
+# --- parse_duration: non-finite input -------------------------------------
+
+
+def test_parse_duration_rejects_nan():
+    """NaN defeats `<= 0`, so it reached asyncio.sleep(nan) in the watch loop."""
+    from aliens_eye.core.watch import parse_duration
+
+    for value in ("nan", "NaN", "-nan"):
+        with pytest.raises(ValueError, match="finite"):
+            parse_duration(value)
+
+
+def test_parse_duration_rejects_infinity():
+    from aliens_eye.core.watch import parse_duration
+
+    for value in ("inf", "-inf", "infinity"):
+        with pytest.raises(ValueError):
+            parse_duration(value)
+
+
+def test_parse_duration_still_accepts_normal_values():
+    from aliens_eye.core.watch import parse_duration
+
+    assert parse_duration("6h") == 21600.0
+    assert parse_duration("90") == 90.0
+    assert parse_duration("1.5m") == 90.0
+
+
+# --- avatar fetch: SSRF guard ---------------------------------------------
+
+
+def _fetchable(url, allow_private=False):
+    import asyncio
+
+    from aliens_eye.core.correlate import is_fetchable_avatar
+
+    return asyncio.run(is_fetchable_avatar(url, allow_private))
+
+
+def test_avatar_fetch_rejects_loopback_and_private_hosts():
+    """Avatar URLs come from the target's own page, so they are attacker-chosen.
+
+    Fetching them unchecked aims requests from the analyst's machine wherever
+    the target likes: cloud metadata, intranet hosts, services on loopback.
+    """
+    for url in (
+        "http://127.0.0.1:8080/admin",
+        "http://localhost/",
+        "http://169.254.169.254/latest/meta-data/",
+        "http://10.0.0.5/",
+        "http://192.168.1.1/",
+        "http://[::1]/",
+    ):
+        assert _fetchable(url) is False, url
+
+
+def test_avatar_fetch_rejects_non_http_schemes():
+    for url in ("file:///etc/passwd", "ftp://example.com/x.png", "gopher://x/", "data:image/png;base64,AAAA"):
+        assert _fetchable(url) is False, url
+
+
+def test_avatar_fetch_rejects_malformed_urls():
+    for url in ("", "http://", "notaurl", "https:///nohost"):
+        assert _fetchable(url) is False, url
+
+
+def test_avatar_fetch_allows_a_public_address():
+    # 8.8.8.8 is a literal public address, so this needs no DNS lookup.
+    assert _fetchable("https://8.8.8.8/avatar.png") is True
+
+
+def test_allow_private_opt_out_skips_the_check():
+    """Deliberate lab scanning must still be possible."""
+    assert _fetchable("http://127.0.0.1/x.png", allow_private=True) is True
+
+
+def test_blocked_avatar_is_never_downloaded():
+    """The guard must run before any request is issued.
+
+    The session records calls rather than raising: the download swallows
+    exceptions by design, so a session that raised could never fail this test.
+    """
+    import asyncio
+
+    from aliens_eye.core.correlate import Profile, _download_and_hash
+
+    class RecordingSession:
+        def __init__(self):
+            self.calls = []
+
+        def get(self, url, **kwargs):
+            self.calls.append(url)
+            raise RuntimeError("no network in this test")
+
+    session = RecordingSession()
+    profile = Profile(
+        variation="u", site="s", url="https://s/u", name="", bio="", status="Found",
+        avatar="http://169.254.169.254/latest/meta-data/",
+    )
+    asyncio.run(_download_and_hash(session, profile, timeout=1.0))
+    assert session.calls == []
+    assert profile.avatar_hash is None
+
+
+# --- correlation: handle-mention chaining (regression) --------------------
+
+
+def test_mentioning_the_searched_handle_links_nothing():
+    """One page echoing @handle in its chrome linked itself to every profile.
+
+    Live scan: Twitter's description is "The latest posts from @handle", and a
+    single-handle scan produced a 228-profile cluster through that one page.
+    """
+    twitter = Profile("arx", "twitter", name="", bio="The latest posts from @arx",
+                      avatar="", url="", status="Found")
+    words = ["cats", "chess", "piano", "rust", "hiking", "coffee", "jazz", "vim", "linux", "ramen",
+             "surf", "birds", "golang", "poetry", "tennis", "maps", "space", "fonts", "tea", "yoga"]
+    # Distinct bios, so nothing but the handle mention could possibly link them.
+    others = [Profile("arx", f"site{i}", name="", bio=f"{word} enthusiast{i}", avatar="",
+                      url="", status="Found") for i, word in enumerate(words)]
+    assert cluster_profiles([twitter, *others]) == []
+
+
+def test_two_bios_mentioning_the_same_third_handle_still_link():
+    a = Profile("arx", "s1", name="", bio="work at @acmecorp", avatar="", url="", status="Found")
+    b = Profile("arx", "s2", name="", bio="engineer @acmecorp", avatar="", url="", status="Found")
+    [cluster] = cluster_profiles([a, b])
+    assert "handle" in cluster["reasons"]
+
+
+def test_mention_across_different_searched_handles_still_links():
+    """b, found under 'aaron.t', points at 'arx': real evidence of one owner."""
+    a = Profile("arx", "github", name="", bio="", avatar="", url="", status="Found")
+    b = Profile("aaron.t", "reddit", name="", bio="main account @arx", avatar="", url="", status="Found")
+    [cluster] = cluster_profiles([a, b])
+    assert "handle" in cluster["reasons"]
+
+
+def test_a_brand_title_is_not_a_shared_name():
+    """og:title 'Flickr' on flickr and flickr.albums is the service, not a person."""
+    profiles = [
+        Profile("arx", "flickr", name="Flickr", bio="", avatar="", url="", status="Found"),
+        Profile("arx", "flickr.albums", name="Flickr", bio="", avatar="", url="", status="Found"),
+    ]
+    assert cluster_profiles(profiles) == []
+
+
+def test_real_shared_names_still_link():
+    profiles = [
+        Profile("arx", "github", name="Aaron Thomas", bio="", avatar="", url="", status="Found"),
+        Profile("arx", "gitlab", name="Aaron Thomas", bio="", avatar="", url="", status="Found"),
+    ]
+    [cluster] = cluster_profiles(profiles)
+    assert cluster["reasons"] == ["name"]
+
+
+# --- synchronous avatar guard (PDF export) ---------------------------------
+
+
+@pytest.mark.parametrize("url", [
+    "file:///etc/passwd",
+    "file://C:/Windows/win.ini",
+    "http://127.0.0.1/x.png",
+    "http://169.254.169.254/latest/meta-data/",
+    "http://[::1]/x.png",
+    "ftp://example.com/x.png",
+    "",
+])
+def test_sync_avatar_guard_blocks_local_and_private(url):
+    from aliens_eye.core.correlate import avatar_url_allowed
+
+    assert avatar_url_allowed(url) is False
+
+
+def test_sync_avatar_guard_allows_public():
+    from aliens_eye.core.correlate import avatar_url_allowed
+
+    assert avatar_url_allowed("https://8.8.8.8/a.png") is True
+
+
+def test_pdf_avatar_fetch_never_opens_a_blocked_url(monkeypatch):
+    """A hostile og:image must never reach the network or the filesystem."""
+    import urllib.request
+
+    pytest.importorskip("reportlab")  # CI installs the [pdf] extra so this runs there
+    from aliens_eye.core import pdf_report
+
+    opened = []
+    monkeypatch.setattr(urllib.request.OpenerDirector, "open",
+                        lambda self, req, *a, **k: opened.append(req.full_url))
+    for url in ("file:///etc/passwd", "http://127.0.0.1/admin", "http://10.0.0.1/x"):
+        assert pdf_report._fetch_avatar(url) is None
+    assert opened == []

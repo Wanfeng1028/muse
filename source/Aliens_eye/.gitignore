@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+results/
+cache/
+config.json
+
+# Evaluation artifacts: captured response corpora and archived metrics. These
+# hold third-party page content, so they stay local and are not published.
+paper/

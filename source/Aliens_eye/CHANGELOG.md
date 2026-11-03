@@ -1,0 +1,351 @@
+# Changelog
+
+## 2.7.4 (2026-10-20)
+
+### Fixed
+- **A scan could run the process out of file descriptors** (#26, the follow-up log:
+  `Task exception was never retrieved ... OSError: [Errno 24] Too many open files`).
+  Three things added up:
+  - aiohttp holds each finished request's socket in a pool for 75 seconds (its default),
+    one per site, while the connector's `limit` counts only the connections in use.
+    Scanning 854 sites therefore left several hundred idle sockets open at once -- past
+    macOS's default of 256 file descriptors, after which every socket, and every attempt
+    to spawn the Playwright driver, failed with Errno 24. Idle sockets are now reaped
+    after 10 seconds, and the CLI raises the soft limit to 4096 at startup where the OS
+    allows it.
+  - Errno 24 in a fetch read only "Too many open files", like the site had failed. It now
+    says the process hit its file-descriptor limit and names `ulimit -n`.
+  - A browser fallback that could not start was logged at debug level, so the scan looked
+    healthy while none of its "Maybe" results were re-checked in a browser. The first
+    failure is now warned about once per scan.
+- **A start of Playwright interrupted by the scan's per-site deadline left its driver
+  process and pipes running**, held by nothing: leaked file descriptors, and the
+  fire-and-forgotten `Connection.run()` task that printed "Task exception was never
+  retrieved". A start that fails or is cancelled now stops the driver it already spawned.
+
+## 2.7.3 (2026-10-20)
+
+### Fixed
+- **`--json-stdout` printed nothing.** It silenced the banner but a scan never wrote its
+  JSON, so `aliens_eye username --json-stdout | jq` got an empty stream. It now writes the
+  report to stdout as one JSON line per username (JSON Lines), so a single username is one
+  document that `json.load` or `jq` reads directly. The banner, progress bar and summary go
+  to stderr, and the output is ASCII-escaped so a console in a legacy code page cannot choke
+  on a name with accents. Files are still written to the output folder as before.
+- **`--only-found` did nothing.** The flag was read and then ignored. Reports now list just
+  the Found and Maybe sites; the counts in them (`sites_scanned`, `not_found`, ...) still
+  cover every site scanned, and the report is marked `"only_found": true`. It applies to the
+  JSON on stdout and to the saved files, including CSV.
+
+### Added
+- A README section and one line under the startup banner about the author's other project,
+  [lxask](https://github.com/arxhr007/lxask). `ALIENS_EYE_NO_PROMO=1` hides the line. It is
+  never printed with `--json-stdout`, by the library API or by the MCP server.
+
+## 2.7.2 (2026-10-19)
+
+### Fixed
+- **The browser fallback could start dozens of Chromium processes and keep pages open
+  forever** (#26, a Mac that ran out of memory with the fallback switched on). The fallback
+  (`--playwright`, or "fallback" in the interactive settings) re-checks every "Maybe" result
+  in a real browser. Two bugs in it:
+  - The browser was started on first use, and the check for "already started" ran before the
+    lock that guards it. With 50 scan workers asking at once, each one launched its own
+    Chromium, and only the last was ever closed.
+  - A page that timed out, failed to load, or was cancelled by the scan's deadline was never
+    closed, so a scan accumulated hundreds of open pages.
+
+  The browser now starts once, every page is closed whatever happens, the browser context is
+  replaced every 40 pages so its memory is returned, and a browser that fails halfway through
+  starting is shut down. Checked against a real Chromium: 20 simultaneous fetches, half to a
+  page that never finishes loading, now use one browser (4 processes), 341 MB at most, and
+  leave no page open and no process running after the scan. The old code, given only 8
+  simultaneous fetches, passed 1.5 GB in seconds.
+
+  Scans without the fallback were never affected.
+
+## 2.7.1 (2026-10-19)
+
+### Added
+- **The Advanced level now says what it will do before it starts.** It checks 123
+  variations of the username, which on all sites is about 105,000 requests and close to two
+  hours. Picking it from the menu now asks for confirmation first (the default is No, and
+  declining returns to the menu). A level given as `-l advanced` is not asked about. Every
+  level with more than one variation also prints its request count and a rough time under
+  the scan banner. The time assumes about 16 sites a second, measured on a default scan.
+  Prompted by a report of a very long scan on a small laptop (#26).
+
+  Memory, for the record, measured on 2.7.0: a default scan peaks at about 350 MB, and 12
+  variations of all 854 sites at about 415 MB.
+
+## 2.7.0 (2026-10-08)
+
+### Fixed
+- **Usernames that don't exist were reported as Found** (#22, reported with rendered-page
+  evidence by @vollegrewar). A made-up username came back Found on 11 of 19 sites tried,
+  up to 95% confidence. The detector scores how profile-like a page looks, and three kinds
+  of page look the part without being one. A Found now has to survive a check for each:
+  - **The site's own answer.** HTTP `404` or `410` is reported as Not Found whatever the
+    score (chatujme.cz answered 404 and was Found at 84%). Any other error code, such as a
+    `403` block page or a `500`, is Maybe at most.
+  - **The same page for everyone.** JavaScript apps, soft "no such user" pages and
+    redirects to search answer every profile address alike. For each Found, the site is now
+    also asked for a username that cannot exist; when both answers are the same page, the
+    result is Maybe. One extra request per Found, cached per site, so a full scan takes the
+    same time (54 seconds before and after for 858 sites).
+  - Bot-check pages, as since 2.5.1.
+
+  Measured on recorded pages from 135 sites the model never trained on, same rows before
+  and after:
+
+  | | 2.6.0 | 2.7.0 | change (95% interval) |
+  |---|---|---|---|
+  | Missing usernames reported Found | 33 of 399 (8.3%) | 4 of 399 (1.0%) | -7.3 points (-11.7 to -3.5) |
+  | Real accounts reported Found | 93 of 172 (54%) | 85 of 172 (49%) | -4.7 points (-8.8 to -1.2) |
+  | Precision | 0.74 | 0.96 | |
+
+  The accounts no longer reported Found are ones whose page is identical to a missing
+  user's: nothing in the response told them apart, so they are a Maybe. Of the 4 false
+  hits left, 2 are real accounts: test names meant not to exist that do, on chess.com and
+  Discogs. The other 2 are one site whose pages differ slightly on every load.
+  The threshold was chosen on the 286 training sites, where the same change takes false
+  hits from 7.3% to 0.9%.
+
+  Live, a scan of all sites for a username used on one of them went from 54 Found to 3.
+
+### Added
+- `--no-control-check` (and `control_check` in a config file) skips the second request.
+- `aliens_eye selfcheck` now scores what a scan reports, with the checks above;
+  `--detector-only` scores the detector's verdict alone, as before.
+
+### Removed
+- Four sites whose address can never identify an account by username: `pubmed` (a search
+  page), `pornmd` (a search aggregator), `literotica` and `empornium` (the address takes a
+  numeric id). 854 sites remain.
+
+### Not changed
+- The other suggestions in #22: rendering every page in a browser, and searching sites
+  that have no profile address. `wikipedia` and `giphy` keep their addresses: with the
+  check above, a username that doesn't exist is no longer Found on either.
+
+## 2.6.0 (2026-10-08)
+
+### Fixed
+- **One site could stall a whole scan.** A site answering `429` or `503` with a long
+  `Retry-After` was obeyed in full, so `Retry-After: 3600` held the scan at that request
+  for an hour (and the wait was applied twice). The header is the server's to set, so it is
+  now honoured only up to the retry backoff cap (8 seconds); a site asking for longer is
+  reported as an error and not asked again.
+- Every site's check now has an overall deadline (about 80 seconds with default settings),
+  after which it is reported as `Timeout`. A scan is only as fast as its slowest site, and
+  a check that never returned kept the whole scan open.
+- **YouTube channels were mostly reported as not found.** The check asked for
+  `youtube.com/<name>`, an address only older channels have. It now asks for
+  `youtube.com/@<name>`, the handle every channel has. Of six real channels that came back
+  "Not Found", five are now found; the sixth no longer exists.
+- Cancelling a scan from code that uses the API (for example with a timeout) left its
+  worker tasks running.
+
+### Security
+- **The address check on scraped URLs could be bypassed with a redirect.** Since 2.4.0,
+  avatar URLs taken from scanned pages were only fetched if they pointed at a public
+  address. The check covered the URL itself, and the HTTP client then followed redirects
+  unchecked, so a public URL answering `302 Location: http://127.0.0.1/...` was still
+  followed. This affected `--correlate` and `--format pdf`. Redirects are now followed one
+  hop at a time with every hop validated, and `--correlate` pins the connection to the
+  address that was checked, which also closes a DNS-rebinding race.
+
+### Added
+- `aliens_eye.api.match_profile_url(url)`: which site and username a profile link belongs
+  to, for any site in the catalogue. `https://www.instagram.com/_someone_/` gives
+  `("instagram", "_someone_")`; a repository, a navigation page or an unknown host gives
+  nothing.
+- `aliens_eye.api.fetch_page(url)`: fetch one page whose address came from somewhere you do
+  not control, with the checks above.
+- `aliens_eye.api.profile_url(site, username)`.
+
+### Changed
+- `--recurse-depth` now understands profile links for every site in the catalogue. It used
+  to recognise 19 hard-coded domains and take the first path segment, which missed
+  `linkedin.com/in/<user>` and `<user>.tumblr.com` and misread `github.com/<user>/<repo>`.
+
+## 2.5.1 (2026-10-07)
+
+### Fixed
+- **Fresh installs crashed on start.** selectolax 1.0.0 (released 2026-10-03) removed the
+  HTML parser backend Aliens Eye imported, and the dependency had no upper bound, so every
+  new `pip install aliens-eye` since then failed with `ImportError: Modest backend is
+  deprecated since selectolax 1.0`. The analyzer now uses selectolax's Lexbor backend, which
+  works on both old and new versions, and the dependency is capped at `<2`. Checked on 706
+  recorded pages: no detection result changes. Thanks to @cristianchiriac (#23).
+
+  If you hit this, upgrade: `pip install -U aliens-eye`.
+- **Bot-check and error pages reported as Found.** Pages such as Cloudflare's "Checking your
+  browser" return HTTP 200 and mention users or profiles, so they could be scored as a found
+  account. A result whose title or meta tags mark it as a challenge, verification or error
+  page is now capped at Maybe. Thanks to @BBmmo-code (#19).
+
+### Added
+- 18 Chinese platforms whose profile URL carries the username, including CSDN, SegmentFault,
+  cnblogs, V2EX, LOFTER and Jianshu. Thanks to @BBmmo-code (#19). Two more from that
+  contribution, leetcode.cn and hupu, were left out because they answer "found" for
+  usernames that do not exist.
+
+## 2.5.0 (2026-09-18)
+
+### Security
+- **`--format pdf` fetched attacker-chosen URLs, including `file://`.** The PDF report
+  downloads each profile's avatar with urllib, which also opens local files. The avatar URL is
+  scraped from the target's own page, so a hostile `og:image` could point the report at a
+  local file or an internal address. The same public-address check that guards `--correlate`
+  now guards this path too.
+
+### Fixed
+- **Every page was parsed from a random-length prefix.** The HTTP reader called
+  `StreamReader.read(n)`, which returns *up to* n bytes -- whatever has arrived on the socket
+  -- not n bytes. Fetching one GitHub profile three times yielded 100000, 100000 and 19497
+  bytes. On short reads the page's `og:` tags (at ~21 KB) were missing, so display name, bio
+  and avatar silently vanished, and every detection feature was computed from a different
+  slice of the page on each run. Pages are now read to the size cap or to the end. Avatar
+  downloads in `--correlate` had the same bug, so images were hashed from partial data.
+- **Detection model retrained on full pages.** The old model had been trained on those
+  truncated prefixes; fed complete pages it got worse (holdout F1 0.543 -> 0.521, false-positive
+  rate 25% -> 29%). The new model is trained on 1,455 samples from 286 platforms -- four times
+  the old training set -- with the blend re-tuned to 0.9 ML / 0.1 heuristic. On 142 platforms
+  it never saw, **false "Found" results drop by two thirds** (false-positive rate 25% -> 9%,
+  precision 0.46 -> 0.65), at the cost of recall (0.67 -> 0.51). F1 is unchanged within noise.
+  Expect noticeably fewer false leads, and some real accounts moving to Maybe or Not Found.
+- **`--correlate` merged almost everything into one "same person" cluster.** Correlation
+  linked two profiles when one bio @-mentioned the handle the other was found under. In a
+  scan of a single handle, every profile was found under that handle, and many sites echo it
+  in page chrome (Twitter: *"The latest posts from @handle"*). One such page therefore linked
+  itself to every other profile: a live scan produced a 228-profile cluster, 227 of whose
+  links ran through Twitter alone. Mentions of a searched handle no longer count. Two bios
+  mentioning the same *other* handle still link, as does a mention across two different
+  searched handles.
+- Display names that are just the site's brand (og:title "Flickr" on `flickr.albums`) no
+  longer link sibling pages of the same service.
+
+### Corrections
+- Results measured before this release, on truncated pages, should be read with that in
+  mind. An earlier claim that ~45% of pages changed within hours compared one random
+  truncation with another and is withdrawn.
+
+### Added
+- `aliens_eye.api.correlate()` also returns `profiles`: every profile considered, with its
+  avatar hash, so callers can apply their own linkage rules on top of the clusters.
+
+## 2.4.0 (2026-09-18)
+
+### Security
+- **`--correlate` fetched attacker-chosen URLs (SSRF).** Avatar URLs are scraped from the
+  target's own page (`og:image`, JSON-LD, favicon, per-site selectors), so whoever controls
+  that page chooses them, and they were requested with no validation. A hostile profile could
+  point its avatar at a cloud metadata endpoint, an intranet host, or a service on the
+  analyst's own loopback. Avatar URLs are now limited to `http`/`https` and must resolve to
+  public addresses. Upgrade if you use `--correlate`.
+
+### Added
+- **`aliens_eye.api`**, a stable programmatic API (`scan`, `correlate`, `load_sites`) for
+  building other tools on Aliens Eye. It returns plain dicts shaped like the JSON report,
+  prints nothing by default, and never writes into the caller's working directory.
+- `UsernameScanner` accepts an `on_result(username, result)` progress hook (sync or async)
+  and an injectable `console`.
+
+### Fixed
+- Sites whose response headers exceed 8190 bytes (e.g. trakt.tv) failed on every request
+  with `Got more than 8190 bytes when reading`. The limit is now 64 KB.
+- `--watch nan` and `--watch inf` were accepted: NaN slips past a `<= 0` check because every
+  comparison with it is false. Durations must now be positive and finite.
+
+### Changed
+- The MCP server now uses `aliens_eye.api`, and routes console output to stderr for the
+  whole process, not just during scans.
+
+## 2.3.0 (2026-09-06)
+
+Evaluation and reproducibility release. No change to detection behaviour: the shipped
+model, blend weights and thresholds are untouched.
+
+### Added
+- **Frozen response corpus** (`aliens_eye corpus record` / `corpus stats`). Captures raw
+  responses once and replays them through the same fetch path a scan uses, so detector
+  evaluation is reproducible — the same corpus yields byte-identical results regardless
+  of what platforms do afterwards. Bodies are content-addressed and deduplicated.
+- **Ablation harness** (`aliens_eye eval ablate`). Scores naive status baselines, each
+  judge in isolation, the shipped blend, and per-feature-group ablations over the same
+  corpus rows. Reports precision/recall/F1/FPR plus the **Maybe rate**, with
+  percentile-bootstrap confidence intervals and paired-bootstrap deltas.
+- **External tool baselines** (`aliens_eye eval external`). Runs Sherlock's, Maigret's and
+  WhatsMyName's own per-site rules against the same stored responses. Rule data is not
+  vendored; pass it by path and mind the upstream licence.
+- **Ground-truth builder** (`aliens_eye eval groundtruth`). Expands the ground-truth set
+  from those projects' account lists, recording per-site provenance so no tool is ever
+  scored on the accounts its own rules were tuned against.
+- `selfcheck --split train|holdout|all`, `--corpus`, and `--ground-truth`.
+- `FingerprintStore(read_only=True)`, required for deterministic replay.
+
+### Changed
+- **Ground truth expanded from 43 to 428 sites** (572 accounts), split site-disjoint into
+  train (286 sites) and holdout (142).
+- Corpus captures flush incrementally and support resume, so a long run cannot lose
+  everything on failure.
+
+### Fixed
+- **Train/eval leakage.** Training data and evaluation both derived from
+  `data/selfcheck.json`, so reported accuracy was a fit measure presented as a
+  generalization measure. Splits are now site-disjoint — by site rather than by account,
+  because the detector learns per-site page structure — and `train collect` refuses a
+  non-train split without `--allow-leakage`.
+- **Documented blend weights did not match the shipped model.** `WORKING.md` stated
+  `0.4*ml + 0.6*heuristic` with thresholds 0.6/0.35, while the shipped `model.json`
+  carries `ml_weight` 0.6 and thresholds 0.5559/0.3224 and overrides the module constants
+  at runtime. Docs corrected and a test now pins them together.
+
+## 2.2.3 (2026-09-06)
+
+### Fixed
+- **Scans failed outright on many platforms due to a Brotli decoding error.** The default
+  request headers advertised `Accept-Encoding: gzip, deflate, br`, but Brotli was not an
+  install dependency, so any server that honoured `br` returned a response the HTTP client
+  could not decode (`can not decode content-encoding: brotli (br)`). Affected sites were
+  reported as fetch errors rather than checked — a silent, total failure rather than a
+  degraded result.
+
+  Measured across a 428-site run, this accounted for 852 of 978 errors, with 173 sites
+  failing on every request, including **artstation, bitbucket, anilist, about.me,
+  archiveofourown, allmylinks, behance and bandcamp**. All return normal results now.
+
+  Brotli is now a required dependency, and `Accept-Encoding` is built from the codecs that
+  are actually importable, so an environment predating this release degrades to
+  `gzip, deflate` instead of failing.
+
+## 2.0.0 (2026-06-11)
+
+### Added
+- **PyPI package**: `pip install aliens-eye` with `aliens_eye` console command
+- **Real ML detection**: logistic-regression model trained on labeled scans, blended with the heuristic engine; pure-python inference with zero ML runtime dependencies
+- `aliens_eye train collect` / `aliens_eye train fit` for building datasets and retraining the model
+- `aliens_eye selfcheck`: validates detection accuracy against accounts known to exist
+- **Rich terminal UI**: live progress bar, sorted result tables, summary panels; `--plain` for scripts
+- **Proxy support**: `--proxy` (HTTP/SOCKS4/SOCKS5) and `--tor`
+- **Site filtering**: `--site`, `--exclude-site`, `--no-nsfw`
+- Markdown report export (`--format md`)
+- `--profile quick|full|aggressive` for non-interactive preset selection
+- `--version`, `--sites` (custom site list), `--model` (custom model), `--no-ml`
+- Dockerfile
+- Test suite (pytest) and GitHub Actions CI (lint + tests on Linux/Windows, Python 3.10–3.13)
+- Automated PyPI release workflow via trusted publishing
+
+### Changed
+- Restructured to a `src/aliens_eye/` package; `sites.json` and the model ship as package data
+- Playwright is now an optional extra: `pip install aliens-eye[browser]`
+- Fingerprint cache and config moved to platform-standard directories (via `platformdirs`)
+- Confidence is now derived from a calibrated probability instead of fixed score bands
+
+### Removed
+- Hardcoded `/etc`, `/usr/local`, and Termux path probing
+- Dead `mumble://` site entry
+
+### Compatibility
+- `python aliens_eye.py` from a source checkout still works

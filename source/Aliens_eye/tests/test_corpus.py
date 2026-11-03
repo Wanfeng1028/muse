@@ -1,0 +1,581 @@
+"""Frozen-corpus record/replay: round-trip, determinism, and the guards that
+keep a replayed evaluation from silently drifting."""
+
+import asyncio
+import json
+
+import pytest
+
+from aliens_eye.core.config import ScannerConfig
+from aliens_eye.core.detector import Detector
+from aliens_eye.core.fingerprints import FingerprintStore, build_fingerprint
+from aliens_eye.core.http import FetchResult
+from aliens_eye.corpus.record import (
+    RecordingFetcher,
+    build_jobs,
+    plausible_negative,
+    random_negative,
+)
+from aliens_eye.corpus.replay import MISSING_ERROR, ReplayFetcher
+from aliens_eye.corpus.store import CorpusError, CorpusStore, body_digest
+
+SITES = {
+    "github": "https://github.com/{}",
+    "reddit": "https://www.reddit.com/user/{}",
+}
+
+
+class FakeNetwork:
+    """Stands in for fetch_url so tests never touch the network."""
+
+    def __init__(self, responses: dict[str, tuple[int, str]]) -> None:
+        self.responses = responses
+        self.calls: list[str] = []
+
+    async def __call__(self, session, url, config, rate_limiter, logger):
+        self.calls.append(url)
+        status, body = self.responses.get(url, (404, "<html>no such user</html>"))
+        return FetchResult(
+            url=url, final_url=url, status=status, content=body,
+            response_time=0.125, headers={"Server": "test"}, error=None,
+            redirect_count=0,
+        )
+
+
+def make_corpus(tmp_path, monkeypatch, responses, jobs):
+    """Record `jobs` against a fake network and return the corpus root."""
+    from aliens_eye.corpus import record as record_mod
+
+    network = FakeNetwork(responses)
+    monkeypatch.setattr(record_mod, "fetch_url", network)
+
+    root = tmp_path / "corpus"
+    store = CorpusStore(root)
+    store.init()
+    recorder = RecordingFetcher(store, tool_version="test")
+    for site, url, username, label in jobs:
+        recorder.register(url, site, username, label)
+
+    async def drive():
+        for _, url, _, _ in jobs:
+            await recorder(None, url, ScannerConfig(), None, _NullLogger())
+
+    asyncio.run(drive())
+    written = recorder.flush()
+    store.write_manifest({"tool_version": "test", "records": written})
+    return root, network
+
+
+class _NullLogger:
+    def debug(self, *a, **k):
+        pass
+
+    def info(self, *a, **k):
+        pass
+
+    def warning(self, *a, **k):
+        pass
+
+
+# --- round trip -----------------------------------------------------------
+
+
+def test_record_then_replay_round_trips(tmp_path, monkeypatch, found_html):
+    url = "https://github.com/torvalds"
+    root, _ = make_corpus(
+        tmp_path, monkeypatch, {url: (200, found_html)},
+        [("github", url, "torvalds", 1)],
+    )
+
+    replay = ReplayFetcher(root)
+    result = asyncio.run(replay(None, url, ScannerConfig(), None, _NullLogger()))
+    assert result.status == 200
+    assert result.content == found_html
+    assert result.response_time == 0.125
+    assert result.headers["Server"] == "test"
+    assert result.error is None
+
+
+def test_replay_makes_no_network_calls(tmp_path, monkeypatch, found_html):
+    url = "https://github.com/torvalds"
+    root, network = make_corpus(
+        tmp_path, monkeypatch, {url: (200, found_html)},
+        [("github", url, "torvalds", 1)],
+    )
+    before = len(network.calls)
+    replay = ReplayFetcher(root)
+    asyncio.run(replay(None, url, ScannerConfig(), None, _NullLogger()))
+    assert len(network.calls) == before
+
+
+# --- determinism ----------------------------------------------------------
+
+
+def test_replay_is_deterministic_across_runs_and_orders(
+    tmp_path, monkeypatch, found_html, not_found_html
+):
+    """Same corpus -> identical detections, regardless of visit order.
+
+    This is the property the whole corpus exists for: a metric change must be
+    attributable to the detector, never to which worker finished first.
+    """
+    urls = {
+        "https://github.com/torvalds": (200, found_html),
+        "https://github.com/nosuchuser99": (404, not_found_html),
+        "https://www.reddit.com/user/spez": (200, found_html),
+    }
+    jobs = [
+        ("github", "https://github.com/torvalds", "torvalds", 1),
+        ("github", "https://github.com/nosuchuser99", "nosuchuser99", 0),
+        ("reddit", "https://www.reddit.com/user/spez", "spez", 1),
+    ]
+    root, _ = make_corpus(tmp_path, monkeypatch, urls, jobs)
+
+    def score(order):
+        from aliens_eye.core.analyzer import FeatureExtractor
+
+        replay = ReplayFetcher(root)
+        extractor = FeatureExtractor()
+        detector = Detector()
+        # Read-only, empty store: no cross-response accumulation, so scoring
+        # cannot depend on completion order.
+        fingerprints = FingerprintStore(tmp_path / "fp.json", read_only=True)
+        out = {}
+        for site, url, username, _ in order:
+            fetch = asyncio.run(replay(None, url, ScannerConfig(), None, _NullLogger()))
+            bundle = extractor.extract(
+                fetch.content, fetch.final_url, username, site,
+                fetch.status, fetch.response_time, fetch.headers, fetch.redirect_count,
+            )
+            fp = build_fingerprint(bundle.fingerprint)
+            scored = fingerprints.score(site, fp)
+            bundle.features["fingerprint_match_found"] = float(scored["match_found"])
+            bundle.features["fingerprint_match_not_found"] = float(scored["match_not_found"])
+            fingerprints.add(site, "found", fp)
+            detection = detector.predict(bundle.features)
+            out[url] = (detection.status, detection.confidence, detection.probability)
+        return out
+
+    first = score(jobs)
+    assert first == score(jobs), "same order must reproduce"
+    assert first == score(list(reversed(jobs))), "reversed order must reproduce"
+
+
+def test_readonly_fingerprint_store_does_not_accumulate(tmp_path, found_html):
+    store = FingerprintStore(tmp_path / "fp.json", read_only=True)
+    fp = {"title_hash": "a", "meta_hash": "b", "dom_signature": "c", "server": "d"}
+    store.add("github", "found", fp)
+    assert store.score("github", fp)["match_found"] == 0
+    store.save()
+    assert not (tmp_path / "fp.json").exists()
+
+
+def test_writable_fingerprint_store_still_accumulates(tmp_path):
+    store = FingerprintStore(tmp_path / "fp.json")
+    fp = {"title_hash": "a", "meta_hash": "b", "dom_signature": "c", "server": "d"}
+    store.add("github", "found", fp)
+    assert store.score("github", fp)["match_found"] > 0
+
+
+# --- storage --------------------------------------------------------------
+
+
+def test_identical_bodies_are_stored_once(tmp_path, monkeypatch, not_found_html):
+    """Error pages repeat across every negative; the corpus must not duplicate them."""
+    urls = {
+        f"https://github.com/ghost{i}": (404, not_found_html) for i in range(5)
+    }
+    jobs = [("github", url, f"ghost{i}", 0) for i, url in enumerate(urls)]
+    root, _ = make_corpus(tmp_path, monkeypatch, urls, jobs)
+
+    bodies = list((root / "bodies").rglob("*.gz"))
+    assert len(bodies) == 1
+    assert ReplayFetcher(root).stats()["records"] == 5
+
+
+def test_body_digest_is_content_addressed():
+    assert body_digest("abc") == body_digest("abc")
+    assert body_digest("abc") != body_digest("abd")
+    assert body_digest("") == ""
+
+
+def test_records_are_written_in_stable_order(tmp_path, monkeypatch, found_html):
+    urls = {f"https://github.com/u{i}": (200, found_html + str(i)) for i in range(4)}
+    jobs = [("github", f"https://github.com/u{i}", f"u{i}", i % 2) for i in range(4)]
+    root, _ = make_corpus(tmp_path, monkeypatch, urls, jobs)
+    lines = (root / "records.jsonl").read_text("utf-8").strip().splitlines()
+    keys = [(json.loads(x)["site"], json.loads(x)["label"], json.loads(x)["username"]) for x in lines]
+    assert keys == sorted(keys)
+
+
+# --- guards ---------------------------------------------------------------
+
+
+def test_strict_replay_raises_on_missing_url(tmp_path, monkeypatch, found_html):
+    url = "https://github.com/torvalds"
+    root, _ = make_corpus(
+        tmp_path, monkeypatch, {url: (200, found_html)},
+        [("github", url, "torvalds", 1)],
+    )
+    replay = ReplayFetcher(root, strict=True)
+    with pytest.raises(CorpusError, match="not in the corpus"):
+        asyncio.run(replay(None, "https://github.com/absent", ScannerConfig(), None, _NullLogger()))
+
+
+def test_lenient_replay_reports_miss_as_fetch_error(tmp_path, monkeypatch, found_html):
+    url = "https://github.com/torvalds"
+    root, _ = make_corpus(
+        tmp_path, monkeypatch, {url: (200, found_html)},
+        [("github", url, "torvalds", 1)],
+    )
+    replay = ReplayFetcher(root, strict=False)
+    result = asyncio.run(
+        replay(None, "https://github.com/absent", ScannerConfig(), None, _NullLogger())
+    )
+    assert result.error == MISSING_ERROR
+    assert replay.misses == ["https://github.com/absent"]
+
+
+def test_missing_corpus_raises(tmp_path):
+    with pytest.raises(CorpusError, match="No corpus manifest"):
+        ReplayFetcher(tmp_path / "nope")
+
+
+def test_version_mismatch_raises(tmp_path, monkeypatch, found_html):
+    url = "https://github.com/torvalds"
+    root, _ = make_corpus(
+        tmp_path, monkeypatch, {url: (200, found_html)},
+        [("github", url, "torvalds", 1)],
+    )
+    manifest = json.loads((root / "manifest.json").read_text("utf-8"))
+    manifest["corpus_version"] = 999
+    (root / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(CorpusError, match="re-record"):
+        ReplayFetcher(root)
+
+
+# --- job construction -----------------------------------------------------
+
+
+def test_build_jobs_covers_positives_and_negatives():
+    import random
+
+    ground_truth = {"github": ["torvalds", "mojombo"], "reddit": ["spez"]}
+    jobs = build_jobs(SITES, ground_truth, negatives_per_site=4, rng=random.Random(1))
+    positives = [j for j in jobs if j[3] == 1]
+    negatives = [j for j in jobs if j[3] == 0]
+    assert len(positives) == 3
+    assert len(negatives) == 8
+    assert {j[0] for j in jobs} == {"github", "reddit"}
+
+
+def test_build_jobs_skips_sites_absent_from_sites_json():
+    import random
+
+    jobs = build_jobs(SITES, {"nowhere": ["someone"]}, 2, random.Random(1))
+    assert jobs == []
+
+
+def test_build_jobs_is_seed_reproducible():
+    import random
+
+    gt = {"github": ["torvalds"]}
+    a = build_jobs(SITES, gt, 4, random.Random(7))
+    b = build_jobs(SITES, gt, 4, random.Random(7))
+    assert a == b
+
+
+def test_negative_pools_have_different_morphology():
+    """Random negatives are separable on shape alone; plausible ones are not.
+
+    A negative class of 16-char random strings is an artificially easy problem
+    and inflates every metric, which is why the corpus mixes in handles built
+    from ordinary word morphology.
+    """
+    import random
+
+    rng = random.Random(3)
+    randoms = [random_negative(rng) for _ in range(50)]
+    plausibles = [plausible_negative(rng) for _ in range(50)]
+    assert all(len(u) >= 14 for u in randoms)
+    assert min(len(u) for u in plausibles) < 14
+    # Random strings are ~uniform over the alphabet; word-built handles are not.
+    assert sum(c.isdigit() for u in randoms for c in u) > sum(
+        c.isdigit() for u in plausibles for c in u
+    )
+
+
+def test_plausible_negatives_vary():
+    import random
+
+    rng = random.Random(11)
+    assert len({plausible_negative(rng) for _ in range(40)}) > 20
+
+
+# --- corpus as the evaluation set -----------------------------------------
+
+
+def test_eval_jobs_returns_labelled_rows(tmp_path, monkeypatch, found_html, not_found_html):
+    urls = {
+        "https://github.com/torvalds": (200, found_html),
+        "https://github.com/ghost1": (404, not_found_html),
+        "https://www.reddit.com/user/spez": (200, found_html),
+    }
+    jobs_in = [
+        ("github", "https://github.com/torvalds", "torvalds", 1),
+        ("github", "https://github.com/ghost1", "ghost1", 0),
+        ("reddit", "https://www.reddit.com/user/spez", "spez", 1),
+    ]
+    root, _ = make_corpus(tmp_path, monkeypatch, urls, jobs_in)
+
+    jobs = ReplayFetcher(root).eval_jobs()
+    assert sorted(jobs) == sorted(jobs_in)
+    assert jobs == sorted(jobs, key=lambda j: (j[0], j[3], j[2])), "must be stably ordered"
+
+
+def test_eval_jobs_filters_by_site(tmp_path, monkeypatch, found_html):
+    urls = {
+        "https://github.com/torvalds": (200, found_html),
+        "https://www.reddit.com/user/spez": (200, found_html),
+    }
+    jobs_in = [
+        ("github", "https://github.com/torvalds", "torvalds", 1),
+        ("reddit", "https://www.reddit.com/user/spez", "spez", 1),
+    ]
+    root, _ = make_corpus(tmp_path, monkeypatch, urls, jobs_in)
+
+    jobs = ReplayFetcher(root).eval_jobs({"github"})
+    assert [j[0] for j in jobs] == ["github"]
+
+
+def test_eval_jobs_hit_the_corpus_exactly(tmp_path, monkeypatch, found_html, not_found_html):
+    """Regression: the eval set must come from the corpus, not be regenerated.
+
+    Regenerating negatives at eval time yields URLs the corpus never captured,
+    so every negative misses and the negative class is empty -- which silently
+    reports a false-positive rate computed over nothing.
+    """
+    urls = {
+        "https://github.com/torvalds": (200, found_html),
+        "https://github.com/ghost1": (404, not_found_html),
+        "https://github.com/ghost2": (404, not_found_html),
+    }
+    jobs_in = [
+        ("github", "https://github.com/torvalds", "torvalds", 1),
+        ("github", "https://github.com/ghost1", "ghost1", 0),
+        ("github", "https://github.com/ghost2", "ghost2", 0),
+    ]
+    root, _ = make_corpus(tmp_path, monkeypatch, urls, jobs_in)
+
+    replay = ReplayFetcher(root, strict=True)
+    jobs = replay.eval_jobs()
+
+    async def drive():
+        for _, url, _, _ in jobs:
+            await replay(None, url, ScannerConfig(), None, _NullLogger())
+
+    asyncio.run(drive())
+    assert replay.misses == []
+    assert replay.hits == len(jobs)
+    # The negative class is non-empty, so FPR is computed over something.
+    assert sum(1 for j in jobs if j[3] == 0) == 2
+
+
+def test_eval_jobs_skips_unlabelled_records(tmp_path, monkeypatch, found_html):
+    url = "https://github.com/torvalds"
+    root, _ = make_corpus(
+        tmp_path, monkeypatch, {url: (200, found_html)},
+        [("github", url, "torvalds", None)],
+    )
+    assert ReplayFetcher(root).eval_jobs() == []
+
+
+# --- incremental flush and resume ----------------------------------------
+
+
+def test_maybe_flush_writes_once_the_threshold_is_reached(tmp_path):
+    """A long capture buffered only in memory loses everything if the run dies."""
+    store = CorpusStore(tmp_path / "c")
+    store.init()
+    recorder = RecordingFetcher(store, tool_version="test")
+
+    async def drive():
+        network = FakeNetwork({})
+        from aliens_eye.corpus import record as record_mod
+
+        original = record_mod.fetch_url
+        record_mod.fetch_url = network
+        try:
+            for i in range(5):
+                url = f"https://x.example/{i}"
+                recorder.register(url, "x", str(i), 0)
+                await recorder(None, url, ScannerConfig(), None, _NullLogger())
+                await recorder.maybe_flush(3)
+        finally:
+            record_mod.fetch_url = original
+
+    asyncio.run(drive())
+    # Threshold 3: one flush of 3 happened, 2 still buffered.
+    assert recorder.flushed == 3
+    assert len(recorder.records) == 2
+    assert len((store.records_path).read_text("utf-8").strip().splitlines()) == 3
+
+
+def test_maybe_flush_is_a_noop_below_the_threshold(tmp_path):
+    store = CorpusStore(tmp_path / "c")
+    store.init()
+    recorder = RecordingFetcher(store, tool_version="test")
+    assert asyncio.run(recorder.maybe_flush(10)) == 0
+    assert recorder.flushed == 0
+
+
+def test_maybe_flush_disabled_by_zero(tmp_path):
+    store = CorpusStore(tmp_path / "c")
+    store.init()
+    recorder = RecordingFetcher(store, tool_version="test")
+    recorder.register("u", "s", "n", 1)
+    assert asyncio.run(recorder.maybe_flush(0)) == 0
+
+
+def test_build_jobs_urls_are_stable_for_resume():
+    """Resume drops already-captured URLs, so regeneration must reproduce them."""
+    import random
+
+    gt = {"github": ["torvalds"]}
+    first = {j[1] for j in build_jobs(SITES, gt, 4, random.Random(1234))}
+    second = {j[1] for j in build_jobs(SITES, gt, 4, random.Random(1234))}
+    assert first == second
+
+
+def test_manifest_counts_survive_incremental_flushing(tmp_path, monkeypatch, found_html, not_found_html):
+    """Regression: the manifest summarised the in-memory buffer.
+
+    With incremental flushing that buffer holds only the final batch, so a
+    2284-record capture across 428 sites reported "17 sites".
+    """
+    import asyncio as _asyncio
+
+    from aliens_eye.corpus import record as record_mod
+
+    urls = {f"https://s{i}.example/u": (200 if i % 2 else 404, found_html) for i in range(12)}
+    monkeypatch.setattr(record_mod, "fetch_url", FakeNetwork(urls))
+
+    root = tmp_path / "c"
+    manifest = _asyncio.run(record_mod.record_corpus(
+        {f"s{i}": f"https://s{i}.example/{{}}" for i in range(12)},
+        {f"s{i}": ["u"] for i in range(12)},
+        root,
+        _NullLogger(),
+        negatives_per_site=1,
+        concurrency=4,
+        flush_every=3,
+    ))
+    assert manifest["records"] == 24
+    assert len(manifest["sites"]) == 12, "manifest must describe the whole corpus"
+    assert ReplayFetcher(root).stats()["records"] == 24
+
+
+# --- the control row: what a site shows for a user who doesn't exist ------------------
+
+
+def shell(username):
+    """A page that looks like a profile whoever you ask for."""
+    return (f"<html><head><title>{username} - Profile</title>"
+            f'<meta name="description" content="{username} profile picture, followers and posts"></head>'
+            f'<body class="user-profile"><div class="profile-header"><img src="a.png"><img src="b.png">'
+            f'<img src="c.png"><img src="d.png"><img src="e.png"><img src="f.png"></div>'
+            f"<p>Follow {username}. Posts and activity timeline.</p></body></html>")
+
+
+def make_control_corpus(tmp_path, monkeypatch, found_html, not_found_html):
+    """`honest` tells users apart; `shell` shows everyone the same page."""
+    from aliens_eye.corpus import record as record_mod
+
+    rows = [   # site, username, label, kind, (status, body)
+        ("honest", "torvalds", 1, None, (200, found_html)),
+        ("honest", "a1b2c3d4e5f6g7h8", 0, "random", (404, not_found_html)),
+        ("honest", "quietharbor", 0, "plausible", (404, not_found_html)),
+        ("shell", "realperson", 1, None, (200, shell("realperson"))),
+        ("shell", "z9y8x7w6v5u4t3s2", 0, "random", (200, shell("z9y8x7w6v5u4t3s2"))),
+        ("shell", "rapidotter", 0, "plausible", (200, shell("rapidotter"))),
+    ]
+    url = "https://{}.example/u/{}".format
+    network = FakeNetwork({url(site, name): page for site, name, _, _, page in rows})
+    monkeypatch.setattr(record_mod, "fetch_url", network)
+    store = CorpusStore(tmp_path / "corpus")
+    store.init()
+    recorder = RecordingFetcher(store, tool_version="test")
+    for site, name, label, kind, _ in rows:
+        recorder.register(url(site, name), site, name, label, {"negative_kind": kind} if kind else {})
+
+    async def drive():
+        for site, name, *_ in rows:
+            await recorder(None, url(site, name), ScannerConfig(), None, _NullLogger())
+
+    asyncio.run(drive())
+    store.write_manifest({"tool_version": "test", "records": recorder.flush()})
+    return tmp_path / "corpus"
+
+
+def test_a_corpus_offers_one_recorded_missing_user_per_site(tmp_path, monkeypatch, found_html, not_found_html):
+    replay = ReplayFetcher(make_control_corpus(tmp_path, monkeypatch, found_html, not_found_html))
+    assert replay.control_for("honest") == ("a1b2c3d4e5f6g7h8", "https://honest.example/u/a1b2c3d4e5f6g7h8")
+    assert replay.control_for("shell") == ("z9y8x7w6v5u4t3s2", "https://shell.example/u/z9y8x7w6v5u4t3s2")
+    assert replay.control_for("nowhere") is None
+
+
+def test_control_rows_can_be_left_out_of_the_test_set(tmp_path, monkeypatch, found_html, not_found_html):
+    """A row compared with itself always agrees; it must not count as a result."""
+    replay = ReplayFetcher(make_control_corpus(tmp_path, monkeypatch, found_html, not_found_html))
+    assert len(replay.eval_jobs()) == 6
+    kept = replay.eval_jobs(exclude_controls=True)
+    assert sorted(j[2] for j in kept) == ["quietharbor", "rapidotter", "realperson", "torvalds"]
+
+
+def run_check(root, **kw):
+    from aliens_eye.selfcheck import run_selfcheck
+
+    replay = ReplayFetcher(root)
+    detector = Detector()
+    detector.load_model(_NullLogger())
+    jobs = replay.eval_jobs(exclude_controls=not kw.get("detector_only", False))
+    return asyncio.run(run_selfcheck(
+        {}, detector, ScannerConfig(), _NullLogger(), report_format="json", fetch=replay, jobs=jobs, **kw,
+    ))
+
+
+def test_selfcheck_scores_what_a_scan_reports(tmp_path, monkeypatch, found_html, not_found_html, capsys):
+    """The shell site is Found for everyone to the detector, and for no one to a scan."""
+    root = make_control_corpus(tmp_path, monkeypatch, found_html, not_found_html)
+    alone = run_check(root, detector_only=True)
+    full = run_check(root)
+    capsys.readouterr()
+    assert alone["overall"]["fp"] == 2            # both made-up users on the shell site
+    assert full["overall"]["fp"] == 0
+    assert alone["per_site"]["shell"]["recall"] == 1.0
+    assert full["per_site"]["shell"]["recall"] == 0.0    # the real one can't be told apart either
+    assert full["per_site"]["honest"]["recall"] == 1.0   # and the honest site loses nothing
+
+
+def test_scanner_uses_the_recorded_control_when_replaying(tmp_path, monkeypatch, found_html, not_found_html):
+    """Strict replay raises on an unknown URL; the scanner must not invent one."""
+    from aliens_eye.core.analyzer import FeatureExtractor
+    from aliens_eye.core.scanner import UsernameScanner
+
+    replay = ReplayFetcher(make_control_corpus(tmp_path, monkeypatch, found_html, not_found_html), strict=True)
+    config = ScannerConfig(output_dir=tmp_path / "out", fingerprints_path=tmp_path / "fp.json")
+    detector = Detector()
+    detector.load_model(_NullLogger())
+    scanner = UsernameScanner(
+        sites_data={"shell": "https://shell.example/u/{}", "honest": "https://honest.example/u/{}"},
+        config=config, extractor=FeatureExtractor(), detector=detector,
+        fingerprints=FingerprintStore(config.fingerprints_path, read_only=True),
+        logger=_NullLogger(), fetch=replay,
+    )
+    by_site = {}
+    for name, site in (("realperson", "shell"), ("torvalds", "honest")):
+        scanner.sites_data = {site: f"https://{site}.example/u/{{}}"}
+        by_site[site] = asyncio.run(scanner.scan_all_sites(name))[0]
+    assert by_site["shell"]["status"] == "Maybe"
+    assert by_site["honest"]["status"] == "Found"
+    assert replay.misses == []
