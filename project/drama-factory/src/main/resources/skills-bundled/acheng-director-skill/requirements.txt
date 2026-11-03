@@ -1,4 +1,0 @@
-# Optional tooling: JSON audit/compile/archive/restore use only Python stdlib.
-# Required for YAML input and rebuilding PNG blocking-sheet examples.
-PyYAML>=6.0,<7
-Pillow>=10.0,<13

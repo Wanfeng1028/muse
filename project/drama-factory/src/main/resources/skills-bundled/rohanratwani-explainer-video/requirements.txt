@@ -1,4 +1,0 @@
-kokoro-onnx>=0.4
-soundfile
-numpy
-faster-whisper

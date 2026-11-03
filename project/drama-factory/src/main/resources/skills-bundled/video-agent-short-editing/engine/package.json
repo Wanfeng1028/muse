@@ -1,9 +1,0 @@
-{
-  "name": "short-editing-engine",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@mediapipe/tasks-vision": "^1.0.1",
-    "playwright-core": "1.63.0"
-  }
-}

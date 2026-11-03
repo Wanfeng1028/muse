@@ -1,4 +1,0 @@
-# Keep this folder local — ignore everything except its docs
-*
-!.gitignore
-!README.md
