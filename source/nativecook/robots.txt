@@ -1,0 +1,4 @@
+User-Agent: *
+Allow: /
+
+Sitemap: https://nativecook.dev/sitemap.xml
